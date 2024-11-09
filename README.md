@@ -1,5 +1,5 @@
 <h1 align="center">Hi 👋, I'm Dark Purple OF</h1>
-<h3 align="center">A Random Guy somewhere in thw world that's intersted in development</h3>
+<h3 align="center">A Random Guy somewhere in the world that's intersted in development</h3>
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=darkpurpleof&label=Profile%20views&color=0e75b6&style=flat" alt="darkpurpleof" /> </p>
 
