@@ -1,2 +1,4 @@
-# darkpurpleof.github.io
-Microsoft 365 Admin &amp; Entra Setup (DONT USE OR COPY)
+# Something Great's Coming...
+This page is currently under development and will be ready son
+
+Sincerely: Javier C.S
