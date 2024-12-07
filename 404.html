@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Purple OF | Not Found</title>
+    <script>
+        document.title = "Dark Purple OF | Not Found";
+        window.onload = function() {
+            var path = window.location.pathname; // Gets the current page path
+            var page = path.substring(path.lastIndexOf('/') + 1); // Extracts the filename after '/'
+            document.getElementById("missing-file").innerText = "/"+page; // Sets the dynamic page
+        }
+    </script>
+    <style>
+        body {
+            font-family: "Georgia", serif;
+            background-color: #ffffff;
+            color: #0F0529;
+            margin: 20px;
+        }
+        h1 {
+            font-size: 2rem;
+            color: #7C0A02;
+        }
+        p {
+            font-size: 1.25rem;
+            line-height: 1.8;
+        }
+        a {
+            text-decoration: none;
+        }
+        .back-link {
+            color: #3366ff;
+            font-weight: bold;
+        }
+        .back-link:hover {
+            color: #4D79FF;
+        }
+    </style>
+</head>
+<body>
+    <h1>Not Found</h1>
+    <p>The Requested URL wasn’t found on this server.</p>
+    <p>
+        Once upon a midnight dreary,<br>
+        While I web surfed, weak and weary,<br>
+        Over many a strange site of "<strong>Dark Purple OF</strong>",<br>
+        While I clicked on my fav’rite HTML,<br>
+        Suddenly there came a warning,<br>
+        And my heart was filled with mourning,<br>
+        Mourning for my dear <span id="missing-file"></span>.
+    </p>
+    <p>
+        "’Tis not possible!", I pleaded,<br>
+        But my browser, it denied.<br>
+        Remained blank, I then repeated,<br>
+        Just a blank and nothing more.
+    </p>
+    <p>
+        With a scream, I was defeated,<br>
+        For my cookies were deleted.<br>
+        So I begged, no longer seated,<br>
+        "Give me back my HTML!"
+    </p>
+    <p>
+        Then, in answer to my query,<br>
+        Through the net I loved so dearly,<br>
+        Came its answer, dark and dreary:<br>
+        <strong>Quoth The Server — 404 - Go <a href="https://darkpurpleof.github.io" class="back-link">Back</a></strong>
+    </p>
+</body>
+</html>
