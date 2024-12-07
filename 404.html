@@ -10,8 +10,14 @@
             var path = window.location.pathname; // Gets the current page path
             var page = path.substring(path.lastIndexOf('/') + 1); // Extracts the filename after '/'
             document.getElementById("missing-file").innerText = "/"+page; // Sets the dynamic page
+            document.getElementById("header-text").innerText = "Not Found » " + "/"+page; // Sets the dynamic header
         }
     </script>
+    <!-- Favicon Links -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <style>
         body {
             font-family: "Georgia", serif;
@@ -40,7 +46,7 @@
     </style>
 </head>
 <body>
-    <h1>Not Found</h1>
+    <h1 id="header-text">Not Found » </h1>
     <p>The Requested URL wasn’t found on this server.</p>
     <p>
         Once upon a midnight dreary,<br>
