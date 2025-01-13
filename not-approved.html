@@ -1,0 +1,229 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permanently Banned</title>
+    <style>
+        :root {
+            --light-bg: #f8d7da;
+            --light-color: #721c24;
+            --dark-bg: #2c2c2c;
+            --dark-color: #f8d7da;
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #3c3c3c;
+            --border-light: #f5c6cb;
+            --border-dark: #555;
+            --button-bg-light: #ffffff;
+            --button-bg-dark: #3c3c3c;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--light-color);
+            text-align: center;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-color);
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        .info-chart {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: var(--card-bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            display: inline-block;
+            text-align: left;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .dark-mode .info-chart {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-dark);
+        }
+        .info-chart table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-chart th, .info-chart td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .dark-mode .info-chart th, .dark-mode .info-chart td {
+            border-bottom: 1px solid var(--border-dark);
+        }
+        .info-chart th {
+            text-align: left;
+            font-weight: bold;
+        }
+        .appeal-note {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+        a {
+            color: #0056b3;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .dropdown {
+            position: absolute;
+            top: 10px;
+            right: 50px;
+        }
+        select {
+            padding: 8px;
+            font-size: 1em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: var(--button-bg-light);
+            transition: background-color 0.3s;
+        }
+        .dark-mode select {
+            background-color: var(--button-bg-dark);
+            border: 1px solid var(--border-dark);
+        }
+        .dark-light-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            color: var(--light-color);
+            transition: color 0.3s;
+        }
+        .dark-mode .dark-light-toggle {
+            color: var(--dark-color);
+        }
+    </style>
+</head>
+<body>
+    <button class="dark-light-toggle" onclick="toggleDarkMode()">☀️</button>
+
+    <div class="dropdown">
+        <label for="language" hidden="">Language:</label>
+        <select id="language" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="ru">Russian</option>
+            <option value="es">Spanish</option>
+            <option value="el">Greek</option>
+            <option value="yi">Yiddish</option>
+        </select>
+    </div>
+
+    <h1>Hello!, <span id="username">User</span>, what's the square root of a fish?</h1>
+    <h2>Looks like you've been permanently banned from using <span id="webpage-url">example.com</span></h2>
+
+    <div class="info-chart">
+        <table>
+            <tbody><tr>
+                <th>Banned Duration:</th>
+                <td>Permanent</td>
+            </tr>
+            <tr>
+                <th>IP Address:</th>
+                <td id="ip-address">Loading...</td>
+            </tr>
+            <tr>
+                <th>ISP (Provider):</th>
+                <td id="isp">Loading...</td>
+            </tr>
+            <tr>
+                <th>Location:</th>
+                <td id="location">Loading...</td>
+            </tr>
+            <tr>
+                <th>Other Info:</th>
+                <td id="other-info">Loading...</td>
+            </tr>
+        </tbody></table>
+    </div>
+
+    <p class="appeal-note">If you wish to appeal your ban, please contact the webpage admin or owner. You may get unbanned.</p>
+
+    <script>
+        async function fetchUserData() {
+            try {
+                const response = await fetch('https://ipinfo.io/json?');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                document.getElementById('ip-address').textContent = data.ip || 'Unknown';
+                document.getElementById('isp').textContent = data.org || 'Unknown ISP';
+                document.getElementById('location').textContent = `${data.city}, ${data.region}, ${data.country}` || 'Unknown Location';
+                document.getElementById('other-info').textContent = `Latitude: ${data.loc.split(',')[0]}, Longitude: ${data.loc.split(',')[1]}` || 'Unknown';
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                document.getElementById('ip-address').textContent = 'Error fetching data';
+                document.getElementById('isp').textContent = 'Error fetching data';
+                document.getElementById('location').textContent = 'Error fetching data';
+                document.getElementById('other-info').textContent = 'Error fetching data';
+            }
+        }
+
+        fetchUserData();
+
+        document.getElementById('username').textContent = navigator.userAgentData ? navigator.userAgentData.brands[0].brand : "Guest";
+        document.getElementById('webpage-url').textContent = window.location.hostname;
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        function changeLanguage() {
+            const language = document.getElementById('language').value;
+            const translations = {
+                en: {
+                    greeting: "Hello!",
+                    bannedMessage: "Looks like you've been permanently banned from using",
+                    appeal: "If you wish to appeal your ban, please contact the webpage admin or owner. You may get unbanned.",
+                    phrase: "what's the square root of a fish?"
+                },
+                ru: {
+                    greeting: "Здравствуйте!",
+                    bannedMessage: "Похоже, вы были навсегда заблокированы на использовании",
+                    appeal: "Если вы хотите обжаловать бан, свяжитесь с администратором или владельцем сайта. Вы можете быть разблокированы.",
+                    phrase: "какой квадратный корень рыбы?"
+                },
+                es: {
+                    greeting: "¡Hola!",
+                    bannedMessage: "Parece que has sido permanentemente baneado de usar",
+                    appeal: "Si deseas apelar tu prohibición, por favor contacta al administrador o propietario de la página. Podrías ser desbaneado.",
+                    phrase: "¿cuál es la raíz cuadrada de un pez?"
+                },
+                el: {
+                    greeting: "Γειά σας!",
+                    bannedMessage: "Φαίνεται ότι έχετε αποκλειστεί μόνιμα από τη χρήση του",
+                    appeal: "Εάν θέλετε να κάνετε έφεση για την απαγόρευση, επικοινωνήστε με τον διαχειριστή ή τον ιδιοκτήτη της ιστοσελίδας. Μπορεί να σας ξεμπλοκάρουν.",
+                    phrase: "ποια είναι η τετραγωνική ρίζα ενός ψαριού;"
+                },
+                yi: {
+                    greeting: "העלא!",
+                    bannedMessage: "עס זעט אויס אַז איר זענט שטענדיק פאַרבאָטן צו נוצן",
+                    appeal: "אויב איר ווילט אַפּעלירן דיין פאַרבאָט, ביטע קאָנטאַקט די וועבזייטל אַדמין אָדער באַזיצער. איר קען ווערן אָפּגעבלאקט.",
+                    phrase: "וואָס איז דער קוואַדראַט וואָרצל פון אַ פיש?"
+                }
+            };
+
+// Set dynamic values for username and webpage URL
+        document.getElementById('username').textContent = navigator.userAgentData ? navigator.userAgentData.brands[0].brand : "Guest";
+        document.getElementById('webpage-url').textContent = window.location.hostname;
+
+            const translation = translations[language];
+            document.querySelector("h1").innerHTML = `${translation.greeting}, ${document.getElementById("username").textContent}, ${translation.phrase}`;
+            document.querySelector("h2").innerHTML = `${translation.bannedMessage} ${document.getElementById("webpage-url").textContent}`;
+            document.querySelector(".appeal-note").textContent = translation.appeal;
+        }
+    </script>
+
+</body></html>
