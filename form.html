@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorry we're not hiring!</title>
+    <style>
+        :root {
+            --light-bg: #f8d7da;
+            --light-color: #721c24;
+            --dark-bg: #2c2c2c;
+            --dark-color: #f8d7da;
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #3c3c3c;
+            --border-light: #f5c6cb;
+            --border-dark: #555;
+            --button-bg-light: #ffffff;
+            --button-bg-dark: #3c3c3c;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--light-color);
+            text-align: center;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-color);
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        .info-chart {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: var(--card-bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            display: inline-block;
+            text-align: left;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .dark-mode .info-chart {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-dark);
+        }
+        .info-chart table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-chart th, .info-chart td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .dark-mode .info-chart th, .dark-mode .info-chart td {
+            border-bottom: 1px solid var(--border-dark);
+        }
+        .info-chart th {
+            text-align: left;
+            font-weight: bold;
+        }
+        .appeal-note {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+        a {
+            color: #0056b3;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .dropdown {
+            position: fixed;
+            left: 10px;
+            bottom: 10px;
+            background-color: var(--card-bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: 5px;
+            padding: 5px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .dark-mode .dropdown {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-dark);
+        }
+        select {
+            padding: 8px;
+            font-size: 1em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: var(--button-bg-light);
+            transition: background-color 0.3s;
+        }
+        .dark-mode select {
+            background-color: var(--button-bg-dark);
+            border: 1px solid var(--border-dark);
+        }
+        .dark-light-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            color: var(--light-color);
+            transition: color 0.3s;
+        }
+        .dark-mode .dark-light-toggle {
+            color: var(--dark-color);
+        }
+    </style>
+</head>
+<body>
+    <button class="dark-light-toggle" onclick="toggleDarkMode()">☀️</button>
+
+    <div class="dropdown">
+        <label for="language" style="margin-right: 5px;">Choose your language:</label>
+        <select id="language" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="ru">Russian</option>
+            <option value="es">Spanish</option>
+            <option value="el">Greek</option>
+            <option value="yi">Yiddish</option>
+        </select>
+    </div>
+
+    <h1 id="greeting">Sorry we're not hiring!</h1>
+    <h2 id="closedMessage">Admin Vacants are closed!</h2>
+
+    <div class="info-chart">
+        <table>
+            <tr>
+                <th>IP:</th>
+                <td id="ip-address">Fetching...</td>
+            </tr>
+            <tr>
+                <th>Current Time:</th>
+                <td id="current-time">Fetching...</td>
+            </tr>
+            <tr>
+                <th>Next Open Vacant:</th>
+                <td id="next-vacant">Pending...</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        async function fetchUserData() {
+            try {
+                const response = await fetch('https://ipinfo.io/json?');
+                const data = await response.json();
+                document.getElementById('ip-address').textContent = data.ip || 'Unknown';
+
+                const now = new Date();
+                const currentDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                document.getElementById('current-time').textContent = currentDate;
+
+                const vacancyResponse = await fetch('https://darkpurpleof.github.io/recentest.txt');
+                const vacancyText = await vacancyResponse.text();
+                const vacancyDate = new Date(vacancyText.trim());
+
+                if (isNaN(vacancyDate.getTime())) {
+                    document.getElementById('next-vacant').textContent = 'Pending...';
+                    return;
+                }
+
+                const diffInSeconds = Math.ceil((vacancyDate - now) / 1000);
+
+                // Handle the redirection and 2-month check logic
+                const twoMonthsAgo = new Date();
+                twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
+                if (vacancyDate < twoMonthsAgo) {
+                    document.getElementById('next-vacant').textContent = 'Pending...';
+                    return;
+                }
+
+                if (diffInSeconds <= 0 && diffInSeconds > -5184000) { // Past but within 2 months
+                    window.location.href = "https://forms.gle/X62EGQikPSTpEXiP7";
+                    return;
+                }
+
+                let countdown = '';
+                if (diffInSeconds > 31536000) {
+                    const years = Math.floor(diffInSeconds / 31536000);
+                    countdown = `in ${years} year${years > 1 ? 's' : ''}`;
+                } else if (diffInSeconds > 2592000) {
+                    const days = Math.floor(diffInSeconds / 86400);
+                    countdown = `in ${days} day${days > 1 ? 's' : ''}`;
+                } else if (diffInSeconds > 604800) {
+                    const weeks = Math.floor(diffInSeconds / 604800);
+                    countdown = `in ${weeks} week${weeks > 1 ? 's' : ''}`;
+                } else if (diffInSeconds > 86400) {
+                    const days = Math.floor(diffInSeconds / 86400);
+                    countdown = `in ${days} day${days > 1 ? 's' : ''}`;
+                } else if (diffInSeconds > 3600) {
+                    const hours = Math.floor(diffInSeconds / 3600);
+                    countdown = `in ${hours} hour${hours > 1 ? 's' : ''}`;
+                } else if (diffInSeconds > 60) {
+                    const minutes = Math.floor(diffInSeconds / 60);
+                    countdown = `in ${minutes} minute${minutes > 1 ? 's' : ''}`;
+                } else if (diffInSeconds > 0) {
+                    countdown = `in ${diffInSeconds} second${diffInSeconds > 1 ? 's' : ''}`;
+                } 
+
+                document.getElementById('next-vacant').textContent = `${vacancyDate.toISOString()} (${countdown})`;
+
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                document.getElementById('ip-address').textContent = 'Error fetching data';
+                document.getElementById('current-time').textContent = 'Error fetching data';
+                document.getElementById('next-vacant').textContent = 'Error fetching data';
+            }
+        }
+
+        function changeLanguage() {
+            const language = document.getElementById('language').value;
+            const translations = {
+                en: {
+                    greeting: "Sorry we're not hiring!",
+                    closedMessage: "Admin Vacants are closed!"
+                },
+                ru: {
+                    greeting: "Извините, мы не нанимаем!",
+                    closedMessage: "Администраторские вакансии закрыты!"
+                },
+                es: {
+                    greeting: "¡Lo sentimos, no estamos contratando!",
+                    closedMessage: "¡Vacantes de administrador están cerradas!"
+                },
+                el: {
+                    greeting: "Συγγνώμη, δεν προσλαμβάνουμε!",
+                    closedMessage: "Οι διοικητικές θέσεις είναι κλειστές!"
+                },
+                yi: {
+                    greeting: "אונז זענען נעבעכדיק, מיר נעמען נישט אַרבעטער!",
+                    closedMessage: "אַדמין סטעלעס זענען פארשפארט!"
+                }
+            };
+
+            const translation = translations[language];
+            document.getElementById('greeting').textContent = translation.greeting;
+            document.getElementById('closedMessage').textContent = translation.closedMessage;
+        }
+
+        function toggleDarkMode() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            document.querySelector('.dark-light-toggle').textContent = body.classList.contains('dark-mode') ? '🌙' : '☀️';
+        }
+
+        fetchUserData();
+        document.querySelector('.dark-light-toggle').textContent = '☀️';
+    </script>
+</body>
+</html>
