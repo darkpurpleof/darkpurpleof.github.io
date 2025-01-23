@@ -147,75 +147,87 @@
                 <th>Next Open Vacant:</th>
                 <td id="next-vacant">Pending...</td>
             </tr>
+            <tr>
+                <th>Hosted By:</th>
+                <td id="hosted-by">Fetching...</td>
+            </tr>
         </table>
     </div>
 
     <script>
         async function fetchUserData() {
             try {
-                const response = await fetch('https://ipinfo.io/json?');
-                const data = await response.json();
-                document.getElementById('ip-address').textContent = data.ip || 'Unknown';
+                const ipResponse = await fetch('https://ipinfo.io/json?');
+                const ipData = await ipResponse.json();
+                document.getElementById('ip-address').textContent = ipData.ip || 'Unknown';
 
-                const now = new Date();
-                const currentDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                document.getElementById('current-time').textContent = currentDate;
+                updateTime(); // Start updating current time dynamically
 
-                const vacancyResponse = await fetch('https://darkpurpleof.github.io/recentest.txt');
-                const vacancyText = await vacancyResponse.text();
-                const vacancyDate = new Date(vacancyText.trim());
+                const vacancyResponse = await fetch('https://darkpurpleof.github.io/recentest.json');
+                const vacancyData = await vacancyResponse.json();
 
-                if (isNaN(vacancyDate.getTime())) {
-                    document.getElementById('next-vacant').textContent = 'Pending...';
+                if (!vacancyData || vacancyData.is_allowed === "no") {
+                    window.location.href = "https://darkpurpleof.github.io/404";
                     return;
                 }
 
-                const diffInSeconds = Math.ceil((vacancyDate - now) / 1000);
+                const vacancyDate = new Date(
+                    `${vacancyData.year}-${vacancyData.month}-${vacancyData.day}T${vacancyData.hour}:${vacancyData.minute}:00`);
+                const nowUtc = new Date(new Date().getTime() + new Date().getTimezoneOffset() * 60000);
+                const timeZoneOffset = -(new Date().getTimezoneOffset() / 60);
 
-                // Handle the redirection and 2-month check logic
-                const twoMonthsAgo = new Date();
-                twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-
-                if (vacancyDate < twoMonthsAgo) {
-                    document.getElementById('next-vacant').textContent = 'Pending...';
+                if (vacancyData.form_is_closed === "yes" && nowUtc > vacancyDate) {
+                    window.location.href = "mailto:darkpurpleof@outlook.com";
                     return;
                 }
 
-                if (diffInSeconds <= 0 && diffInSeconds > -5184000) { // Past but within 2 months
-                    window.location.href = "https://forms.gle/X62EGQikPSTpEXiP7";
-                    return;
+                const diffInSeconds = Math.ceil((vacancyDate - nowUtc) / 1000);
+                const countdown = getCountdownText(diffInSeconds);
+                const formattedDate = `${vacancyData.year}-${String(vacancyData.month).padStart(2, '0')}-` +
+                                      `${String(vacancyData.day).padStart(2, '0')} ${String(vacancyData.hour).padStart(2, '0')}:` +
+                                      `${String(vacancyData.minute).padStart(2, '0')} (GMT${timeZoneOffset >= 0 ? '+' : ''}${timeZoneOffset})`;
+
+                document.getElementById('next-vacant').textContent = `${formattedDate} (${countdown})`;
+                document.getElementById('hosted-by').textContent = vacancyData.hosted_by || "Unknown";
+
+                if (vacancyData.is_standard === "no" && !document.referrer.includes("darkpurpleof.web.app/gofillform")) {
+                    document.getElementById('next-vacant').textContent = "Pending...";
                 }
-
-                let countdown = '';
-                if (diffInSeconds > 31536000) {
-                    const years = Math.floor(diffInSeconds / 31536000);
-                    countdown = `in ${years} year${years > 1 ? 's' : ''}`;
-                } else if (diffInSeconds > 2592000) {
-                    const days = Math.floor(diffInSeconds / 86400);
-                    countdown = `in ${days} day${days > 1 ? 's' : ''}`;
-                } else if (diffInSeconds > 604800) {
-                    const weeks = Math.floor(diffInSeconds / 604800);
-                    countdown = `in ${weeks} week${weeks > 1 ? 's' : ''}`;
-                } else if (diffInSeconds > 86400) {
-                    const days = Math.floor(diffInSeconds / 86400);
-                    countdown = `in ${days} day${days > 1 ? 's' : ''}`;
-                } else if (diffInSeconds > 3600) {
-                    const hours = Math.floor(diffInSeconds / 3600);
-                    countdown = `in ${hours} hour${hours > 1 ? 's' : ''}`;
-                } else if (diffInSeconds > 60) {
-                    const minutes = Math.floor(diffInSeconds / 60);
-                    countdown = `in ${minutes} minute${minutes > 1 ? 's' : ''}`;
-                } else if (diffInSeconds > 0) {
-                    countdown = `in ${diffInSeconds} second${diffInSeconds > 1 ? 's' : ''}`;
-                } 
-
-                document.getElementById('next-vacant').textContent = `${vacancyDate.toISOString()} (${countdown})`;
 
             } catch (error) {
                 console.error('Error fetching user data:', error);
-                document.getElementById('ip-address').textContent = 'Error fetching data';
-                document.getElementById('current-time').textContent = 'Error fetching data';
                 document.getElementById('next-vacant').textContent = 'Error fetching data';
+                document.getElementById('hosted-by').textContent = 'Error fetching data';
+            }
+        }
+
+        function updateTime() {
+            setInterval(() => {
+                const now = new Date();
+                const currentDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ` +
+                                    `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} `;
+                document.getElementById('current-time').textContent = currentDate;
+            }, 1000);
+        }
+
+        function getCountdownText(diffInSeconds) {
+            if (diffInSeconds > 31536000) {
+                const years = Math.floor(diffInSeconds / 31536000);
+                return `in ${years} year${years > 1 ? 's' : ''}`;
+            } else if (diffInSeconds > 86400) {
+                const days = Math.floor(diffInSeconds / 86400);
+                return `in ${days} day${days > 1 ? 's' : ''}`;
+            } else if (diffInSeconds > 3600) {
+                const hours = Math.floor(diffInSeconds / 3600);
+                return `in ${hours} hour${hours > 1 ? 's' : ''}`;
+            } else if (diffInSeconds > 60) {
+                const minutes = Math.floor(diffInSeconds / 60);
+                return `in ${minutes} minute${minutes > 1 ? 's' : ''}`;
+            } else if (diffInSeconds > 0) {
+                return `in ${diffInSeconds} second${diffInSeconds > 1 ? 's' : ''}`;
+            } else {
+                window.location.href = "https://forms.gle/X62EGQikPSTpEXiP7";
+                return "";
             }
         }
 
@@ -253,6 +265,23 @@
             const body = document.body;
             body.classList.toggle('dark-mode');
             document.querySelector('.dark-light-toggle').textContent = body.classList.contains('dark-mode') ? '🌙' : '☀️';
+        }
+
+        // Automatically detect browser language
+        const browserLang = navigator.language.slice(0, 2);
+        const supportedLangs = ['en', 'ru', 'es', 'el', 'yi'];
+        if (supportedLangs.includes(browserLang)) {
+            document.getElementById('language').value = browserLang;
+            changeLanguage();
+        } else {
+            document.getElementById('language').value = 'en';
+            changeLanguage();
+        }
+
+        // Automatically set theme based on system preference
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+            toggleDarkMode();
         }
 
         fetchUserData();
