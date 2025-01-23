@@ -117,7 +117,7 @@
     </style>
 </head>
 <body>
-    <button class="dark-light-toggle" onclick="toggleDarkMode()">☀️</button>
+    <button class="dark-light-toggle" id="toggle-theme" onclick="toggleDarkMode()">☀️</button>
 
     <div class="dropdown">
         <label for="language" style="margin-right: 5px;">Choose your language:</label>
@@ -151,10 +151,75 @@
                 <th>Hosted By:</th>
                 <td id="hosted-by">Fetching...</td>
             </tr>
+            <tr>
+                <th>Time Left:</th>
+                <td id="time-left">Fetching...</td>
+            </tr>
         </table>
     </div>
 
     <script>
+        const translations = {
+            en: {
+                greeting: "Sorry we're not hiring!",
+                closedMessage: "Admin Vacants are closed!",
+                nextVacant: "Next Open Vacant",
+                hostedBy: "Hosted By",
+                timeLeft: "Time Left",
+                ip: "IP",
+                currentTime: "Current Time"
+            },
+            ru: {
+                greeting: "Извините, мы не нанимаем!",
+                closedMessage: "Администраторские вакансии закрыты!",
+                nextVacant: "Следующая вакансия",
+                hostedBy: "Хостинг от",
+                timeLeft: "Осталось времени",
+                ip: "IP",
+                currentTime: "Текущее время"
+            },
+            es: {
+                greeting: "¡Lo siento, no estamos contratando!",
+                closedMessage: "¡Las vacantes del administrador están cerradas!",
+                nextVacant: "Próxima vacante",
+                hostedBy: "Alojado por",
+                timeLeft: "Tiempo restante",
+                ip: "IP",
+                currentTime: "Hora actual"
+            },
+            el: {
+                greeting: "Συγγνώμη, δεν προσλαμβάνουμε!",
+                closedMessage: "Οι θέσεις διαχειριστή είναι κλειστές!",
+                nextVacant: "Επόμενη θέση",
+                hostedBy: "Φιλοξενείται από",
+                timeLeft: "Υπολειπόμενος χρόνος",
+                ip: "IP",
+                currentTime: "Τρέχουσα ώρα"
+            },
+            yi: {
+                greeting: "גענצטער, מיר נעמען נישט אויף!",
+                closedMessage: "די אדמיניסטראטאָר'ס אפציעס זענען פארמאכט!",
+                nextVacant: "נעקסטע אפציע",
+                hostedBy: "געזוכט דורך",
+                timeLeft: "צייט פארבליבן",
+                ip: "IP",
+                currentTime: "קרעדיט צייט"
+            }
+        };
+
+        function changeLanguage() {
+            const language = document.getElementById("language").value;
+            const translation = translations[language];
+
+            document.getElementById('greeting').textContent = translation.greeting;
+            document.getElementById('closedMessage').textContent = translation.closedMessage;
+            document.getElementById('next-vacant').previousElementSibling.textContent = translation.nextVacant;
+            document.getElementById('hosted-by').previousElementSibling.textContent = translation.hostedBy;
+            document.getElementById('time-left').previousElementSibling.textContent = translation.timeLeft;
+            document.getElementById('ip-address').previousElementSibling.textContent = translation.ip;
+            document.getElementById('current-time').previousElementSibling.textContent = translation.currentTime;
+        }
+
         async function fetchUserData() {
             try {
                 const ipResponse = await fetch('https://ipinfo.io/json?');
@@ -171,33 +236,82 @@
                     return;
                 }
 
-                const vacancyDate = new Date(
-                    `${vacancyData.year}-${vacancyData.month}-${vacancyData.day}T${vacancyData.hour}:${vacancyData.minute}:00`);
+                // Get origin timezone from JSON
+                const originTimezone = vacancyData.origin_timezone || "GMT+0"; // Default to GMT+0 if not available
+
                 const nowUtc = new Date(new Date().getTime() + new Date().getTimezoneOffset() * 60000);
-                const timeZoneOffset = -(new Date().getTimezoneOffset() / 60);
 
-                if (vacancyData.form_is_closed === "yes" && nowUtc > vacancyDate) {
-                    window.location.href = "mailto:darkpurpleof@outlook.com";
-                    return;
-                }
+                // Make sure the vacancy date is correctly formatted
+                const year = parseInt(vacancyData.year, 10);
+                const month = parseInt(vacancyData.month, 10) - 1; // Month is 0-indexed
+                const day = parseInt(vacancyData.day, 10);
+                const hour = parseInt(vacancyData.hour, 10);
+                const minute = parseInt(vacancyData.minute, 10);
 
-                const diffInSeconds = Math.ceil((vacancyDate - nowUtc) / 1000);
-                const countdown = getCountdownText(diffInSeconds);
+                const vacancyDate = new Date(Date.UTC(year, month, day, hour, minute));
+
+                // Adjust the date based on the origin timezone (GMT-6 format)
+                const timezoneOffset = getTimezoneOffsetFromGMT(originTimezone);
+                vacancyDate.setHours(vacancyDate.getHours() + timezoneOffset);
+
+                // Calculate the difference
+                const diffInSeconds = Math.abs(Math.floor((vacancyDate - nowUtc) / 1000)); // Absolute difference
+
+                // Calculate and display Time Left
+                const timeLeft = getTimeLeft(diffInSeconds);
+                document.getElementById('time-left').textContent = timeLeft;
+
                 const formattedDate = `${vacancyData.year}-${String(vacancyData.month).padStart(2, '0')}-` +
                                       `${String(vacancyData.day).padStart(2, '0')} ${String(vacancyData.hour).padStart(2, '0')}:` +
-                                      `${String(vacancyData.minute).padStart(2, '0')} (GMT${timeZoneOffset >= 0 ? '+' : ''}${timeZoneOffset})`;
+                                      `${String(vacancyData.minute).padStart(2, '0')} (${originTimezone})`;
 
-                document.getElementById('next-vacant').textContent = `${formattedDate} (${countdown})`;
+                document.getElementById('next-vacant').textContent = formattedDate;
                 document.getElementById('hosted-by').textContent = vacancyData.hosted_by || "Unknown";
 
-                if (vacancyData.is_standard === "no" && !document.referrer.includes("darkpurpleof.web.app/gofillform")) {
-                    document.getElementById('next-vacant').textContent = "Pending...";
+                // Redirect if time is passed
+                if (nowUtc >= vacancyDate) {
+                    window.location.href = "https://forms.gle/X62EGQikPSTpEXiP7";
                 }
-
+                
             } catch (error) {
                 console.error('Error fetching user data:', error);
                 document.getElementById('next-vacant').textContent = 'Error fetching data';
                 document.getElementById('hosted-by').textContent = 'Error fetching data';
+                document.getElementById('time-left').textContent = 'Error fetching time left';
+            }
+        }
+
+        function getTimezoneOffsetFromGMT(gmt) {
+            const sign = gmt[3] === '-' ? -1 : 1;
+            const offset = parseInt(gmt.slice(4), 10);
+            return sign * offset;
+        }
+
+        function getTimeLeft(diffInSeconds) {
+            if (diffInSeconds <= 0) return "The event has started or passed!";
+            
+            const years = Math.floor(diffInSeconds / 31536000);
+            const months = Math.floor(diffInSeconds / 2592000);
+            const weeks = Math.floor(diffInSeconds / 604800);
+            const days = Math.floor(diffInSeconds / 86400);
+            const hours = Math.floor(diffInSeconds / 3600);
+            const minutes = Math.floor(diffInSeconds / 60);
+            const seconds = diffInSeconds;
+
+            if (years > 0) {
+                return `${years} year${years > 1 ? 's' : ''}`;
+            } else if (months > 0) {
+                return `${months} month${months > 1 ? 's' : ''}`;
+            } else if (weeks > 0) {
+                return `${weeks} week${weeks > 1 ? 's' : ''}`;
+            } else if (days > 0) {
+                return `${days} day${days > 1 ? 's' : ''}`;
+            } else if (hours > 0) {
+                return `${hours} hour${hours > 1 ? 's' : ''}`;
+            } else if (minutes > 0) {
+                return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+            } else {
+                return `${seconds} second${seconds > 1 ? 's' : ''}`;
             }
         }
 
@@ -210,82 +324,18 @@
             }, 1000);
         }
 
-        function getCountdownText(diffInSeconds) {
-            if (diffInSeconds > 31536000) {
-                const years = Math.floor(diffInSeconds / 31536000);
-                return `in ${years} year${years > 1 ? 's' : ''}`;
-            } else if (diffInSeconds > 86400) {
-                const days = Math.floor(diffInSeconds / 86400);
-                return `in ${days} day${days > 1 ? 's' : ''}`;
-            } else if (diffInSeconds > 3600) {
-                const hours = Math.floor(diffInSeconds / 3600);
-                return `in ${hours} hour${hours > 1 ? 's' : ''}`;
-            } else if (diffInSeconds > 60) {
-                const minutes = Math.floor(diffInSeconds / 60);
-                return `in ${minutes} minute${minutes > 1 ? 's' : ''}`;
-            } else if (diffInSeconds > 0) {
-                return `in ${diffInSeconds} second${diffInSeconds > 1 ? 's' : ''}`;
+        function toggleDarkMode() {
+            const body = document.body;
+            const icon = document.getElementById('toggle-theme');
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                icon.textContent = '🌙';
             } else {
-                window.location.href = "https://forms.gle/X62EGQikPSTpEXiP7";
-                return "";
+                icon.textContent = '☀️';
             }
         }
 
-        function changeLanguage() {
-            const language = document.getElementById('language').value;
-            const translations = {
-                en: {
-                    greeting: "Sorry we're not hiring!",
-                    closedMessage: "Admin Vacants are closed!"
-                },
-                ru: {
-                    greeting: "Извините, мы не нанимаем!",
-                    closedMessage: "Администраторские вакансии закрыты!"
-                },
-                es: {
-                    greeting: "¡Lo sentimos, no estamos contratando!",
-                    closedMessage: "¡Vacantes de administrador están cerradas!"
-                },
-                el: {
-                    greeting: "Συγγνώμη, δεν προσλαμβάνουμε!",
-                    closedMessage: "Οι διοικητικές θέσεις είναι κλειστές!"
-                },
-                yi: {
-                    greeting: "אונז זענען נעבעכדיק, מיר נעמען נישט אַרבעטער!",
-                    closedMessage: "אַדמין סטעלעס זענען פארשפארט!"
-                }
-            };
-
-            const translation = translations[language];
-            document.getElementById('greeting').textContent = translation.greeting;
-            document.getElementById('closedMessage').textContent = translation.closedMessage;
-        }
-
-        function toggleDarkMode() {
-            const body = document.body;
-            body.classList.toggle('dark-mode');
-            document.querySelector('.dark-light-toggle').textContent = body.classList.contains('dark-mode') ? '🌙' : '☀️';
-        }
-
-        // Automatically detect browser language
-        const browserLang = navigator.language.slice(0, 2);
-        const supportedLangs = ['en', 'ru', 'es', 'el', 'yi'];
-        if (supportedLangs.includes(browserLang)) {
-            document.getElementById('language').value = browserLang;
-            changeLanguage();
-        } else {
-            document.getElementById('language').value = 'en';
-            changeLanguage();
-        }
-
-        // Automatically set theme based on system preference
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (prefersDark) {
-            toggleDarkMode();
-        }
-
         fetchUserData();
-        document.querySelector('.dark-light-toggle').textContent = '☀️';
     </script>
 </body>
 </html>
