@@ -1,30 +1,65 @@
-<html lang="en"><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Success!</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            text-align: center;
-            padding: 50px;
-        }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Success</title>
+  <script>
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
 
-        h1 {
-            color: #4CAF50;
-        }
+    // Function to handle the authentication and exchange code for access token
+    async function exchangeCodeForToken() {
+      const code = getUrlParameter('code');  // Capture authorization code from URL
 
-        p {
-            font-size: 1.2em;
+      if (!code) {
+        document.getElementById('error').textContent = 'Authorization code not found!';
+        return;
+      }
+
+      try {
+        // Request to exchange code for an access token
+        const response = await fetch('https://login.microsoftonline.com/bee81854-23d1-4631-8546-ac477a2841b3/oauth2/v2.0/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({
+            client_id: '12020c18-8f4c-4c0f-afc4-8bcfe5418a3f',
+            scope: 'user.read',
+            code: code,
+            redirect_uri: 'https://darkpurpleof.github.io/success', // Ensure this matches your redirect URI
+            client_secret: 'YOUR_CLIENT_SECRET'  // Add your actual client secret here
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.access_token) {
+          document.getElementById('success').textContent = 'Access token received!';
+          document.getElementById('token').textContent = data.access_token;
+        } else {
+          document.getElementById('error').textContent = 'Failed to exchange code for token: ' + (data.error || 'Unknown error');
         }
-    </style>
+      } catch (error) {
+        document.getElementById('error').textContent = 'Error: ' + error.message;
+      }
+    }
+
+    // Call the function on page load
+    window.onload = function() {
+      exchangeCodeForToken();
+    };
+  </script>
 </head>
 <body>
-
-    <h1>Success!</h1>
-    <p>Your Microsoft account has been successfully verified.</p>
-    <p>You can now close this window</p>
-
-
-</body></html>
+  <h1>Authentication Success</h1>
+  <p id="success" style="color: green;"></p>
+  <p id="error" style="color: red;"></p>
+  <h2>Access Token</h2>
+  <pre id="token"></pre>
+</body>
+</html>
