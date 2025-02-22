@@ -9,11 +9,11 @@
 
 - 📫 How to reach me **darkpurpleof@outlook.com**
 
-- ⚡ Fun fact **I'm 20 y.o and from USA**
+- ⚡ Fun fact **I'm 21 y.o and from USA**
 
 <h3 align="left">Connect with me:</h3>
 <p align="left">
-<a href="https://twitter.com/darkpurpleof" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/twitter.svg" alt="darkpurpleof" height="30" width="40" /></a>
+<a href="https://x.com/darkpurpleof" target="blank"><img align="center" src="https://avatars.githubusercontent.com/u/50278?s=200&v=4" alt="darkpurpleof" height="30" width="40" /></a>
 <a href="https://stackoverflow.com/users/dark-purple" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/stack-overflow.svg" alt="dark-purple" height="30" width="40" /></a>
 <a href="https://codesandbox.com/darkpurpleof" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/codesandbox.svg" alt="darkpurpleof" height="30" width="40" /></a>
 <a href="https://instagram.com/darkpurpleof" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/instagram.svg" alt="darkpurpleof" height="30" width="40" /></a>
