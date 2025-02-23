@@ -122,7 +122,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -137,6 +137,13 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+    // Check if the user is already logged in
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            window.location.href = "https://darkpurpleof.github.io"; // Redirect to dashboard if logged in
+        }
+    });
 
     document.getElementById("loginForm").addEventListener("submit", function(event) {
         event.preventDefault();
