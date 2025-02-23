@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logging Out...</title>
+    <style>
+        :root {
+            --light-bg: #f8d7da;
+            --light-color: #721c24;
+            --dark-bg: #2c2c2c;
+            --dark-color: #f8d7da;
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #3c3c3c;
+            --border-light: #f5c6cb;
+            --border-dark: #555;
+            --button-bg-light: #ffffff;
+            --button-bg-dark: #3c3c3c;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--light-color);
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+            text-align: left;
+        }
+
+        .dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-color);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        .dark-mode h1, .dark-mode h2 {
+            color: var(--dark-color);
+        }
+
+        .input-field {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid var(--border-light);
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .dark-mode .input-field {
+            background-color: var(--button-bg-dark);
+            border: 1px solid var(--border-dark);
+            color: var(--dark-color);
+        }
+
+        .register-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .register-button:hover {
+            background-color: #0056b3;
+        }
+
+        .dark-light-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            color: var(--light-color);
+            transition: color 0.3s;
+        }
+
+        .dark-mode .dark-light-toggle {
+            color: var(--dark-color);
+        }
+    </style>
+</head>
+<body>
+<button class="dark-light-toggle" onclick="toggleDarkMode()">🌙</button>
+<h1 id="title">Logging you out...</h1>
+<h2 id="subtitle">Please wait while we log you out</h2>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+        authDomain: "darkpurpleof-s-website.firebaseapp.com",
+        projectId: "darkpurpleof-s-website",
+        storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+        messagingSenderId: "520651082420",
+        appId: "G-S2X2JYC8Z0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    let userEmail = '';
+
+    // Check if the user is logged in before the page loads
+    onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            // If the user is not logged in, show an error message
+            document.title = "Error";
+            document.getElementById("title").innerText = "You need to log in first!";
+            document.getElementById("subtitle").innerHTML = 'To log out, first <a href="https://darkpurpleof.github.io/login">log in</a>';
+        } else {
+            // If logged in, proceed with logout operation
+            userEmail = user.email;
+            signOut(auth).then(() => {
+                // Change the page title and subtitle after successful logout
+                document.title = "Logged out!";
+                document.getElementById("title").innerText = `You were logged out of ${userEmail}`;
+                document.getElementById("subtitle").innerText = "It's recommended that you close all your browser windows.";
+            }).catch((error) => {
+                console.error("Error logging out:", error);
+            });
+        }
+    });
+</script>
+
+<script>
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+        localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
+    }
+
+    if (localStorage.getItem("darkMode") === "enabled") {
+        document.body.classList.add("dark-mode");
+    }
+</script>
+</body>
+</html>
