@@ -145,7 +145,7 @@
         const errorMessage = document.getElementById("errorMessage");
 
         // Check if the user is banned
-        const userRef = doc(db, "bannedUsers", email);
+        const userRef = doc(db, "banned_users", email); // Check if a document with the email as the ID exists
         getDoc(userRef).then((docSnap) => {
             if (docSnap.exists()) {
                 errorMessage.innerText = "You are banned from accessing the site.";
@@ -180,4 +180,3 @@
 
 </body>
 </html>
- 
