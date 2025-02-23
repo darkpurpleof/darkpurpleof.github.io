@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download File</title>
+    <style>
+        :root {
+            --light-bg: #f8d7da;
+            --light-color: #721c24;
+            --dark-bg: #2c2c2c;
+            --dark-color: #f8d7da;
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #3c3c3c;
+            --border-light: #f5c6cb;
+            --border-dark: #555;
+            --button-bg-light: #ffffff;
+            --button-bg-dark: #3c3c3c;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--light-color);
+            text-align: left;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-color);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .info-chart {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: var(--card-bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            display: inline-block;
+            text-align: left;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .dark-mode .info-chart {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-dark);
+        }
+
+        .input-field {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid var(--border-light);
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .dark-mode .input-field {
+            background-color: var(--button-bg-dark);
+            border: 1px solid var(--border-dark);
+            color: var(--dark-color);
+        }
+
+        .register-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .register-button:hover {
+            background-color: #0056b3;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+
+        .success-message {
+            color: green;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+
+        .dark-light-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            color: var(--light-color);
+            transition: color 0.3s;
+        }
+
+        .dark-mode .dark-light-toggle {
+            color: var(--dark-color);
+        }
+    </style>
+</head>
+<body>
+<button class="dark-light-toggle" onclick="toggleDarkMode()">🌙</button>
+<h1 id="pageTitle">Download <span id="filename"></span></h1>
+<div class="info-chart" id="info-chart">
+    <p id="subtitle"></p>
+    <button id="downloadBtn" class="register-button">Download</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+        authDomain: "darkpurpleof-s-website.firebaseapp.com",
+        projectId: "darkpurpleof-s-website",
+        storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+        messagingSenderId: "520651082420",
+        appId: "G-S2X2JYC8Z0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const firestore = getFirestore(app);
+
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const filename = urlParams.get('file');
+
+    // Set filename in the <span> tag
+    document.getElementById("filename").textContent = filename;
+
+    // Set up dynamic document title based on file name
+    const pageTitle = document.getElementById("pageTitle");
+
+    // Set up page content based on authentication status
+    onAuthStateChanged(auth, async (user) => {
+        const subtitle = document.getElementById("subtitle");
+        const downloadBtn = document.getElementById("downloadBtn");
+
+        if (!filename) {
+            pageTitle.innerHTML = "Missing!";
+            document.title = "Missing!";
+            subtitle.innerHTML = `Well, Well, Well, looks like ${filename} is missing. We didn't do nothing, we promise! (just deleted it)`;
+            downloadBtn.style.display = 'none';
+            return;
+        }
+
+        if (user) {
+            const userEmail = user.email;
+
+            // Block download for certain files (html, css, js) unless user is admin
+            if (filename.endsWith(".html") || filename.endsWith(".css") || filename.endsWith(".js")) {
+                if (!userEmail.endsWith("@darkpurpleof.github.io")) {
+                    pageTitle.innerHTML = "DarkPurple?, No? 🥺";
+                    document.title = "DarkPurple?, No? 🥺";
+                    subtitle.innerHTML = `In order to download ${filename} you have to be an admin or login as one, to do so first logout then, login as your admin account. <br> <a href="https://darkpurpleof.github.io/logout">Logout</a>`;
+                    downloadBtn.style.display = 'none';
+                    return;
+                }
+            }
+
+            const emailDocRef = doc(firestore, "banned_users", userEmail);
+            const emailDoc = await getDoc(emailDocRef);
+
+            if (emailDoc.exists()) {
+                pageTitle.innerHTML = "Forbidden";
+                document.title = "Forbidden";
+                subtitle.innerHTML = `You have no permission to view or download ${filename}. You've been banned from this website, please appeal your ban.`;
+                downloadBtn.style.display = 'none';
+                return;
+            }
+
+            // Set download link
+            downloadBtn.onclick = () => {
+                window.location.href = `/downloads/${filename}`;
+            };
+
+            pageTitle.innerHTML = `Download ${filename}`;
+            document.title = `Download ${filename}`;
+            subtitle.innerHTML = `Are you sure you want to continue downloading ${filename}?`;
+        } else {
+            pageTitle.innerHTML = "Log in first";
+            document.title = "Log in first";
+            subtitle.innerHTML = `To download ${filename} please log in first. To do so go <a href="https://darkpurpleof.github.io/login">here</a>, then return to this page.`;
+            downloadBtn.style.display = 'none';
+        }
+    });
+
+    // Dark mode toggle function
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+        localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
+    }
+
+    // Enable dark mode if set in localStorage
+    if (localStorage.getItem("darkMode") === "enabled") {
+        document.body.classList.add("dark-mode");
+    }
+</script>
+</body>
+</html>
