@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
@@ -16,46 +16,49 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 // Function to check if the user is banned by email or IP
-function checkIfBanned() {
-    const user = auth.currentUser;
+async function checkIfBanned(user) {
+    let bannedByEmail = false;
+    let bannedByIP = false;
 
-    if (user) {
-        // Logged-in user
-        const email = user.email;
+    try {
+        if (user) {
+            const email = user.email;
 
-        // Fetch user's IP address using ipinfo.io
-        fetch('https://ipinfo.io/json')
-            .then(response => response.json())
-            .then(data => {
-                const ip = data.ip;
+            // Check if the user is banned by email (document name)
+            const emailDoc = await getDoc(doc(db, "banned_users", email));
+            if (emailDoc.exists()) {
+                console.warn(`User ${email} is banned.`);
+                bannedByEmail = true;
+            }
+        }
 
-                // Check if the user is banned by email
-                getDoc(doc(db, "bannedUsers", email)).then((docSnapshot) => {
-                    if (docSnapshot.exists()) {
-                        // User banned by email, redirect to "not-approved" page
-                        window.location.href = "https://darkpurpleof.github.io/not-approved";
-                    } else {
-                        // Check if the user's IP is banned
-                        getDoc(doc(db, "bannedIPs", ip)).then((docSnapshot) => {
-                            if (docSnapshot.exists()) {
-                                // User banned by IP, redirect to "not-approved" page
-                                window.location.href = "https://darkpurpleof.github.io/not-approved";
-                            }
-                        }).catch((error) => {
-                            console.error("Error checking IP ban status:", error);
-                        });
-                    }
-                }).catch((error) => {
-                    console.error("Error checking ban status:", error);
-                });
-            }).catch((error) => {
-            console.error("Error fetching IP:", error);
-        });
-    } else {
-        // If the user is not logged in, redirect to the login page
-        window.location.href = "https://darkpurpleof.github.io/login.html";
+        // Fetch user's IP address
+        const response = await fetch('https://ipinfo.io/json');
+        const data = await response.json();
+        const ip = data.ip;
+
+        // Check if the user's IP is banned (document name)
+        const ipDoc = await getDoc(doc(db, "banned_ips", ip));
+        if (ipDoc.exists()) {
+            console.warn(`IP ${ip} is banned.`);
+            bannedByIP = true;
+        }
+
+        // If banned by either email or IP, redirect to /not-approved
+        if (bannedByEmail || bannedByIP) {
+            console.warn("Banned detected. Redirecting to /not-approved.");
+            window.location.href = "https://darkpurpleof.github.io/not-approved";
+        } else if (!user) {
+            // Only redirect to login if the user is NOT banned and NOT logged in
+            window.location.href = "https://darkpurpleof.github.io/login.html";
+        }
+
+    } catch (error) {
+        console.error("Error checking ban status:", error);
     }
 }
 
-// Run the check as soon as the script loads
-checkIfBanned();
+// Wait for authentication state to change before checking bans
+onAuthStateChanged(auth, (user) => {
+    checkIfBanned(user);
+});
