@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -152,26 +153,62 @@
         const password = document.getElementById("password").value;
         const errorMessage = document.getElementById("errorMessage");
 
-        // Check if the user is banned
-        const userRef = doc(db, "banned_users", email); // Check if a document with the email as the ID exists
+        // Check if the user is banned by email
+        const userRef = doc(db, "banned_users", email);
         getDoc(userRef).then((docSnap) => {
             if (docSnap.exists()) {
                 errorMessage.innerText = "You are banned from accessing the site.";
-                return; // Stop further login attempts if banned
+                return;
             }
 
-            // Proceed with login if not banned
-            signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    window.location.href = "https://darkpurpleof.github.io"; // Redirect to dashboard
-                })
-                .catch((error) => {
-                    errorMessage.innerText = "Whoops!, Login failed because " + error.message;
-                });
+            // If email is from @darkpurpleof.github.io, skip banned IP check
+            if (!email.endsWith("@darkpurpleof.github.io")) {
+                checkBannedIP(errorMessage);  // Check for banned IP for non-darkpurpleof accounts
+            } else {
+                // Allow login for @darkpurpleof.github.io even if the IP is banned
+                attemptLogin(email, password, errorMessage);
+            }
         }).catch((error) => {
             errorMessage.innerText = "Error checking ban status: " + error.message;
         });
     });
+
+    function checkBannedIP(errorMessage) {
+        // Fetch the user's current IP using ipinfo.io
+        fetch("https://ipinfo.io/json")  // Replace YOUR_IPINFO_TOKEN with your actual IPInfo API token
+            .then(response => response.json())
+            .then(data => {
+                const userIP = data.ip;
+
+                // Check if the user's IP is banned
+                const ipRef = doc(db, "banned_ips", userIP);
+                getDoc(ipRef).then((ipSnap) => {
+                    if (ipSnap.exists()) {
+                        errorMessage.innerText = "Your IP is banned.";
+                        return;
+                    } else {
+                        // Proceed with login if IP is not banned
+                        const email = document.getElementById("email").value;
+                        const password = document.getElementById("password").value;
+                        attemptLogin(email, password, errorMessage);
+                    }
+                }).catch((error) => {
+                    errorMessage.innerText = "Error checking IP ban: " + error.message;
+                });
+            }).catch((error) => {
+            errorMessage.innerText = "Unable to fetch IP address: " + error.message;
+        });
+    }
+
+    function attemptLogin(email, password, errorMessage) {
+        signInWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                window.location.href = "https://darkpurpleof.github.io";
+            })
+            .catch((error) => {
+                errorMessage.innerText = "Whoops! Login failed because " + error.message;
+            });
+    }
 </script>
 
 <script>
