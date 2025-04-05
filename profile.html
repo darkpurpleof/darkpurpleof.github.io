@@ -212,6 +212,7 @@
     try {
       const user = auth.currentUser;
       if (!user) {
+        console.log('User is not logged in');
         // Not logged in, display placeholders and skip ban check
         displayName.querySelector('span').textContent = 'No display name';
         profilePicture.src = 'https://minotar.net/helm/DarkPurpleOF/600.png';
@@ -232,13 +233,14 @@
         // Fetch user data from user_data collection
         const userDoc = await db.collection('user_data').doc(email).get();
         if (userDoc.exists) {
+          console.log('User data found:', userDoc.data());
           const userData = userDoc.data();
           profileBanner.src = userData.banner || 'https://i.pinimg.com/736x/f2/e8/bb/f2e8bb89b56a250c7ecc0ced69fd3a74.jpg';
           profilePicture.src = userData.profile_picture || 'https://minotar.net/helm/DarkPurpleOF/600.png';
-          displayName.querySelector('span').textContent = userData["display name"] || user.email;  // Fix for display name with space
+          displayName.querySelector('span').textContent = userData['display name'] || user.email;
         } else {
+          console.log('User data not found');
           displayName.querySelector('span').textContent = user.email;
-          console.error('User data not found');
         }
       }
     } catch (error) {
