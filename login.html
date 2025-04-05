@@ -9,117 +9,169 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
     <script src="https://www.darkpurpleof.github.io/favicon.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
         :root {
-            --light-bg: #f8d7da;
-            --light-color: #721c24;
-            --dark-bg: #2c2c2c;
-            --dark-color: #f8d7da;
-            --card-bg-light: #ffffff;
-            --card-bg-dark: #3c3c3c;
-            --border-light: #f5c6cb;
-            --border-dark: #555;
-            --button-bg-light: #ffffff;
-            --button-bg-dark: #3c3c3c;
+            --bg-color: #000;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.05);
+            --border-color: purple;
+        }
+
+        body.light {
+            --bg-color: #fff;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.1);
+            --border-color: purple;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background-color: var(--light-bg);
-            color: var(--light-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             text-align: center;
-            padding: 20px;
-            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+            transition: background 0.4s, color 0.4s;
+            padding: 1rem;
+            box-sizing: border-box;
         }
-        .dark-mode {
-            background-color: var(--dark-bg);
-            color: var(--dark-color);
+
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
         }
+
+        .icon-btn {
+            font-size: 22px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 6px;
+            transition: opacity 0.3s;
+        }
+
+        .icon-btn:hover {
+            opacity: 0.7;
+        }
+
+        .profile-pic {
+            width: 32px;
+            height: 32px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+        }
+
         h2 {
             font-size: 2em;
+            margin: 20px 0;
+            text-shadow: 0 0 6px var(--text-color);
+            animation: glitch 1.5s infinite;
         }
-        .info-chart {
-            margin: 20px auto;
-            padding: 15px;
-            background-color: var(--card-bg-light);
-            border: 1px solid var(--border-light);
+
+        .login-container {
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            padding: 20px;
             border-radius: 10px;
-            display: inline-block;
+            box-shadow: 0 0 10px var(--text-color);
+            max-width: 400px;
+            width: 100%;
             text-align: left;
-            transition: background-color 0.3s, border-color 0.3s;
         }
-        .dark-mode .info-chart {
-            background-color: var(--card-bg-dark);
-            border-color: var(--border-dark);
+
+        .input-group {
+            margin-bottom: 20px;
         }
+
         input {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid var(--border-light);
-            border-radius: 5px;
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border-color);
+            background-color: var(--box-bg);
+            color: var(--text-color);
+            box-sizing: border-box;
         }
-        .dark-mode input {
-            background-color: var(--card-bg-dark);
-            border: 1px solid var(--border-dark);
-            color: var(--dark-color);
-        }
-        button {
-            padding: 10px;
-            background-color: var(--button-bg-light);
-            border: 1px solid var(--border-light);
-            cursor: pointer;
-        }
-        .dark-mode button {
-            background-color: var(--button-bg-dark);
-            border: 1px solid var(--border-dark);
-            color: var(--dark-color);
-        }
-        .dark-light-toggle {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-size: 1.5em;
-            color: var(--light-color);
-            transition: color 0.3s;
-        }
-        .dark-mode .dark-light-toggle {
-            color: var(--dark-color);
-        }
+
         .error-message {
             color: red;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--box-bg);
+            color: var(--text-color);
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
         .forgot-password {
             margin-top: 10px;
         }
+
         .forgot-password a {
-            color: #007bff;
+            color: purple;
             text-decoration: none;
         }
+
         .forgot-password a:hover {
             text-decoration: underline;
+        }
+
+        @keyframes glitch {
+            0% { transform: none; }
+            20% { transform: skewX(3deg); }
+            40% { transform: skewX(-3deg); }
+            60% { transform: none; }
+            100% { transform: none; }
         }
     </style>
 </head>
 <body>
-<button class="dark-light-toggle" onclick="toggleDarkMode()">🌙</button>
+<div class="top-bar">
+    <button class="icon-btn" id="themeToggle" onclick="toggleDarkMode()">🌙</button>
+</div>
 
 <h2>Login</h2>
-<div class="info-chart">
+<div class="login-container">
     <form id="loginForm">
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="password" id="password" placeholder="Password" required>
+        <div class="input-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Enter your email" required>
+        </div>
+        <div class="input-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" required>
+        </div>
         <button type="submit">Login</button>
     </form>
     <p class="error-message" id="errorMessage"></p>
-</div>
 
-<!-- Forgot Password Link -->
-<div class="forgot-password">
-    <p><a href="forgot.html">Forgot password?</a></p>
+    <!-- Forgot Password Link -->
+    <div class="forgot-password">
+        <p><a href="forgot.html">Forgot password?</a></p>
+    </div>
 </div>
 
 <script type="module">
@@ -213,15 +265,25 @@
 
 <script>
     function toggleDarkMode() {
-        document.body.classList.toggle("dark-mode");
-        localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
+        const themeButton = document.getElementById('themeToggle');
+        const isDarkMode = document.body.classList.contains('light');
+
+        if (isDarkMode) {
+            document.body.classList.remove('light');
+            themeButton.innerHTML = '🌙'; // Moon icon
+            localStorage.setItem('lightMode', 'disabled');
+        } else {
+            document.body.classList.add('light');
+            themeButton.innerHTML = '☀️'; // Sun icon
+            localStorage.setItem('lightMode', 'enabled');
+        }
     }
 
-    // Apply dark mode if it was enabled previously
-    if (localStorage.getItem("darkMode") === "enabled") {
-        document.body.classList.add("dark-mode");
+    // Check for saved theme
+    if (localStorage.getItem('lightMode') === 'enabled') {
+        document.body.classList.add('light');
+        document.getElementById('themeToggle').innerHTML = '☀️'; // Sun icon
     }
 </script>
-
 </body>
 </html>
