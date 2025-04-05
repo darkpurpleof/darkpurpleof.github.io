@@ -166,7 +166,7 @@
   </div>
 
   <!-- Additional Information -->
-  <div class="preview-box">
+  <div class="preview-box" id="preview-box">
     <h3>View full profile:</h3>
     <p>Update your profile!, and view more advanced and additional functions</p>
     <p>"Click the button below to open your profile (You need the website extension to do so) (Only available for Android at the moment)"</p>
@@ -207,6 +207,7 @@
   const profileBanner = document.getElementById('profile-banner');
   const profilePicture = document.getElementById('profile-picture');
   const displayName = document.getElementById('display-name');
+  const contentBox = document.getElementByID('preview-box');
 
   // Wait for auth state to initialize
   onAuthStateChanged(auth, async (user) => {
@@ -218,6 +219,7 @@
       // Handle when no user is logged in
       bannedMessage.style.display = 'none';
       profileSection.style.display = 'none';
+      contentBox.style.display = 'block';
     }
   });
 
@@ -232,9 +234,11 @@
       if (bannedDoc.exists()) {
         bannedMessage.style.display = 'block';
         profileSection.style.display = 'none';
+        contentBox.style.display = 'none';
       } else {
         bannedMessage.style.display = 'none';
         profileSection.style.display = 'block';
+        contentBox.style.display = 'block';
 
         // Fetch user data from user_data collection
         const userDocRef = doc(db, "user_data", email);
