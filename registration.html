@@ -1,87 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <style>
-        /* Your existing CSS code */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
         :root {
-            --light-bg: #f8d7da;
-            --light-color: #721c24;
-            --dark-bg: #2c2c2c;
-            --dark-color: #f8d7da;
-            --card-bg-light: #ffffff;
-            --card-bg-dark: #3c3c3c;
-            --border-light: #f5c6cb;
-            --border-dark: #555;
-            --button-bg-light: #ffffff;
-            --button-bg-dark: #3c3c3c;
+            --bg-color: #000;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.05);
+            --border-color: purple;
+        }
+
+        body.light {
+            --bg-color: #fff;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.1);
+            --border-color: purple;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background-color: var(--light-bg);
-            color: var(--light-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             text-align: center;
-            padding: 20px;
-            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+            transition: background 0.4s, color 0.4s;
+            padding: 1rem;
+            box-sizing: border-box;
         }
 
-        .dark-mode {
-            background-color: var(--dark-bg);
-            color: var(--dark-color);
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .icon-btn {
+            font-size: 22px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 6px;
+            transition: opacity 0.3s;
+        }
+
+        .icon-btn:hover {
+            opacity: 0.7;
+        }
+
+        .profile-pic {
+            width: 32px;
+            height: 32px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
         }
 
         h1 {
             font-size: 2.5em;
             margin-bottom: 20px;
+            text-shadow: 0 0 6px var(--text-color);
+            animation: glitch 1.5s infinite;
         }
 
         .info-chart {
             margin: 20px auto;
             padding: 15px;
-            background-color: var(--card-bg-light);
-            border: 1px solid var(--border-light);
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
             border-radius: 10px;
             display: inline-block;
             text-align: left;
             transition: background-color 0.3s, border-color 0.3s;
-        }
-
-        .dark-mode .info-chart {
-            background-color: var(--card-bg-dark);
-            border-color: var(--border-dark);
+            width: auto; /* Ensuring it doesn't stretch full width */
+            max-width: 500px; /* Optional: To limit the chart width */
         }
 
         .input-field {
-            width: 80%;
-            padding: 10px;
+            width: calc(100% - 2px); /* Take up almost all width minus padding */
+            padding: 12px;
             margin: 10px 0;
-            border: 1px solid var(--border-light);
-            border-radius: 5px;
-            font-size: 1em;
-        }
-
-        .dark-mode .input-field {
-            background-color: var(--button-bg-dark);
-            border: 1px solid var(--border-dark);
-            color: var(--dark-color);
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--box-bg);
+            color: var(--text-color);
+            box-sizing: border-box;
         }
 
         .register-button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
+            width: calc(100% - 2px); /* Same as input field */
+            background-color: var(--box-bg);
+            color: var(--text-color);
+            padding: 12px 20px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
             font-size: 1.2em;
-            border-radius: 5px;
+            cursor: pointer;
             margin-top: 10px;
         }
 
         .register-button:hover {
-            background-color: #0056b3;
+            opacity: 0.8;
         }
 
         .error-message {
@@ -91,7 +122,7 @@
         }
 
         .success-message {
-            color: green;
+            color: purple;
             margin-top: 10px;
             font-size: 1em;
         }
@@ -104,33 +135,52 @@
             background: none;
             border: none;
             font-size: 1.5em;
-            color: var(--light-color);
+            color: var(--text-color);
             transition: color 0.3s;
         }
 
         .dark-mode .dark-light-toggle {
-            color: var(--dark-color);
+            color: var(--text-color);
+        }
+
+        @keyframes glitch {
+            0% { transform: none; }
+            20% { transform: skewX(3deg); }
+            40% { transform: skewX(-3deg); }
+            60% { transform: none; }
+            100% { transform: none; }
         }
     </style>
     <!-- Add Google reCAPTCHA Script -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js" async="" defer=""></script>
 </head>
 <body>
-<button class="dark-light-toggle" onclick="toggleDarkMode()">🌙</button>
+<button id="themeToggle" class="dark-light-toggle" onclick="toggleDarkMode()">🌙</button>
 <h1>Register</h1>
 <div class="info-chart">
     <form id="registerForm">
-        <input type="email" id="email" class="input-field" placeholder="Email" required>
-        <input type="password" id="password" class="input-field" placeholder="Password" required>
+        <input type="email" id="email" class="input-field" placeholder="Email" required="">
+        <input type="password" id="password" class="input-field" placeholder="Password" required="">
         <!-- Add reCAPTCHA widget here -->
         <div class="g-recaptcha" data-sitekey="6Lddwd8qAAAAAC0OUZ7iOrKFGEeu--_-1XvjU0et"></div>
         <button type="submit" class="register-button">Register</button>
     </form>
     <p id="errorMessage" class="error-message"></p>
     <p id="successMessage" class="success-message"></p>
+
+    <!-- Description inside the chart -->
+    <p style="font-size: 1em; color: var(--text-color); margin-top: 15px;">
+    By registering, you agree to our <a href="terms.html" style="color: purple;">Terms of Service</a>.
+</p>
+<p style="font-size: 0.95em; color: var(--text-color); margin-top: 10px;">
+    <b>@darkpurpleof.github.io</b> emails will not register, because they're reserved for moderators.
+</p>
+<p style="font-size: 0.95em; color: var(--text-color); margin-top: 5px;">
+    If you want to apply for being an admin, <a href="https://darkpurpleof.github.io/form" style="color: purple;">click here</a>.
+</p>
 </div>
 
-<p>Already have an account? <a href="login.html">Login here</a>.</p>
+<p>Already have an account? <a href="login.html" style="color: purple;">Login here</a>.</p>
 
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
@@ -237,13 +287,30 @@
 
 <script>
     function toggleDarkMode() {
-        document.body.classList.toggle("dark-mode");
-        localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
+        const themeButton = document.getElementById('themeToggle');
+        const isDarkMode = document.body.classList.contains('light');
+
+        if (!themeButton) return;
+
+        if (isDarkMode) {
+            document.body.classList.remove('light');
+            themeButton.innerHTML = '🌙';
+            localStorage.setItem('lightMode', 'disabled');
+        } else {
+            document.body.classList.add('light');
+            themeButton.innerHTML = '☀️';
+            localStorage.setItem('lightMode', 'enabled');
+        }
     }
 
-    if (localStorage.getItem("darkMode") === "enabled") {
-        document.body.classList.add("dark-mode");
-    }
+    // Check for saved theme after DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        const themeButton = document.getElementById('themeToggle');
+        if (localStorage.getItem('lightMode') === 'enabled') {
+            document.body.classList.add('light');
+            if (themeButton) themeButton.innerHTML = '☀️';
+        }
+    });
 </script>
-</body>
-</html>
+
+</body></html>
