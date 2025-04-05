@@ -189,7 +189,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -223,26 +223,24 @@
         });
 
         // Profile Picture Handling
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        onAuthStateChanged(auth, async (user) => {
+            const profilePic = document.getElementById("profilePic");
 
-onAuthStateChanged(auth, async (user) => {
-    const profilePic = document.getElementById("profilePic");
+            if (user) {
+                const email = user.email;
 
-    if (user) {
-        const email = user.email;
+                try {
+                    const profileRef = doc(firestore, "user_data", email);
+                    const profileSnap = await getDoc(profileRef);
+                    const profilePicUrl = profileSnap.exists() ? profileSnap.data().profile_picture : null;
 
-        try {
-            const profileRef = doc(firestore, "user_data", email);
-            const profileSnap = await getDoc(profileRef);
-            const profilePicUrl = profileSnap.exists() ? profileSnap.data().profile_picture : null;
-
-            profilePic.style.backgroundImage = `url('${profilePicUrl || "https://darkpurpleof.github.io/org-owner.jpg"}')`;
-        } catch (error) {
-            console.error("Error fetching profile picture:", error);
-            profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
-        }
-    }
-});
-        }
+                    profilePic.style.backgroundImage = `url('${profilePicUrl || "https://darkpurpleof.github.io/org-owner.jpg"}')`;
+                } catch (error) {
+                    console.error("Error fetching profile picture:", error);
+                    profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+                }
+            }
+        });
+    </script>
 </body>
 </html>
