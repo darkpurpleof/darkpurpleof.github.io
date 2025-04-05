@@ -1,277 +1,221 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oops!</title>
-    <style>
-        :root {
-            --light-bg: #f8d7da;
-            --light-color: #721c24;
-            --dark-bg: #2c2c2c;
-            --dark-color: #f8d7da;
-            --card-bg-light: #ffffff;
-            --card-bg-dark: #3c3c3c;
-            --border-light: #f5c6cb;
-            --border-dark: #555;
-            --button-bg-light: #ffffff;
-            --button-bg-dark: #3c3c3c;
-        }
+  <meta charset="UTF-8">
+  <title>Access Denied</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
 
-        body {
-            font-family: Arial, sans-serif;
-            background-color: var(--light-bg);
-            color: var(--light-color);
-            text-align: center;
-            padding: 20px;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .dark-mode {
-            background-color: var(--dark-bg);
-            color: var(--dark-color);
-        }
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-        }
-        .info-chart {
-            margin: 20px auto;
-            padding: 15px;
-            background-color: var(--card-bg-light);
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            display: inline-block;
-            text-align: left;
-            transition: background-color 0.3s, border-color 0.3s;
-        }
-        .dark-mode .info-chart {
-            background-color: var(--card-bg-dark);
-            border-color: var(--border-dark);
-        }
-        .info-chart table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .info-chart th, .info-chart td {
-            padding: 10px;
-            border-bottom: 1px solid var(--border-light);
-        }
-        .dark-mode .info-chart th, .dark-mode .info-chart td {
-            border-bottom: 1px solid var(--border-dark);
-        }
-        .info-chart th {
-            text-align: left;
-            font-weight: bold;
-        }
-        .appeal-note {
-            margin-top: 20px;
-            font-size: 1.2em;
-        }
-        a {
-            color: #0056b3;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .dropdown {
-            position: absolute;
-            left: 10px;
-            background-color: var(--card-bg-light);
-            border: 1px solid var(--border-light);
-            border-radius: 5px;
-            padding: 5px;
-            transition: background-color 0.3s, border-color 0.3s;
-        }
-        .dark-mode .dropdown {
-            background-color: var(--card-bg-dark);
-            border-color: var(--border-dark);
-        }
-        select {
-            padding: 8px;
-            font-size: 1em;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            background-color: var(--button-bg-light);
-            transition: background-color 0.3s;
-        }
-        .dark-mode select {
-            background-color: var(--button-bg-dark);
-            border: 1px solid var(--border-dark);
-        }
-        .dark-light-toggle {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-size: 1.5em;
-            color: var(--light-color);
-            transition: color 0.3s;
-        }
-        .dark-mode .dark-light-toggle {
-            color: var(--dark-color);
-        }
-    </style>
+    :root {
+      --bg-color: #000;
+      --text-color: purple;
+      --box-bg: rgba(128, 0, 128, 0.05);
+      --border-color: purple;
+    }
+
+    body.light {
+      --bg-color: #fff;
+      --text-color: purple;
+      --box-bg: rgba(128, 0, 128, 0.1);
+      --border-color: purple;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Orbitron', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      min-height: 100vh;
+      transition: background 0.4s, color 0.4s;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .icon-btn {
+      font-size: 18px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      color: var(--text-color);
+      padding: 6px;
+      transition: opacity 0.3s;
+    }
+
+    .icon-btn:hover {
+      opacity: 0.7;
+    }
+
+    .profile-pic {
+      width: 32px;
+      height: 32px;
+      background-color: var(--box-bg);
+      border: 1.5px solid var(--border-color);
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+    }
+
+    h1 {
+      font-size: 1.6em;
+      margin: 10px 0;
+      animation: glitch 1.5s infinite;
+      text-shadow: 0 0 6px var(--text-color);
+    }
+
+    p {
+      font-size: 1em;
+      margin-top: 10px;
+      max-width: 95%;
+      line-height: 1.4;
+      opacity: 0.85;
+    }
+
+    .ban-label {
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.9em;
+      letter-spacing: 1px;
+      box-shadow: 0 0 10px var(--text-color);
+      background-color: var(--box-bg);
+      animation: pulse 2s infinite;
+      display: inline-block;
+    }
+
+    .error-box {
+      margin-top: 25px;
+      font-size: 0.85em;
+      background: var(--box-bg);
+      padding: 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      box-shadow: 0 0 8px var(--text-color);
+      text-align: left;
+      max-width: 100%;
+    }
+
+    .error-box code {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    @keyframes glitch {
+      0% { transform: none; }
+      20% { transform: skewX(3deg); }
+      40% { transform: skewX(-3deg); }
+      60% { transform: none; }
+      100% { transform: none; }
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 6px var(--text-color); }
+      50% { box-shadow: 0 0 12px var(--text-color); }
+      100% { box-shadow: 0 0 6px var(--text-color); }
+    }
+  </style>
 </head>
 <body>
-    <button class="dark-light-toggle" onclick="toggleDarkMode()">☀️</button>
+  <div class="top-bar">
+    <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">
+      <span id="theme-icon">☾</span>
+    </button>
+    <div id="profile" class="profile-pic"></div>
+  </div>
 
-    <div class="dropdown" style="top: auto; bottom: 10px;">
-        <label for="language" style="margin-right: 5px;">Choose your language:</label>
-        <select id="language" onchange="changeLanguage()">
-            <option value="en">English</option>
-            <option value="ru">Russian</option>
-            <option value="es">Spanish</option>
-            <option value="el">Greek</option>
-            <option value="yi">Yiddish</option>
-        </select>
-    </div>
+  <h1>What's the square root of a fish?</h1>
+  <p id="message">Fetching user data...</p>
+  <div id="ban-label" class="ban-label" style="display:none;">PERMANENT BAN</div>
 
-    <h1 id="greeting">Hello!, <span id="username">User</span>, what's the square root of a fish?</h1>
-    <h2 id="bannedMessage">Looks like you've been permanently banned from using <span id="webpage-url">example.com</span></h2>
+  <div id="error-box" class="error-box" style="display:none;">
+    <code id="status">Status Code: 403</code>
+    <code id="timestamp">Ban Date: Fetching...</code>
+    <code id="user-id">User ID: Fetching...</code>
+    <code>Appeal: <a href="mailto:javiercorzo387@gmail.com" style="color: inherit;">Contact Us</a></code>
+    <code>Duration: Permanent</code>
+  </div>
 
-    <div class="info-chart">
-        <table>
-            <tr>
-                <th>Banned Duration:</th>
-                <td>Permanent</td>
-            </tr>
-            <tr>
-                <th>IP Address:</th>
-                <td id="ip-address">Loading...</td>
-            </tr>
-            <tr>
-                <th>ISP (Provider):</th>
-                <td id="isp">Loading...</td>
-            </tr>
-            <tr>
-                <th>Location:</th>
-                <td id="location">Loading...</td>
-            </tr>
-            <tr>
-                <th>Other Info:</th>
-                <td id="other-info">Loading...</td>
-            </tr>
-            <tr>
-                <th>Approximate Location:</th>
-                <td id="approx-location">Loading...</td>
-            </tr>
-        </table>
-    </div>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-    <p id="appealNote" class="appeal-note">If you wish to appeal your ban, please contact the webpage admin or owner. You may get unbanned.</p>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
 
-    <script>
-        // Fetch real user data from an IP API service
-        async function fetchUserData() {
-            try {
-                const response = await fetch('https://ipinfo.io/json?');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                const data = await response.json();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-                // Populate the webpage with fetched data
-                document.getElementById('ip-address').textContent = data.ip || 'Unknown';
-                document.getElementById('isp').textContent = data.org || 'Unknown ISP';
-                document.getElementById('location').textContent = `${data.city}, ${data.region}, ${data.country}` || 'Unknown Location';
-                document.getElementById('other-info').textContent = `Latitude: ${data.loc.split(',')[0]}, Longitude: ${data.loc.split(',')[1]}` || 'Unknown';
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+      document.getElementById("theme-icon").textContent =
+        document.body.classList.contains('light') ? '☀' : '☾';
+    }
 
-                // Fetch approximate location from OpenCage API
-                await fetchApproximateLocation(data.loc);
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-                document.getElementById('ip-address').textContent = 'Error fetching data';
-                document.getElementById('isp').textContent = 'Error fetching data';
-                document.getElementById('location').textContent = 'Error fetching data';
-                document.getElementById('other-info').textContent = 'Error fetching data';
-            }
+    auth.onAuthStateChanged(async user => {
+      const msg = document.getElementById('message');
+      const errorBox = document.getElementById('error-box');
+      const banLabel = document.getElementById('ban-label');
+      const userId = document.getElementById('user-id');
+      const timestamp = document.getElementById('timestamp');
+      const profile = document.getElementById('profile');
+
+      if (user) {
+        const email = user.email;
+        userId.textContent = "User ID: " + email;
+
+        try {
+          // Get profile picture
+          const profileRef = db.doc(`user_data/${email}`);
+          const profileSnap = await profileRef.get();
+          const pfp = profileSnap.exists ? profileSnap.data().profile_picture : null;
+          profile.style.backgroundImage = `url('${pfp || "https://darkpurpleof.github.io/org-owner-png"}')`;
+
+          // Check ban
+          const banRef = db.doc(`banned_users/${email}`);
+          const banSnap = await banRef.get();
+
+          if (banSnap.exists) {
+            const banData = banSnap.data();
+            const banDate = banData.timestamp?.toDate?.() || new Date();
+            timestamp.textContent = "Ban Date: " + banDate.toLocaleDateString();
+            msg.textContent = "You've been permanently banned from this service.";
+            banLabel.style.display = "inline-block";
+            errorBox.style.display = "block";
+          } else {
+            msg.textContent = "You're not actually banned. You're just viewing this page for fun.";
+          }
+        } catch (err) {
+          msg.textContent = "Error fetching data: " + err.message;
         }
-
-        // Fetch approximate location using OpenCage API
-        async function fetchApproximateLocation(coordinates) {
-            try {
-                const apiKey = 'de9279cb57824f2485376991afef3b28';
-                const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${coordinates}&key=${apiKey}`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                const data = await response.json();
-
-                const approxLocation = data.results[0]?.formatted || 'Unable to determine approximate location';
-                document.getElementById('approx-location').textContent = approxLocation;
-            } catch (error) {
-                console.error('Error fetching approximate location:', error);
-                document.getElementById('approx-location').textContent = 'Error fetching approximate location';
-            }
-        }
-
-        // Call the function on page load
-        fetchUserData();
-
-        // Set dynamic values for username and webpage URL
-        document.getElementById('username').textContent = navigator.userAgentData ? navigator.userAgentData.brands[0].brand : "Guest";
-        document.getElementById('webpage-url').textContent = window.location.hostname;
-
-        // Toggle Dark/Light Mode
-        function toggleDarkMode() {
-            const body = document.body;
-            body.classList.toggle('dark-mode');
-
-            const toggleButton = document.querySelector('.dark-light-toggle');
-            if (body.classList.contains('dark-mode')) {
-                toggleButton.textContent = '🌙';
-            } else {
-                toggleButton.textContent = '☀️';
-            }
-        }
-
-        // Change Language
-        function changeLanguage() {
-            const language = document.getElementById('language').value;
-            const translations = {
-                en: {
-                    greeting: "Hello!",
-                    squareRoot: "what's the square root of a fish?",
-                    bannedMessage: "Looks like you've been permanently banned from using",
-                    appeal: "If you wish to appeal your ban, please contact the webpage admin or owner. You may get unbanned."
-                },
-                ru: {
-                    greeting: "Здравствуйте!",
-                    squareRoot: "какой квадратный корень у рыбы?",
-                    bannedMessage: "Похоже, вы были навсегда заблокированы на использовании",
-                    appeal: "Если вы хотите обжаловать бан, свяжитесь с администратором или владельцем сайта. Вы можете быть разблокированы."
-                },
-                es: {
-                    greeting: "¡Hola!",
-                    squareRoot: "¿cuál es la raíz cuadrada de un pez?",
-                    bannedMessage: "Parece que has sido permanentemente baneado de usar",
-                    appeal: "Si deseas apelar tu prohibición, por favor contacta al administrador o propietario de la página. Podrías ser desbaneado."
-                },
-                el: {
-                    greeting: "Γειά σας!",
-                    squareRoot: "ποια είναι η τετραγωνική ρίζα ενός ψαριού?",
-                    bannedMessage: "Φαίνεται ότι έχετε αποκλειστεί μόνιμα από τη χρήση του",
-                    appeal: "Εάν θέλετε να κάνετε έφεση για την απαγόρευση, επικοινωνήστε με τον διαχειριστή ή τον ιδιοκτήτη της ιστοσελίδας. Μπορεί να σας ξεμπλοκάρουν."
-                },
-                yi: {
-                    greeting: "העלא!",
-                    squareRoot: "וואָס איז דער קוואַדראַט רויט פון אַ פיש?",
-                    bannedMessage: "עס זעט אויס אַז איר זענט שטענדיק פאַרבאָטן צו נוצן",
-                    appeal: "אויב איר ווילט אַפּעלירן דיין פאַרבאָט, ביטע קאָנטאַקט די וועבזייטל אַדמין אָדער באַזיצער. איר קען ווערן אָפּגעבלאקט."
-                }
-            };
-
-            const translation = translations[language];
-            document.getElementById("greeting").innerHTML = `${translation.greeting} <span id="username">${document.getElementById("username").textContent}</span>, ${translation.squareRoot}`;
-            document.getElementById("bannedMessage").innerHTML = `${translation.bannedMessage} <span id="webpage-url">${document.getElementById("webpage-url").textContent}</span>`;
-            document.getElementById("appealNote").textContent = translation.appeal;
-        }
-
-        // Set initial state for toggle button
-        document.querySelector('.dark-light-toggle').textContent = '☀️';
-    </script>
+      } else {
+        msg.textContent = "You're not logged in. This is just a demo ban screen.";
+        profile.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+      }
+    });
+  </script>
 </body>
 </html>
