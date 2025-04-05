@@ -1,7 +1,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Access Denied</title>
+  <title>Banned</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
@@ -133,7 +133,7 @@
 <body>
   <div class="top-bar">
     <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">
-      <span id="theme-icon">☾</span>
+      <span id="theme-icon">🌙</span>
     </button>
     <div id="profile" class="profile-pic"></div>
   </div>
@@ -172,7 +172,7 @@
     function toggleTheme() {
       document.body.classList.toggle('light');
       document.getElementById("theme-icon").textContent =
-        document.body.classList.contains('light') ? '☀' : '☾';
+        document.body.classList.contains('light') ? '☀️' : '🌙';
     }
 
     auth.onAuthStateChanged(async user => {
