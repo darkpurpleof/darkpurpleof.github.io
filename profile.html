@@ -182,7 +182,7 @@
   // Import necessary Firebase functions
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
   // Firebase config
   const firebaseConfig = {
@@ -217,6 +217,7 @@
       console.log('No user logged in');
       // Handle when no user is logged in
       bannedMessage.style.display = 'none';
+      profileSection.style.display = 'none';
     }
   });
 
@@ -225,8 +226,10 @@
       const email = user.email;
 
       // Check ban status in banned_users collection
-      const bannedDoc = await db.collection('banned_users').doc(email).get();
-      if (bannedDoc.exists) {
+      const bannedDocRef = doc(db, "banned_users", email);
+      const bannedDoc = await getDoc(bannedDocRef);
+
+      if (bannedDoc.exists()) {
         bannedMessage.style.display = 'block';
         profileSection.style.display = 'none';
       } else {
@@ -234,8 +237,10 @@
         profileSection.style.display = 'block';
 
         // Fetch user data from user_data collection
-        const userDoc = await db.collection('user_data').doc(email).get();
-        if (userDoc.exists) {
+        const userDocRef = doc(db, "user_data", email);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
           console.log('User data found:', userDoc.data());
           const userData = userDoc.data();
           profileBanner.src = userData.banner || 'https://i.pinimg.com/736x/f2/e8/bb/f2e8bb89b56a250c7ecc0ced69fd3a74.jpg';
