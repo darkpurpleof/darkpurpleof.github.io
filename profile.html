@@ -181,7 +181,7 @@
   <script type="module">
   // Import necessary Firebase functions
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-  import { getAuth } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
   import { getFirestore } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
   // Firebase config
@@ -208,17 +208,20 @@
   const profilePicture = document.getElementById('profile-picture');
   const displayName = document.getElementById('display-name');
 
-  const fetchUserData = async () => {
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        console.log('User is not logged in');
-        // Not logged in, display placeholders and skip ban check
-        displayName.querySelector('span').textContent = 'No display name';
-        profilePicture.src = 'https://minotar.net/helm/DarkPurpleOF/600.png';
-        return;
-      }
+  // Wait for auth state to initialize
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      console.log('User logged in:', user);
+      await fetchUserData(user);
+    } else {
+      console.log('No user logged in');
+      // Handle when no user is logged in
+      bannedMessage.style.display = 'none';
+    }
+  });
 
+  const fetchUserData = async (user) => {
+    try {
       const email = user.email;
 
       // Check ban status in banned_users collection
@@ -245,13 +248,8 @@
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
-      // Fallback if fetching fails
-      displayName.querySelector('span').textContent = 'Error loading profile';
     }
   };
-
-  // Start fetching user data
-  fetchUserData();
 
   function copyAppLink() {
     navigator.clipboard.writeText('darkpurpleof://profile').then(() => {
