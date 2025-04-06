@@ -1,0 +1,219 @@
+<!--Really, no purpose at all, this file is made solely for one person, and that's amethyst, you may now know them, nor i am gonna tell you who they're-->
+
+<!--DO not, for any reason, open this page in the browser, you won't be able to see it unless you're logged in as amethyst, if you're logged in with another account, you will be banned, you've been warned-->
+
+<!--Now, you chose to continue reading, amethyst and i have known for a while even tho we're distant, we knew about each other since mid 2019 and have been friends since, we really didin't use to be so close until about now in May 2024-->
+
+<!--Amethyst has been helping me to shape the website, etc, i've been provided assets and coding samples, the early era of this website was thanks to Amethyst who suggested me to open this website on November, which i only planned doing because of microsoft's domain verification, but later, as you can see the website has been evolving-->
+
+<!--This file is to thank amethyst for their work on this project and how they've helped shape it to what is is now-->
+
+<!--Thanks for reading, if you're amethyst, make sure you're logged in either using your admin account or gmail account, if you're not amethyst, you're not intended to see what's behind this file (the site)-->
+
+<!--CODENAME: ATTRIBUTIONSITE, original creation: 2019-05-16-->
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Private</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+    :root {
+      --bg-color: #000;
+      --text-color: purple;
+      --box-bg: rgba(128, 0, 128, 0.05);
+      --border-color: purple;
+    }
+
+    body.light {
+      --bg-color: #fff;
+      --text-color: purple;
+      --box-bg: rgba(128, 0, 128, 0.1);
+      --border-color: purple;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Orbitron', sans-serif;
+      margin: 0;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      text-align: center;
+      transition: background 0.4s, color 0.4s;
+      box-sizing: border-box;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      padding: 10px;
+    }
+
+    .dark-light-toggle {
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      color: var(--text-color);
+    }
+
+    .main-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 2rem;
+      max-width: 900px;
+      margin-top: 2rem;
+    }
+
+    .image-container {
+      flex: 1;
+      max-width: 300px;
+    }
+
+    .image-container img {
+      width: 100%;
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
+      box-shadow: 0 0 10px var(--border-color);
+    }
+
+    .text-container {
+      flex: 2;
+      text-align: left;
+      max-width: 500px;
+    }
+
+    h1 {
+      font-size: 2.8em;
+      margin-bottom: 0.5em;
+      text-shadow: 0 0 6px var(--text-color);
+      animation: glitch 1.5s infinite;
+    }
+
+    p.description {
+      font-size: 1.1em;
+      line-height: 1.6;
+      background: var(--box-bg);
+      padding: 20px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+    }
+
+    @keyframes glitch {
+      0% { transform: none; }
+      20% { transform: skewX(3deg); }
+      40% { transform: skewX(-3deg); }
+      60% { transform: none; }
+      100% { transform: none; }
+    }
+
+    .hide {
+      display: none !important;
+    }
+
+    .blank-message {
+      display: none;
+      font-size: 1em;
+      color: var(--text-color);
+      background: #111;
+      padding: 2rem;
+      border-radius: 10px;
+      text-align: left;
+      max-width: 700px;
+      margin-top: 3rem;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <button class="dark-light-toggle" onclick="toggleTheme()">🌙</button>
+  </div>
+
+  <div class="main-container hide" id="mainContent">
+    <div class="image-container">
+      <img src="https://darkpurpleof.github.io/IMG-20250218-WA0000.jpg" alt="Thank you, Amethyst">
+    </div>
+    <div class="text-container">
+      <h1>So it's been long since...</h1>
+      <p class="description">
+        It's been long since 2019, and i don't... know if i could get that... it's been almost 3 years since i'm writing this, so after everything i've been through, i think this is a safe place... this site, everything, so even tho i feel safe here because this, Dark Purple, the only person i can trust of... anyone else... yeah right... i hate them, this is supposed to be an attribution page, but all i can say its just a mask for everything.
+      </p>
+    </div>
+  </div>
+
+  <!-- Block message is shown by default -->
+  <div class="blank-message" id="blockedMessage" style="display: block;">
+Really, no purpose at all, this file is made solely for one person, and that's amethyst, you may now know them, nor i am gonna tell you who they're
+
+DO not, for any reason, open this page in the browser, you won't be able to see it unless you're logged in as amethyst, if you're logged in with another account, you will be banned, you've been warned
+
+Now, you chose to continue reading, amethyst and i have known for a while even tho we're distant, we knew about each other since mid 2019 and have been friends since, we really didin't use to be so close until about now in May 2024
+
+Amethyst has been helping me to shape the website, etc, i've been provided assets and coding samples, the early era of this website was thanks to Amethyst who suggested me to open this website on November, which i only planned doing because of microsoft's domain verification, but later, as you can see the website has been evolving
+
+This file is to thank amethyst for their work on this project and how they've helped shape it to what is is now
+
+Thanks for reading, if you're amethyst, make sure you're logged in either using your admin account or gmail account, if you're not amethyst, you're not intended to see what's behind this file (the site)
+
+CODENAME: ATTRIBUTIONSITE, original creation: 2019-05-16
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle("light");
+      const icon = document.querySelector(".dark-light-toggle");
+      icon.textContent = document.body.classList.contains("light") ? "☀️" : "🌙";
+    }
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+  measurementId: "G-S2X2JYC8Z0"
+};
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "https://darkpurpleof.github.io/login";
+        return;
+      }
+
+      const allowed = [
+        "darkpurpleof@darkpurpleof.github.io",
+        "boykisser2189@gmail.com",
+        "boykisser2189@darkpurpleof.github.io"
+      ];
+
+      if (allowed.includes(user.email)) {
+        document.getElementById("mainContent").classList.remove("hide");
+        document.getElementById("blockedMessage").style.display = "none";
+      } else {
+        // If not whitelisted, just stay showing the block message
+        document.getElementById("mainContent").classList.add("hide");
+        document.getElementById("blockedMessage").style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>
