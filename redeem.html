@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Redeem Code</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Theme & Font -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
 
@@ -27,15 +26,13 @@
             color: var(--text-color);
             font-family: 'Orbitron', sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
             min-height: 100vh;
             transition: background 0.4s, color 0.4s;
-            padding: 1rem;
-            box-sizing: border-box;
         }
 
         .top-bar {
@@ -55,10 +52,6 @@
             color: var(--text-color);
             padding: 6px;
             transition: opacity 0.3s;
-        }
-
-        .icon-btn:hover {
-            opacity: 0.7;
         }
 
         .profile-pic {
@@ -84,34 +77,19 @@
             background-color: var(--box-bg);
             border: 1.5px solid var(--border-color);
             border-radius: 10px;
-            display: inline-block;
-            text-align: left;
-            transition: background-color 0.3s, border-color 0.3s;
-            width: auto; /* Ensuring it doesn't stretch full width */
-            max-width: 500px; /* Optional: To limit the chart width */
+            max-width: 500px;
         }
 
-        .input-field {
-            width: calc(100% - 2px); /* Take up almost all width minus padding */
+        .input-field, .register-button {
+            width: 100%;
             padding: 12px;
             margin: 10px 0;
             border: 1.5px solid var(--border-color);
             border-radius: 8px;
             background-color: var(--box-bg);
             color: var(--text-color);
+            font-size: 1em;
             box-sizing: border-box;
-        }
-
-        .register-button {
-            width: calc(100% - 2px); /* Same as input field */
-            background-color: var(--box-bg);
-            color: var(--text-color);
-            padding: 12px 20px;
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1.2em;
-            cursor: pointer;
-            margin-top: 10px;
         }
 
         .register-button:hover {
@@ -121,79 +99,48 @@
         .error-message {
             color: red;
             margin-top: 10px;
-            font-size: 1em;
         }
 
         .success-message {
             color: purple;
             margin-top: 10px;
-            font-size: 1em;
-        }
-
-        .dark-light-toggle {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-size: 1.5em;
-            color: var(--text-color);
-            transition: color 0.3s;
-        }
-
-        .dark-mode .dark-light-toggle {
-            color: var(--text-color);
         }
 
         @keyframes glitch {
-            0% { transform: none; }
+            0%, 60%, 100% { transform: none; }
             20% { transform: skewX(3deg); }
             40% { transform: skewX(-3deg); }
-            60% { transform: none; }
-            100% { transform: none; }
         }
     </style>
 </head>
 <body>
-<!-- Top right controls -->
 <div class="top-bar">
     <button id="theme-toggle" class="icon-btn">🌙</button>
-    <div id="profile" class="profile-pic" title="Profile"></div>
+    <div id="profile" class="profile-pic"></div>
 </div>
 
-<!-- Title -->
 <h1>REDEEM CODE</h1>
 
-<!-- Code Entry Chart -->
 <div class="info-chart">
-    <p>
-        Enter a redemption code to earn bonus coins. <br>
-        Codes typically look like: <code>EXAMPLECODE100</code><br>
-        The number at the end is the amount of coins you’ll receive.
-    </p>
-    <button id="open-app" class="register-button" style="margin-bottom: 10px; background-color: purple; color: white;">
-        Redeem on the App
-    </button>
+    <p>Enter a redemption code to earn bonus coins.</p>
+    <button id="open-app" class="register-button" style="background: purple; color: white;">Redeem on the App</button>
     <input id="code-input" class="input-field" placeholder="Enter your code">
     <button id="redeem-btn" class="register-button">Redeem</button>
     <div id="redeem-message" class="error-message" style="display: none;"></div>
 </div>
 
-<!-- Firebase & Logic -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, deleteDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey: 'AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA',
-        authDomain: 'darkpurpleof-s-website.firebaseapp.com',
-        projectId: 'darkpurpleof-s-website',
-        storageBucket: 'darkpurpleof-s-website.firebasestorage.app',
-        messagingSenderId: '520651082420',
-        appId: '1:520651082420:web:bb05c0c3fd64517952e5e1',
-        measurementId: 'G-S2X2JYC8Z0'
+        apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+        authDomain: "darkpurpleof-s-website.firebaseapp.com",
+        projectId: "darkpurpleof-s-website",
+        storageBucket: "darkpurpleof-s-website.appspot.com",
+        messagingSenderId: "520651082420",
+        appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -214,10 +161,10 @@
             const userRef = doc(db, "user_data", email);
             try {
                 const userSnap = await getDoc(userRef);
-                const url = userSnap.exists() && userSnap.data().profile_picture
+                const pic = userSnap.exists() && userSnap.data().profile_picture
                     ? userSnap.data().profile_picture
                     : "https://darkpurpleof.github.io/org-owner.jpg";
-                profile.style.backgroundImage = `url(${url})`;
+                profile.style.backgroundImage = `url(${pic})`;
             } catch {
                 profile.style.backgroundImage = "url('https://darkpurpleof.github.io/org-owner.jpg')";
             }
@@ -233,13 +180,11 @@
         msg.textContent = "";
 
         if (!currentUser) {
-            showError("You must be logged in to redeem!");
-            return;
+            return showError("You must be logged in to redeem!");
         }
 
         if (!code || code.length < 5) {
-            showError("Invalid code format.");
-            return;
+            return showError("Invalid code format.");
         }
 
         const codeRef = doc(db, "redeemable", code);
@@ -247,28 +192,31 @@
 
         try {
             const codeSnap = await getDoc(codeRef);
-            if (!codeSnap.exists()) {
-                showError("Code not found or already used.");
-                return;
-            }
+            if (!codeSnap.exists()) return showError("Code not found or already used.");
 
             const match = code.match(/\d+/g);
-            const coins = match ? parseInt(match.join(""), 10) : 0;
-            if (coins <= 0) {
-                showError("Code doesn't contain a valid reward.");
-                return;
+            const coinsToAdd = match ? parseInt(match.join(""), 10) : 0;
+            if (coinsToAdd <= 0) return showError("Code doesn't contain a valid reward.");
+
+            const userSnap = await getDoc(userRef);
+            let currentCoins = "0";
+            if (userSnap.exists()) {
+                const coinsStr = userSnap.data().coins || "0";
+                currentCoins = isNaN(coinsStr) ? "0" : coinsStr;
             }
 
-            await updateDoc(userRef, { coins: increment(coins) });
+            const updatedCoins = (parseInt(currentCoins) + coinsToAdd).toString();
+
+            await updateDoc(userRef, { coins: updatedCoins });
             await deleteDoc(codeRef);
 
             msg.className = "success-message";
-            msg.textContent = `🎉 Success! ${coins} coins added to your account.`;
+            msg.textContent = `🎉 Success! ${coinsToAdd} coins added.`;
             msg.style.display = "block";
             codeInput.value = "";
 
-        } catch (err) {
-            console.error(err);
+        } catch (e) {
+            console.error(e);
             showError("Redemption failed. Try again.");
         }
     });
@@ -277,63 +225,16 @@
         msg.className = "error-message";
         msg.textContent = text;
         msg.style.display = "block";
-        redeemBtn.classList.add("shake", "red-glow");
-        redeemBtn.style.color = "black";
-        setTimeout(() => {
-            redeemBtn.classList.remove("shake", "red-glow");
-            redeemBtn.style.color = "";
-        }, 1500);
     }
 
-    // Theme
-    const themeBtn = document.getElementById("theme-toggle");
-    themeBtn.addEventListener("click", () => {
+    document.getElementById("theme-toggle").addEventListener("click", () => {
         document.body.classList.toggle("light");
-        themeBtn.textContent = document.body.classList.contains("light") ? "☀️" : "🌙";
+        document.getElementById("theme-toggle").textContent = document.body.classList.contains("light") ? "☀️" : "🌙";
     });
 
-    // App button
     openApp.addEventListener("click", () => {
         window.location.href = "darkpurpleof://redeem";
     });
-
-    // Animations + styles
-    const style = document.createElement("style");
-    style.innerHTML = `
-      .shake {
-        animation: shake 0.4s;
-      }
-
-      .red-glow {
-        background-color: #ffdddd !important;
-        border-color: red !important;
-        box-shadow: 0 0 12px red;
-      }
-
-      @keyframes shake {
-        0% { transform: translateX(0); }
-        25% { transform: translateX(-5px); }
-        50% { transform: translateX(5px); }
-        75% { transform: translateX(-5px); }
-        100% { transform: translateX(0); }
-      }
-
-      body.light {
-        --bg-color: #fefefe;
-        --text-color: #4b0082;
-        --box-bg: rgba(128, 0, 128, 0.08);
-        --border-color: #4b0082;
-      }
-
-      body.light .register-button:hover {
-        background-color: rgba(128, 0, 128, 0.2);
-      }
-
-      body.light .input-field {
-        background-color: #fff;
-      }
-    `;
-    document.head.appendChild(style);
 </script>
 </body>
 </html>
