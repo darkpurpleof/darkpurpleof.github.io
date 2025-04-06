@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore DPFHTML Features!</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #6c5ce7; /* Purple Heading Color */
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        .feature-section {
+            margin-top: 30px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f0f8ff;
+        }
+        .interactive-element {
+            margin-bottom: 25px; /* Increased vertical space */
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 8px;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #6c5ce7; /* Purple Button Color */
+            color: white;
+            border: none;
+            border-radius: 25px; /* Rounded Buttons */
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-right: 15px;
+            margin-top: 10px; /* Vertical space for button */
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #4a39b3;
+        }
+        input[type="range"] {
+            width: 250px; /* Slightly Bigger Slider */
+        }
+        #sliderValue {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            color: #6c5ce7;
+        }
+        input[type="text"] {
+            padding: 12px 20px; /* Increased padding */
+            border: 1px solid #ccc;
+            border-radius: 25px; /* Rounder Input Fields */
+            font-size: 1.1em; /* Slightly bigger font */
+            width: 200px; /* Shorter Input Fields */
+            margin-right: 15px;
+            margin-bottom: 15px; /* Vertical space below input */
+        }
+        #textOutput {
+            margin-top: 15px;
+            font-style: italic;
+            color: #555;
+        }
+        #currentTime, #ipAddress, #deviceType {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #6c5ce7;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <h1>Exploring DPFHTML Features</h1>
+    <p>This sample <span class="highlight">DPFHTML</span> file showcases some of the interactive elements and features that can be implemented within the <span class="highlight">DarkPurpleOF's Website</span> application when using signed DPFHTML files.</p>
+
+    <div class="feature-section">
+        <h2>Features and Benefits of DPFHTML</h2>
+
+        <div class="interactive-element">
+            <h3>Interactive Buttons</h3>
+            <p>DPFHTML can include interactive buttons that trigger actions within the application using JavaScript.</p>
+            <button onclick="showAlert()">Click Me!</button>
+        </div>
+
+        <div class="interactive-element">
+            <h3>Range Sliders</h3>
+            <p>You can use sliders to allow users to select values. This data can then be used by the application.</p>
+            <input type="range" id="volumeSlider" min="0" max="100" value="50" oninput="updateSliderValue(this.value)">
+            <span id="sliderValue">50</span>
+        </div>
+
+        <div class="interactive-element">
+            <h3>Text Input Fields</h3>
+            <p>DPFHTML supports text input fields, allowing users to enter information that can be processed by the application.</p>
+            <input type="text" id="inputField" placeholder="Enter text here">
+            <button onclick="displayText()">Show Input</button>
+            <p id="textOutput"></p>
+        </div>
+
+        <div class="interactive-element">
+            <h3>Dynamic Content Updates</h3>
+            <p>JavaScript within signed DPFHTML files can dynamically update the content of the page based on user interactions or other events.</p>
+            <button onclick="updateTime()">Show Current Time</button>
+            <p id="currentTime"></p>
+        </div>
+
+        <div class="interactive-element">
+            <h3>Access to Device Information</h3>
+            <p>Signed DPFHTML can leverage pre-installed functionalities within the <span class="highlight">DarkPurpleOF's Website</span> application to access device information.</p>
+            <button onclick="showDeviceInfo()">Show Device Info</button>
+            <p id="deviceType"></p>
+        </div>
+
+        <div class="interactive-element">
+            <h3>IP Address Retrieval</h3>
+            <p>Signed DPFHTML can utilize the pre-installed <span class="highlight">ipinfo.io</span> integration to retrieve the device's IP address.</p>
+            <button onclick="showIPAddress()">Show IP Address</button>
+            <p id="ipAddress"></p>
+        </div>
+
+        <div class="interactive-element">
+            <h3>Secure Internal Content</h3>
+            <p>As highlighted before, DPFHTML allows for secure internal content delivery, preventing the loading of arbitrary external websites and ensuring a controlled environment within the <span class="highlight">DarkPurpleOF's Website</span> application.</p>
+        </div>
+
+        <div class="interactive-element">
+            <h3>Styled Content</h3>
+            <p>DPFHTML supports CSS for styling the visual appearance of the internal content, allowing for a rich and user-friendly interface.</p>
+        </div>
+    </div>
+
+    <p>Remember, the full interactivity and access to device information demonstrated here rely on JavaScript and pre-installed functionalities within the <span class="highlight">DarkPurpleOF's Website</span> application, which will only be fully enabled in <span class="highlight">DPFHTML</span> files that have been digitally signed by the developer.</p>
+
+    <script>
+        function showAlert() {
+            alert("Hello from DPFHTML!");
+        }
+
+        function updateSliderValue(value) {
+            document.getElementById("sliderValue").innerText = value;
+        }
+
+        function displayText() {
+            const text = document.getElementById("inputField").value;
+            document.getElementById("textOutput").innerText = `You entered: ${text}`;
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById("currentTime").innerText = `Current Time: ${now.toLocaleTimeString()}`;
+        }
+
+        function showDeviceInfo() {
+            // In a real signed DPFHTML within your app, you would call a pre-installed function
+            // to get the device type. For this sample, we'll simulate it.
+            const device = navigator.userAgent;
+            let os = "Unknown";
+            if (device.indexOf("Win") != -1) os = "Windows";
+            if (device.indexOf("Android") != -1) os = "Android";
+            if (device.indexOf("Linux") != -1) os = "Linux";
+            if (device.indexOf("Mac") != -1) os = "macOS";
+            document.getElementById("deviceType").innerText = `Device Type: ${os}`;
+        }
+
+        function showIPAddress() {
+            // This will only work correctly if the DPFHTML is loaded within your signed app
+            // where the 'getIPAddress' function is pre-installed and available in the global scope.
+            if (typeof getIPAddress === 'function') {
+                getIPAddress()
+                    .then(ip => {
+                        document.getElementById("ipAddress").innerText = `IP Address: ${ip}`;
+                    })
+                    .catch(error => {
+                        document.getElementById("ipAddress").innerText = `IP Address: Error retrieving IP`;
+                        console.error("Error getting IP address:", error);
+                    });
+            } else {
+                document.getElementById("ipAddress").innerText = `IP Address: Function not available (unsigned?)`;
+            }
+        }
+    </script>
+</body>
+</html>
+
