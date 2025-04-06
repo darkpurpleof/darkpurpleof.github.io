@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dreamscape</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+    :root {
+      --bg-color: #000;
+      --text-color: purple;
+      --box-bg: rgba(128, 0, 128, 0.05);
+      --border-color: purple;
+    }
+
+    body.light {
+      --bg-color: #fff;
+      --text-color: purple;
+      --box-bg: rgba(128, 0, 128, 0.1);
+      --border-color: purple;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Orbitron', sans-serif;
+      margin: 0;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      text-align: center;
+      transition: background 0.4s, color 0.4s;
+      box-sizing: border-box;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      padding: 10px;
+    }
+
+    .dark-light-toggle {
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      color: var(--text-color);
+      transition: opacity 0.3s;
+    }
+
+    h1 {
+      font-size: 2.8em;
+      margin-bottom: 0.5em;
+      text-shadow: 0 0 6px var(--text-color);
+      animation: glitch 1.5s infinite;
+    }
+
+    @keyframes glitch {
+      0% { transform: none; }
+      20% { transform: skewX(3deg); }
+      40% { transform: skewX(-3deg); }
+      60% { transform: none; }
+      100% { transform: none; }
+    }
+
+    .quote-box {
+      font-size: 1.4em;
+      padding: 2rem;
+      border-radius: 10px;
+      border: 1px dashed var(--border-color);
+      background-color: var(--box-bg);
+      max-width: 700px;
+      margin-top: 3rem;
+      box-shadow: 0 0 10px var(--border-color);
+      transition: opacity 0.5s;
+    }
+
+    .quote-fade {
+      opacity: 0;
+    }
+
+    .hint {
+      margin-top: 1rem;
+      font-size: 0.9em;
+      opacity: 0.6;
+    }
+
+    #nextButton {
+      margin-top: 1.5rem;
+      background: transparent;
+      border: 1.5px solid var(--border-color);
+      color: var(--text-color);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.3s, opacity 0.3s;
+    }
+
+    #nextButton:hover:enabled {
+      background-color: var(--box-bg);
+    }
+
+    #nextButton.disabled {
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <button class="dark-light-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+  </div>
+  <h1>Dreamscape</h1>
+  <div class="quote-box" id="quoteBox">Loading...</div>
+  <div class="hint">Press <kbd>D</kbd> or tap <em>Next</em> to dream deeper</div>
+  <button id="nextButton" onclick="nextQuote()">Next</button>
+
+  <script>
+    const quotes = [
+      "Your mind is the limit—and limits are illusions.",
+      "This place is built on thoughts. Yours shape what it becomes.",
+      "Even in silence, the dream speaks.",
+      "You blinked. The world shifted.",
+      "Reality is optional here.",
+      "Dream deeper. You're not done yet.",
+      "You've always known how to fly. You just forgot.",
+      "This is not a simulation. Or is it?"
+    ];
+
+    let current = 0;
+    const box = document.getElementById("quoteBox");
+    const nextBtn = document.getElementById("nextButton");
+    const themeToggle = document.getElementById("themeToggle");
+
+    function showQuote(index) {
+      box.classList.add("quote-fade");
+      setTimeout(() => {
+        if (index < quotes.length) {
+          box.textContent = quotes[index];
+        } else {
+          box.textContent = "You've reached the edge of the dream. Rest now.";
+          nextBtn.classList.add("disabled");
+        }
+        box.classList.remove("quote-fade");
+      }, 300);
+    }
+
+    function nextQuote() {
+      if (current < quotes.length) {
+        showQuote(current);
+        current++;
+        if (current >= quotes.length) {
+          // All quotes shown
+          setTimeout(() => {
+            nextBtn.classList.add("disabled");
+          }, 400);
+        }
+      }
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "d") {
+        nextQuote();
+      }
+    });
+
+    function toggleTheme() {
+      document.body.classList.toggle("light");
+      const isLight = document.body.classList.contains("light");
+      themeToggle.textContent = isLight ? "☀️" : "🌙";
+    }
+
+    // Initial setup
+    toggleTheme(); // Set correct icon
+    showQuote(current);
+    current++;
+  </script>
+</body>
+</html>
