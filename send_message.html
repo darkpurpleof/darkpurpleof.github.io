@@ -1,35 +1,259 @@
-<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting to WhatsApp...</title>
     <meta http-equiv="refresh" content="0; url=https://wa.me/527225296124">
     <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            text-align: center;
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+        :root {
+            --bg-color: #000;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.05);
+            --border-color: purple;
         }
-        .message {
+
+        body.light {
+            --bg-color: #fff;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.1);
+            --border-color: purple;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh;
+            transition: background 0.4s, color 0.4s;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .icon-btn {
+            font-size: 22px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 6px;
+            transition: opacity 0.3s;
+        }
+
+        .icon-btn:hover {
+            opacity: 0.7;
+        }
+
+        .profile-pic {
+            width: 32px;
+            height: 32px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 6px var(--text-color);
+            animation: glitch 1.5s infinite;
+        }
+
+        .info-chart {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            display: inline-block;
+            text-align: left;
+            transition: background-color 0.3s, border-color 0.3s;
+            width: auto;
             max-width: 500px;
         }
-        a {
+
+        .input-field {
+            width: calc(100% - 2px);
+            padding: 12px;
+            margin: 10px 0;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--box-bg);
+            color: var(--text-color);
+            box-sizing: border-box;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+
+        .success-message {
+            color: purple;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+
+        .dark-light-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+
+        .dark-mode .dark-light-toggle {
+            color: var(--text-color);
+        }
+
+        .message-container {
+            max-width: 500px;
+            background: var(--box-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .message-container a {
             color: #25D366;
             text-decoration: none;
             font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .message-container a:hover {
+            color: #128C7E;
+        }
+
+        .green-text {
+            color: purple;
+            font-weight: bold;
+        }
+
+        .description {
+            font-size: 1.2em;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            width: auto;
+            max-width: 500px;
+            text-align: left;
+        }
+
+        .contact-section {
+            margin-top: 20px;
+            background-color: var(--box-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border-color);
+            width: auto;
+            max-width: 500px;
+            text-align: left;
+        }
+
+        .social-links {
+            margin-top: 10px;
+        }
+
+        .social-links a {
+            display: block;
+            font-size: 1.2em;
+            color: #0088cc;
+            text-decoration: none;
+            margin-bottom: 10px;
+        }
+
+        .social-links a:hover {
+            color: #025f72;
+        }
+
+        @keyframes glitch {
+            0% {
+                transform: none;
+            }
+
+            20% {
+                transform: skewX(3deg);
+            }
+
+            40% {
+                transform: skewX(-3deg);
+            }
+
+            60% {
+                transform: none;
+            }
+
+            100% {
+                transform: none;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="message">
-        <p>If you are not redirected automatically, <a href="https://wa.me/527225296124">click here to chat with me on WhatsApp</a>.</p>
+    <div class="top-bar">
+        <button class="icon-btn" id="theme-switcher" onclick="toggleTheme()">🌙</button>
     </div>
+
+    <div class="message-container">
+        <h1>Send a message!</h1>
+        <p>Find ways of conatcting me below!</p>
+    </div>
+
+    <div class="info-chart">
+        <h2>Useful Info</h2>
+        <p>Feel free to explore our platform! If you encounter any issues, our team is here to assist you. We are always improving to offer a better experience.</p>
+    </div>
+
+    <div class="contact-section">
+        <h2>Contact Me</h2>
+        <p>If you want to chat directly, click the link below to open Telegram:</p>
+        <div class="social-links">
+            <a href="https://t.me/darkpurpleof" target="_blank">Telegram: @darkpurpleof</a>
+            <a href="https://wa.me/527225296124" target="_blank">WhatsApp</a>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('light');
+            const themeSwitcher = document.getElementById('theme-switcher');
+            if (document.body.classList.contains('light')) {
+                themeSwitcher.textContent = '🌞'; // Sun emoji for light mode
+            } else {
+                themeSwitcher.textContent = '🌙'; // Moon emoji for dark mode
+            }
+        }
+    </script>
 </body>
+
 </html>
