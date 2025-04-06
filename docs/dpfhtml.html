@@ -132,40 +132,45 @@
   </style>
 
   <script>
-    const firebaseConfig = {
-  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-  authDomain: "darkpurpleof-s-website.firebaseapp.com",
-  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
-  projectId: "darkpurpleof-s-website",
-  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-  messagingSenderId: "520651082420",
-  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-  measurementId: "G-S2X2JYC8Z0"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+    authDomain: "darkpurpleof-s-website.firebaseapp.com",
+    databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+    projectId: "darkpurpleof-s-website",
+    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+    messagingSenderId: "520651082420",
+    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+    measurementId: "G-S2X2JYC8Z0"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-    function toggleTheme() {
-      document.body.classList.toggle('light');
-      document.getElementById('theme-icon').textContent =
-        document.body.classList.contains('light') ? '☀️' : '🌙';
-    }
+  function toggleTheme() {
+    document.body.classList.toggle('light');
+    document.getElementById('theme-icon').textContent =
+      document.body.classList.contains('light') ? '☀️' : '🌙';
+  }
 
-    window.addEventListener("DOMContentLoaded", () => {
+  window.addEventListener("DOMContentLoaded", () => {
     const profilePic = document.getElementById("profile-pic");
 
-    auth.onAuthStateChanged(auth, async (user) => {
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
         const email = user.email;
 
         try {
-          const profileRef = doc(firestore, "user_data", email);
-          const profileSnap = await getDoc(profileRef);
-          const profilePicUrl = profileSnap.exists() ? profileSnap.data().profile_picture : null;
+          const profileDocRef = db.collection("user_data").doc(email);
+          const docSnap = await profileDocRef.get();
 
-          profilePic.style.backgroundImage = `url('${profilePicUrl || "https://darkpurpleof.github.io/org-owner.jpg"}')`;
+          if (docSnap.exists) {
+            const data = docSnap.data();
+            const profilePicUrl = data.profile_picture || "https://darkpurpleof.github.io/org-owner.jpg";
+            profilePic.style.backgroundImage = `url('${profilePicUrl}')`;
+          } else {
+            profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+          }
         } catch (error) {
           console.error("Error fetching profile picture:", error);
           profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
@@ -175,7 +180,7 @@
       }
     });
   });
-  </script>
+</script>
 </head>
 <body>
   <div class="header-controls">
