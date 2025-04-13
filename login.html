@@ -179,17 +179,24 @@
 </div>
 
 <script>
-    // Extract token from URL
     const urlParams = new URLSearchParams(window.location.search);
     const idToken = urlParams.get('token');
 
     if (idToken) {
         firebase.auth().signInWithCustomToken(idToken)
             .then(() => {
-                window.close(); // Close the tab after successful login
+                // Notify parent that authentication succeeded
+                if (window.opener) {
+                    window.opener.postMessage('auth-success', 'https://darkpurpleof.github.io');
+                } else if (window.parent !== window) {
+                    window.parent.postMessage('auth-success', 'https://darkpurpleof.github.io');
+                }
             })
             .catch((error) => {
-                document.getElementById('errorMessage').innerText = "Token login failed: " + error.message;
+                // Optional: post error back to parent
+                if (window.parent !== window) {
+                    window.parent.postMessage('auth-failed', 'https://darkpurpleof.github.io');
+                }
             });
     }
 </script>
