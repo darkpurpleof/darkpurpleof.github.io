@@ -178,6 +178,22 @@
     </div>
 </div>
 
+<script>
+    // Extract token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idToken = urlParams.get('token');
+
+    if (idToken) {
+        firebase.auth().signInWithCustomToken(idToken)
+            .then(() => {
+                window.close(); // Close the tab after successful login
+            })
+            .catch((error) => {
+                document.getElementById('errorMessage').innerText = "Token login failed: " + error.message;
+            });
+    }
+</script>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
