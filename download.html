@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Page</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+        :root {
+            --bg-color: #000;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.05);
+            --border-color: purple;
+        }
+
+        body.light {
+            --bg-color: #fff;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.1);
+            --border-color: purple;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh;
+            transition: background 0.4s, color 0.4s;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .icon-btn {
+            font-size: 22px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 6px;
+            transition: opacity 0.3s;
+        }
+
+        .icon-btn:hover {
+            opacity: 0.7;
+        }
+
+        .profile-pic {
+            width: 32px;
+            height: 32px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 6px var(--text-color);
+            animation: glitch 1.5s infinite;
+        }
+
+        .file-list {
+            width: 100%;
+            max-width: 800px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: var(--box-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 5px 0;
+        }
+
+        .file-item img {
+            width: 32px;
+            height: 32px;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+
+        .download-button {
+            background-color: var(--box-bg);
+            color: var(--text-color);
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .download-button:hover {
+            opacity: 0.8;
+        }
+
+        .error-message {
+            color: red;
+        }
+
+        @keyframes glitch {
+            0% { transform: none; }
+            20% { transform: skewX(3deg); }
+            40% { transform: skewX(-3deg); }
+            60% { transform: none; }
+            100% { transform: none; }
+        }
+
+        /* Modal Dialog Styles */
+        .blur-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            z-index: 999;
+        }
+
+        .download-dialog {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--box-bg);
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 300px;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .download-dialog button {
+            background-color: var(--border-color);
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .cancel-button {
+            background-color: #ccc;
+            margin-left: 10px;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+  
+    <div class="top-bar">
+        <button id="themeToggle" class="icon-btn" onclick="toggleTheme()">🌙</button>
+        <div class="profile-pic" id="profilePic"></div>
+    </div>
+
+    <h1>Available Downloads</h1>
+
+    <ul class="file-list" id="fileList">
+        <!-- Dynamically populated file list -->
+    </ul>
+
+    <!-- Blur background and download dialog -->
+    <div id="blurBackground" class="blur-background">
+        <div class="download-dialog">
+            <h2>Download File</h2>
+            <p>Are you sure you want to download this file?</p>
+            <button id="downloadButton" class="download-button">Download</button>
+            <button id="cancelButton" class="download-button cancel-button">Cancel</button>
+            <p id="errorMessage" class="error-message"></p>
+        </div>
+    </div>
+
+  <script>
+    function toggleTheme() {
+            const themeButton = document.getElementById('themeToggle');
+            const isDarkMode = document.body.classList.contains('light');
+
+            if (!themeButton) return;
+
+            if (isDarkMode) {
+                document.body.classList.remove('light');
+                themeButton.innerHTML = '🌙';
+                localStorage.setItem('lightMode', 'disabled');
+            } else {
+                document.body.classList.add('light');
+                themeButton.innerHTML = '☀️';
+                localStorage.setItem('lightMode', 'enabled');
+            }
+        }
+
+        // Check for saved theme after DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeButton = document.getElementById('themeToggle');
+            if (localStorage.getItem('lightMode') === 'enabled') {
+                document.body.classList.add('light');
+                if (themeButton) themeButton.innerHTML = '☀️';
+            }
+        });
+  </script>
+  
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Get user login state
+        let loggedInUser = null;
+        auth.onAuthStateChanged(async (user) => {
+            loggedInUser = user;
+            if (user) {
+                // Get user profile picture
+                const docRef = db.collection('user_data').doc(user.email);
+                const doc = await docRef.get();
+                if (doc.exists && doc.data().profile_picture) {
+                    document.getElementById('profilePic').style.backgroundImage = `url(${doc.data().profile_picture})`;
+                } else {
+                    document.getElementById('profilePic').style.backgroundImage = `url('https://darkpurpleof.github.io/default-placeholder.jpg')`;
+                }
+            } else {
+                document.getElementById('profilePic').style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+            }
+            fetchFiles();
+        });
+
+        // Fetch files from the server
+        async function fetchFiles() {
+            const response = await fetch('https://api.github.com/repos/darkpurpleof/darkpurpleof.github.io/contents/downloads/public');
+            const files = await response.json();
+
+            files.forEach(file => {
+                if (file.type === 'file') {
+                    const fileItem = document.createElement('li');
+                    fileItem.classList.add('file-item');
+                    const fileName = file.name;
+                    const fileIcon = fileName.endsWith('.jpg') || fileName.endsWith('.png') || fileName.endsWith('.gif') ? 
+                        `<img src="${file.download_url}" alt="${fileName}">` : '';
+
+                    const fileLink = `<span>${fileIcon}${fileName}</span><button onclick="initiateDownload('${file.download_url}', '${fileName}')" class="download-button">Download</button>`;
+                    fileItem.innerHTML = fileLink;
+                    document.getElementById('fileList').appendChild(fileItem);
+                }
+            });
+        }
+    </script>
+
+    <!-- Separate Script for Download Handling -->
+    <script>
+        function initiateDownload(fileUrl, fileName) {
+            // Show blur background and download dialog
+            const blurBackground = document.getElementById('blurBackground');
+            const downloadDialog = document.querySelector('.download-dialog');
+            const downloadButton = document.getElementById('downloadButton');
+            const cancelButton = document.getElementById('cancelButton');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            blurBackground.style.display = 'block';
+            
+            downloadButton.onclick = function() {
+                // Trigger the file download
+                const a = document.createElement('a');
+                a.href = fileUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Close the download dialog
+                blurBackground.style.display = 'none';
+            };
+
+            cancelButton.onclick = function() {
+                // Close the download dialog without downloading
+                blurBackground.style.display = 'none';
+            };
+        }
+    </script>
+</body>
+</html>
