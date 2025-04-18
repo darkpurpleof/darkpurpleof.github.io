@@ -217,32 +217,45 @@ const firebaseConfig = {
         let selectedItem = null;
 
         function formatCoins(value) {
-            const num = parseInt(value);
-            if (isNaN(num)) return "?";
-            if (num >= 1e9) return (num / 1e9).toFixed(1) + "B";
-            if (num >= 1e6) return (num / 1e6).toFixed(1) + "M";
-            if (num >= 1e3) return (num / 1e3).toFixed(1) + "K";
-            return num.toString();
+    const num = parseFloat(value);
+    if (isNaN(num)) return "?";
+
+    const suffixes = [
+        { value: 1e18, symbol: "Qs" },
+        { value: 1e15, symbol: "Qd" },
+        { value: 1e12, symbol: "T" },
+        { value: 1e9, symbol: "B" },
+        { value: 1e6, symbol: "M" },
+        { value: 1e3, symbol: "K" }
+    ];
+
+    for (let i = 0; i < suffixes.length; i++) {
+        if (num >= suffixes[i].value) {
+            return (num / suffixes[i].value).toFixed(1) + suffixes[i].symbol;
         }
+    }
+
+    return num.toString();
+}
 
         async function updateUserData(user) {
-            const email = user.email;
-            const userDoc = doc(db, "user_data", email);
-            try {
-                const docSnap = await getDoc(userDoc);
-                const data = docSnap.data();
-                const coins = data?.coins ?? "0";
-                const pic = data?.profile_picture ?? "https://darkpurpleof.github.io/org-owner.jpg";
+    const email = user.email;
+    const userDoc = doc(db, "user_data", email);
+    try {
+        const docSnap = await getDoc(userDoc);
+        const data = docSnap.data();
+        const coins = data?.coins ?? "DF$ - 0";
+        const pic = data?.profile_picture ?? "https://darkpurpleof.github.io/org-owner.jpg";
 
-                currentCoins = coins;
-                coinDisplay.textContent = formatCoins(coins);
-                profile.style.backgroundImage = `url('${pic}')`;
-            } catch (err) {
-                currentCoins = "DF$ - ?";
-                coinDisplay.textContent = "DF$ - ?";
-                profile.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
-            }
-        }
+        currentCoins = coins;
+        coinDisplay.textContent = "DF$ - " + formatCoins(coins);  // Prepend "DF$ - "
+        profile.style.backgroundImage = `url('${pic}')`;
+    } catch (err) {
+        currentCoins = "DF$ - ?";
+        coinDisplay.textContent = "DF$ - ?";  // Prepend "DF$ - "
+        profile.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+    }
+}
 
         onAuthStateChanged(auth, user => {
             currentUser = user;
@@ -257,6 +270,7 @@ const firebaseConfig = {
 
         const shopItems = [
             {
+                productId: "test_boykisser",
                 title: "Boykisser",
                 description: "You like kissing boys, don't you?",
                 price: 15,
@@ -264,6 +278,7 @@ const firebaseConfig = {
                 action: () => window.open("https://darkpurpleof.github.io/amethyst", "_blank")
             },
             {
+                productId: "item_windows",
                 title: "Windows",
                 description: "Where do you want to go today?.",
                 price: 43643634354,
@@ -330,25 +345,48 @@ img.style.borderRadius = "10px"; /* Maintain rounded corners */
         }
 
         document.getElementById("confirm-btn").onclick = async () => {
-            if (!selectedItem || !currentUser) return;
+    if (!selectedItem) return;
 
-            const email = currentUser.email;
-            const userDoc = doc(db, "user_data", email);
-            const docSnap = await getDoc(userDoc);
-            const userCoins = parseInt(docSnap.data()?.coins ?? "DF$ - 0");
+    await handlePurchase(selectedItem);
+    dialog.close();
+};
 
-            if (userCoins >= selectedItem.price) {
-                const newCoins = userCoins - selectedItem.price;
-                await updateDoc(userDoc, { coins: newCoins.toString() });
-                currentCoins = newCoins.toString();
-                coinDisplay.textContent = formatCoins(currentCoins);
-                selectedItem.action();
-            } else {
-                alert("You no longer have enough coins.");
-            }
+async function handlePurchase(item) {
+    if (!currentUser) return alert("You must be signed in to purchase.");
 
-            dialog.close();
-        };
+    const email = currentUser.email;
+    const userDoc = doc(db, "user_data", email);
+
+    try {
+        const docSnap = await getDoc(userDoc);
+        const data = docSnap.data();
+        const currentCoins = parseFloat(data.coins || 0);
+        const purchasedIds = data.purchasedIds || [];
+
+        if (purchasedIds.includes(item.productId)) {
+            alert("You already own this item.");
+            return;
+        }
+
+        if (currentCoins < item.price) {
+            alert("Not enough coins!");
+            return;
+        }
+
+        // Deduct coins and save purchase
+        await updateDoc(userDoc, {
+            coins: currentCoins - item.price,
+            purchasedIds: [...purchasedIds, item.productId]
+        });
+
+        alert("Purchase successful!");
+        item.action();  // Run item's action
+        updateUserData(currentUser); // Refresh balance
+    } catch (e) {
+        console.error("Purchase error:", e);
+        alert("Error processing your purchase.");
+    }
+}
 
         document.getElementById("cancel-btn").onclick = () => dialog.close();
 
