@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shop | DarkPurple</title>
+    <link rel="icon" href="/favicon.ico">
+    <script type="module" src="/shop.js" defer></script>
+    <link rel="stylesheet" href="/shop.css">
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+        :root {
+            --bg-color: #000;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.05);
+            --border-color: purple;
+        }
+
+        body.light {
+            --bg-color: #fff;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.1);
+            --border-color: purple;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh;
+            transition: background 0.4s, color 0.4s;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .icon-btn {
+            font-size: 22px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 6px;
+            transition: opacity 0.3s;
+        }
+
+        .icon-btn:hover {
+            opacity: 0.7;
+        }
+
+        .profile-pic {
+            width: 32px;
+            height: 32px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 6px var(--text-color);
+            animation: glitch 1.5s infinite;
+        }
+
+        .info-chart {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            display: inline-block;
+            text-align: left;
+            transition: background-color 0.3s, border-color 0.3s;
+            width: auto; /* Ensuring it doesn't stretch full width */
+            max-width: 500px; /* Optional: To limit the chart width */
+        }
+
+        .input-field {
+            width: calc(100% - 2px); /* Take up almost all width minus padding */
+            padding: 12px;
+            margin: 10px 0;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--box-bg);
+            color: var(--text-color);
+            box-sizing: border-box;
+        }
+
+        .register-button {
+            width: calc(100% - 2px); /* Same as input field */
+            background-color: var(--box-bg);
+            color: var(--text-color);
+            padding: 12px 20px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .register-button:hover {
+            opacity: 0.8;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+
+        .success-message {
+            color: purple;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+
+        .dark-light-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+
+        .dark-mode .dark-light-toggle {
+            color: var(--text-color);
+        }
+
+        @keyframes glitch {
+            0% { transform: none; }
+            20% { transform: skewX(3deg); }
+            40% { transform: skewX(-3deg); }
+            60% { transform: none; }
+            100% { transform: none; }
+        }
+    </style>
+</head>
+<body class="dark">
+    <div class="top-bar">
+        <div id="coin-balance">DF$ - 0</div>
+        <button class="icon-btn" id="theme-toggle">🌙</button>
+        <div id="profile" class="profile-pic" style="background-image: url('https://darkpurpleof.github.io/org-owner.jpg');"></div>
+    </div>
+
+    <h1>DarkPurple Shop</h1>
+
+    <div id="shop-items" class="shop-grid"></div>
+
+    <dialog id="confirm-dialog">
+        <form method="dialog">
+            <h3 id="confirm-title">Confirm Purchase</h3>
+            <p id="confirm-text"></p>
+            <menu>
+                <button id="cancel-btn" value="cancel">Cancel</button>
+                <button id="confirm-btn" value="default">Buy</button>
+            </menu>
+        </form>
+    </dialog>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            updateDoc
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getFirestore();
+
+        const coinDisplay = document.getElementById("coin-balance");
+        const profile = document.getElementById("profile");
+        const shopContainer = document.getElementById("shop-items");
+        const dialog = document.getElementById("confirm-dialog");
+        const confirmTitle = document.getElementById("confirm-title");
+        const confirmText = document.getElementById("confirm-text");
+
+        let currentUser = null;
+        let currentCoins = "DF$ - 0";
+        let selectedItem = null;
+
+        function formatCoins(value) {
+            const num = parseInt(value);
+            if (isNaN(num)) return "?";
+            if (num >= 1e9) return (num / 1e9).toFixed(1) + "B";
+            if (num >= 1e6) return (num / 1e6).toFixed(1) + "M";
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + "K";
+            return num.toString();
+        }
+
+        async function updateUserData(user) {
+            const email = user.email;
+            const userDoc = doc(db, "user_data", email);
+            try {
+                const docSnap = await getDoc(userDoc);
+                const data = docSnap.data();
+                const coins = data?.coins ?? "0";
+                const pic = data?.profile_picture ?? "https://darkpurpleof.github.io/org-owner.jpg";
+
+                currentCoins = coins;
+                coinDisplay.textContent = formatCoins(coins);
+                profile.style.backgroundImage = `url('${pic}')`;
+            } catch (err) {
+                currentCoins = "DF$ - ?";
+                coinDisplay.textContent = "DF$ - ?";
+                profile.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+            }
+        }
+
+        onAuthStateChanged(auth, user => {
+            currentUser = user;
+            if (user) {
+                updateUserData(user);
+            } else {
+                profile.style.backgroundImage = "url('https://darkpurpleof.github.io/org-owner.jpg')";
+                coinDisplay.textContent = "DF$ - 0";
+                currentCoins = "DF$ - 0";
+            }
+        });
+
+        const shopItems = [
+            {
+                title: "Boykisser",
+                description: "You like kissing boys, don't you?",
+                price: 15,
+                image: "https://i.kym-cdn.com/entries/icons/original/000/044/050/boykisser.jpg",
+                action: () => window.open("https://darkpurpleof.github.io/amethyst", "_blank")
+            },
+            {
+                title: "Windows",
+                description: "Where do you want to go today?.",
+                price: 43643634354,
+                image: "https://cdn-dynmedia-1.microsoft.com/is/image/microsoftcorp/MSFT-windows-10-window-logo-RW19Kuy?scl=1",
+                action: () => window.open("https://windows.microsoft.com", "_blank")
+            }
+        ];
+
+        function renderShop() {
+            shopItems.forEach(item => {
+                const box = document.createElement("div");
+                box.className = "info-chart";
+
+                const img = document.createElement("img");
+                img.src = item.image;
+                img.style.width = "200px";  /* Fixed width */
+img.style.height = "200px"; /* Fixed height */
+img.style.objectFit = "cover"; /* Ensure image fits nicely within the box */
+img.style.borderRadius = "10px"; /* Maintain rounded corners */
+
+
+                const title = document.createElement("h3");
+                title.textContent = item.title;
+
+                const desc = document.createElement("p");
+                desc.textContent = item.description;
+
+                const price = document.createElement("p");
+                price.innerHTML = `<b>Price:</b> ${formatCoins(item.price)}`;
+
+                const btn = document.createElement("button");
+                btn.className = "register-button";
+                btn.textContent = "Buy";
+                btn.onclick = () => {
+                    if (!currentUser) {
+                        alert("⚠️ You must be logged in to buy items.");
+                        return;
+                    }
+
+                    if (isNaN(parseInt(currentCoins))) {
+                        alert("⚠️ Invalid balance.");
+                        return;
+                    }
+
+                    if (parseInt(currentCoins) < item.price) {
+                        alert("💰 Not enough coins.");
+                        return;
+                    }
+
+                    selectedItem = item;
+                    confirmTitle.textContent = `Confirm: ${item.title}`;
+                    confirmText.textContent = `Do you want to buy ${item.title} for ${formatCoins(item.price)}?`;
+                    dialog.showModal();
+                };
+
+                box.appendChild(img);
+                box.appendChild(title);
+                box.appendChild(desc);
+                box.appendChild(price);
+                box.appendChild(btn);
+
+                shopContainer.appendChild(box);
+            });
+        }
+
+        document.getElementById("confirm-btn").onclick = async () => {
+            if (!selectedItem || !currentUser) return;
+
+            const email = currentUser.email;
+            const userDoc = doc(db, "user_data", email);
+            const docSnap = await getDoc(userDoc);
+            const userCoins = parseInt(docSnap.data()?.coins ?? "DF$ - 0");
+
+            if (userCoins >= selectedItem.price) {
+                const newCoins = userCoins - selectedItem.price;
+                await updateDoc(userDoc, { coins: newCoins.toString() });
+                currentCoins = newCoins.toString();
+                coinDisplay.textContent = formatCoins(currentCoins);
+                selectedItem.action();
+            } else {
+                alert("You no longer have enough coins.");
+            }
+
+            dialog.close();
+        };
+
+        document.getElementById("cancel-btn").onclick = () => dialog.close();
+
+        document.getElementById("theme-toggle").onclick = () => {
+            document.body.classList.toggle("light");
+            document.getElementById("theme-toggle").textContent =
+                document.body.classList.contains("light") ? "☀️" : "🌙";
+        };
+
+        renderShop();
+    </script>
+</body>
+</html>
