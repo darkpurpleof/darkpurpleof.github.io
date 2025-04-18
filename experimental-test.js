@@ -1,7 +1,7 @@
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-<script>
-  const firebaseConfig = {
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js";
+
+const firebaseConfig = {
   apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
   authDomain: "darkpurpleof-s-website.firebaseapp.com",
   databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
@@ -12,25 +12,25 @@
   measurementId: "G-S2X2JYC8Z0"
 };
 
-  firebase.initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-  firebase.auth().onAuthStateChanged((user) => {
-    if (!user) {
-      window.location.href = "/login";
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.href = "/login";
+  } else {
+    const email = user.email || "";
+    if (!email.endsWith("@darkpurpleof.github.io")) {
+      document.body.innerHTML = `
+        <div style="text-align:center;font-family:sans-serif;margin-top:10%">
+          <h1 style="font-size:3em;color:#d00;">403 Forbidden</h1>
+          <p>This page is restricted to internal experimental users only.</p>
+          <p><strong>${email}</strong> is not authorized to access this content.</p>
+        </div>
+      `;
+      document.title = "403 Forbidden";
     } else {
-      const email = user.email || "";
-      if (!email.endsWith("@darkpurpleof.github.io")) {
-        document.body.innerHTML = `
-          <div style="text-align:center;font-family:sans-serif;margin-top:10%">
-            <h1 style="font-size:3em;color:#d00;">403 Forbidden</h1>
-            <p>This page is restricted to internal experimental users only.</p>
-            <p><strong>${email}</strong> is not authorized to access this content.</p>
-          </div>
-        `;
-        document.title = "403 Forbidden";
-      } else {
-        console.log("OK");
-      }
+      console.log("OK");
     }
-  });
-</script>
+  }
+});
