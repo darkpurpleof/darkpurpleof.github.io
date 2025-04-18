@@ -12,13 +12,12 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase with a custom name "check perms"
-const app = initializeApp(firebaseConfig, "check perms");
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// Check for authentication state
 onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.href = "/login";
-  } else {
+  if (user) {
     const email = user.email || "";
     if (!email.endsWith("@darkpurpleof.github.io")) {
       document.body.innerHTML = `
@@ -30,7 +29,11 @@ onAuthStateChanged(auth, (user) => {
       `;
       document.title = "403 Forbidden";
     } else {
-      console.log("OK");
+      console.log("User is authenticated:", email);
+      // Do your main logic here, as the user is authenticated.
     }
+  } else {
+    console.log("No user signed in, redirecting...");
+    window.location.href = "/login";  // Redirect if no user is logged in
   }
 });
