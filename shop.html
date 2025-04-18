@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop | DarkPurple</title>
+    <title>Shop</title>
     <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="/shop.css">
   <style>
@@ -223,7 +223,7 @@ dialog::backdrop {
         <div id="profile" class="profile-pic" style="background-image: url('https://darkpurpleof.github.io/org-owner.jpg');"></div>
     </div>
 
-    <h1>DarkPurple Shop</h1>
+    <h1>Shop</h1>
 
     <div id="shop-items" class="shop-grid"></div>
 
@@ -313,7 +313,7 @@ const firebaseConfig = {
         profile.style.backgroundImage = `url('${pic}')`;
     } catch (err) {
         currentCoins = "DF$ - ?";
-        coinDisplay.textContent = "DF$ - ?";  // Prepend "DF$ - "
+        coinDisplay.textContent = "DF$ - 0";  // Prepend "DF$ - "
         profile.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
     }
 }
