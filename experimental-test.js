@@ -30,7 +30,7 @@ onAuthStateChanged(auth, (user) => {
       `;
       document.title = "403 Forbidden";
     } else {
-      console.log("OK");
+      console.log("OK.");
     }
   }
 });
