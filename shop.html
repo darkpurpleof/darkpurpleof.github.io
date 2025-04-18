@@ -147,17 +147,20 @@
         }
 
       dialog#confirm-dialog {
-    border: none;
+    border: 2px solid var(--border-color);
     border-radius: 16px;
     padding: 20px 30px;
-    background: rgba(128, 0, 128, 0.15); /* Subtle purple glass */
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 20px rgba(128, 0, 128, 0.5);
+    background: var(--bg-color);
     color: var(--text-color);
+    box-shadow:
+        0 0 20px rgba(128, 0, 128, 0.5),
+        inset 0 0 10px rgba(128, 0, 128, 0.2); /* subtle inner glow */
     transition: opacity 0.4s ease, transform 0.4s ease;
     opacity: 0;
     transform: translateY(-20px);
     pointer-events: none;
+    max-width: 90vw;
+    width: 400px;
 }
 
 dialog[open]#confirm-dialog {
@@ -169,7 +172,7 @@ dialog[open]#confirm-dialog {
 dialog::backdrop {
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(5px);
-    transition: background 0.3s;
+    transition: background 0.3s ease;
 }
 
 #confirm-dialog h3 {
