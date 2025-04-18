@@ -330,23 +330,37 @@ const firebaseConfig = {
         });
 
         const shopItems = [
-            {
-                productId: "test_boykisser",
-                title: "Boykisser",
-                description: "You like kissing boys, don't you?",
-                price: 15,
-                image: "https://i.kym-cdn.com/entries/icons/original/000/044/050/boykisser.jpg",
-                action: () => window.open("https://darkpurpleof.github.io/amethyst", "_blank")
-            },
-            {
-                productId: "item_windows",
-                title: "Windows",
-                description: "Where do you want to go today?.",
-                price: 43643634354,
-                image: "https://cdn-dynmedia-1.microsoft.com/is/image/microsoftcorp/MSFT-windows-10-window-logo-RW19Kuy?scl=1",
-                action: () => window.open("https://windows.microsoft.com", "_blank")
+    {
+        productId: "COINPACKFREE1000",
+        title: "Free Coins",
+        description: "Get free 1000 coins for testing the preview",
+        price: 0,
+        image: "https://static.vecteezy.com/system/resources/previews/011/192/447/non_2x/rupiah-money-3d-illustration-free-png.png",
+        action: async () => {
+            if (!currentUser) {
+                alert("You must be signed in to receive coins.");
+                return;
             }
-        ];
+
+            const email = currentUser.email;
+            const userDoc = doc(db, "user_data", email);
+
+            try {
+                const docSnap = await getDoc(userDoc);
+                const currentCoins = parseInt(docSnap.data()?.coins ?? "0");
+
+                const newCoins = currentCoins + 1000;
+
+                await updateDoc(userDoc, {
+                    coins: newCoins.toString()
+                });
+            } catch (e) {
+                console.error("Failed to add coins:", e);
+                alert("Something went wrong while adding coins.");
+            }
+        }
+    }
+];
 
         function renderShop() {
             shopItems.forEach(item => {
