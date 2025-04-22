@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting to Profile...</title>
+  <script>
+    window.onload = function() {
+      const params = new URLSearchParams(window.location.search);
+      const profile = params.get("profile");
+
+      if (profile) {
+        const encodedProfile = encodeURIComponent(profile);
+        window.location.href = `darkpurpleof://profile/${encodedProfile}`;
+      } else {
+        document.body.innerHTML = "<h1>Profile parameter missing.</h1><p>Please add <code>?profile=your@email.com</code> to the URL.</p>";
+      }
+    };
+  </script>
+</head>
+<body>
+  <h1>Redirecting...</h1>
+  <p>If you're not redirected, make sure your app is installed and the profile parameter is set.</p>
+</body>
+</html>
