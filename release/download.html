@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Downloading APK...</title>
+  <script>
+    const owner = "darkpurpleof";
+    const repo = "darkpurpleofswebsite-app";
+
+    async function downloadLatestAPK() {
+      try {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`);
+        const releases = await response.json();
+
+        for (const release of releases) {
+          if (release.draft) continue; // Skip drafts
+
+          const apkAsset = release.assets.find(asset => asset.name.endsWith(".apk"));
+          if (apkAsset) {
+            const link = document.createElement("a");
+            link.href = apkAsset.browser_download_url;
+            link.download = apkAsset.name;
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => window.close(), 2000); // Give the browser time to handle the download
+            return;
+          }
+        }
+
+        document.body.innerText = "No APK file found in recent releases.";
+      } catch (err) {
+        document.body.innerText = "Error: " + err.message;
+      }
+    }
+
+    window.onload = downloadLatestAPK;
+  </script>
+</head>
+<body>
+  <p>Downloading the latest APK...</p>
+</body>
+</html>
