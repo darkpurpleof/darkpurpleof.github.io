@@ -1,0 +1,190 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Blocked Users</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Your Orbitron Theme -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+        :root {
+            --bg-color: #000;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.05);
+            --border-color: purple;
+        }
+
+        body.light {
+            --bg-color: #fff;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.1);
+            --border-color: purple;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 6px var(--text-color);
+            animation: glitch 1.5s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: none; }
+            20% { transform: skewX(3deg); }
+            40% { transform: skewX(-3deg); }
+            60% { transform: none; }
+            100% { transform: none; }
+        }
+
+        .blocked-user {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 10px;
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+
+        .blocked-email {
+            font-size: 1.1em;
+            word-break: break-all;
+        }
+
+        .unblock-btn {
+            padding: 6px 14px;
+            border: 1.5px solid var(--border-color);
+            background-color: transparent;
+            color: var(--text-color);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .unblock-btn:hover {
+            opacity: 0.8;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Manage Blocked Users</h1>
+
+    <div id="blockedList"></div>
+    <div id="message" class="message"></div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Firebase v9+ imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, arrayRemove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // TODO: Replace with your Firebase config
+        const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+  measurementId: "G-S2X2JYC8Z0"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const blockedList = document.getElementById('blockedList');
+        const messageDiv = document.getElementById('message');
+
+        function renderBlockedUsers(email, blockedUsers) {
+            blockedList.innerHTML = "";
+
+            if (!blockedUsers || blockedUsers.length === 0) {
+                blockedList.innerHTML = "<p>No users blocked.</p>";
+                return;
+            }
+
+            blockedUsers.forEach(blockedEmail => {
+                const div = document.createElement('div');
+                div.className = "blocked-user";
+
+                const emailSpan = document.createElement('span');
+                emailSpan.className = "blocked-email";
+                emailSpan.textContent = blockedEmail;
+
+                const btn = document.createElement('button');
+                btn.className = "unblock-btn";
+                btn.textContent = "Unblock";
+
+                btn.onclick = async () => {
+                    try {
+                        const userDocRef = doc(db, "user_data", email);
+                        await updateDoc(userDocRef, {
+                            blockedUsers: arrayRemove(blockedEmail)
+                        });
+                        messageDiv.textContent = `${blockedEmail} has been unblocked.`;
+                        // Re-render
+                        loadBlockedUsers(email);
+                    } catch (err) {
+                        console.error("Failed to unblock:", err);
+                        messageDiv.textContent = `Error: ${err.message}`;
+                    }
+                };
+
+                div.appendChild(emailSpan);
+                div.appendChild(btn);
+                blockedList.appendChild(div);
+            });
+        }
+
+        async function loadBlockedUsers(email) {
+            try {
+                const userDocRef = doc(db, "user_data", email);
+                const userSnap = await getDoc(userDocRef);
+
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    renderBlockedUsers(email, data.blockedUsers);
+                } else {
+                    blockedList.innerHTML = "<p>User data not found.</p>";
+                }
+            } catch (err) {
+                messageDiv.textContent = `Failed to load data: ${err.message}`;
+            }
+        }
+
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                const email = user.email;
+                loadBlockedUsers(email);
+            } else {
+                messageDiv.textContent = "Please log in to manage blocked users.";
+            }
+        });
+    </script>
+</body>
+</html>
