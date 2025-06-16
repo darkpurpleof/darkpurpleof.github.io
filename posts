@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>View Post</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    window.onload = () => {
+      const params = new URLSearchParams(window.location.search);
+      const postId = params.get("post");
+
+      if (!postId || postId.trim() === "") {
+        console.warn("No post ID provided.");
+        return;
+      }
+
+      // Launch the app
+      const deeplink = `darkpurpleof://post/${encodeURIComponent(postId)}`;
+      window.location.href = deeplink;
+    };
+  </script>
+</head>
+<body>
+  <h1>Redirecting to the app…</h1>
+  <p>If nothing happens, make sure the DarkPurpleOF app is installed and try <a id="manualLink" href="#">opening the post manually</a>.</p>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get("post");
+    const link = document.getElementById("manualLink");
+
+    if (postId && postId.trim() !== "") {
+      link.href = `darkpurpleof://post/${encodeURIComponent(postId)}`;
+    } else {
+      link.style.display = "none";
+    }
+  </script>
+</body>
+</html>
