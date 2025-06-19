@@ -605,7 +605,7 @@
       // Replace view-profile-btn
       const viewBtn = document.getElementById('view-profile-btn');
       viewBtn.textContent = 'View more in the app';
-      viewBtn.href = `/viewprofile?profile=${encodeURIComponent(targetEmail)}`;
+      viewBtn.href = `/profiles?profile=${encodeURIComponent(targetEmail)}`;
 
       function renderSectionTitle(title) {
   const titleEl = document.createElement('h2');
