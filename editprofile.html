@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Edit Profile</title>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+    :root {
+        --bg-color: #000;
+        --text-color: purple;
+        --box-bg: rgba(128, 0, 128, 0.05);
+        --border-color: purple;
+    }
+
+    body.light {
+        --bg-color: #fff;
+        --text-color: purple;
+        --box-bg: rgba(128, 0, 128, 0.1);
+        --border-color: purple;
+    }
+
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: 'Orbitron', sans-serif;
+        margin: 0;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        min-height: 100vh;
+        transition: background 0.4s, color 0.4s;
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    h1 {
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 0 0 6px var(--text-color);
+        animation: glitch 1.5s infinite;
+    }
+
+    @keyframes glitch {
+        0% { transform: none; }
+        20% { transform: skewX(3deg); }
+        40% { transform: skewX(-3deg); }
+        60% { transform: none; }
+        100% { transform: none; }
+    }
+
+    .card {
+        background-color: var(--box-bg);
+        border: 1.5px solid var(--border-color);
+        border-radius: 12px;
+        max-width: 600px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0;
+        overflow: hidden;
+        text-align: left;
+        user-select: none;
+    }
+
+    .banner {
+        width: 100%;
+        height: 140px;
+        background-color: #333;
+        background-position: center;
+        background-size: cover;
+        cursor: pointer;
+        border-bottom: 1.5px solid var(--border-color);
+        transition: filter 0.3s ease;
+    }
+    .banner:hover {
+        filter: brightness(0.8);
+    }
+
+    .profile-info {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        gap: 15px;
+    }
+
+    .profile-pic {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        background-color: var(--box-bg);
+        border: 1.5px solid var(--border-color);
+        background-position: center;
+        background-size: cover;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: filter 0.3s ease;
+    }
+    .profile-pic:hover {
+        filter: brightness(0.8);
+    }
+
+    .name-section {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.5em;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .verified-icon {
+        width: 22px;
+        height: 22px;
+        background-image: url('/assets/verified.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        filter: drop-shadow(0 0 1px purple);
+    }
+
+    .edit-btn {
+        cursor: pointer;
+        width: 28px;
+        height: 28px;
+        background-image: url('/assets/edit.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        border: none;
+        background-color: transparent;
+        transition: opacity 0.3s ease;
+    }
+    .edit-btn:hover {
+        opacity: 0.7;
+    }
+
+    .email {
+        padding: 0 1.5rem 1rem 1.5rem;
+        color: var(--text-color);
+        font-size: 1em;
+        opacity: 0.7;
+        user-select: text;
+    }
+
+    .view-profile-btn {
+        display: block;
+        margin: 0 1.5rem 1.5rem 1.5rem;
+        width: calc(100% - 3rem);
+        padding: 12px 0;
+        border-radius: 8px;
+        border: 1.5px solid var(--border-color);
+        background-color: var(--box-bg);
+        color: var(--text-color);
+        font-size: 1.2em;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        user-select: none;
+        transition: opacity 0.3s ease;
+    }
+    .view-profile-btn1 {
+        display: block;
+        margin: 0 1.5rem 1.5rem 1.5rem;
+        width: calc(100% - 3rem);
+        padding: 12px 0;
+        border-radius: 8px;
+        border: 1.5px solid var(--border-color);
+        background-color: var(--box-bg);
+        color: var(--text-color);
+        font-size: 1.2em;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        user-select: none;
+        transition: opacity 0.3s ease;
+    }
+    .view-profile-btn:hover {
+        opacity: 0.8;
+    }
+    .view-profile-btn1:hover {
+        opacity: 0.8;
+    }
+
+    /* Dialog Overlay */
+    .dialog-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .dialog-overlay.active {
+        display: flex;
+    }
+
+    /* Dialog Box */
+    .dialog {
+        background-color: var(--bg-color);
+        border: 2px solid var(--border-color);
+        border-radius: 14px;
+        width: 90%;
+        max-width: 400px;
+        padding: 1.5rem;
+        box-sizing: border-box;
+        color: var(--text-color);
+        font-family: 'Orbitron', sans-serif;
+        text-align: center;
+        user-select: text;
+        position: relative;
+    }
+
+    .dialog h2 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.7em;
+        text-shadow: 0 0 6px var(--text-color);
+        animation: glitch 1.5s infinite;
+    }
+
+    .dialog input[type="text"] {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1.5px solid var(--border-color);
+        background-color: var(--box-bg);
+        color: var(--text-color);
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1em;
+        box-sizing: border-box;
+        margin-bottom: 1.2rem;
+    }
+
+    .dialog-buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+    }
+
+    .dialog-buttons button {
+        flex-grow: 1;
+        padding: 10px;
+        font-size: 1.1em;
+        border-radius: 8px;
+        border: 1.5px solid var(--border-color);
+        background-color: var(--box-bg);
+        color: var(--text-color);
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+    }
+    .dialog-buttons button:hover {
+        opacity: 0.8;
+    }
+    .bio-section .edit-btn {
+    width: 20px;
+    height: 20px;
+    background-image: url('/assets/edit.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+.bio-section .edit-btn:hover {
+    opacity: 0.7;
+}
+</style>
+</head>
+<body>
+
+<h1>Edit your profile</h1>
+
+<div class="card" id="profile-card">
+    <div class="banner" id="banner"></div>
+    <div class="profile-info">
+        <div class="profile-pic" id="profile-pic" title="Click to edit profile picture"></div>
+        <div class="name-section">
+            <span id="display-name"></span>
+            <div class="verified-icon" id="verified-icon" style="display:none;" title="Verified User"></div>
+        </div>
+        <button class="edit-btn" id="edit-name-btn" title="Edit display name"></button>
+    </div>
+    <div class="email" id="email"></div>
+    <div class="bio-section" style="padding: 0 1.5rem 1rem 1.5rem; color: var(--text-color); font-size: 1em; user-select: text;">
+        <strong>Bio:</strong> <span id="bio-text">Loading bio...</span>
+        <button class="edit-btn" id="edit-bio-btn" title="Edit bio" style="margin-left: 8px; vertical-align: middle;"></button>
+    </div>    
+    <div id="website-row" style="display: none; padding: 0 1.5rem 1.2rem 1.5rem; color: var(--text-color); font-size: 1em; display: flex; align-items: center; gap: 10px;">
+        <img src="/assets/verified2.png" alt="Verified Domain" style="width: 20px; height: 20px;" />
+        <a id="domain-link" href="#" target="_blank" style="color: var(--text-color); text-decoration: underline; word-break: break-all;"></a>
+    </div>
+    <div id="domain-note" style="display: none; padding: 0 1.5rem 1.5rem 1.5rem; font-size: 0.9em; color: var(--text-color); opacity: 0.7;">
+        This can only be edited or removed in the app
+    </div>   
+    <div id="role-section" style="padding: 0 1.5rem 1rem 1.5rem; display: none; flex-direction: column; gap: 10px;"></div> 
+    <div class="public-profile-toggle" style="padding: 0 1.5rem 1.5rem 1.5rem; color: var(--text-color); font-size: 1em; user-select: none; display: flex; align-items: center; gap: 10px;">
+        <label for="publicProfileCheckbox" style="cursor: pointer;">Public Profile</label>
+        <input type="checkbox" id="publicProfileCheckbox" style="width: 20px; height: 20px; cursor: pointer;" />
+    </div>    
+    <a href="#" class="view-profile-btn" id="view-profile-btn">View your public profile</a>
+    <a href="#" class="view-profile-btn1" id="view-profile-btn1">Manage Blocked Users</a>
+</div>
+
+<!-- Dialog -->
+<div class="dialog-overlay" id="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <div class="dialog">
+        <h2 id="dialog-title">Edit</h2>
+        <input type="text" id="dialog-input" placeholder="Enter URL or text..." />
+        <div class="dialog-buttons">
+            <button id="dialog-cancel-btn">Cancel</button>
+            <button id="dialog-save-btn">Save</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+// Import Firebase libs
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
+    getFirestore, doc, getDoc, setDoc
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+    getAuth, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+  measurementId: "G-S2X2JYC8Z0"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const bannerEl = document.getElementById('banner');
+const profilePicEl = document.getElementById('profile-pic');
+const displayNameEl = document.getElementById('display-name');
+const verifiedIconEl = document.getElementById('verified-icon');
+const emailEl = document.getElementById('email');
+const viewProfileBtn = document.getElementById('view-profile-btn');
+const viewProfileBtn1 = document.getElementById('view-profile-btn1');
+const editNameBtn = document.getElementById('edit-name-btn');
+const websiteRow = document.getElementById('website-row');
+const domainLink = document.getElementById('domain-link');
+const domainNote = document.getElementById('domain-note');
+
+const dialogOverlay = document.getElementById('dialog-overlay');
+const dialogInput = document.getElementById('dialog-input');
+const publicProfileCheckbox = document.getElementById('publicProfileCheckbox');
+const dialogCancelBtn = document.getElementById('dialog-cancel-btn');
+const bioTextEl = document.getElementById('bio-text');
+const editBioBtn = document.getElementById('edit-bio-btn');
+const dialogSaveBtn = document.getElementById('dialog-save-btn');
+
+let currentUser = null;
+let editingField = null; // 'banner', 'profile_picture', or 'display_name'
+
+
+
+// Utility defaults
+const DEFAULT_BANNER = '/assets/default_banner.png';
+const DEFAULT_PFP = 'https://minotar.net/helm/DarkPurpleOF.png';
+
+// Open dialog helper
+function openDialog(field, currentValue) {
+    editingField = field;
+    dialogInput.value = currentValue || '';
+    dialogOverlay.classList.add('active');
+    dialogInput.focus();
+}
+
+// Close dialog helper
+function closeDialog() {
+    dialogOverlay.classList.remove('active');
+    editingField = null;
+    dialogInput.value = '';
+}
+
+dialogCancelBtn.onclick = () => {
+    closeDialog();
+};
+
+dialogOverlay.onclick = (e) => {
+    if (e.target === dialogOverlay) closeDialog();
+};
+
+dialogSaveBtn.onclick = async () => {
+    if (!currentUser) return alert('No user logged in');
+    const newValue = dialogInput.value.trim();
+    if (newValue === '') {
+        alert('Value cannot be empty');
+        return;
+    }
+    const userDocRef = doc(db, 'user_data', currentUser.email);
+    try {
+        const updateObj = {};
+        updateObj[editingField] = newValue;
+        await setDoc(userDocRef, updateObj, { merge: true });
+
+        // Update UI immediately
+        if (editingField === 'banner') {
+            bannerEl.style.backgroundImage = `url(${newValue})`;
+        } else if (editingField === 'profile_picture') {
+            profilePicEl.style.backgroundImage = `url(${newValue})`;
+        } else if (editingField === 'display_name') {
+            displayNameEl.textContent = newValue;
+        } else if (editingField === 'bio') {
+    bioTextEl.textContent = newValue || "Bio not yet set";
+}
+
+        closeDialog();
+    } catch (err) {
+        alert('Failed to update profile data: ' + err.message);
+    }
+};
+
+// Load user data from Firestore
+async function loadUserData(user) {
+    if (!user) return;
+    currentUser = user;
+    emailEl.textContent = user.email;
+    viewProfileBtn.href = `/viewprofile?profile=${encodeURIComponent(user.email)}`;
+    viewProfileBtn1.href = `/manageblockedusers`;
+
+    const userDocRef = doc(db, 'user_data', user.email);
+    const userDocSnap = await getDoc(userDocRef);
+
+    let bannerUrl = DEFAULT_BANNER;
+    let isProfilePublic = false;
+    let pfpUrl = DEFAULT_PFP;
+    let displayName = user.email;
+    let isVerified = false;
+    let bio = "Bio not yet set";
+    websiteRow.style.display = 'none';
+    domainNote.style.display = 'none';
+
+    if (userDocSnap.exists()) {
+        const data = userDocSnap.data();
+        if (data.banner) bannerUrl = data.banner;
+        if (data.profile_picture) pfpUrl = data.profile_picture;
+        if (data['display name']) displayName = data['display name'];
+        if (data.bio && data.bio.trim() !== '') bio = data.bio;
+        if (data.isProfilePublic === true) isProfilePublic = true;
+        if (data.is_verified === true) isVerified = true;
+        if (data.domain_verified === true && typeof data.domain_name === 'string' && data.domain_name.trim() !== '') {
+    domainLink.href = data.domain_name.startsWith('http') ? data.domain_name : 'https://' + data.domain_name;
+    domainLink.textContent = data.domain_name;
+    websiteRow.style.display = 'flex';
+    } else {
+    domainNote.style.display = 'block';
+    }
+    const roleSection = document.getElementById("role-section");
+const roles = data.roles && Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Member'];
+
+const roleMap = {
+    "Administrator": { icon: "/assets/ic_admin.webp", desc: "Official Administrator of the platform, can manage users" },
+    "Member": { icon: "/assets/ic_member.webp", desc: "Normal member of the platform" },
+    "(Creator) English": { icon: "/assets/us.png", desc: "Helped translate the app into English, creator of the app!" },
+    "German helper": { icon: "/assets/de.png", desc: "User who translated the app into German" },
+    "Spanish Helper": { icon: "/assets/es.png", desc: "User who translated the app into Spanish" },
+    "Japanese Helper": { icon: "/assets/jp.png", desc: "User who translated the app into Japanese" },
+    "Russian Helper": { icon: "/assets/ru.png", desc: "User who translated the app into Russian" },
+    "Owner": { icon: "/assets/ic_owner.webp", desc: "The owner of the DarkPurpleOF's website!, official account, it's me DarkPurple!" },
+    "Tester": { icon: "/assets/test.png", desc: "User who tested the app before its official release" },
+    "Legacy User": { icon: "/assets/legacy.png", desc: "Users registered on the platform prior to December 2024" },
+    "System": { icon: "/assets/ic_system.webp", desc: "Official system account!" },
+    "Elite User": { icon: "/assets/elite.png", desc: "Users whose actions or contributions have been deeply known in the platform" },
+    "Feedback Contributor": { icon: "/assets/feedback.png", desc: "Users whose contributions or ideas have been added to the app or website" },
+    "Unbannable": { icon: "/assets/ic_unbannable.webp", desc: "Users who can't be banned by moderation tools or the system" }
+};
+
+const importantRoles = roles.filter(role => roleMap.hasOwnProperty(role));
+
+console.log("User roles:", roles);
+console.log("Filtered important roles:", importantRoles);
+
+if (importantRoles.length > 0) {
+    roleSection.style.display = 'flex';
+    roleSection.innerHTML = ''; // Clear old
+
+    importantRoles.forEach(role => {
+        const { icon, desc } = roleMap[role];
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.alignItems = "center";
+        row.style.gap = "12px";
+
+        row.innerHTML = `
+            <img src="${icon}" alt="${role}" style="width: 32px; height: 32px; flex-shrink: 0;" />
+            <div style="display: flex; flex-direction: column;">
+                <strong style="font-size: 1em; color: var(--text-color);">${role}</strong>
+                <span style="font-size: 0.9em; opacity: 0.8;">${desc}</span>
+            </div>
+        `;
+        roleSection.appendChild(row);
+    });
+
+    // Add note for more roles
+    if (roles.length > importantRoles.length) {
+        const note = document.createElement("div");
+        note.style.marginTop = "8px";
+        note.style.fontSize = "0.9em";
+        note.style.opacity = "0.6";
+        note.textContent = `Other roles can be viewed in the app.`;
+        roleSection.appendChild(note);
+    }
+    }
+    }
+
+    bannerEl.style.backgroundImage = `url(${bannerUrl})`;
+    profilePicEl.style.backgroundImage = `url(${pfpUrl})`;
+    displayNameEl.textContent = displayName;
+    verifiedIconEl.style.display = isVerified ? 'inline-block' : 'none';
+    bioTextEl.textContent = bio;
+    publicProfileCheckbox.checked = isProfilePublic;
+
+}
+
+// Event listeners to open dialog with current values
+bannerEl.addEventListener('click', () => {
+    openDialog('banner', bannerEl.style.backgroundImage.slice(5, -2));
+});
+
+profilePicEl.addEventListener('click', () => {
+    openDialog('profile_picture', profilePicEl.style.backgroundImage.slice(5, -2));
+});
+
+editNameBtn.addEventListener('click', () => {
+    openDialog('display_name', displayNameEl.textContent);
+});
+
+editBioBtn.addEventListener('click', () => {
+    openDialog('bio', bioTextEl.textContent === "Bio not yet set" ? '' : bioTextEl.textContent);
+});
+
+publicProfileCheckbox.addEventListener('change', async () => {
+    if (!currentUser) return;
+    const newVal = publicProfileCheckbox.checked;
+    try {
+        const userDocRef = doc(db, 'user_data', currentUser.email);
+        await setDoc(userDocRef, { isProfilePublic: newVal }, { merge: true });
+        // Optionally: notify user of success/failure silently or with toast
+    } catch (err) {
+        alert('Failed to update Public Profile setting: ' + err.message);
+        // Revert checkbox on error
+        publicProfileCheckbox.checked = !newVal;
+    }
+});
+
+onAuthStateChanged(auth, user => {
+    if (user) {
+        loadUserData(user);
+    } else {
+        window.location.href = '/login.html';
+    }
+});
+</script>
+
+</body>
+</html>
