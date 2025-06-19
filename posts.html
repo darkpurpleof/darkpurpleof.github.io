@@ -1,39 +1,604 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>View Post</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script>
-    window.onload = () => {
-      const params = new URLSearchParams(window.location.search);
-      const postId = params.get("post");
+<meta charset="UTF-8" />
+<title>Post</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
 
-      if (!postId || postId.trim() === "") {
-        console.warn("No post ID provided.");
+    :root {
+        --bg-color: #000;
+        --text-color: purple;
+        --box-bg: rgba(128, 0, 128, 0.05);
+        --border-color: purple;
+    }
+
+    body.light {
+        --bg-color: #fff;
+        --text-color: purple;
+        --box-bg: rgba(128, 0, 128, 0.1);
+        --border-color: purple;
+    }
+
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: 'Orbitron', sans-serif;
+        margin: 0;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        min-height: 100vh;
+        transition: background 0.4s, color 0.4s;
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    .top-bar {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .dark-light-toggle {
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-size: 1.5em;
+        color: var(--text-color);
+        transition: color 0.3s;
+    }
+
+    .dark-light-toggle:hover {
+        opacity: 0.7;
+    }
+
+    h1.page-title {
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 0 0 6px var(--text-color);
+        animation: glitch 1.5s infinite;
+    }
+
+    @keyframes glitch {
+        0% { transform: none; }
+        20% { transform: skewX(3deg); }
+        40% { transform: skewX(-3deg); }
+        60% { transform: none; }
+        100% { transform: none; }
+    }
+
+    .post-card {
+        background-color: var(--box-bg);
+        border: 1.5px solid var(--border-color);
+        border-radius: 10px;
+        width: 100%;
+        max-width: 600px;
+        padding: 20px;
+        text-align: left;
+        box-sizing: border-box;
+        margin-bottom: 30px;
+        box-shadow: 0 0 10px rgba(128, 0, 128, 0.3);
+    }
+
+    .author-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+
+    .profile-pic {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: var(--box-bg);
+        background-position: center;
+        background-size: cover;
+        border: 1.5px solid var(--border-color);
+        flex-shrink: 0;
+    }
+
+    .author-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .author-name-verif {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: bold;
+        font-size: 1.2em;
+        color: var(--text-color);
+    }
+
+    .author-email {
+        font-size: 0.9em;
+        color: var(--text-color);
+        opacity: 0.8;
+        word-break: break-word;
+    }
+
+    .verified-badge {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 2px purple);
+    }
+
+    .post-text {
+        margin-top: 20px;
+        font-size: 1.1em;
+        white-space: pre-wrap;
+    }
+
+    .post-images {
+        margin-top: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: flex-start;
+    }
+
+    .post-images img {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 10px;
+        object-fit: contain;
+        border: 1.5px solid var(--border-color);
+    }
+
+    .blocked-message {
+        font-size: 1.3em;
+        color: red;
+        margin-top: 50px;
+        font-weight: bold;
+    }
+
+    .interact-button {
+        background-color: var(--box-bg);
+        color: var(--text-color);
+        padding: 16px 28px;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        font-size: 1.4em;
+        cursor: pointer;
+        max-width: 600px;
+        width: 100%;
+        transition: opacity 0.3s;
+        user-select: none;
+    }
+
+    .interact-button:hover {
+        opacity: 0.8;
+    }
+    
+    .button-row {
+    margin-top: 15px;
+    display: flex;
+    gap: 20px;
+  }
+
+  .action-button {
+    flex: 1;
+    background-color: var(--box-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px 0;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--text-color);
+    user-select: none;
+    transition: opacity 0.3s;
+  }
+  .action-button:hover:not(:disabled) {
+    opacity: 0.75;
+  }
+  .action-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  .comments-section {
+    max-width: 600px;
+    width: 100%;
+    margin-top: 30px;
+    text-align: left;
+  }
+
+  .comment {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .comment .profile-pic {
+    width: 40px;
+    height: 40px;
+  }
+
+  .comment-content {
+    flex: 1;
+  }
+
+  .comment-author {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-color);
+  }
+
+  .comment-text {
+    margin-top: 4px;
+    white-space: pre-wrap;
+  }
+
+  .comment-input-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .comment-input {
+    flex: 1;
+    padding: 10px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    background-color: var(--box-bg);
+    color: var(--text-color);
+    font-size: 1em;
+    box-sizing: border-box;
+  }
+
+  .comment-send-btn {
+    background-color: var(--box-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0 20px;
+    font-weight: bold;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: opacity 0.3s;
+    user-select: none;
+  }
+  .comment-send-btn:hover:not(:disabled) {
+    opacity: 0.75;
+  }
+  .comment-send-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  .comments-disabled-message {
+    color: red;
+    font-weight: bold;
+    margin-top: 15px;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+    <button id="toggleTheme" class="dark-light-toggle" title="Toggle Light/Dark Mode">🌓</button>
+</div>
+
+<h1 class="page-title" id="pageTitle">Post</h1>
+
+<div id="postContainer">
+  <!-- Post card or blocked message will appear here -->
+</div>
+
+<button id="interactBtn" class="interact-button" style="display:none;">
+  Interact with this post in the app!
+</button>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script>
+  // Initialize Firebase here with your config
+  const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+  measurementId: "G-S2X2JYC8Z0"
+};
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  // Theme toggle logic
+  const toggleBtn = document.getElementById('toggleTheme');
+  toggleBtn.onclick = () => {
+    document.body.classList.toggle('light');
+    localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+  };
+  // Load saved theme on start
+  if(localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+
+  // Grab post ID from URL param
+  const params = new URLSearchParams(window.location.search);
+  const postId = params.get('post');
+
+  const postContainer = document.getElementById('postContainer');
+  const interactBtn = document.getElementById('interactBtn');
+  const pageTitle = document.getElementById('pageTitle');
+
+  if (!postId || postId.trim() === '') {
+    postContainer.innerHTML = '<p style="color:red;">No post ID provided in URL.</p>';
+  } else {
+    // Wait for auth user - anonymous or signed in
+    auth.onAuthStateChanged(async (user) => {
+      const currentUserEmail = user?.email?.toLowerCase() || null;
+
+      try {
+      // Get post doc
+      const postDoc = await db.collection('posts').doc(postId).get();
+      if (!postDoc.exists) {
+        postContainer.innerHTML = '<p style="color:red;">Post not found.</p>';
+        interactBtn.style.display = 'none';
         return;
       }
 
-      // Launch the app
-      const deeplink = `darkpurpleof://post/${encodeURIComponent(postId)}`;
-      window.location.href = deeplink;
-    };
-  </script>
-</head>
-<body>
-  <h1>Redirecting to the app…</h1>
-  <p>If nothing happens, make sure the DarkPurpleOF app is installed and try <a id="manualLink" href="#">opening the post manually</a>.</p>
+      const editorEmailRaw = postDoc.get('editor');
+      if (!editorEmailRaw) {
+        postContainer.innerHTML = '<p style="color:red;">Post editor info missing.</p>';
+        interactBtn.style.display = 'none';
+        return;
+      }
+      const editorEmail = editorEmailRaw.toLowerCase();
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const postId = params.get("post");
-    const link = document.getElementById("manualLink");
+      // Author user data
+      const editorUserDoc = await db.collection('user_data').doc(editorEmail).get();
+      if (!editorUserDoc.exists) {
+        postContainer.innerHTML = '<p style="color:red;">Author data not found.</p>';
+        interactBtn.style.display = 'none';
+        return;
+      }
+      const displayName = editorUserDoc.get('display name') || editorEmail;
+      const profilePicUrl = editorUserDoc.get('profile_picture') || '';
+      const blockedUsers = editorUserDoc.get('blockedUsers') || [];
+      const verified = editorUserDoc.get('is_verified') === true;
 
-    if (postId && postId.trim() !== "") {
-      link.href = `darkpurpleof://post/${encodeURIComponent(postId)}`;
+      // Check if viewer blocked
+      const isBlocked = currentUserEmail && blockedUsers.includes(currentUserEmail);
+
+      // Post content
+      const postText = postDoc.get('text') || '';
+      const postImages = postDoc.get('images') || [];
+      const likedBy = postDoc.get('likedBy') || [];
+      const commentsSetting = (postDoc.get('comments') || 'everyone').toLowerCase();
+
+      // Set titles
+      document.title = `${displayName}'s post`;
+      pageTitle.textContent = `${displayName}'s post`;
+
+      if (isBlocked) {
+        postContainer.innerHTML = `<p class="blocked-message">You don't have permission to view this post.</p>`;
+        interactBtn.style.display = 'none';
+        return;
+      }
+
+      // Build verification badge html
+      const verifiedBadgeHTML = verified
+        ? `<img src="/assets/verified.png" alt="Verified" class="verified-badge" title="Verified User" />`
+        : '';
+
+      // Profile pic style inline
+      const profilePicStyle = profilePicUrl
+        ? `background-image: url('${profilePicUrl}');`
+        : 'background-color: rgba(128,0,128,0.2);';
+
+      // Build images HTML
+      let imagesHTML = '';
+      if (Array.isArray(postImages) && postImages.length > 0) {
+        imagesHTML = `<div class="post-images">` + postImages.map(url => {
+          const safeUrl = encodeURI(url);
+          return `<img src="${safeUrl}" alt="Post image" loading="lazy" />`;
+        }).join('') + `</div>`;
+      }
+
+      let userLiked = false; // <-- FIXED
+
+      userLiked = currentUserEmail ? likedBy.includes(currentUserEmail) : false; // <-- FIXED
+
+      // Compose post card with buttons & comments container
+      postContainer.innerHTML = `
+        <div class="post-card">
+          <div class="author-info">
+            <div class="profile-pic" style="${profilePicStyle}"></div>
+            <div class="author-details">
+              <div class="author-name-verif">
+                ${displayName} ${verifiedBadgeHTML}
+              </div>
+              <div class="author-email">${editorEmail}</div>
+            </div>
+          </div>
+          <div class="post-text">${postText.replace(/\n/g, '<br>')}</div>
+          ${imagesHTML}
+          <div class="button-row">
+            <button id="likeBtn" class="action-button">${userLiked ? 'Unlike' : 'Like'}</button>
+            <button id="reportBtn" class="action-button">Report</button>
+          </div>
+          <div id="commentsSection" class="comments-section">
+            <h3>Comments</h3>
+            <div id="commentsList"></div>
+            <div id="commentsDisabledMsg" class="comments-disabled-message" style="display:none;"></div>
+            <div class="comment-input-row" style="display:none;">
+              <input id="commentInput" class="comment-input" type="text" placeholder="Write a comment..." maxlength="500" />
+              <button id="sendCommentBtn" class="comment-send-btn" disabled>Send</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      interactBtn.style.display = 'block';
+      interactBtn.onclick = () => {
+        window.location.href = `darkpurpleof://posts/${encodeURIComponent(postId)}`;
+      };
+
+      // Like button logic
+      const likeBtn = document.getElementById('likeBtn');
+likeBtn.onclick = async () => {
+  if (!currentUserEmail) return alert('You must be logged in to like posts.');
+  try {
+    likeBtn.disabled = true;
+    const postRef = db.collection('posts').doc(postId);
+    if (userLiked) {
+      await postRef.update({
+        likedBy: firebase.firestore.FieldValue.arrayRemove(currentUserEmail),
+      });
+      likeBtn.textContent = 'Like';
     } else {
-      link.style.display = "none";
+      await postRef.update({
+        likedBy: firebase.firestore.FieldValue.arrayUnion(currentUserEmail),
+      });
+      likeBtn.textContent = 'Unlike';
     }
-  </script>
+    userLiked = !userLiked; // <-- Now safe, it's declared as `let`
+  } catch (e) {
+    alert('Error updating like status: ' + e.message);
+  }
+  likeBtn.disabled = false;
+};
+
+      // Report button logic
+      const reportBtn = document.getElementById('reportBtn');
+      reportBtn.onclick = () => {
+        window.location.href = `/reportabuse?reporting=${encodeURIComponent(editorEmail)}`;
+      };
+
+      // Comments logic
+      const commentsList = document.getElementById('commentsList');
+      const commentsDisabledMsg = document.getElementById('commentsDisabledMsg');
+      const commentInputRow = postContainer.querySelector('.comment-input-row');
+      const commentInput = document.getElementById('commentInput');
+      const sendCommentBtn = document.getElementById('sendCommentBtn');
+
+      // Helper: can current user comment based on commentsSetting?
+      const canComment = (() => {
+        if (!currentUserEmail) return false;
+        switch (commentsSetting) {
+          case 'none': return false;
+          case 'verified': return verified;
+          case 'admins': return currentUserEmail.endsWith('@darkpurpleof.github.io');
+          case 'everyone': return true;
+          default: return true;
+        }
+      })();
+
+      if (commentsSetting === 'none') {
+        commentsDisabledMsg.style.display = 'block';
+        commentsDisabledMsg.textContent = 'Comments Disabled';
+        commentInputRow.style.display = 'none';
+      } else {
+        commentsDisabledMsg.style.display = 'none';
+        if (canComment) {
+          commentInputRow.style.display = 'flex';
+        } else {
+          commentInputRow.style.display = 'none';
+        }
+      }
+
+      // Enable send button only when input has content
+      commentInput.addEventListener('input', () => {
+        sendCommentBtn.disabled = commentInput.value.trim().length === 0;
+      });
+
+      // Fetch & listen to comments
+      const commentsRef = db.collection('posts').doc(postId).collection('comments').orderBy('timestamp', 'asc');
+      commentsRef.onSnapshot(async (snapshot) => {
+        commentsList.innerHTML = ''; // clear existing comments
+
+        // Fetch all comment authors user_data in parallel to check block status
+        const commentDocs = snapshot.docs;
+        const authorEmailsSet = new Set(commentDocs.map(d => d.get('author').toLowerCase()));
+        const authorEmails = Array.from(authorEmailsSet);
+
+        // Batch fetch authors user_data
+        const authorDocs = await Promise.all(authorEmails.map(email =>
+          db.collection('user_data').doc(email).get()
+        ));
+        const authorDataMap = {};
+        authorDocs.forEach(doc => {
+          if (doc.exists) authorDataMap[doc.id.toLowerCase()] = doc.data();
+        });
+
+        // Render each comment
+        for (const doc of commentDocs) {
+          const cAuthorEmail = doc.get('author').toLowerCase();
+          const cText = doc.get('text') || '';
+          const cAuthorData = authorDataMap[cAuthorEmail];
+
+          // Skip comment if current user is blocked by the commentator
+          if (cAuthorData?.blockedUsers && currentUserEmail && cAuthorData.blockedUsers.includes(currentUserEmail)) {
+            continue;
+          }
+
+          const cDisplayName = cAuthorData?.['display name'] || cAuthorEmail;
+          const cPfp = cAuthorData?.profile_picture || '';
+          const cVerified = cAuthorData?.is_verified === true;
+
+          const cVerifiedBadgeHTML = cVerified
+            ? `<img src="/assets/verified.png" alt="Verified" class="verified-badge" style="width:16px;height:16px;" title="Verified User" />`
+            : '';
+
+          const cProfilePicStyle = cPfp
+            ? `background-image: url('${cPfp}');`
+            : 'background-color: rgba(128,0,128,0.2);';
+
+          const commentHTML = `
+            <div class="comment">
+              <div class="profile-pic" style="${cProfilePicStyle}"></div>
+              <div class="comment-content">
+                <div class="comment-author">${cDisplayName} ${cVerifiedBadgeHTML}</div>
+                <div class="comment-text">${cText.replace(/\n/g, '<br>')}</div>
+              </div>
+            </div>
+          `;
+
+          commentsList.insertAdjacentHTML('beforeend', commentHTML);
+        }
+      });
+
+      // Send comment button
+      sendCommentBtn.onclick = async () => {
+        const text = commentInput.value.trim();
+        if (!text) return;
+
+        try {
+          await db.collection('posts').doc(postId).collection('comments').add({
+            author: currentUserEmail,
+            text,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          commentInput.value = '';
+          sendCommentBtn.disabled = true;
+        } catch (e) {
+          alert('Error sending comment: ' + e.message);
+        }
+      };
+
+    } catch (err) {
+      console.error('Error loading post:', err);
+      postContainer.innerHTML = '<p style="color:red;">Error loading post data.</p>';
+      interactBtn.style.display = 'none';
+    }
+  });
+}
+</script>
+
 </body>
 </html>
