@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create a Sticker Pack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+        :root {
+            --bg-color: #000;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.05);
+            --border-color: purple;
+        }
+
+        .disabled-button {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+        dialog#imageDialog {
+    background-color: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    width: 90%;
+    max-width: 400px;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    color: var(--text-color);
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+    user-select: text;
+    animation: fadeIn 0.3s ease;
+    z-index: 9999;
+}
+
+dialog::backdrop {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+dialog#imageDialog p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.4em;
+    text-shadow: 0 0 6px var(--text-color);
+    animation: glitch 1.5s infinite;
+}
+
+#imgUrlInput {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border-color);
+    background-color: var(--box-bg);
+    color: var(--text-color);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+a {
+  color: #d87aff; /* soft lavender-purple */
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #f0aaff; /* brighter purple on hover */
+}
+
+a {
+  animation: glitch 1.5s infinite;
+}
+
+
+#imageDialog button.register-button {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 1.1em;
+    border-radius: 8px;
+    border: 1.5px solid var(--border-color);
+    background-color: var(--box-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    font-family: 'Orbitron', sans-serif;
+    margin: 0 5px;
+}
+
+#imageDialog button.register-button:hover {
+    opacity: 0.8;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+
+        body.light {
+            --bg-color: #fff;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.1);
+            --border-color: purple;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh;
+            transition: background 0.4s, color 0.4s;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .icon-btn {
+            font-size: 22px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 6px;
+            transition: opacity 0.3s;
+        }
+
+        /* Add this to the existing <style> block */
+.input-field:disabled {
+  background-color: rgba(128, 0, 128, 0.2); /* Lighter background */
+  color: rgba(128, 0, 128, 0.6); /* Dimmed text color */
+  cursor: not-allowed; /* Show disabled cursor */
+}
+
+.register-button:disabled {
+  background-color: rgba(128, 0, 128, 0.2); /* Lighter background */
+  color: rgba(128, 0, 128, 0.6); /* Dimmed text color */
+  cursor: not-allowed; /* Show disabled cursor */
+  border-color: rgba(128, 0, 128, 0.4); /* Dimmed border */
+}
+
+        .icon-btn:hover {
+            opacity: 0.7;
+        }
+
+        .profile-pic {
+            width: 32px;
+            height: 32px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+        }
+
+        img[alt="Delete"]:hover {
+    opacity: 0.7;
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 6px var(--text-color);
+            animation: glitch 1.5s infinite;
+        }
+
+        .info-chart {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            display: inline-block;
+            text-align: left;
+            transition: background-color 0.3s, border-color 0.3s;
+            width: auto; /* Ensuring it doesn't stretch full width */
+            max-width: 500px; /* Optional: To limit the chart width */
+        }
+
+        .input-field {
+            width: calc(100% - 2px); /* Take up almost all width minus padding */
+            padding: 12px;
+            margin: 10px 0;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--box-bg);
+            color: var(--text-color);
+            box-sizing: border-box;
+        }
+
+        .register-button {
+            width: calc(100% - 2px); /* Same as input field */
+            background-color: var(--box-bg);
+            color: var(--text-color);
+            padding: 12px 20px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .register-button:hover {
+            opacity: 0.8;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+
+        .success-message {
+            color: purple;
+            margin-top: 10px;
+            font-size: 1em;
+        }
+
+        .dark-light-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+
+        .dark-mode .dark-light-toggle {
+            color: var(--text-color);
+        }
+
+        @keyframes glitch {
+            0% { transform: none; }
+            20% { transform: skewX(3deg); }
+            40% { transform: skewX(-3deg); }
+            60% { transform: none; }
+            100% { transform: none; }
+        }
+
+        /* Add this to the existing <style> block */
+.styled-button {
+  display: inline-block;
+  padding: 12px 20px;
+  font-size: 1.2em;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-color);
+  background-color: var(--box-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.styled-button:hover {
+  background-color: rgba(128, 0, 128, 0.2); /* Slightly lighter background */
+  color: #f0aaff; /* Brighter purple on hover */
+}
+
+/* Add this to the existing <style> block */
+.button-container {
+  display: flex;
+  gap: 10px; /* Space between buttons */
+  justify-content: center; /* Center the buttons */
+  margin-top: 20px; /* Add spacing above the container */
+}
+
+.register-button,
+.styled-button {
+  flex: 1; /* Make both buttons the same size */
+  max-width: 200px; /* Optional: Limit the button width */
+}
+    </style>
+</head>
+<body>
+  <h1>Create a sticker pack</h1>
+  <p>To use sticker packs you need app version 9.1 or above — <a href="https://darkpurpleof.github.io/release/download" target="_blank">download it here</a></p>
+
+  <button class="dark-light-toggle" onclick="document.body.classList.toggle('light')">🌓</button>
+
+
+  <div class="info-chart">
+    <input class="input-field" id="packId" placeholder="Pack ID">
+    <input class="input-field" id="packName" placeholder="Pack Name">
+    <input class="input-field" id="packAuthor" placeholder="Pack Author">
+    <textarea class="input-field" id="packDescription" placeholder="Description (max 500 chars)" maxlength="500"></textarea>
+  </div>
+
+  <div id="stickersContainer" class="info-chart" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"></div>
+  <p id="errorMessage" class="error-message"></p>
+  <!-- Wrap the buttons in a container -->
+<div class="button-container">
+  <button class="register-button" id="exportBtn" disabled>Export to Sticker Pack</button>
+  <label for="importFile" class="styled-button">Import from Pack</label>
+  <input type="file" id="importFile" accept=".dpfstickers" style="display: none;" />
+</div>
+  <dialog id="imageDialog">
+    <form method="dialog">
+      <p>Enter image URL:</p>
+      <input id="imgUrlInput" type="url" placeholder="https://example.com/image.png" required />
+      <div style="margin-top:10px; display:flex; justify-content:space-between;">
+        <button class="register-button" id="confirmAddImage">Add Image</button>
+        <button class="register-button" type="button" onclick="document.getElementById('imageDialog').close()">Cancel</button>
+      </div>
+    </form>
+  </dialog>  
+
+  <script>
+    const maxStickers = 50;
+    const stickers = [];
+    let currentEditingIndex = null;
+
+    const stickersContainer = document.getElementById('stickersContainer');
+    const exportBtn = document.getElementById('exportBtn');
+    const errorMessage = document.getElementById('errorMessage');
+    const imgDialog = document.getElementById('imageDialog');
+    const imgUrlInput = document.getElementById('imgUrlInput');
+    
+
+    function createAddCard() {
+      const card = document.createElement('div');
+      card.className = 'info-chart';
+      card.style.width = '120px';
+      card.style.height = '120px';
+      card.style.display = 'flex';
+      card.style.flexDirection = 'column';
+      card.style.justifyContent = 'center';
+      card.style.alignItems = 'center';
+      card.style.cursor = 'pointer';
+      card.innerHTML = '<span style="font-size: 40px">+</span>';
+      card.onclick = () => {
+        currentEditingIndex = null;
+        imgUrlInput.value = '';
+        imgDialog.showModal();
+      };
+      stickersContainer.appendChild(card);
+    }
+
+    function renderStickers() {
+  stickersContainer.innerHTML = '';
+  let hasSizeWarning = false; // Track if any sticker has size issues
+
+  stickers.forEach((sticker, index) => {
+    const card = document.createElement('div');
+    card.className = 'info-chart';
+    card.style.width = '255px';
+    card.style.height = 'auto';
+    card.style.position = 'relative';
+    card.style.padding = '10px';
+    card.style.boxSizing = 'border-box';
+    card.style.overflow = 'hidden';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.alignItems = 'center';
+    card.style.gap = '8px';
+
+    // Create image element to load and validate dimensions
+    const imgElement = document.createElement('img');
+    imgElement.src = sticker.url;
+    imgElement.style.maxHeight = '255px';
+    imgElement.style.maxWidth = '100%';
+    imgElement.style.objectFit = 'contain';
+    imgElement.style.cursor = 'pointer';
+    imgElement.onclick = () => {
+      currentEditingIndex = index;
+      imgUrlInput.value = sticker.url;
+      imgDialog.showModal();
+    };
+
+    // Dimension feedback text
+    const dimFeedback = document.createElement('div');
+    dimFeedback.style.fontSize = '0.9em';
+    dimFeedback.style.textAlign = 'center';
+
+    const imageCheck = new Image();
+    imageCheck.onload = () => {
+      const { width, height } = imageCheck;
+      if (width > 255 || height > 255) {
+        dimFeedback.textContent = `❗ Too big (${width}x${height})`;
+        dimFeedback.style.color = 'red';
+        hasSizeWarning = true; // Set warning flag
+      } else if (width < 200 || height < 200) {
+        dimFeedback.textContent = `⚠️ Too small (${width}x${height})`;
+        dimFeedback.style.color = 'orange';
+        hasSizeWarning = true; // Set warning flag
+      } else {
+        dimFeedback.textContent = `☑️ ${width}x${height}`;
+        dimFeedback.style.color = 'purple';
+      }
+    };
+    imageCheck.onerror = () => {
+      dimFeedback.textContent = `❌ Could not load`;
+      dimFeedback.style.color = 'red';
+    };
+    imageCheck.src = sticker.url;
+
+    // ID input
+    const idInput = document.createElement('input');
+    idInput.placeholder = 'ID';
+    idInput.className = 'input-field';
+    idInput.style.width = '100%';
+    idInput.value = sticker.id || '';
+    idInput.onchange = (e) => updateSticker(index, 'id', e.target.value);
+    idInput.onclick = (e) => e.stopPropagation();
+
+    // Name input
+    const nameInput = document.createElement('input');
+    nameInput.placeholder = 'Name';
+    nameInput.className = 'input-field';
+    nameInput.style.width = '100%';
+    nameInput.value = sticker.name || '';
+    nameInput.onchange = (e) => updateSticker(index, 'name', e.target.value);
+    nameInput.onclick = (e) => e.stopPropagation();
+
+    // Error display
+    const errorMsg = document.createElement('p');
+    errorMsg.className = 'error-message';
+    errorMsg.id = `error-${index}`;
+
+    // Delete button
+    const deleteBtn = document.createElement('img');
+    deleteBtn.src = '/assets/delete.png';
+    deleteBtn.alt = 'Delete';
+    deleteBtn.style.position = 'absolute';
+    deleteBtn.style.top = '6px';
+    deleteBtn.style.right = '6px';
+    deleteBtn.style.width = '20px';
+    deleteBtn.style.height = '20px';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.onclick = (e) => {
+      e.stopPropagation();
+      stickers.splice(index, 1);
+      renderStickers();
+    };
+
+    // Add all to card
+    card.appendChild(imgElement);
+    card.appendChild(dimFeedback);
+    card.appendChild(idInput);
+    card.appendChild(nameInput);
+    card.appendChild(errorMsg);
+    card.appendChild(deleteBtn);
+    stickersContainer.appendChild(card);
+  });
+
+  // Add disclaimer if there are size warnings
+  if (hasSizeWarning) {
+    const disclaimer = document.createElement('p');
+    disclaimer.textContent =
+      '⚠️ In the app, stickers always display the same size. Stickers that are too small or too big may fail to load, not show at all, or be cropped.';
+    disclaimer.style.color = 'yellow';
+    disclaimer.style.fontSize = '1em';
+    disclaimer.style.marginTop = '10px';
+    disclaimer.style.textAlign = 'center';
+    stickersContainer.appendChild(disclaimer);
+  }
+
+  if (stickers.length < maxStickers) createAddCard();
+  validateExportReady();
+}
+
+
+
+    function updateSticker(index, field, value) {
+      stickers[index][field] = value;
+      validateExportReady();
+    }
+
+    // Add this below the existing script
+document.getElementById('importFile').onchange = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      // Validate the imported file structure
+      if (!data.packId || !data.name || !data.author || !data.stickers) {
+        errorMessage.textContent = 'Invalid file format';
+        return;
+      }
+
+      // Populate fields with imported data
+      document.getElementById('packId').value = data.packId;
+      document.getElementById('packName').value = data.name;
+      document.getElementById('packAuthor').value = data.author;
+      document.getElementById('packDescription').value = data.description || '';
+      stickers.length = 0; // Clear existing stickers
+      stickers.push(...data.stickers.map(s => ({ id: s.id, name: s.name, url: s.resource })));
+
+      // Disable editing for name, author, and ID
+      document.getElementById('packId').disabled = true;
+      document.getElementById('packName').disabled = true;
+      document.getElementById('packAuthor').disabled = true;
+
+      renderStickers();
+      errorMessage.textContent = '';
+    } catch (err) {
+      errorMessage.textContent = 'Error reading file';
+    }
+  };
+
+  reader.readAsText(file);
+};
+
+    document.getElementById('confirmAddImage').onclick = (e) => {
+      e.preventDefault();
+      const url = imgUrlInput.value;
+
+      // Validate URL format
+      if (!url.startsWith('https://')) {
+        errorMessage.textContent = 'URL must start with https://';
+        return;
+      }
+      
+      const img = new Image();
+      img.onload = () => {
+        if (img.width > 250 || img.height > 250) {
+          errorMessage.textContent = 'Image too big: must be 250x250 or smaller';
+        } else {
+          errorMessage.textContent = '';
+          if (currentEditingIndex !== null) {
+            stickers[currentEditingIndex].url = url;
+          } else {
+            stickers.push({ url, id: '', name: '' });
+          }
+          renderStickers();
+        }
+        imgDialog.close();
+      };
+      img.onerror = () => {
+        errorMessage.textContent = 'Invalid image URL or not an image';
+        imgDialog.close();
+      };
+      img.src = url;
+    };
+
+    function validateExportReady() {
+  let valid = true;
+  const ids = new Set();
+
+
+  
+  stickers.forEach((sticker, index) => {
+    const idField = document.querySelector(`#error-${index}`);
+    if (!sticker.id || ids.has(sticker.id)) {
+      idField.textContent = !sticker.id ? 'Missing ID' : 'Duplicate ID';
+      valid = false;
+    } else {
+      idField.textContent = '';
+      ids.add(sticker.id);
+    }
+  });
+
+  const ready = valid && stickers.length >= 2;
+
+  exportBtn.disabled = !ready;
+  exportBtn.classList.toggle('disabled-button', !ready);
+}
+
+
+    exportBtn.onclick = () => {
+      const packId = document.getElementById('packId').value;
+      const packName = document.getElementById('packName').value;
+      const packAuthor = document.getElementById('packAuthor').value;
+      const packDescription = document.getElementById('packDescription').value;
+      const date = new Date().toISOString();
+      const data = {
+        packId,
+        name: packName,
+        description: packDescription,
+        author: packAuthor,
+        date,
+        stickers: stickers.map(s => ({ id: s.id, name: s.name, resource: s.url }))
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${packId}.dpfstickers`;
+      link.click();
+    };
+
+    renderStickers();
+  </script>
+</body>
+</html>
