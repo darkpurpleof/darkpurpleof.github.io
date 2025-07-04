@@ -335,7 +335,7 @@ const firebaseConfig = {
         title: "Free Coins",
         description: "Get free 1000 coins for testing the preview",
         price: 0,
-        image: "https://static.vecteezy.com/system/resources/previews/011/192/447/non_2x/rupiah-money-3d-illustration-free-png.png",
+        image: "https://minotar.net/helm/DarkPurpleOf/200.png",
         action: async () => {
             if (!currentUser) {
                 alert("You must be signed in to receive coins.");
@@ -359,8 +359,64 @@ const firebaseConfig = {
                 alert("Something went wrong while adding coins.");
             }
         }
+    },
+    {
+        productId: "FURRYROLE",
+        title: "Furry Role",
+        description: "ooh, you like kissing boys, dont you?",
+        price: 50,
+        image: "https://media1.tenor.com/m/2hCfz7DcxcEAAAAd/boykisser-boykisser-meme.gif",
+        action: async () => {
+            if (!currentUser) {
+                alert("You must be signed in to update your roles.");
+                return;
+            }
+
+            const email = currentUser.email;
+            const userDoc = doc(db, "user_data", email);
+
+            try {
+                await updateDoc(userDoc, {
+                    roles: arrayUnion("Furry")
+                });
+            } catch (e) {
+                console.error("Failed to update roles:", e);
+                alert("Something went wrong while updating roles.");
+            }
+        }
+    },
+    {
+        productId: "MESSAGELIMITNONE",
+        title: "No message limit",
+        description: "No longer be limited by the 300 character limit, get infinite character messages!",
+        price: 300,
+        image: "https://darkpurpleof.github.io/assets/360_F_1231361662_LFZiAQMDXEKfOvKIfNBQoXp9OVgIMaq2.webp",
+        action: async () => {
+            // No action needed; ID is enough
+        }
+    },
+    {
+        productId: "CWALLPAPER",
+        title: "Chat Wallpapers",
+        description: "Save your chat wallpapers remotely instead of just locally!",
+        price: 1000,
+        image: "https://4kwallpapers.com/images/walls/thumbs_3t/8133.jpg",
+        action: async () => {
+            // No action needed; ID is enough
+        }
+    },
+    {
+        productId: "USELESSBOYKISSER",
+        title: "Yet another boykisser",
+        description: "Who?",
+        price: 1,
+        image: "https://boykisser2189.neocities.org/boykisseridk.gif",
+        action: () => {
+            window.open("https://boykisser2189.neocities.org/boykisser", "_blank");
+        }
     }
 ];
+
 
         function renderShop() {
             shopItems.forEach(item => {
