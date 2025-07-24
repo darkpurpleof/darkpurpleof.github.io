@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+        :root {
+            --bg-color: #000;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.05);
+            --border-color: purple;
+        }
+
+        body.light {
+            --bg-color: #fff;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.1);
+            --border-color: purple;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh;
+            transition: background 0.4s, color 0.4s;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .profile-preview {
+        background-color: #141414;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 500px;
+        overflow: hidden;
+        margin-top: 20px;
+        cursor: pointer;
+    }
+
+    .profile-banner {
+        width: 100%;
+        height: 100px;
+        background-color: #333;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .profile-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+    }
+
+    .profile-pfp {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        background-size: cover;
+        background-position: center;
+        flex-shrink: 0;
+    }
+
+    .profile-text {
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+        overflow: hidden;
+    }
+
+    .profile-name-verif img {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+    .profile-bio {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
+    }
+
+    .profile-bio,
+.profile-name-verif span,
+#preview-name {
+    color: #fff;
+}
+
+        .friends-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 10px;
+    margin-top: 20px;
+    scroll-behavior: smooth;
+}
+
+.friends-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.friends-container::-webkit-scrollbar-thumb {
+    background: purple;
+    border-radius: 4px;
+}
+
+.friend-card {
+    flex: 0 0 auto;
+    width: 80px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.friend-pfp {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
+    background-size: cover;
+    background-position: center;
+    margin: auto;
+}
+
+.friend-name {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    margin-top: 5px;
+    word-break: break-word;
+}
+
+.friend-name img {
+    width: 14px;
+    height: 14px;
+}
+
+iframe {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+}
+iframe::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .action-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: var(--box-bg);
+    border: 1.5px solid var(--border-color);
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 15px;
+    width: 80%;
+    max-width: 300px;
+    transition: background 0.2s;
+}
+
+.action-button:hover {
+    background-color: rgba(128, 0, 128, 0.15);
+}
+
+.action-button img {
+    width: 20px;
+    height: 20px;
+}
+
+        .top-bar-left {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .top-bar-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            font-size: 22px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 6px;
+            transition: opacity 0.3s;
+        }
+
+        .icon-btn:hover {
+            opacity: 0.7;
+        }
+
+        .profile-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            width: 32px;
+            height: 32px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .info-chart {
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #202016;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .info-chart button {
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .announcement-title {
+            font-size: 1.2rem;
+            margin: 5px 0;
+        }
+
+        .announcement-message {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .card {
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            width: 80%;
+            max-width: 500px;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        .action-button img {
+            width: 20px;
+            height: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div class="top-bar-left">Home</div>
+    <div class="top-bar-right">
+        <button id="coin-display" class="icon-btn">DF$ - 0</button>
+        <img src="/assets/search.png" class="icon-btn" onclick="location.href='/search'" alt="Search">
+        <svg class="icon-btn" onclick="location.href='/ugc/posts'" viewBox="0 0 2000 2000" width="24" height="24">
+            <path fill="#F1F1F1" d="m1657,116h47l19,2 20,6 9,6 7,8 4,11 2,18 2,43 1,48v1278l-3,31 -4,16 -5,12 -9,11 -14,11 -16,8 -12,4 -23,2h-343l-2,-5 -2,-23 -1,-19v-14l3,-36 3,-23 2,-11 2,-2 257,-1v-320l1,-13 5,-14 8,-31 10,-33 11,-31 14,-38 13,-41 7,-25 7,-32 7,-47 2,-20 1,-21v-107l-2,-21 -7,-29 -11,-33 -12,-25 -10,-15 -11,-14 -9,-10 -17,-17 -6,-5 -1,-2 -1,-266 -546,1h-108l-548,-1 1,678v578l1,46v42l-1,1h-118l-9,-3 -8,-6 -11,-12 -10,-14 -5,-11 -4,-16 -1,-24 -1,-10 -1,-36 -1,-692 -1,-27 -2,-23 -1,-36v-507l2,-23 4,-15 5,-12 9,-13 9,-11 7,-7 15,-9 17,-6 9,-2h1328z"/>
+  <path fill="#F1F1F1" d="m1561,573 l12,1 12,5 12,11 15,15 13,17 10,18 10,25 7,22 4,21 3,23 1,21v46l-2,42 -1,12 -1,14 -4,40 -1,12 5,5 -2,13 -6,14 -8,30 -10,35 -12,38 -8,22 -5,22 -8,26 -8,19 -7,14 -12,29 -9,17 -15,24 -10,19 -8,16 -9,15 -9,11 -12,13 -13,12 -19,14 -17,13 -28,21 -13,10 -25,20 -13,11 -11,9 -11,10 -11,9 -7,7 -8,7 -8,8 -8,14 -5,13 -1,8 -3,60 -2,39 -1,44 -1,2 -667,1h-171l-2,-1 1,-17 1,-15 2,-72 1,-138 2,-16 6,-21 10,-25 9,-15 13,-16 10,-11 7,-8 30,-30 14,-11 21,-14 6,-8 9,-6 21,-12 44,-22 29,-13 16,-8 25,-11 21,-4 11,-2 37,-11 36,-9 35,-7 43,-7 32,-3 18,-1h68l31,2 29,3 48,8 23,5 24,4 26,1 15,-1 15,-3 16,-3 10,-5 14,-12 11,-9 14,-12 11,-9 14,-12 7,-7 10,-14 12,-20 8,-15 10,-21 11,-27 12,-42 13,-48 9,-35 10,-42 13,-44 13,-43 13,-54 5,-13 7,-11 8,-10 8,-8 12,-9 12,-8 20,-8z"/>
+  <path fill="#F1F1F1" d="m943,560h59l22,3 26,6 21,7 20,9 19,12 16,12 14,12 14,14 9,12 13,12 9,14 7,15 9,28 16,64 4,17 2,18v15l-2,17 -7,25 -10,28 -11,26 -11,22 -11,18 -10,13 -12,13 -12,11 -13,10 -21,14 -18,10 -23,10 -27,8 -27,5 -13,2 -12,1h-21l-24,-3 -23,-4 -28,-8 -21,-9 -23,-12 -22,-15 -11,-9 -10,-9 -13,-13 -6,-5 -10,-14 -16,-28 -8,-16 -8,-21 -5,-17 -7,-34 -6,-47v-15l6,-35 6,-20 8,-21 10,-20 11,-17 9,-12 9,-10 7,-8 20,-20 8,-7 14,-11 13,-8 20,-11 24,-10 21,-7 27,-6z"/>
+  <path fill="#F1F1F1" d="m813,453h431l135,1 22,2 15,3 12,5 12,7 10,9 7,8 10,17 5,15 1,6v24l-4,15 -8,16 -7,11 -8,8 -14,9 -13,6 -16,4 -14,2 -32,1h-174l-5,-5 -12,-13 -11,-9 -10,-9 -19,-14 -22,-13 -17,-8 -19,-7 -27,-7 -24,-4 -20,-2h-50l-31,4 -23,6 -28,10 -23,10 -19,10 -17,12 -10,9 -11,9 -20,20 -2,1h-142l-23,-2 -16,-4 -15,-6 -12,-8 -10,-10 -10,-16 -5,-12 -4,-15v-20l4,-17 6,-14 10,-14 4,-5h2l1,-3 12,-9 15,-7 11,-3 14,-2 19,-1z"/>
+  <path fill="#F1F1F1" d="m632,809h57l2,1 4,18 10,53 7,26 8,21 12,25 8,14 4,8v2h-50l-70,-1 -21,-4 -11,-4 -14,-7 -13,-11 -9,-12 -8,-16 -4,-13 -1,-8v-15l2,-14 5,-13 7,-12 7,-9 10,-10 11,-7 10,-5 19,-5z"/>
+  <path fill="#F1F1F1" d="m1262,808h82l36,1 10,2 5,2 -1,11 -20,78 -11,37 -8,23 -7,14 -3,1 -113,1h-32l-1,-2 13,-24 13,-27 14,-36 8,-25 13,-52z"/>
+  <path fill="#F1F1F1" d="m615,1138h51l-2,3 -54,25 -24,12 -17,10 -19,12 -20,12 -11,6h-4v-10l4,-14 8,-15 10,-13 11,-10 11,-7 14,-6 13,-3 8,-1z"/>
+</svg>
+        <div class="profile-container" id="topbar-profile">
+    <div id="profile-pic" class="profile-pic"></div>
+    <span id="profile-name">Loading...</span>
+</div>
+    </div>
+</div>
+
+<h2 class="auth-required">Your Friends</h2>
+<div class="friends-container auth-required" id="friends-list"></div>
+
+<div class="announcement-title" id="announcement-title">Loading...</div>
+<div class="announcement-message" id="announcement-message">Please wait...</div>
+
+<h2>Random Quote</h2>
+<div class="card" id="quote-card">Loading quote...</div>
+
+<div class="action-button auth-required" onclick="location.href='/shop.html'">
+    <span>Shop</span>
+    <img src="/assets/forward.png" alt="Arrow">
+</div>
+
+<div class="action-button auth-required" onclick="location.href='/redeem'">
+    <span>Redeem a code</span>
+    <img src="/assets/redeem.png" alt="Arrow">
+</div>
+
+<div class="action-button auth-required" onclick="location.href='/manageblockedusers'">
+    <span>Manage Blocked Users</span>
+    <img src="/assets/block.png" alt="Arrow">
+</div>
+
+<div id="profile-preview" class="profile-preview" style="display:none;" onclick="location.href='/editprofile'">
+    <div class="profile-banner" id="profile-banner"></div>
+    <div class="profile-info">
+        <div class="profile-pfp" id="preview-pfp"></div>
+        <div class="profile-text">
+            <div class="profile-name-verif">
+                <span id="preview-name">Loading...</span>
+                <img id="preview-verified" src="/assets/verified.png" alt="Verified" style="display:none;">
+            </div>
+            <div class="profile-bio" id="preview-bio"></div>
+        </div>
+    </div>
+</div>
+
+<div id="android-promo" style="margin-top: 20px; width: 80%; max-width: 500px; text-align: center; color: var(--text-color); font-family: 'Orbitron', sans-serif;">
+    <p style="margin-bottom: 10px; font-weight: bold;">Even more sections and options in the app for android!</p>
+    <div class="action-button" onclick="location.href='/release/download'">
+        <span>Download it now</span>
+        <img src="/assets/download.png" alt="Download">
+    </div>
+</div>
+
+
+<script>
+    // Firebase config (replace with your own)
+    const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+  measurementId: "G-S2X2JYC8Z0"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Format numbers into compact (T, B, k, etc.)
+    function formatNumber(num) {
+        return Intl.NumberFormat('en', { notation: 'compact' }).format(num);
+    }
+
+    auth.onAuthStateChanged(async user => {
+    if (!user) return;
+
+    const friendsListRef = db.collection("friends").doc(user.email).collection("friendlist");
+
+    friendsListRef.onSnapshot(async snapshot => {
+        const container = document.getElementById("friends-list");
+        container.innerHTML = ""; // clear old friends
+
+        for (const doc of snapshot.docs) {
+            const friendEmail = doc.id;
+
+            // Get friend's profile data
+            const friendDataRef = db.collection("user_data").doc(friendEmail);
+            const friendSnap = await friendDataRef.get();
+            const friendData = friendSnap.exists ? friendSnap.data() : {};
+
+            const displayName = friendData["display name"] || friendEmail;
+            const profilePic = friendData.profile_picture || "/org-owner.jpg";
+            const verified = friendData.is_verified === true;
+
+            // Create friend card
+            const card = document.createElement("div");
+            card.className = "friend-card";
+            card.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(friendEmail)}`;
+
+            card.innerHTML = `
+                <div class="friend-pfp" style="background-image:url('${profilePic}')"></div>
+                <div class="friend-name">
+                    <span>${displayName}</span>
+                    ${verified ? `<img src="/assets/verified.png" alt="Verified">` : ""}
+                </div>
+            `;
+
+            container.appendChild(card);
+        }
+    });
+});
+
+    // Load user data from Firestore
+    auth.onAuthStateChanged(async user => {
+    if (!user) {
+        document.getElementById('profile-name').textContent = "Not signed in";
+        return;
+    }
+    const docRef = db.collection('user_data').doc(user.email);
+    const docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+        const data = docSnap.data();
+
+        // Coins
+        const coins = parseFloat(data.coins || 0);
+        document.getElementById('coin-display').textContent = `DF$ - ${formatNumber(coins)}`;
+
+        // Profile picture
+        document.getElementById('profile-pic').style.backgroundImage =
+            `url(${data.profile_picture || '/org-owner.jpg'})`;
+
+        // Display name or email
+        const nameElement = document.getElementById('profile-name');
+        nameElement.textContent = data['display name'] || user.email;
+
+        // Check verification
+        if (data.is_verified === true) {
+            const verifiedIcon = document.createElement('img');
+            verifiedIcon.src = '/assets/verified.png';
+            verifiedIcon.alt = 'Verified';
+            verifiedIcon.style.width = '14px';
+            verifiedIcon.style.height = '14px';
+            verifiedIcon.style.marginLeft = '4px';
+
+            nameElement.appendChild(verifiedIcon);
+        }
+    }
+});
+
+    // Load latest announcement
+    db.collection('announcements')
+        .orderBy('timestamp', 'desc')
+        .limit(1)
+        .onSnapshot(snapshot => {
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                document.getElementById('announcement-title').textContent = data.title;
+                document.getElementById('announcement-message').textContent = data.message;
+            });
+        });
+
+    // Load random quote (disable SSL)
+    fetch("https://api.quotable.io/random")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('quote-card').textContent = `${data.content} — ${data.author}`;
+        })
+        .catch(() => {
+            document.getElementById('quote-card').textContent = "Failed to load quote.";
+        });
+
+</script>
+
+<script>
+auth.onAuthStateChanged(async user => {
+    const card = document.getElementById('profile-preview');
+    if (!user) {
+        card.style.display = 'none';
+        return;
+    }
+
+    const docRef = db.collection('user_data').doc(user.email);
+    const docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+        const data = docSnap.data();
+        card.style.display = 'block';
+
+        // Banner
+        document.getElementById('profile-banner').style.backgroundImage =
+            `url(${data.banner || '/default-banner.jpg'})`;
+
+        // Profile Picture
+        document.getElementById('preview-pfp').style.backgroundImage =
+            `url(${data.profile_picture || '/org-owner.jpg'})`;
+
+        // Name / Email
+        const displayName = data['display name'] || user.email;
+        document.getElementById('preview-name').textContent = displayName;
+
+        // Verification
+        document.getElementById('preview-verified').style.display =
+            data.is_verified ? 'inline' : 'none';
+
+        // Bio (truncate if too long)
+        const bio = data.bio || '';
+        document.getElementById('preview-bio').textContent =
+            bio.length > 50 ? bio.substring(0, 47) + '...' : bio;
+    }
+});
+</script>
+
+<script>
+auth.onAuthStateChanged(async user => {
+    const authElements = document.querySelectorAll('.auth-required');
+    const profileContainer = document.getElementById('topbar-profile');
+
+    if (!user) {
+        // Hide friends & buttons
+        authElements.forEach(el => el.style.display = 'none');
+
+        // Show "Not signed in" and set click to login
+        document.getElementById('profile-name').textContent = "Not signed in";
+        document.getElementById('profile-pic').style.backgroundImage = "url('/org-owner.jpg')";
+        profileContainer.onclick = () => location.href = '/login';
+        return;
+    }
+
+    // Show friends & buttons if logged in
+    authElements.forEach(el => el.style.display = '');
+
+    // Profile click → editprofile
+    profileContainer.onclick = () => location.href = '/editprofile';
+
+    // Load profile data
+    const docRef = db.collection('user_data').doc(user.email);
+    const docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+        const data = docSnap.data();
+
+        // Coins
+        const coins = parseFloat(data.coins || 0);
+        document.getElementById('coin-display').textContent = `DF$ - ${formatNumber(coins)}`;
+
+        // Profile pic & name
+        document.getElementById('profile-pic').style.backgroundImage =
+            `url(${data.profile_picture || '/org-owner.jpg'})`;
+        const nameElement = document.getElementById('profile-name');
+        nameElement.textContent = data['display name'] || user.email;
+
+        // Verification badge
+        if (data.is_verified) {
+            const verifiedIcon = document.createElement('img');
+            verifiedIcon.src = '/assets/verified.png';
+            verifiedIcon.alt = 'Verified';
+            verifiedIcon.style.width = '14px';
+            verifiedIcon.style.height = '14px';
+            verifiedIcon.style.marginLeft = '4px';
+            nameElement.appendChild(verifiedIcon);
+        }
+    }
+});
+</script>
+
+</body>
+</html>

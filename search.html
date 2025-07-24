@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Users</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+            authDomain: "darkpurpleof-s-website.firebaseapp.com",
+            databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+            projectId: "darkpurpleof-s-website",
+            storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+            messagingSenderId: "520651082420",
+            appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+            measurementId: "G-S2X2JYC8Z0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUserEmail = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "/login";
+                return;
+            }
+            currentUserEmail = user.email;
+        });
+
+        async function fetchUsers() {
+            const snapshot = await getDocs(collection(db, "user_data"));
+            const users = [];
+            snapshot.forEach(docSnap => {
+                users.push({ email: docSnap.id, ...docSnap.data() });
+            });
+            return users;
+        }
+
+        function matchesSearch(user, query) {
+            if (!query) return false;
+            query = query.toLowerCase();
+
+            const isEmailSearch = query.includes("@") && query.includes(".");
+            if (isEmailSearch) {
+                return user.email.toLowerCase() === query;
+            } else {
+                if (user.isProfilePublic === false) return false;
+                return user["display name"] && user["display name"].toLowerCase().includes(query);
+            }
+        }
+
+        async function searchUsers(query) {
+            const resultsContainer = document.getElementById("results");
+            resultsContainer.innerHTML = "";
+
+            if (!query.trim()) return;
+
+            const users = await fetchUsers();
+
+            users.forEach(user => {
+                if (user.email === currentUserEmail) return;
+                if (Array.isArray(user.blockedUsers) && user.blockedUsers.includes(currentUserEmail)) return;
+
+                if (matchesSearch(user, query)) {
+                    renderUserItem(user);
+                }
+            });
+        }
+
+        function renderUserItem(user) {
+            const resultsContainer = document.getElementById("results");
+
+            const item = document.createElement("div");
+            item.classList.add("user-row");
+            item.style.cursor = "pointer";
+
+            // Profile picture
+            const img = document.createElement("img");
+            img.classList.add("profile-pic");
+            img.src = user.profile_picture || "/org-owner.jpg";
+            img.onerror = () => { img.src = "/org-owner.jpg"; };
+
+            // Text container
+            const textContainer = document.createElement("div");
+            textContainer.classList.add("user-text");
+
+            const nameSpan = document.createElement("span");
+            nameSpan.textContent = user.is_profile_public === false
+                ? user.email
+                : user["display name"] || user.email;
+
+            // Verified badge
+            if (user.is_verified) {
+                const badge = document.createElement("img");
+                badge.src = "/assets/verified.png";
+                badge.classList.add("verified-icon");
+                nameSpan.appendChild(badge);
+            }
+
+            textContainer.appendChild(nameSpan);
+
+            item.appendChild(img);
+            item.appendChild(textContainer);
+
+            item.addEventListener("click", () => {
+                window.location.href = `/viewprofile?profile=${encodeURIComponent(user.email)}`;
+            });
+
+            resultsContainer.appendChild(item);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const searchInput = document.getElementById("searchBox");
+            searchInput.addEventListener("input", (e) => {
+                searchUsers(e.target.value);
+            });
+        });
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+        :root {
+            --bg-color: #000;
+            --text-color: purple;
+            --box-bg: rgba(128, 0, 128, 0.05);
+            --border-color: purple;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 6px var(--text-color);
+            animation: glitch 1.5s infinite;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .search-container img {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+        }
+
+        .search-container input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 16px;
+            background: transparent;
+            color: var(--text-color);
+        }
+
+        #results {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .user-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background-color: var(--box-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            transition: background 0.2s;
+        }
+
+        .user-row:hover {
+            background-color: rgba(128, 0, 128, 0.15);
+        }
+
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border-color);
+            object-fit: cover;
+        }
+
+        .user-text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .user-text span {
+            font-size: 16px;
+        }
+
+        .verified-icon {
+            width: 16px;
+            height: 16px;
+            margin-left: 6px;
+        }
+
+        @keyframes glitch {
+            0% { transform: none; }
+            20% { transform: skewX(3deg); }
+            40% { transform: skewX(-3deg); }
+            60% { transform: none; }
+            100% { transform: none; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Search Users</h1>
+    <div class="search-container">
+        <img src="/assets/search.png" alt="Search">
+        <input id="searchBox" type="text" placeholder="Search by name or email...">
+    </div>
+    <div id="results"></div>
+</body>
+</html>
