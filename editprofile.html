@@ -85,6 +85,7 @@
         align-items: center;
         padding: 1rem 1.5rem;
         gap: 15px;
+        position: relative; /* <-- Add this line */
     }
 
     .profile-pic {
@@ -102,6 +103,22 @@
     .profile-pic:hover {
         filter: brightness(0.8);
     }
+
+    .profile-pic-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
+    pointer-events: none;
+    border-radius: 16px;
+    border: 2px dashed var(--border-color);
+    background-color: transparent;
+    background-size: cover;
+    background-position: center;
+    z-index: 2;
+    display: none;
+}
 
     .name-section {
         flex-grow: 1;
@@ -283,7 +300,10 @@
 <div class="card" id="profile-card">
     <div class="banner" id="banner"></div>
     <div class="profile-info">
-        <div class="profile-pic" id="profile-pic" title="Click to edit profile picture"></div>
+        <div class="profile-pic-wrapper" style="position: relative; width: 80px; height: 80px;">
+            <div class="profile-pic" id="profile-pic" title="Click to edit profile picture"></div>
+            <div class="profile-pic-frame" id="profile-pic-frame"></div>
+        </div>
         <div class="name-section">
             <span id="display-name"></span>
             <div class="verified-icon" id="verified-icon" style="display:none;" title="Verified User"></div>
@@ -309,6 +329,7 @@
     </div>    
     <a href="#" class="view-profile-btn" id="view-profile-btn">View your public profile</a>
     <a href="#" class="view-profile-btn1" id="view-profile-btn1">Manage Blocked Users</a>
+    <a href="#" class="view-profile-btn1" id="edit-frame-btn">Edit Profile Frame</a>
 </div>
 
 <!-- Dialog -->
@@ -357,6 +378,8 @@ const viewProfileBtn = document.getElementById('view-profile-btn');
 const viewProfileBtn1 = document.getElementById('view-profile-btn1');
 const editNameBtn = document.getElementById('edit-name-btn');
 const websiteRow = document.getElementById('website-row');
+const editFrameBtn = document.getElementById('edit-frame-btn');
+const profilePicFrameEl = document.getElementById('profile-pic-frame');
 const domainLink = document.getElementById('domain-link');
 const domainNote = document.getElementById('domain-note');
 
@@ -370,6 +393,7 @@ const dialogSaveBtn = document.getElementById('dialog-save-btn');
 
 let currentUser = null;
 let editingField = null; // 'banner', 'profile_picture', or 'display_name'
+let currentUserFrameUrl = ''; // Add this near your other let variables
 
 
 
@@ -421,8 +445,17 @@ dialogSaveBtn.onclick = async () => {
         } else if (editingField === 'display_name') {
             displayNameEl.textContent = newValue;
         } else if (editingField === 'bio') {
-    bioTextEl.textContent = newValue || "Bio not yet set";
-}
+            bioTextEl.textContent = newValue || "Bio not yet set";
+        } else if (editingField === 'profile_picture_frame') {
+            currentUserFrameUrl = newValue;
+            if (newValue && newValue.trim() !== "") {
+                profilePicFrameEl.style.backgroundImage = `url(${newValue})`;
+                profilePicFrameEl.style.display = "block";
+            } else {
+                profilePicFrameEl.style.backgroundImage = "";
+                profilePicFrameEl.style.display = "none";
+            }
+        }
 
         closeDialog();
     } catch (err) {
@@ -447,9 +480,11 @@ async function loadUserData(user) {
     let displayName = user.email;
     let isVerified = false;
     let bio = "Bio not yet set";
+    let frameUrl = '';
     websiteRow.style.display = 'none';
     domainNote.style.display = 'none';
 
+    let purchasedIds = [];
     if (userDocSnap.exists()) {
         const data = userDocSnap.data();
         if (data.banner) bannerUrl = data.banner;
@@ -458,6 +493,10 @@ async function loadUserData(user) {
         if (data.bio && data.bio.trim() !== '') bio = data.bio;
         if (data.isProfilePublic === true) isProfilePublic = true;
         if (data.is_verified === true) isVerified = true;
+        if (data.purchasedIds && Array.isArray(data.purchasedIds)) {
+            purchasedIds = data.purchasedIds;
+        }
+        if (data['profile_picture_frame']) frameUrl = data['profile_picture_frame'];
         if (data.domain_verified === true && typeof data.domain_name === 'string' && data.domain_name.trim() !== '') {
     domainLink.href = data.domain_name.startsWith('http') ? data.domain_name : 'https://' + data.domain_name;
     domainLink.textContent = data.domain_name;
@@ -465,6 +504,11 @@ async function loadUserData(user) {
     } else {
     domainNote.style.display = 'block';
     }
+    if (purchasedIds.includes("PFPFRAMES")) {
+    editFrameBtn.style.display = "block";
+} else {
+    editFrameBtn.style.display = "none";
+}
     const roleSection = document.getElementById("role-section");
 const roles = data.roles && Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ['Member'];
 
@@ -529,8 +573,18 @@ if (importantRoles.length > 0) {
     verifiedIconEl.style.display = isVerified ? 'inline-block' : 'none';
     bioTextEl.textContent = bio;
     publicProfileCheckbox.checked = isProfilePublic;
+    currentUserFrameUrl = frameUrl; // Save for dialog use
+    if (frameUrl && frameUrl.trim() !== "") {
+        profilePicFrameEl.style.backgroundImage = `url(${frameUrl})`;
+        profilePicFrameEl.style.display = "block";
+    } else {
+        profilePicFrameEl.style.backgroundImage = "";
+        profilePicFrameEl.style.display = "none";
+    }
 
 }
+
+// Show/hide the Edit Profile Frame button based on purchase
 
 // Event listeners to open dialog with current values
 bannerEl.addEventListener('click', () => {
@@ -561,6 +615,10 @@ publicProfileCheckbox.addEventListener('change', async () => {
         // Revert checkbox on error
         publicProfileCheckbox.checked = !newVal;
     }
+});
+
+editFrameBtn.addEventListener('click', () => {
+    openDialog('profile_picture_frame', currentUserFrameUrl);
 });
 
 onAuthStateChanged(auth, user => {

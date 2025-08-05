@@ -54,6 +54,23 @@
         transition: color 0.3s;
     }
 
+    .profile-pic-frame {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    z-index: 2;
+    display: none;
+}
+.comment .profile-pic-frame {
+    border-radius: 50%;
+}
+
     .dark-light-toggle:hover {
         opacity: 0.7;
     }
@@ -371,6 +388,7 @@
       const profilePicUrl = editorUserDoc.get('profile_picture') || 'https://minotar.net/helm/DarkPurpleOf/128.png';
       const blockedUsers = editorUserDoc.get('blockedUsers') || [];
       const verified = editorUserDoc.get('is_verified') === true;
+      const frameUrl = editorUserDoc.get('profile_picture_frame') || '';
 
       // Check if viewer blocked
       const isBlocked = currentUserEmail && blockedUsers.includes(currentUserEmail);
@@ -417,8 +435,10 @@
       // Compose post card with buttons & comments container
       postContainer.innerHTML = `
         <div class="post-card">
-          <div class="author-info">
-            <div class="profile-pic" style="${profilePicStyle}"></div>
+          <div class="author-info" style="position:relative;">
+            <div class="profile-pic" style="${profilePicStyle}; position:relative;">
+              ${frameUrl && frameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${frameUrl}')"></div>` : ""}
+            </div>
             <div class="author-details">
               <div class="author-name-verif">
                 ${displayName} ${verifiedBadgeHTML}
@@ -550,6 +570,7 @@ likeBtn.onclick = async () => {
           const cDisplayName = cAuthorData?.['display name'] || cAuthorEmail;
           const cPfp = cAuthorData?.profile_picture || '';
           const cVerified = cAuthorData?.is_verified === true;
+          const cFrameUrl = cAuthorData?.profile_picture_frame || '';
 
           const cVerifiedBadgeHTML = cVerified
             ? `<img src="/assets/verified.png" alt="Verified" class="verified-badge" style="width:16px;height:16px;" title="Verified User" />`
@@ -561,7 +582,9 @@ likeBtn.onclick = async () => {
 
           const commentHTML = `
             <div class="comment">
-              <div class="profile-pic" style="${cProfilePicStyle}"></div>
+              <div class="profile-pic" style="${cProfilePicStyle}; position:relative;">
+                ${cFrameUrl && cFrameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${cFrameUrl}')"></div>` : ""}
+              </div>
               <div class="comment-content">
                 <div class="comment-author">${cDisplayName} ${cVerifiedBadgeHTML}</div>
                 <div class="comment-text">${cText.replace(/\n/g, '<br>')}</div>

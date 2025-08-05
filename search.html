@@ -81,12 +81,30 @@
             const item = document.createElement("div");
             item.classList.add("user-row");
             item.style.cursor = "pointer";
+            item.style.position = "relative";
+
+            // Profile picture container (for overlay)
+            const picContainer = document.createElement("div");
+            picContainer.style.position = "relative";
+            picContainer.style.width = "40px";
+            picContainer.style.height = "40px";
 
             // Profile picture
             const img = document.createElement("img");
             img.classList.add("profile-pic");
             img.src = user.profile_picture || "/org-owner.jpg";
             img.onerror = () => { img.src = "/org-owner.jpg"; };
+
+            // Frame overlay
+            const frame = document.createElement("div");
+            frame.className = "profile-pic-frame";
+            if (user.profile_picture_frame && user.profile_picture_frame.trim() !== "") {
+                frame.style.backgroundImage = `url('${user.profile_picture_frame}')`;
+                frame.style.display = "block";
+            }
+
+            picContainer.appendChild(img);
+            picContainer.appendChild(frame);
 
             // Text container
             const textContainer = document.createElement("div");
@@ -107,7 +125,7 @@
 
             textContainer.appendChild(nameSpan);
 
-            item.appendChild(img);
+            item.appendChild(picContainer);
             item.appendChild(textContainer);
 
             item.addEventListener("click", () => {
@@ -198,6 +216,7 @@
             border-radius: 8px;
             padding: 10px;
             transition: background 0.2s;
+            position: relative;
         }
 
         .user-row:hover {
@@ -210,6 +229,22 @@
             border-radius: 50%;
             border: 1.5px solid var(--border-color);
             object-fit: cover;
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-pic-frame {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 40px;
+            height: 40px;
+            pointer-events: none;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            z-index: 2;
+            display: none;
         }
 
         .user-text {

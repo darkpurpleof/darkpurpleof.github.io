@@ -45,6 +45,20 @@
         margin-bottom: 20px;
     }
 
+    .profile-pic-frame {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 48px;
+    height: 48px;
+    pointer-events: none;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    z-index: 2;
+    display: none;
+}
+
     .dark-light-toggle {
         cursor: pointer;
         background: none;
@@ -258,10 +272,14 @@
           ).join('') + `</div>`;
         }
 
+        const frameUrl = userDoc.get('profile_picture_frame') || '';
+
         const cardHTML = `
           <div class="post-card" id="post-${postId}">
-            <div class="author-info">
-              <div class="profile-pic" style="${profileStyle}"></div>
+            <div class="author-info" style="position:relative;">
+              <div class="profile-pic" style="${profileStyle}; position:relative;">
+                ${frameUrl && frameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${frameUrl}')"></div>` : ""}
+              </div>
               <div class="author-details">
                 <div class="author-name-verif">${displayName} ${verifiedBadgeHTML}</div>
                 <div class="author-email">${editorEmail}</div>

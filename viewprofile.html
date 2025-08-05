@@ -205,6 +205,7 @@
         align-items: center;
         padding: 1rem 1.5rem;
         gap: 15px;
+        position: relative;
     }
 
     .profile-pic {
@@ -413,6 +414,19 @@
 .bio-section .edit-btn:hover {
     opacity: 0.7;
 }
+.profile-pic-frame {
+    position: absolute;
+    left: 1.5rem;
+    top: 1rem;
+    width: 80px;
+    height: 80px;
+    pointer-events: none;
+    border-radius: 16px;
+    background-size: cover;
+    background-position: center;
+    z-index: 2;
+    display: none;
+}
 </style>
 </head>
 <body>
@@ -422,7 +436,8 @@
 <div class="card" id="profile-card">
     <div class="banner" id="banner"></div>
     <div class="profile-info">
-        <div class="profile-pic" id="profile-pic" title="Click to edit profile picture"></div>
+        <div class="profile-pic" id="profile-pic" title="Profile picture"></div>
+        <div class="profile-pic-frame" id="profile-pic-frame"></div>
         <div class="name-section">
             <span id="display-name"></span>
             <div class="verified-icon" id="verified-icon" style="display:none;" title="Verified User"></div>
@@ -534,7 +549,9 @@
       const roleSection = document.getElementById("role-section");
       const icon = document.getElementById("icon");
       const headerEl = document.querySelector('h1');
-    
+      const profilePicFrameEl = document.getElementById('profile-pic-frame');
+      const frameUrl = targetData.profile_picture_frame;
+
       bannerEl.style.backgroundImage = `url(${targetData.banner || '/assets/default_banner.png'})`;
       profilePicEl.style.backgroundImage = `url(${targetData.profile_picture || 'https://minotar.net/helm/DarkPurpleOF.png'})`;
       const displayName = targetData['display name'] || targetEmail;
@@ -551,6 +568,14 @@
         domainNote.style.display = 'none';
         icon.style.display = 'none';
       }
+
+      if (frameUrl && frameUrl.trim() !== "") {
+    profilePicFrameEl.style.backgroundImage = `url(${frameUrl})`;
+    profilePicFrameEl.style.display = "block";
+} else {
+    profilePicFrameEl.style.backgroundImage = "";
+    profilePicFrameEl.style.display = "none";
+}
 
       if (headerEl) {
     headerEl.textContent = `${displayName}'s Profile`;
@@ -642,6 +667,16 @@ async function renderPostCard(docSnap) {
   const isVerified = authorData?.domain_verified;
   const verifiedIconHTML = isVerified ? `<img src="/assets/verified.png" alt="Verified" class="verified-icon" style="height: 1em; margin-left: 0.3em; vertical-align: middle;">` : '';
 
+  // Profile picture and frame
+  const profilePicUrl = authorData?.profile_picture || 'https://minotar.net/helm/DarkPurpleOF.png';
+  const frameUrl = authorData?.profile_picture_frame;
+  const profilePicHTML = `
+    <div style="position: relative; width: 48px; height: 48px;">
+      <div class="profile-pic" style="width:48px;height:48px;background-image:url('${profilePicUrl}'); position: absolute; left: 0; top: 0; z-index: 1;"></div>
+      ${frameUrl && frameUrl.trim() !== "" ? `<div style="position:absolute;left:0;top:0;width:48px;height:48px;border-radius:50%;background-image:url('${frameUrl}');background-size:cover;background-position:center;z-index:2;pointer-events:none;"></div>` : ""}
+    </div>
+  `;
+
   const card = document.createElement('div');
   card.className = 'post-card';
   card.style.cursor = 'pointer';
@@ -653,7 +688,7 @@ async function renderPostCard(docSnap) {
 
   card.innerHTML = `
     <div class="author-info">
-      <div class="profile-pic" style="background-image:url('${authorData?.profile_picture || 'https://minotar.net/helm/DarkPurpleOF.png'}')"></div>
+      ${profilePicHTML}
       <div class="author-details">
         <div class="author-name-verif">${displayName}${verifiedIconHTML}</div>
         <div class="author-email">${post.editor}</div>
