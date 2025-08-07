@@ -133,6 +133,50 @@
         color: var(--text-color);
     }
 
+    /* Add inside <style> */
+#toast {
+    position: fixed;
+    top: -80px;
+    left: 0;
+    width: 100vw;
+    min-width: 0;
+    max-width: 100vw;
+    padding: 18px 0;
+    border-radius: 0 0 16px 16px;
+    font-size: 1.1em;
+    font-family: inherit;
+    color: #fff;
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(128,0,128,0.15);
+    opacity: 0;
+    pointer-events: none;
+    text-align: center;
+    transition: opacity 0.4s, top 0.4s;
+}
+#toast.show {
+    opacity: 1;
+    pointer-events: auto;
+    top: 0;
+    animation: toast-slide-down 0.4s cubic-bezier(.77,0,.175,1);
+}
+#toast.hide {
+    opacity: 0;
+    top: -80px;
+    animation: toast-slide-up 0.4s cubic-bezier(.77,0,.175,1);
+}
+#toast.purple { background: purple; }
+#toast.yellow { background: #e6b800; color: #222; }
+#toast.red { background: #c00; }
+
+@keyframes toast-slide-down {
+    from { top: -80px; opacity: 0; }
+    to   { top: 0; opacity: 1; }
+}
+@keyframes toast-slide-up {
+    from { top: 0; opacity: 1; }
+    to   { top: -80px; opacity: 0; }
+}
+
     .author-email {
         font-size: 0.9em;
         color: var(--text-color);
@@ -504,135 +548,162 @@
     const viewProfileBtn2 = document.getElementById('view-profile-btn2');
     
     if (!targetEmail) {
-      document.body.innerHTML = '<h2>Missing profile parameter.</h2>';
-      throw new Error("No profile email specified");
+      showToast("Missing profile parameter.", "red");
+denyAccess("Missing profile parameter.");
+throw new Error("No profile email specified");
     }
-    
-    function denyAccess() {
-      document.getElementById('profile-card').innerHTML = `
-        <div style="padding: 2rem; font-size: 1.2em; text-align: center;">
-          You don't have permission to view this profile.
-        </div>
-      `;
-    }
-    
-    onAuthStateChanged(auth, async (currentUser) => {
-      if (!currentUser) {
-        window.location.href = "/login.html";
-        return;
-      }
 
-      const userDocRef = doc(db, 'user_data', targetEmail);
-      const userDocSnap = await getDoc(userDocRef);
-    
-      if (!userDocSnap.exists()) return denyAccess();
-    
-      const targetData = userDocSnap.data();
-    
-      // Check if profile is private
-      if (targetData.isProfilePublic === false) return denyAccess();
-    
-      // Check if viewer is blocked by profile owner
-      const blockedUsers = targetData.blockedUsers || [];
-      if (blockedUsers.includes(currentUser.email)) return denyAccess();
-    
-      // Load readonly info
-      const bannerEl = document.getElementById('banner');
-      const profilePicEl = document.getElementById('profile-pic');
-      const displayNameEl = document.getElementById('display-name');
-      const verifiedIconEl = document.getElementById('verified-icon');
-      const emailEl = document.getElementById('email');
-      const bioTextEl = document.getElementById('bio-text');
-      const domainLink = document.getElementById('domain-link');
-      const websiteRow = document.getElementById('website-row');
-      const domainNote = document.getElementById('domain-note');
-      const roleSection = document.getElementById("role-section");
-      const icon = document.getElementById("icon");
-      const headerEl = document.querySelector('h1');
-      const profilePicFrameEl = document.getElementById('profile-pic-frame');
-      const frameUrl = targetData.profile_picture_frame;
-
-      bannerEl.style.backgroundImage = `url(${targetData.banner || '/assets/default_banner.png'})`;
-      profilePicEl.style.backgroundImage = `url(${targetData.profile_picture || 'https://minotar.net/helm/DarkPurpleOF.png'})`;
-      const displayName = targetData['display name'] || targetEmail;
-      displayNameEl.textContent = displayName;
-      emailEl.textContent = targetEmail;
-      bioTextEl.textContent = targetData.bio || "Bio not yet set";
-    
-      if (targetData.is_verified) verifiedIconEl.style.display = 'inline-block';
-      if (targetData.domain_verified && targetData.domain_name?.trim()) {
-        domainLink.href = targetData.domain_name.startsWith("http") ? targetData.domain_name : "https://" + targetData.domain_name;
-        domainLink.textContent = targetData.domain_name;
-        websiteRow.style.display = 'flex';
-      } else {
-        domainNote.style.display = 'none';
-        icon.style.display = 'none';
-      }
-
-      if (frameUrl && frameUrl.trim() !== "") {
-    profilePicFrameEl.style.backgroundImage = `url(${frameUrl})`;
-    profilePicFrameEl.style.display = "block";
-} else {
-    profilePicFrameEl.style.backgroundImage = "";
-    profilePicFrameEl.style.display = "none";
+function showToast(message, color = "purple", duration = 3500) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = `${color} show`;
+    toast.style.display = "block";
+    setTimeout(() => {
+        toast.className = `${color} hide`;
+        setTimeout(() => {
+            toast.style.display = "none";
+            toast.className = color;
+        }, 400);
+    }, duration);
 }
 
-      if (headerEl) {
-    headerEl.textContent = `${displayName}'s Profile`;
-      }
-    
-      const roles = Array.isArray(targetData.roles) && targetData.roles.length > 0 ? targetData.roles : ['Member'];
-      const roleMap = {
-        "Administrator": { icon: "/assets/ic_admin.webp", desc: "Official Administrator of the platform, can manage users" },
-        "Member": { icon: "/assets/ic_member.webp", desc: "Normal member of the platform" },
-        "(Creator) English": { icon: "/assets/us.png", desc: "Helped translate the app into English, creator of the app!" },
-        "German helper": { icon: "/assets/de.png", desc: "User who translated the app into German" },
-        "Spanish Helper": { icon: "/assets/es.png", desc: "User who translated the app into Spanish" },
-        "Japanese Helper": { icon: "/assets/jp.png", desc: "User who translated the app into Japanese" },
-        "Russian Helper": { icon: "/assets/ru.png", desc: "User who translated the app into Russian" },
-        "Owner": { icon: "/assets/ic_owner.webp", desc: "The owner of the DarkPurpleOF's website!, official account, it's me DarkPurple!" },
-        "Tester": { icon: "/assets/test.png", desc: "User who tested the app before its official release" },
-        "Legacy User": { icon: "/assets/legacy.png", desc: "Users registered on the platform prior to December 2024" },
-        "System": { icon: "/assets/ic_system.webp", desc: "Official system account!" },
-        "Elite User": { icon: "/assets/elite.png", desc: "Users whose actions or contributions have been deeply known in the platform" },
-        "Feedback Contributor": { icon: "/assets/feedback.png", desc: "Users whose contributions or ideas have been added to the app or website" },
-        "Unbannable": { icon: "/assets/ic_unbannable.webp", desc: "Users who can't be banned by moderation tools or the system" }
-      };
-      const importantRoles = roles.filter(role => roleMap[role]);
-    
-      if (importantRoles.length > 0) {
-        roleSection.style.display = 'flex';
-        roleSection.innerHTML = '';
-        importantRoles.forEach(role => {
-          const { icon, desc } = roleMap[role];
-          const row = document.createElement("div");
-          row.style.display = "flex";
-          row.style.alignItems = "center";
-          row.style.gap = "12px";
-          row.innerHTML = `
-            <img src="${icon}" alt="${role}" style="width: 32px; height: 32px; flex-shrink: 0;" />
-            <div style="display: flex; flex-direction: column;">
-              <strong style="font-size: 1em; color: var(--text-color);">${role}</strong>
-              <span style="font-size: 0.9em; opacity: 0.8;">${desc}</span>
-            </div>
-          `;
-          roleSection.appendChild(row);
-        });
-      }
-    
-      // Remove edit controls
-      document.getElementById('edit-name-btn').remove();
-      document.getElementById('edit-bio-btn').remove();
-      document.getElementById('publicProfileCheckbox').closest('div').remove();
-      document.getElementById('view-profile-btn1').remove();
-      document.title = `${displayName}'s Profile`;
-    
-      // Replace view-profile-btn
-      const viewBtn = document.getElementById('view-profile-btn');
-      viewBtn.textContent = 'View more in the app';
-      viewBtn.href = `/profiles?profile=${encodeURIComponent(targetEmail)}`;
+function denyAccess(reason = "You don't have permission to view this profile.") {
+    showToast(reason, "red");
+    document.getElementById('profile-card').innerHTML = `
+      <div style="padding: 2rem; font-size: 1.2em; text-align: center;">
+        <img src="/assets/default_banner.png" style="width:100%;max-width:600px;border-radius:12px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:15px;">
+          <div class="profile-pic" style="width:80px;height:80px;background-image:url('https://minotar.net/helm/DarkPurpleOF.png');"></div>
+          <div style="font-size:2em;font-weight:600;color:var(--text-color);">Profile Unavailable</div>
+        </div>
+        <div style="margin-top:1em;color:var(--text-color);opacity:0.7;">${reason}</div>
+      </div>
+    `;
+}
 
-      function renderSectionTitle(title) {
+onAuthStateChanged(auth, async (currentUser) => {
+    if (!currentUser) {
+        window.location.href = "/login.html";
+        return;
+    }
+
+    // Check if target user is banned
+    const bannedDocRef = doc(db, "banned_users", targetEmail);
+    const bannedDocSnap = await getDoc(bannedDocRef);
+    if (bannedDocSnap.exists()) {
+        denyAccess("You can't view banned users' profiles.");
+        return;
+    }
+
+    const userDocRef = doc(db, 'user_data', targetEmail);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (!userDocSnap.exists()) return denyAccess("Profile not found.");
+
+    const targetData = userDocSnap.data();
+
+    if (targetData.isProfilePublic === false) return denyAccess("This profile is private.");
+
+    const blockedUsers = targetData.blockedUsers || [];
+    if (blockedUsers.includes(currentUser.email)) return denyAccess("This profile isn't available at the moment.");
+
+    // Load readonly info
+    const bannerEl = document.getElementById('banner');
+    const profilePicEl = document.getElementById('profile-pic');
+    const displayNameEl = document.getElementById('display-name');
+    const verifiedIconEl = document.getElementById('verified-icon');
+    const emailEl = document.getElementById('email');
+    const bioTextEl = document.getElementById('bio-text');
+    const domainLink = document.getElementById('domain-link');
+    const websiteRow = document.getElementById('website-row');
+    const domainNote = document.getElementById('domain-note');
+    const roleSection = document.getElementById("role-section");
+    const icon = document.getElementById("icon");
+    const headerEl = document.querySelector('h1');
+    const profilePicFrameEl = document.getElementById('profile-pic-frame');
+    const frameUrl = targetData.profile_picture_frame;
+
+    bannerEl.style.backgroundImage = `url(${targetData.banner || '/assets/default_banner.png'})`;
+    profilePicEl.style.backgroundImage = `url(${targetData.profile_picture || 'https://minotar.net/helm/DarkPurpleOF.png'})`;
+    const displayName = targetData['display name'] || targetEmail;
+    displayNameEl.textContent = displayName;
+    emailEl.textContent = targetEmail;
+    bioTextEl.textContent = targetData.bio || "Bio not yet set";
+  
+    if (targetData.is_verified) verifiedIconEl.style.display = 'inline-block';
+    if (targetData.domain_verified && targetData.domain_name?.trim()) {
+      domainLink.href = targetData.domain_name.startsWith("http") ? targetData.domain_name : "https://" + targetData.domain_name;
+      domainLink.textContent = targetData.domain_name;
+      websiteRow.style.display = 'flex';
+    } else {
+      domainNote.style.display = 'none';
+      icon.style.display = 'none';
+    }
+
+    if (frameUrl && frameUrl.trim() !== "") {
+  profilePicFrameEl.style.backgroundImage = `url(${frameUrl})`;
+  profilePicFrameEl.style.display = "block";
+} else {
+  profilePicFrameEl.style.backgroundImage = "";
+  profilePicFrameEl.style.display = "none";
+}
+
+    if (headerEl) {
+  headerEl.textContent = `${displayName}'s Profile`;
+    }
+  
+    const roles = Array.isArray(targetData.roles) && targetData.roles.length > 0 ? targetData.roles : ['Member'];
+    const roleMap = {
+      "Administrator": { icon: "/assets/ic_admin.webp", desc: "Official Administrator of the platform, can manage users" },
+      "Member": { icon: "/assets/ic_member.webp", desc: "Normal member of the platform" },
+      "(Creator) English": { icon: "/assets/us.png", desc: "Helped translate the app into English, creator of the app!" },
+      "German helper": { icon: "/assets/de.png", desc: "User who translated the app into German" },
+      "Spanish Helper": { icon: "/assets/es.png", desc: "User who translated the app into Spanish" },
+      "Japanese Helper": { icon: "/assets/jp.png", desc: "User who translated the app into Japanese" },
+      "Russian Helper": { icon: "/assets/ru.png", desc: "User who translated the app into Russian" },
+      "Owner": { icon: "/assets/ic_owner.webp", desc: "The owner of the DarkPurpleOF's website!, official account, it's me DarkPurple!" },
+      "Tester": { icon: "/assets/test.png", desc: "User who tested the app before its official release" },
+      "Legacy User": { icon: "/assets/legacy.png", desc: "Users registered on the platform prior to December 2024" },
+      "System": { icon: "/assets/ic_system.webp", desc: "Official system account!" },
+      "Elite User": { icon: "/assets/elite.png", desc: "Users whose actions or contributions have been deeply known in the platform" },
+      "Feedback Contributor": { icon: "/assets/feedback.png", desc: "Users whose contributions or ideas have been added to the app or website" },
+      "Unbannable": { icon: "/assets/ic_unbannable.webp", desc: "Users who can't be banned by moderation tools or the system" }
+    };
+    const importantRoles = roles.filter(role => roleMap[role]);
+  
+    if (importantRoles.length > 0) {
+      roleSection.style.display = 'flex';
+      roleSection.innerHTML = '';
+      importantRoles.forEach(role => {
+        const { icon, desc } = roleMap[role];
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.alignItems = "center";
+        row.style.gap = "12px";
+        row.innerHTML = `
+          <img src="${icon}" alt="${role}" style="width: 32px; height: 32px; flex-shrink: 0;" />
+          <div style="display: flex; flex-direction: column;">
+            <strong style="font-size: 1em; color: var(--text-color);">${role}</strong>
+            <span style="font-size: 0.9em; opacity: 0.8;">${desc}</span>
+          </div>
+        `;
+        roleSection.appendChild(row);
+      });
+    }
+  
+    // Remove edit controls
+    document.getElementById('edit-name-btn').remove();
+    document.getElementById('edit-bio-btn').remove();
+    document.getElementById('publicProfileCheckbox').closest('div').remove();
+    document.getElementById('view-profile-btn1').remove();
+    document.title = `${displayName}'s Profile`;
+  
+    // Replace view-profile-btn
+    const viewBtn = document.getElementById('view-profile-btn');
+    viewBtn.textContent = 'View more in the app';
+    viewBtn.href = `/profiles?profile=${encodeURIComponent(targetEmail)}`;
+
+    function renderSectionTitle(title) {
   const titleEl = document.createElement('h2');
   titleEl.style = 'font-size: 1.5em; margin-top: 2rem;';
   titleEl.textContent = title;
@@ -755,6 +826,6 @@ onAuthStateChanged(auth, async (currentUser) => {
 });
     });
 </script>
-
+<div id="toast" style="display:none;"></div>
 </body>
 </html>

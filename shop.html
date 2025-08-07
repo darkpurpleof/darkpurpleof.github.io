@@ -80,17 +80,31 @@
         }
 
         .info-chart {
+            width: 240px;         /* Fixed width for all cards */
+            height: 420px;        /* Increased height for all cards */
             margin: 20px auto;
             padding: 15px;
             background-color: var(--box-bg);
             border: 1.5px solid var(--border-color);
             border-radius: 10px;
-            display: inline-block;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
             text-align: left;
             transition: background-color 0.3s, border-color 0.3s;
-            width: auto; /* Ensuring it doesn't stretch full width */
-            max-width: 500px; /* Optional: To limit the chart width */
+            box-sizing: border-box;
+            overflow: hidden;     /* Prevent overflow */
         }
+
+        .info-chart p {
+    max-height: 48px;           /* Limit height for description */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    margin-bottom: 8px;
+}
 
         .input-field {
             width: calc(100% - 2px); /* Take up almost all width minus padding */
@@ -170,6 +184,49 @@ dialog[open]#confirm-dialog {
     pointer-events: auto;
 }
 
+#toast {
+    position: fixed;
+    top: -80px; /* Start hidden above the viewport */
+    left: 0;
+    width: 100vw;
+    min-width: 0;
+    max-width: 100vw;
+    padding: 18px 0;
+    border-radius: 0 0 16px 16px;
+    font-size: 1.1em;
+    font-family: inherit;
+    color: #fff;
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(128,0,128,0.15);
+    opacity: 0;
+    pointer-events: none;
+    text-align: center;
+    transition: opacity 0.4s, top 0.4s;
+}
+#toast.show {
+    opacity: 1;
+    pointer-events: auto;
+    top: 0;
+    animation: toast-slide-down 0.4s cubic-bezier(.77,0,.175,1);
+}
+#toast.hide {
+    opacity: 0;
+    top: -80px;
+    animation: toast-slide-up 0.4s cubic-bezier(.77,0,.175,1);
+}
+#toast.purple { background: purple; }
+#toast.yellow { background: #e6b800; color: #222; }
+#toast.red { background: #c00; }
+
+@keyframes toast-slide-down {
+    from { top: -80px; opacity: 0; }
+    to   { top: 0; opacity: 1; }
+}
+@keyframes toast-slide-up {
+    from { top: 0; opacity: 1; }
+    to   { top: -80px; opacity: 0; }
+}
+
 dialog::backdrop {
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(5px);
@@ -214,6 +271,14 @@ dialog::backdrop {
             60% { transform: none; }
             100% { transform: none; }
         }
+
+        .shop-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: center;
+    width: 100%;
+}
     </style>
 </head>
 <body class="dark">
@@ -238,6 +303,8 @@ dialog::backdrop {
         </form>
     </dialog>
 
+    <div id="toast" style="display:none;"></div>
+
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -250,6 +317,7 @@ dialog::backdrop {
             doc,
             getDoc,
             updateDoc
+        , setDoc, serverTimestamp, arrayUnion
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 const firebaseConfig = {
   apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
@@ -336,9 +404,10 @@ const firebaseConfig = {
         description: "Get free 1000 coins for testing the preview",
         price: 0,
         image: "https://minotar.net/helm/DarkPurpleOf/200.png",
+        author: "darkpurpleof@darkpurpleof.github.io",
         action: async () => {
             if (!currentUser) {
-                alert("You must be signed in to receive coins.");
+                showToast("You must be signed in to receive coins.", "red");
                 return;
             }
 
@@ -354,9 +423,10 @@ const firebaseConfig = {
                 await updateDoc(userDoc, {
                     coins: newCoins.toString()
                 });
+                showToast("Coins added successfully!", "purple");
             } catch (e) {
                 console.error("Failed to add coins:", e);
-                alert("Something went wrong while adding coins.");
+                showToast("An error occurred while adding coins.", "red");
             }
         }
     },
@@ -366,9 +436,10 @@ const firebaseConfig = {
         description: "ooh, you like kissing boys, dont you?",
         price: 50,
         image: "https://media1.tenor.com/m/2hCfz7DcxcEAAAAd/boykisser-boykisser-meme.gif",
+        author: "boykisser2189@darkpurpleof.github.io",
         action: async () => {
             if (!currentUser) {
-                alert("You must be signed in to update your roles.");
+                showToast("You must be signed in to update your roles.", "red");
                 return;
             }
 
@@ -379,9 +450,10 @@ const firebaseConfig = {
                 await updateDoc(userDoc, {
                     roles: arrayUnion("Furry")
                 });
+                showToast("Role updated successfully!", "purple");
             } catch (e) {
                 console.error("Failed to update roles:", e);
-                alert("Something went wrong while updating roles.");
+                showToast("An error occurred while updating roles.", "red");
             }
         }
     },
@@ -391,6 +463,7 @@ const firebaseConfig = {
         description: "No longer be limited by the 300 character limit, get infinite character messages!",
         price: 300,
         image: "https://darkpurpleof.github.io/assets/360_F_1231361662_LFZiAQMDXEKfOvKIfNBQoXp9OVgIMaq2.webp",
+        author: "darkpurpleof@darkpurpleof.github.io",
         action: async () => {
             // No action needed; ID is enough
         }
@@ -401,6 +474,7 @@ const firebaseConfig = {
         description: "Save your chat wallpapers remotely instead of just locally!",
         price: 1000,
         image: "https://4kwallpapers.com/images/walls/thumbs_3t/8133.jpg",
+        author: "superperro9705@darkpurpleof.github.io",
         action: async () => {
             // No action needed; ID is enough
         }
@@ -411,6 +485,7 @@ const firebaseConfig = {
         description: "Who?",
         price: 1,
         image: "https://boykisser2189.neocities.org/boykisseridk.gif",
+        author: "boykisser2189@darkpurpleof.github.io",
         action: () => {
             window.open("https://boykisser2189.neocities.org/boykisser", "_blank");
         }
@@ -421,6 +496,7 @@ const firebaseConfig = {
         description: "Unlock the ability to use custom frames on your profile picture and stand out in the community!",
         price: 300,
         image: "https://boykisser2189.neocities.org/frames.jpg",
+        author: "boykisser2189@darkpurpleof.github.io",
         action: async () => {
             // No action needed; ID is enough
         }
@@ -445,6 +521,7 @@ img.style.borderRadius = "10px"; /* Maintain rounded corners */
                 title.textContent = item.title;
 
                 const desc = document.createElement("p");
+                desc.className = "item-desc";
                 desc.textContent = item.description;
 
                 const price = document.createElement("p");
@@ -455,20 +532,17 @@ img.style.borderRadius = "10px"; /* Maintain rounded corners */
                 btn.textContent = "Buy";
                 btn.onclick = () => {
                     if (!currentUser) {
-                        alert("⚠️ You must be logged in to buy items.");
+                        showToast("You must be signed in to buy items.", "red");
                         return;
                     }
-
                     if (isNaN(parseInt(currentCoins))) {
-                        alert("⚠️ Invalid balance.");
+                        showToast("Invalid balance. Please refresh.", "red");
                         return;
                     }
-
                     if (parseInt(currentCoins) < item.price) {
-                        alert("💰 Not enough coins.");
+                        showToast("Insufficient coins for this purchase.", "red");
                         return;
                     }
-
                     selectedItem = item;
                     confirmTitle.textContent = `Confirm: ${item.title}`;
                     confirmText.textContent = `Do you want to buy ${item.title} for ${formatCoins(item.price)}?`;
@@ -493,8 +567,10 @@ img.style.borderRadius = "10px"; /* Maintain rounded corners */
 };
 
 async function handlePurchase(item) {
-    if (!currentUser) return alert("You must be signed in to purchase.");
-
+    if (!currentUser) {
+        showToast("You must be signed in to purchase.", "red");
+        return;
+    }
     const email = currentUser.email;
     const userDoc = doc(db, "user_data", email);
 
@@ -505,26 +581,41 @@ async function handlePurchase(item) {
         const purchasedIds = data.purchasedIds || [];
 
         if (purchasedIds.includes(item.productId)) {
-            alert("You already own this item.");
+            showToast("You already own this item.", "yellow");
             return;
         }
-
         if (currentCoins < item.price) {
-            alert("Not enough coins!");
+            showToast("Insufficient coins for this purchase.", "red");
             return;
         }
 
         await updateDoc(userDoc, {
-    coins: (currentCoins - item.price).toString(),
-    purchasedIds: [...purchasedIds, item.productId]
-});
+            coins: (currentCoins - item.price).toString(),
+            purchasedIds: [...purchasedIds, item.productId]
+        });
 
-alert("Purchase successful!");
-item.action(); 
-updateUserData(currentUser);
+        // Save transaction to Firestore
+        const txRef = doc(db, `transactions/${email}/records/${item.productId}`);
+        await setDoc(txRef, {
+            amount: item.price,
+            date: serverTimestamp(),
+            description: item.title,
+            image: item.image,
+            source: item.author,
+            type: "outgoing"
+        });
+
+        showToast("Purchase successful!", "purple");
+        item.action();
+        updateUserData(currentUser);
+
+        // Reload page after toast disappears
+        setTimeout(() => {
+            location.reload();
+        }, 3900); // 3500ms toast + 400ms animation
     } catch (e) {
         console.error("Purchase error:", e);
-        alert("Error processing your purchase.");
+        showToast("An error occurred while processing your purchase.", "red");
     }
 }
 
@@ -535,6 +626,20 @@ updateUserData(currentUser);
             document.getElementById("theme-toggle").textContent =
                 document.body.classList.contains("light") ? "☀️" : "🌙";
         };
+
+        function showToast(message, color = "purple", duration = 3500) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = `${color} show`;
+    toast.style.display = "block";
+    setTimeout(() => {
+        toast.className = `${color} hide`;
+        setTimeout(() => {
+            toast.style.display = "none";
+            toast.className = color;
+        }, 400); // match animation duration
+    }, duration);
+}
 
         renderShop();
     </script>

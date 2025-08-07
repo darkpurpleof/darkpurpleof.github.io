@@ -599,6 +599,13 @@ auth.onAuthStateChanged(async user => {
         return;
     }
 
+    // Check if user is banned
+    const bannedDoc = await db.collection("banned_users").doc(user.email).get();
+    if (bannedDoc.exists) {
+        window.location.href = "/not-approved";
+        return;
+    }
+
     // Show friends & buttons if logged in
     authElements.forEach(el => el.style.display = '');
 

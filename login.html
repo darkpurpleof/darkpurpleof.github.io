@@ -150,12 +150,74 @@
             60% { transform: none; }
             100% { transform: none; }
         }
+        /* ...existing code... */
+#toast {
+    position: fixed;
+    top: -80px;
+    left: 0;
+    width: 100vw;
+    min-width: 0;
+    max-width: 100vw;
+    padding: 18px 0;
+    border-radius: 0 0 16px 16px;
+    font-size: 1.1em;
+    font-family: inherit;
+    color: #fff;
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(128,0,128,0.15);
+    opacity: 0;
+    pointer-events: none;
+    text-align: center;
+    transition: opacity 0.4s, top 0.4s;
+}
+#toast.show {
+    opacity: 1;
+    pointer-events: auto;
+    top: 0;
+    animation: toast-slide-down 0.4s cubic-bezier(.77,0,.175,1);
+}
+#toast.hide {
+    opacity: 0;
+    top: -80px;
+    animation: toast-slide-up 0.4s cubic-bezier(.77,0,.175,1);
+}
+#toast.purple { background: purple; }
+#toast.yellow { background: #e6b800; color: #222; }
+#toast.red { background: #c00; }
+
+@keyframes toast-slide-down {
+    from { top: -80px; opacity: 0; }
+    to   { top: 0; opacity: 1; }
+}
+@keyframes toast-slide-up {
+    from { top: 0; opacity: 1; }
+    to   { top: -80px; opacity: 0; }
+}
+
+/* Responsive scaling for mobile */
+@media (max-width: 600px) {
+    .login-container {
+        max-width: 98vw;
+        padding: 10px;
+        font-size: 1em;
+    }
+    input, button {
+        font-size: 1em;
+        padding: 10px;
+    }
+    h2 {
+        font-size: 1.5em;
+    }
+}
     </style>
 </head>
 <body>
 <div class="top-bar">
     <button class="icon-btn" id="themeToggle" onclick="toggleDarkMode()">🌙</button>
 </div>
+
+<div id="toast" style="display:none;"></div>
+
 
 <h2>Login</h2>
 <div class="login-container">
@@ -170,8 +232,7 @@
         </div>
         <button type="submit">Login</button>
     </form>
-    <p class="error-message" id="errorMessage"></p>
-
+    
     <!-- Forgot Password Link -->
     <div class="forgot-password">
         <p><a href="forgot.html">Forgot password?</a></p>
@@ -230,62 +291,74 @@
         event.preventDefault();
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
-        const errorMessage = document.getElementById("errorMessage");
 
         // Check if the user is banned by email
         const userRef = doc(db, "banned_users", email);
         getDoc(userRef).then((docSnap) => {
             if (docSnap.exists()) {
-                errorMessage.innerText = "You are banned from accessing the site.";
+                showToast("You are banned from accessing the site.", "red");
                 return;
             }
 
             // If email is from @darkpurpleof.github.io, skip banned IP check
             if (!email.endsWith("@darkpurpleof.github.io")) {
-                checkBannedIP(errorMessage);  // Check for banned IP for non-darkpurpleof accounts
+                checkBannedIP();
             } else {
                 // Allow login for @darkpurpleof.github.io even if the IP is banned
-                attemptLogin(email, password, errorMessage);
+                attemptLogin(email, password);
             }
         }).catch((error) => {
-            errorMessage.innerText = "Error checking ban status: " + error.message;
+            showToast("Error checking ban status: " + error.message, "red");
         });
     });
 
-    function checkBannedIP(errorMessage) {
-        // Fetch the user's current IP using ipinfo.io
-        fetch("https://ipinfo.io/json")  // Replace YOUR_IPINFO_TOKEN with your actual IPInfo API token
+    function showToast(message, color = "purple", duration = 3500) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = `${color} show`;
+    toast.style.display = "block";
+    setTimeout(() => {
+        toast.className = `${color} hide`;
+        setTimeout(() => {
+            toast.style.display = "none";
+            toast.className = color;
+        }, 400);
+    }, duration);
+}
+
+    function checkBannedIP() {
+        fetch("https://ipinfo.io/json")
             .then(response => response.json())
             .then(data => {
                 const userIP = data.ip;
-
-                // Check if the user's IP is banned
                 const ipRef = doc(db, "banned_ips", userIP);
                 getDoc(ipRef).then((ipSnap) => {
                     if (ipSnap.exists()) {
-                        errorMessage.innerText = "Your IP is banned.";
+                        showToast("Your IP is banned.", "red");
                         return;
                     } else {
-                        // Proceed with login if IP is not banned
                         const email = document.getElementById("email").value;
                         const password = document.getElementById("password").value;
-                        attemptLogin(email, password, errorMessage);
+                        attemptLogin(email, password);
                     }
                 }).catch((error) => {
-                    errorMessage.innerText = "Error checking IP ban: " + error.message;
+                    showToast("Error checking IP ban: " + error.message, "red");
                 });
             }).catch((error) => {
-            errorMessage.innerText = "Unable to fetch IP address: " + error.message;
-        });
+                showToast("Unable to fetch IP address: " + error.message, "red");
+            });
     }
 
-    function attemptLogin(email, password, errorMessage) {
+    function attemptLogin(email, password) {
         signInWithEmailAndPassword(auth, email, password)
             .then((userCredential) => {
-                window.location.href = "https://darkpurpleof.github.io";
+                showToast("Login successful!", "purple");
+                setTimeout(() => {
+                    window.location.href = "https://darkpurpleof.github.io";
+                }, 3900);
             })
             .catch((error) => {
-                errorMessage.innerText = "Whoops! Login failed because " + error.message;
+                showToast("Whoops! Login failed because " + error.message, "red");
             });
     }
 </script>

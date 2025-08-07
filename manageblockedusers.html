@@ -86,13 +86,57 @@
             margin-top: 20px;
             font-size: 1em;
         }
+        /* ...existing code... */
+#toast {
+    position: fixed;
+    top: -80px;
+    left: 0;
+    width: 100vw;
+    min-width: 0;
+    max-width: 100vw;
+    padding: 18px 0;
+    border-radius: 0 0 16px 16px;
+    font-size: 1.1em;
+    font-family: inherit;
+    color: #fff;
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(128,0,128,0.15);
+    opacity: 0;
+    pointer-events: none;
+    text-align: center;
+    transition: opacity 0.4s, top 0.4s;
+}
+#toast.show {
+    opacity: 1;
+    pointer-events: auto;
+    top: 0;
+    animation: toast-slide-down 0.4s cubic-bezier(.77,0,.175,1);
+}
+#toast.hide {
+    opacity: 0;
+    top: -80px;
+    animation: toast-slide-up 0.4s cubic-bezier(.77,0,.175,1);
+}
+#toast.purple { background: purple; }
+#toast.yellow { background: #e6b800; color: #222; }
+#toast.red { background: #c00; }
+
+@keyframes toast-slide-down {
+    from { top: -80px; opacity: 0; }
+    to   { top: 0; opacity: 1; }
+}
+@keyframes toast-slide-up {
+    from { top: 0; opacity: 1; }
+    to   { top: -80px; opacity: 0; }
+}
+/* ...existing code... */
     </style>
 </head>
 <body>
     <h1>Manage Blocked Users</h1>
+    <div id="toast" style="display:none;"></div>
 
     <div id="blockedList"></div>
-    <div id="message" class="message"></div>
 
     <!-- Firebase SDKs -->
     <script type="module">
@@ -118,73 +162,87 @@
         const db = getFirestore(app);
 
         const blockedList = document.getElementById('blockedList');
-        const messageDiv = document.getElementById('message');
 
         function renderBlockedUsers(email, blockedUsers) {
-            blockedList.innerHTML = "";
+    blockedList.innerHTML = "";
 
-            if (!blockedUsers || blockedUsers.length === 0) {
-                blockedList.innerHTML = "<p>No users blocked.</p>";
-                return;
-            }
+    if (!blockedUsers || blockedUsers.length === 0) {
+        blockedList.innerHTML = "<p>No users blocked.</p>";
+        return;
+    }
 
-            blockedUsers.forEach(blockedEmail => {
-                const div = document.createElement('div');
-                div.className = "blocked-user";
+    blockedUsers.forEach(blockedEmail => {
+        const div = document.createElement('div');
+        div.className = "blocked-user";
 
-                const emailSpan = document.createElement('span');
-                emailSpan.className = "blocked-email";
-                emailSpan.textContent = blockedEmail;
+        const emailSpan = document.createElement('span');
+        emailSpan.className = "blocked-email";
+        emailSpan.textContent = blockedEmail;
 
-                const btn = document.createElement('button');
-                btn.className = "unblock-btn";
-                btn.textContent = "Unblock";
+        const btn = document.createElement('button');
+        btn.className = "unblock-btn";
+        btn.textContent = "Unblock";
 
-                btn.onclick = async () => {
-                    try {
-                        const userDocRef = doc(db, "user_data", email);
-                        await updateDoc(userDocRef, {
-                            blockedUsers: arrayRemove(blockedEmail)
-                        });
-                        messageDiv.textContent = `${blockedEmail} has been unblocked.`;
-                        // Re-render
-                        loadBlockedUsers(email);
-                    } catch (err) {
-                        console.error("Failed to unblock:", err);
-                        messageDiv.textContent = `Error: ${err.message}`;
-                    }
-                };
-
-                div.appendChild(emailSpan);
-                div.appendChild(btn);
-                blockedList.appendChild(div);
-            });
-        }
-
-        async function loadBlockedUsers(email) {
+        btn.onclick = async () => {
             try {
                 const userDocRef = doc(db, "user_data", email);
-                const userSnap = await getDoc(userDocRef);
-
-                if (userSnap.exists()) {
-                    const data = userSnap.data();
-                    renderBlockedUsers(email, data.blockedUsers);
-                } else {
-                    blockedList.innerHTML = "<p>User data not found.</p>";
-                }
-            } catch (err) {
-                messageDiv.textContent = `Failed to load data: ${err.message}`;
-            }
-        }
-
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                const email = user.email;
+                await updateDoc(userDocRef, {
+                    blockedUsers: arrayRemove(blockedEmail)
+                });
+                showToast("User unblocked successfully", "purple");
+                // Re-render
                 loadBlockedUsers(email);
-            } else {
-                messageDiv.textContent = "Please log in to manage blocked users.";
+            } catch (err) {
+                console.error("Failed to unblock:", err);
+                showToast("Error: " + err.message, "red");
             }
-        });
+        };
+
+        div.appendChild(emailSpan);
+        div.appendChild(btn);
+        blockedList.appendChild(div);
+    });
+}
+
+async function loadBlockedUsers(email) {
+    try {
+        const userDocRef = doc(db, "user_data", email);
+        const userSnap = await getDoc(userDocRef);
+
+        if (userSnap.exists()) {
+            const data = userSnap.data();
+            renderBlockedUsers(email, data.blockedUsers);
+        } else {
+            blockedList.innerHTML = "<p>User data not found.</p>";
+            showToast("User data not found.", "yellow");
+        }
+    } catch (err) {
+        showToast("Failed to load data: " + err.message, "red");
+    }
+}
+
+onAuthStateChanged(auth, user => {
+    if (user) {
+        const email = user.email;
+        loadBlockedUsers(email);
+    } else {
+        showToast("Please log in to manage blocked users.", "yellow");
+    }
+});
+
+function showToast(message, color = "purple", duration = 3500) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = `${color} show`;
+    toast.style.display = "block";
+    setTimeout(() => {
+        toast.className = `${color} hide`;
+        setTimeout(() => {
+            toast.style.display = "none";
+            toast.className = color;
+        }, 400);
+    }, duration);
+}
     </script>
 </body>
 </html>
