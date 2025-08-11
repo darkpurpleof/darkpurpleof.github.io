@@ -624,7 +624,7 @@ onAuthStateChanged(auth, async (currentUser) => {
     const frameUrl = targetData.profile_picture_frame;
 
     bannerEl.style.backgroundImage = `url(${targetData.banner || '/assets/default_banner.png'})`;
-    profilePicEl.style.backgroundImage = `url(${targetData.profile_picture || 'https://minotar.net/helm/DarkPurpleOF.png'})`;
+    profilePicEl.style.backgroundImage = `url(${targetData.profile_picture || 'https://darkpurpleof.github.io/org-owner.jpg'})`;
     const displayName = targetData['display name'] || targetEmail;
     displayNameEl.textContent = displayName;
     emailEl.textContent = targetEmail;
@@ -739,7 +739,7 @@ async function renderPostCard(docSnap) {
   const verifiedIconHTML = isVerified ? `<img src="/assets/verified.png" alt="Verified" class="verified-icon" style="height: 1em; margin-left: 0.3em; vertical-align: middle;">` : '';
 
   // Profile picture and frame
-  const profilePicUrl = authorData?.profile_picture || 'https://minotar.net/helm/DarkPurpleOF.png';
+  const profilePicUrl = authorData?.profile_picture || 'https://darkpurpleof.github.io/org-owner.jpg';
   const frameUrl = authorData?.profile_picture_frame;
   const profilePicHTML = `
     <div style="position: relative; width: 48px; height: 48px;">
