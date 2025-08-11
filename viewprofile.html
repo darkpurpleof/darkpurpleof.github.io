@@ -146,7 +146,7 @@
     font-size: 1.1em;
     font-family: inherit;
     color: #fff;
-    z-index: 9999;
+    z-index: 10002; /* <-- Make sure this is higher than #block-blur-overlay */
     box-shadow: 0 4px 16px rgba(128,0,128,0.15);
     opacity: 0;
     pointer-events: none;
@@ -471,6 +471,23 @@
     z-index: 2;
     display: none;
 }
+
+/* Add this helper for blurring */
+#block-blur-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(7px);
+    z-index: 10001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+#block-blur-overlay.active {
+    display: flex;
+}
 </style>
 </head>
 <body>
@@ -570,15 +587,85 @@ function showToast(message, color = "purple", duration = 3500) {
 function denyAccess(reason = "You don't have permission to view this profile.") {
     showToast(reason, "red");
     document.getElementById('profile-card').innerHTML = `
-      <div style="padding: 2rem; font-size: 1.2em; text-align: center;">
-        <img src="/assets/default_banner.png" style="width:100%;max-width:600px;border-radius:12px;margin-bottom:20px;">
-        <div style="display:flex;align-items:center;justify-content:center;gap:15px;">
-          <div class="profile-pic" style="width:80px;height:80px;background-image:url('https://darkpurpleof.github.io/org-owner.jpg');"></div>
-          <div style="font-size:2em;font-weight:600;color:var(--text-color);">Profile Unavailable</div>
+      <div style="padding: 2.2rem 1.2rem; font-size: 1.13em; text-align: center;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:18px;">
+          <div class="profile-pic" style="width:72px;height:72px;background-image:url('https://darkpurpleof.github.io/org-owner.jpg');box-shadow:0 2px 8px rgba(128,0,128,0.10);border-radius:16px;border:2px solid var(--border-color);"></div>
+          <div style="text-align:left;">
+            <div style="font-size:1.7em;font-weight:700;color:var(--text-color);margin-bottom:2px;letter-spacing:0.5px;">Profile Unavailable</div>
+            <div style="font-size:1.08em;color:var(--text-color);opacity:0.7;line-height:1.5;">
+              This user's profile cannot be displayed.<br>
+              <span style="font-size:0.97em;opacity:0.8;">Possible reasons:</span>
+              <ul style="margin:0.5em 0 0 1.2em;padding:0;font-size:0.97em;opacity:0.8;text-align:left;">
+                <li>The user is banned</li>
+                <li>The profile is private</li>
+                <li>The profile does not exist</li>
+              </ul>
+            </div>
+          </div>
         </div>
-        <div style="margin-top:1em;color:var(--text-color);opacity:0.7;">${reason}</div>
+        <div style="margin-top:1.2em;color:var(--text-color);opacity:0.85;font-size:1.05em;">
+          <span style="display:inline-block;background:rgba(128,0,128,0.08);padding:8px 18px;border-radius:8px;box-shadow:0 1px 6px rgba(128,0,128,0.04);">
+            ${reason}
+          </span>
+        </div>
       </div>
     `;
+}
+
+// Add this helper for blurring
+function setPageBlurred(blurred, onYes) {
+    const body = document.body;
+    if (blurred) {
+        if (!document.getElementById('block-blur-overlay')) {
+            const overlay = document.createElement('div');
+            overlay.id = 'block-blur-overlay';
+            overlay.style = `
+                position: fixed;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.45);
+                backdrop-filter: blur(7px);
+                z-index: 10001;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            overlay.innerHTML = `
+                <div style="background: var(--bg-color); border: 2px solid var(--border-color); border-radius: 14px; max-width: 350px; width: 90%; padding: 2rem 1.2rem; color: var(--text-color); text-align: center; box-shadow: 0 4px 32px rgba(128,0,128,0.13);">
+                    <div style="font-size: 1.25em; font-weight: 600; margin-bottom: 1.2em;">You have blocked this user.</div>
+                    <div style="font-size: 1em; opacity: 0.8; margin-bottom: 1.5em;">Do you want to view this profile anyway?</div>
+                    <div style="display: flex; gap: 18px; justify-content: center;">
+                        <button id="block-view-yes" style="flex:1;padding:10px 0;border-radius:8px;border:1.5px solid var(--border-color);background:var(--box-bg);color:var(--text-color);font-size:1.1em;cursor:pointer;">Yes</button>
+                        <button id="block-view-no" style="flex:1;padding:10px 0;border-radius:8px;border:1.5px solid var(--border-color);background:var(--box-bg);color:var(--text-color);font-size:1.1em;cursor:pointer;">No</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            document.getElementById('block-view-yes').onclick = () => {
+                setPageBlurred(false); // Remove blur
+                if (typeof onYes === "function") onYes();
+            };
+            document.getElementById('block-view-no').onclick = () => {
+                window.history.back();
+            };
+        }
+        // Blur everything except the toast and overlay
+        Array.from(document.body.children).forEach(el => {
+            if (el.id !== 'toast' && el.id !== 'block-blur-overlay') {
+                el.style.filter = 'blur(7px)';
+                el.style.pointerEvents = 'none';
+                el.style.userSelect = 'none';
+            }
+        });
+    } else {
+        const overlay = document.getElementById('block-blur-overlay');
+        if (overlay) overlay.remove();
+        Array.from(document.body.children).forEach(el => {
+            el.style.filter = '';
+            el.style.pointerEvents = '';
+            el.style.userSelect = '';
+        });
+    }
 }
 
 onAuthStateChanged(auth, async (currentUser) => {
@@ -587,25 +674,69 @@ onAuthStateChanged(auth, async (currentUser) => {
         return;
     }
 
+    // Fetch current user's block list
+    let currentUserBlocked = [];
+    try {
+        const currentUserDoc = await getDoc(doc(db, 'user_data', currentUser.email));
+        if (currentUserDoc.exists()) {
+            currentUserBlocked = currentUserDoc.data().blockedUsers || [];
+        }
+    } catch (e) {
+        // ignore
+    }
+
+    // Priority: banned > not found > private > blocked by them > blocked by you
+    const ignoreBlock = new URLSearchParams(window.location.search).get('ignoreblock') === 'true';
+
     // Check if target user is banned
     const bannedDocRef = doc(db, "banned_users", targetEmail);
     const bannedDocSnap = await getDoc(bannedDocRef);
     if (bannedDocSnap.exists()) {
+        setPageBlurred(false);
         denyAccess("You can't view banned users' profiles.");
         return;
     }
 
+    // Check if target user exists
     const userDocRef = doc(db, 'user_data', targetEmail);
     const userDocSnap = await getDoc(userDocRef);
-
-    if (!userDocSnap.exists()) return denyAccess("Profile not found.");
+    if (!userDocSnap.exists()) {
+        setPageBlurred(false);
+        return denyAccess("Profile not found.");
+    }
 
     const targetData = userDocSnap.data();
 
-    if (targetData.isProfilePublic === false) return denyAccess("This profile is private.");
+    // Check if profile is private
+    if (targetData.isProfilePublic === false) {
+        setPageBlurred(false);
+        return denyAccess("This profile is private.");
+    }
 
+    // Check if current user is blocked by target (do NOT reveal, just generic)
     const blockedUsers = targetData.blockedUsers || [];
-    if (blockedUsers.includes(currentUser.email)) return denyAccess("This profile isn't available at the moment.");
+    if (blockedUsers.includes(currentUser.email)) {
+        setPageBlurred(false);
+        return denyAccess();
+    }
+
+    // If current user has blocked the target profile
+    if (currentUserBlocked.includes(targetEmail) && !ignoreBlock) {
+        showToast("You have blocked this user.", "yellow");
+        setPageBlurred(true, async () => {
+            // After confirmation, reload page with ignoreblock param
+            const url = new URL(window.location.href);
+            url.searchParams.set('ignoreblock', 'true');
+            window.location.href = url.toString();
+        });
+        return;
+    } else if (ignoreBlock && currentUserBlocked.includes(targetEmail)) {
+        // Show the "Viewing blocked user's profile" toast only if ignoreblock param is present
+        showToast("Viewing blocked user's profile", "yellow");
+        setPageBlurred(false);
+    } else {
+        setPageBlurred(false);
+    }
 
     // Load readonly info
     const bannerEl = document.getElementById('banner');
