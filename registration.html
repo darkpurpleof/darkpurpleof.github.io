@@ -79,6 +79,50 @@
             animation: glitch 1.5s infinite;
         }
 
+        /* Toast styles (from viewprofile.html) */
+#toast {
+    position: fixed;
+    top: -80px;
+    left: 0;
+    width: 100vw;
+    min-width: 0;
+    max-width: 100vw;
+    padding: 18px 0;
+    border-radius: 0 0 16px 16px;
+    font-size: 1.1em;
+    font-family: inherit;
+    color: #fff;
+    z-index: 10002;
+    box-shadow: 0 4px 16px rgba(128,0,128,0.15);
+    opacity: 0;
+    pointer-events: none;
+    text-align: center;
+    transition: opacity 0.4s, top 0.4s;
+}
+#toast.show {
+    opacity: 1;
+    pointer-events: auto;
+    top: 0;
+    animation: toast-slide-down 0.4s cubic-bezier(.77,0,.175,1);
+}
+#toast.hide {
+    opacity: 0;
+    top: -80px;
+    animation: toast-slide-up 0.4s cubic-bezier(.77,0,.175,1);
+}
+#toast.purple { background: purple; }
+#toast.yellow { background: #e6b800; color: #222; }
+#toast.red { background: #c00; }
+
+@keyframes toast-slide-down {
+    from { top: -80px; opacity: 0; }
+    to   { top: 0; opacity: 1; }
+}
+@keyframes toast-slide-up {
+    from { top: 0; opacity: 1; }
+    to   { top: -80px; opacity: 0; }
+}
+
         .info-chart {
             margin: 20px auto;
             padding: 15px;
@@ -169,8 +213,6 @@
         <div class="g-recaptcha" data-sitekey="6Lddwd8qAAAAAC0OUZ7iOrKFGEeu--_-1XvjU0et"></div>
         <button type="submit" class="register-button">Register</button>
     </form>
-    <p id="errorMessage" class="error-message"></p>
-    <p id="successMessage" class="success-message"></p>
 
     <!-- Description inside the chart -->
     <p style="font-size: 1em; color: var(--text-color); margin-top: 15px;">
@@ -247,44 +289,86 @@
         }
     }
 
+    // Toast function (from viewprofile.html)
+function showToast(message, color = "purple", duration = 3500) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = `${color} show`;
+    toast.style.display = "block";
+    setTimeout(() => {
+        toast.className = `${color} hide`;
+        setTimeout(() => {
+            toast.style.display = "none";
+            toast.className = color;
+        }, 400);
+    }, duration);
+}
+
+// Fetch user's IP info using ipinfo.io API
+async function fetchUserIpInfo() {
+    try {
+        const response = await fetch('https://ipinfo.io/json?token=6b7c2e6e4e2e0c'); // Add your token if needed
+        const data = await response.json();
+        return data;  // Returns the user's IP info object
+    } catch (error) {
+        console.error('Error fetching IP info:', error);
+        return null;
+    }
+}
+
+const bannedRegions = [
+    "United Kingdom", "Australia", "Turkiye", "Turkey", "Argentina", "Brazil", "China"
+];
+
     document.getElementById("registerForm").addEventListener("submit", async function(event) {
         event.preventDefault();
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
-        const recaptchaResponse = grecaptcha.getResponse(); // Get the reCAPTCHA response
-        const errorMessage = document.getElementById("errorMessage");
-        const successMessage = document.getElementById("successMessage");
+        const recaptchaResponse = grecaptcha.getResponse();
 
         if (email.endsWith("@darkpurpleof.github.io")) {
-            errorMessage.innerText = "You can't use an admin account here. Please ask Dark Purple.";
+            showToast("You can't use an admin account here. Please ask Dark Purple.", "red");
             return;
         }
 
         if (!recaptchaResponse) {
-            errorMessage.innerText = "Please complete the reCAPTCHA.";
+            showToast("Please complete the reCAPTCHA.", "red");
             return;
         }
 
-        const userIp = await fetchUserIp();
-        if (!userIp) {
-            errorMessage.innerText = "Could not determine your IP address.";
+        const ipInfo = await fetchUserIpInfo();
+        if (!ipInfo) {
+            showToast("Could not determine your IP address.", "red");
             return;
         }
 
-        if (await checkBans(email, userIp)) {
-            errorMessage.innerText = "Your email or IP is banned.";
+        // Check for banned region
+        if (bannedRegions.includes(ipInfo.region)) {
+            showToast("Registration from your region is not allowed.", "red");
+            return;
+        }
+
+        // Check for VPN usage
+        if (ipInfo.privacy && ipInfo.privacy.vpn) {
+            showToast("VPN usage detected. Please disable your VPN to register.", "red");
+            return;
+        }
+
+        // Check bans as before
+        if (await checkBans(email, ipInfo.ip)) {
+            showToast("Your email or IP is banned.", "red");
             return;
         }
 
         createUserWithEmailAndPassword(auth, email, password)
             .then(() => {
-                successMessage.innerText = "Registration successful! Redirecting...";
+                showToast("Registration successful! Redirecting...", "purple");
                 setTimeout(() => {
-                    window.location.href = "login.html";
+                    window.location.href = "index.html";
                 }, 2000);
             })
             .catch((error) => {
-                errorMessage.innerText = "We couldn't register you: " + error.message;
+                showToast("We couldn't register you, try again later", "red");
             });
     });
 </script>
@@ -316,5 +400,8 @@
         }
     });
 </script>
+
+<!-- Add toast HTML just before </body> -->
+<div id="toast" style="display:none;"></div>
 
 </body></html>

@@ -492,35 +492,75 @@ iframe::-webkit-scrollbar {
         const container = document.getElementById("friends-list");
         container.innerHTML = ""; // clear old friends
 
+        // Collect unique friends by email (no duplicates)
+        const friendEmailsSet = new Set();
+        const friends = [];
         for (const doc of snapshot.docs) {
-            const friendEmail = doc.id;
+            const friendEmail = doc.id.toLowerCase();
+            if (friendEmailsSet.has(friendEmail)) continue; // skip duplicates
+            friendEmailsSet.add(friendEmail);
 
-            // Get friend's profile data
             const friendDataRef = db.collection("user_data").doc(friendEmail);
             const friendSnap = await friendDataRef.get();
             const friendData = friendSnap.exists ? friendSnap.data() : {};
 
-            const displayName = friendData["display name"] || friendEmail;
-            const profilePic = friendData.profile_picture || "/org-owner.jpg";
-            const verified = friendData.is_verified === true;
-            const frameUrl = friendData.profile_picture_frame;
+            friends.push({
+                displayName: friendData["display name"] || friendEmail,
+                profilePic: friendData.profile_picture || "/org-owner.jpg",
+                verified: friendData.is_verified === true,
+                frameUrl: friendData.profile_picture_frame,
+                email: friendEmail
+            });
+        }
 
-            // Create friend card
-            const card = document.createElement("div");
-            card.className = "friend-card";
-            card.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(friendEmail)}`;
+        // Render friends (mobile/webview: pyramid, desktop: horizontal)
+        if (isMobile() || isWebView()) {
+            let idx = 0;
+            while (idx < friends.length) {
+                const remaining = friends.length - idx;
+                const rowCount = Math.min(4, remaining);
+                const row = document.createElement("div");
+                row.style.display = "flex";
+                row.style.justifyContent = "center";
+                row.style.gap = "15px";
+                row.style.marginBottom = "10px";
+                row.style.width = "100%";
 
-            card.innerHTML = `
-                <div class="friend-pfp" style="background-image:url('${profilePic}'); position:relative;">
-                    ${frameUrl && frameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${frameUrl}')"></div>` : ""}
-                </div>
-                <div class="friend-name">
-                    <span>${displayName}</span>
-                    ${verified ? `<img src="/assets/verified.png" alt="Verified">` : ""}
-                </div>
-            `;
-
-            container.appendChild(card);
+                for (let i = 0; i < rowCount; i++) {
+                    const f = friends[idx + i];
+                    const card = document.createElement("div");
+                    card.className = "friend-card";
+                    card.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(f.email)}`;
+                    card.innerHTML = `
+                        <div class="friend-pfp" style="background-image:url('${f.profilePic}'); position:relative;">
+                            ${f.frameUrl && f.frameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${f.frameUrl}')"></div>` : ""}
+                        </div>
+                        <div class="friend-name">
+                            <span>${f.displayName}</span>
+                            ${f.verified ? `<img src="/assets/verified.png" alt="Verified">` : ""}
+                        </div>
+                    `;
+                    row.appendChild(card);
+                }
+                container.appendChild(row);
+                idx += rowCount;
+            }
+        } else {
+            for (const f of friends) {
+                const card = document.createElement("div");
+                card.className = "friend-card";
+                card.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(f.email)}`;
+                card.innerHTML = `
+                    <div class="friend-pfp" style="background-image:url('${f.profilePic}'); position:relative;">
+                        ${f.frameUrl && f.frameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${f.frameUrl}')"></div>` : ""}
+                    </div>
+                    <div class="friend-name">
+                        <span>${f.displayName}</span>
+                        ${f.verified ? `<img src="/assets/verified.png" alt="Verified">` : ""}
+                    </div>
+                `;
+                container.appendChild(card);
+            }
         }
     });
 });
@@ -722,6 +762,170 @@ auth.onAuthStateChanged(async user => {
 });
 </script>
 <div id="toast" style="display:none;"></div>
+
+<script>
+(function () {
+    const MOBILE_MAX = 600;
+
+    // guard against double-initialization
+    if (window.__friendsInit) return;
+    window.__friendsInit = true;
+
+    const state = {
+        unsub: null,
+        friends: []
+    };
+
+    function isMobile() {
+        return window.matchMedia
+            ? window.matchMedia(`(max-width: ${MOBILE_MAX}px)`).matches
+            : window.innerWidth <= MOBILE_MAX;
+    }
+
+    function isWebView() {
+        const standalone = window.navigator.standalone === true;
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isAndroidWebView =
+            /\bwv\b/.test(ua) ||
+            (/Version\/[\d.]+.*Chrome/.test(ua) && !/Chrome\/[\d.]+ Mobile/.test(ua));
+        const isNoChrome = !window.chrome && /Safari/.test(ua) && !/Chrome/.test(ua);
+        return standalone || isAndroidWebView || isNoChrome;
+    }
+
+    function updateCoinDisplayVisibility() {
+        const coinDisplay = document.getElementById('coin-display');
+        if (!coinDisplay) return;
+        coinDisplay.style.display = isMobile() ? 'none' : '';
+    }
+
+    function makeCard(f) {
+        const card = document.createElement("div");
+        card.className = "friend-card";
+        card.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(f.email)}`;
+        card.innerHTML = `
+            <div class="friend-pfp" style="background-image:url('${f.profilePic}'); position:relative;">
+                ${f.frameUrl && String(f.frameUrl).trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${f.frameUrl}')"></div>` : ""}
+            </div>
+            <div class="friend-name">
+                <span>${f.displayName}</span>
+                ${f.verified ? `<img src="/assets/verified.png" alt="Verified">` : ""}
+            </div>
+        `;
+        return card;
+    }
+
+    function renderDesktop(container, friends) {
+        // enforce desktop container layout
+        container.innerHTML = "";
+        container.style.display = "flex";
+        container.style.flexWrap = "nowrap";
+        container.style.overflowX = "auto";
+        container.style.gap = "15px";
+        container.style.alignItems = "stretch";
+
+        for (const f of friends) {
+            container.appendChild(makeCard(f));
+        }
+    }
+
+    function renderPyramid(container, friends) {
+        // enforce pyramid container layout
+        container.innerHTML = "";
+        container.style.display = "block";
+        container.style.overflowX = "visible";
+        container.style.gap = "0";
+
+        let idx = 0;
+        let rowSize = 1; // 1→2→3→4→1...
+        while (idx < friends.length) {
+            const rowCount = Math.min(rowSize, friends.length - idx);
+            const row = document.createElement("div");
+            row.style.display = "flex";
+            row.style.justifyContent = "center";
+            row.style.gap = "15px";
+            row.style.marginBottom = "10px";
+            row.style.width = "100%";
+
+            for (let i = 0; i < rowCount; i++) {
+                row.appendChild(makeCard(friends[idx + i]));
+            }
+            container.appendChild(row);
+            idx += rowCount;
+            rowSize = rowSize < 4 ? rowSize + 1 : 1;
+        }
+    }
+
+    function renderLayout() {
+        const container = document.getElementById("friends-list");
+        if (!container) return;
+        if (isMobile() || isWebView()) {
+            renderPyramid(container, state.friends);
+        } else {
+            renderDesktop(container, state.friends);
+        }
+    }
+
+    window.addEventListener('resize', () => {
+        updateCoinDisplayVisibility();
+        renderLayout();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateCoinDisplayVisibility();
+        if (isWebView()) {
+            showToast("For better compatibility, set URLs to open in this app instead of on your default browser", "purple", 6000);
+        }
+    });
+
+    auth.onAuthStateChanged(async user => {
+        const container = document.getElementById("friends-list");
+
+        // cleanup any previous listener to avoid duplicate renders
+        if (state.unsub) {
+            state.unsub();
+            state.unsub = null;
+        }
+
+        if (!user || !container) {
+            if (container) container.innerHTML = "";
+            state.friends = [];
+            return;
+        }
+
+        const friendsListRef = db.collection("friends")
+            .doc(user.email)
+            .collection("friendlist");
+
+        state.unsub = friendsListRef.onSnapshot(async snapshot => {
+            // normalize & dedupe by trimmed, lowercased id
+            const emails = [];
+            snapshot.forEach(d => {
+                const id = String(d.id || "").trim().toLowerCase();
+                if (id && !emails.includes(id)) emails.push(id);
+            });
+
+            // fetch friend docs in parallel
+            const docs = await Promise.all(
+                emails.map(email => db.collection("user_data").doc(email).get())
+            );
+
+            state.friends = docs.map((snap, i) => {
+                const email = emails[i];
+                const data = snap.exists ? snap.data() : {};
+                return {
+                    displayName: data && data["display name"] ? data["display name"] : email,
+                    profilePic: (data && data.profile_picture) || "/org-owner.jpg",
+                    verified: !!(data && data.is_verified === true),
+                    frameUrl: data ? data.profile_picture_frame : undefined,
+                    email
+                };
+            });
+
+            renderLayout();
+        });
+    });
+})();
+</script>
 
 </body>
 </html>

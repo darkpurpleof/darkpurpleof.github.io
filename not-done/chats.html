@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat List</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+    :root {
+        --bg-color: #000;
+        --text-color: purple;
+        --box-bg: rgba(128, 0, 128, 0.05);
+        --border-color: purple;
+    }
+
+    body.light {
+        --bg-color: #fff;
+        --text-color: purple;
+        --box-bg: rgba(128, 0, 128, 0.1);
+        --border-color: purple;
+    }
+
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: 'Orbitron', sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        min-height: 100vh;
+        transition: background 0.4s, color 0.4s;
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+
+    .top-bar {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .top-bar .title {
+        font-size: 1.8em;
+        font-weight: bold;
+        text-shadow: 0 0 6px var(--text-color);
+    }
+
+    .top-bar .icons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .icon-btn {
+        font-size: 22px;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        color: var(--text-color);
+        padding: 6px;
+        transition: opacity 0.3s;
+    }
+
+    .icon-btn:hover {
+        opacity: 0.7;
+    }
+
+    .profile-pic {
+        width: 48px;
+        height: 48px;
+        background-color: var(--box-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 50%;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+
+    .pfp-frame {
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .chat-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background-color: var(--box-bg);
+        border: 1.5px solid var(--border-color);
+        padding: 8px 12px;
+        border-radius: 10px;
+        width: 100%;
+        max-width: 500px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: opacity 0.3s, transform 0.2s;
+    }
+
+    .chat-item:hover {
+        opacity: 0.85;
+        transform: translateY(-2px);
+    }
+
+    .chat-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .chat-info .display-name {
+        font-weight: bold;
+        font-size: 1.1em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .chat-info .last-message {
+        font-size: 0.9em;
+        color: var(--text-color);
+        opacity: 0.8;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    #toast {
+        position: fixed;
+        top: -80px;
+        left: 0;
+        width: 100vw;
+        min-width: 0;
+        max-width: 100vw;
+        padding: 18px 0;
+        border-radius: 0 0 16px 16px;
+        font-size: 1.1em;
+        font-family: inherit;
+        color: #fff;
+        z-index: 10002;
+        box-shadow: 0 4px 16px rgba(128,0,128,0.15);
+        opacity: 0;
+        pointer-events: none;
+        text-align: center;
+        transition: opacity 0.4s, top 0.4s;
+    }
+    #toast.show {
+        opacity: 1;
+        pointer-events: auto;
+        top: 0;
+        animation: toast-slide-down 0.4s cubic-bezier(.77,0,.175,1);
+    }
+    #toast.hide {
+        opacity: 0;
+        top: -80px;
+        animation: toast-slide-up 0.4s cubic-bezier(.77,0,.175,1);
+    }
+    #toast.purple { background: purple; }
+    #toast.yellow { background: #e6b800; color: #222; }
+    #toast.red { background: #c00; }
+
+    @keyframes toast-slide-down {
+        from { top: -80px; opacity: 0; }
+        to   { top: 0; opacity: 1; }
+    }
+    @keyframes toast-slide-up {
+        from { top: 0; opacity: 1; }
+        to   { top: -80px; opacity: 0; }
+    }
+
+    .empty-state {
+        width: 100%;
+        max-width: 500px;
+        height: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        opacity: 0.3;
+        font-size: 1em;
+        color: var(--text-color);
+        position: relative;
+    }
+    .empty-state canvas {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div class="title">Chats</div>
+    <div class="icons">
+        <button class="icon-btn" id="search-btn">
+            <img src="/assets/search.png" alt="Search" width="24" height="24">
+        </button>
+        <button class="icon-btn" id="settings-btn">
+            <img src="/assets/cog.png" alt="Settings" width="24" height="24">
+        </button>
+    </div>
+</div>
+
+<div id="chat-list"></div>
+
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+  measurementId: "G-S2X2JYC8Z0"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+function showToast(message, color = "purple", duration = 3500) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = `${color} show`;
+    toast.style.display = "block";
+    setTimeout(() => {
+        toast.className = `${color} hide`;
+        setTimeout(() => {
+            toast.style.display = "none";
+            toast.className = color;
+        }, 400);
+    }, duration);
+}
+
+document.getElementById("settings-btn").addEventListener("click", () => {
+    window.location.href = "/chatsettings";
+});
+
+document.getElementById("search-btn").addEventListener("click", () => {
+    window.location.href = "/search";
+});
+
+// Simple canvas placeholder for empty state
+function createEmptyState(container) {
+    const emptyDiv = document.createElement("div");
+    emptyDiv.className = "empty-state";
+    const canvas = document.createElement("canvas");
+    canvas.width = 200; canvas.height = 150;
+    const ctx = canvas.getContext("2d");
+    ctx.strokeStyle = "purple";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(10, 10, 180, 130);
+    ctx.setLineDash([]);
+    ctx.font = "14px Orbitron";
+    ctx.fillStyle = "purple";
+    ctx.textAlign = "center";
+    ctx.fillText("No chats available", 100, 80);
+    emptyDiv.appendChild(canvas);
+    container.appendChild(emptyDiv);
+}
+
+function createErrorCard(container, message = "No chats available", reason = "") {
+    const card = document.createElement("div");
+    card.style = `
+        background: var(--box-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 14px;
+        max-width: 500px;
+        width: 100%;
+        margin: 32px auto;
+        padding: 2.2rem 1.2rem;
+        color: var(--text-color);
+        box-shadow: 0 2px 16px rgba(128,0,128,0.10);
+        text-align: center;
+    `;
+    card.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;gap:18px;">
+            <div class="profile-pic" style="width:72px;height:72px;background-image:url('https://darkpurpleof.github.io/org-owner.jpg');box-shadow:0 2px 8px rgba(128,0,128,0.10);border-radius:16px;border:2px solid var(--border-color);"></div>
+            <div style="text-align:left;">
+                <div style="font-size:1.5em;font-weight:700;color:var(--text-color);margin-bottom:2px;">${message}</div>
+                <div style="font-size:1.08em;color:var(--text-color);opacity:0.7;line-height:1.5;">
+                    ${reason ? `<span style="font-size:0.97em;opacity:0.8;">${reason}</span>` : ""}
+                </div>
+            </div>
+        </div>
+    `;
+    container.appendChild(card);
+}
+
+auth.onAuthStateChanged(async (user) => {
+    const chatListContainer = document.getElementById("chat-list");
+    chatListContainer.innerHTML = '';
+
+    if (!user) {
+        showToast("You must be logged in to see chats!", "red");
+        createErrorCard(chatListContainer, "Access Denied", "You must be logged in to see your chats.");
+        return;
+    }
+
+    const currentUserEmail = user.email;
+
+    try {
+        const chatsSnapshot = await db.collection("chats")
+            .where("users", "array-contains", currentUserEmail)
+            .get();
+
+        if (chatsSnapshot.empty) {
+            createErrorCard(chatListContainer, "No Chats Found", "You have no chats yet.");
+            return;
+        }
+
+        chatsSnapshot.forEach(async (chatDoc) => {
+            const chatData = chatDoc.data();
+            const otherUserEmail = chatData.users.find(u => u !== currentUserEmail);
+
+            const [userDataSnapshot, messagesSnapshot] = await Promise.all([
+                db.collection("user_data").doc(otherUserEmail).get(),
+                db.collection("chats").doc(chatDoc.id).collection("messages")
+                    .orderBy("timestamp", "desc").limit(1).get()
+            ]);
+
+            let showDefault = false;
+            let displayName = otherUserEmail;
+            let profilePicUrl = 'https://darkpurpleof.github.io/org-owner.jpg';
+            let showVerified = false;
+            let showFrame = false;
+            let frameUrl = "";
+
+            if (userDataSnapshot.exists) {
+                const userData = userDataSnapshot.data();
+                const blockedUsers = userData.blockedUsers || [];
+                if (blockedUsers.includes(currentUserEmail)) {
+                    showDefault = true;
+                } else {
+                    displayName = userData["display name"] || otherUserEmail;
+                    profilePicUrl = userData.profile_picture || profilePicUrl;
+                    showVerified = !!userData.is_verified;
+                    showFrame = !!userData.profile_picture_frame;
+                    frameUrl = userData.profile_picture_frame || "";
+                }
+            } else {
+                showDefault = true;
+            }
+
+            const lastMessage = messagesSnapshot.empty ? '' : messagesSnapshot.docs[0].data().text;
+
+            const chatItem = document.createElement("div");
+            chatItem.className = "chat-item";
+            chatItem.addEventListener("click", () => {
+                window.location.href = `/chat?user=${encodeURIComponent(otherUserEmail)}`;
+            });
+
+            const pfpContainer = document.createElement("div");
+            pfpContainer.style.position = "relative";
+
+            const pfp = document.createElement("div");
+            pfp.className = "profile-pic";
+            pfp.style.backgroundImage = `url('${profilePicUrl}')`;
+
+            pfpContainer.appendChild(pfp);
+
+            // Only show frame if not blocked/default and frame exists
+            if (!showDefault && showFrame && frameUrl) {
+                const frame = document.createElement("img");
+                frame.className = "pfp-frame";
+                frame.src = frameUrl;
+                pfpContainer.appendChild(frame);
+            }
+
+            const info = document.createElement("div");
+            info.className = "chat-info";
+            const nameEl = document.createElement("div");
+            nameEl.className = "display-name";
+            nameEl.textContent = displayName;
+
+            // Show verified icon if applicable and not blocked/default
+            if (showVerified && !showDefault) {
+                const verifiedIcon = document.createElement("img");
+                verifiedIcon.src = "/assets/verified.png";
+                verifiedIcon.alt = "Verified";
+                verifiedIcon.style.height = "1em";
+                verifiedIcon.style.marginLeft = "0.4em";
+                verifiedIcon.style.verticalAlign = "middle";
+                nameEl.appendChild(verifiedIcon);
+            }
+
+            const lastMsgEl = document.createElement("div");
+            lastMsgEl.className = "last-message";
+            lastMsgEl.textContent = lastMessage;
+
+            info.appendChild(nameEl);
+            info.appendChild(lastMsgEl);
+
+            chatItem.appendChild(pfpContainer);
+            chatItem.appendChild(info);
+
+            chatListContainer.appendChild(chatItem);
+        });
+
+    } catch (error) {
+        console.error("Error fetching chats:", error);
+        showToast("Error loading chats.", "red");
+        createErrorCard(chatListContainer, "Error Loading Chats", "There was a problem loading your chats. Please try again later.");
+    }
+});
+</script>
+</body>
+</html>

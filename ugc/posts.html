@@ -180,6 +180,41 @@
         opacity: 0.4;
         cursor: not-allowed;
     }
+
+    @media (max-width: 600px) {
+    .post-card {
+        max-width: 98vw;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 12px;
+        box-sizing: border-box;
+    }
+    .author-info {
+        flex-direction: row;
+        gap: 10px;
+    }
+    .profile-pic {
+        width: 40px;
+        height: 40px;
+    }
+    .profile-pic-frame {
+        width: 40px;
+        height: 40px;
+    }
+    .post-images img {
+        max-width: 98vw;
+        max-height: 140px;
+    }
+    .button-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .action-button {
+        padding: 10px 0;
+        font-size: 1em;
+    }
+}
 </style>
 </head>
 <body>
