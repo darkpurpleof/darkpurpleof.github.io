@@ -1,0 +1,1303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Creator Dashboard</title>
+
+  <!-- Roboto for Material -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Material Web importmap (all components) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "@material/web/": "https://esm.run/@material/web/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import '@material/web/all.js';
+    import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+    document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+  </script>
+
+  <!-- Firebase v9 modular -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    import {
+  getFirestore, collection, collectionGroup, doc, getDoc, getDocs, onSnapshot, query, where,
+  addDoc, setDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    // --- REPLACE with your firebase config ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.appspot.com",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    window.__FIREBASE__ = { app, auth, db };
+
+    // -----------------------
+    // state & helpers
+    // -----------------------
+    let currentUser = null;
+    const profileElId = "profile-pic";
+    const storeGridId = "store-grid";
+    const devGridId = "dev-grid";
+    const storeNoItemsId = "store-no-items";
+    const devNoItemsId = "dev-no-items";
+    const storeTabId = "store-tab";
+    const devTabId = "dev-tab";
+    let unsubStore = null;
+    let unsubDev = null;
+
+    function showPermissionBanner(msg){
+      let b = document.getElementById('perm-banner');
+      if(!b){
+        b = document.createElement('div');
+        b.id = 'perm-banner';
+        b.style.cssText = 'position:fixed;left:16px;right:16px;top:80px;padding:12px;border-radius:10px;background:#8B0000;color:#fff;z-index:9999;font-weight:600;display:flex;gap:12px;align-items:center;';
+        document.body.appendChild(b);
+      }
+      b.textContent = msg;
+    }
+    function clearPermissionBanner(){ const b = document.getElementById('perm-banner'); if(b) b.remove(); }
+
+    // -----------------------
+    // Firestore helpers
+    // -----------------------
+    async function createStoreItem(data) {
+      if (!currentUser) throw new Error('Not signed in');
+      const email = currentUser.email;
+      const colRef = collection(db, 'ugc', email, 'store-items');
+      return await addDoc(colRef, data);
+    }
+    async function updateStoreItem(docId, data) {
+      if (!currentUser) throw new Error('Not signed in');
+      const email = currentUser.email;
+      const docRef = doc(db, 'ugc', email, 'store-items', docId);
+      return await setDoc(docRef, data, { merge: true });
+    }
+    async function createDevItem(data) {
+      if (!currentUser) throw new Error('Not signed in');
+      const email = currentUser.email;
+      const colRef = collection(db, 'ugc', email, 'development-items');
+      return await addDoc(colRef, data);
+    }
+    async function updateDevItem(docId, data) {
+      if (!currentUser) throw new Error('Not signed in');
+      const email = currentUser.email;
+      const docRef = doc(db, 'ugc', email, 'development-items', docId);
+      return await setDoc(docRef, data, { merge: true });
+    }
+
+    // -----------------------
+    // card creation (edit opens dialog)
+    // -----------------------
+    function createItemCard({ id, name, image, description, price, on_sale, downloadable, download_link, creator, type }, isDevelopment=false) {
+      const card = document.createElement('article');
+      card.className = 'creator-card md-filled-tonal-surface';
+      card.dataset.productId = id || '';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'edit-link';
+      editBtn.title = 'Edit item';
+      editBtn.setAttribute('aria-label', `Edit ${name || 'item'}`);
+      editBtn.innerHTML = `<img src="/assets/edit.png" alt="edit" />`;
+      editBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openItemDialog({
+          mode: 'edit',
+          isDev: !!isDevelopment,
+          item: { id, name, image, description, price, on_sale, downloadable, download_link, creator, type }
+        });
+      });
+      card.appendChild(editBtn);
+
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'card-image';
+      imgWrap.style.backgroundImage = `url(${image || 'https://darkpurpleof.github.io/org-owner.jpg'})`;
+      card.appendChild(imgWrap);
+
+      const content = document.createElement('div');
+      content.className = 'card-content';
+
+      const titleRow = document.createElement('div');
+      titleRow.className = 'card-title-row';
+
+      const title = document.createElement('h3');
+      title.className = 'card-title md-typescale-title-medium';
+      title.textContent = name || '(no name)';
+      titleRow.appendChild(title);
+
+      const priceChip = document.createElement('div');
+      priceChip.className = 'chip price-chip';
+      priceChip.textContent = (typeof price !== 'undefined' && price !== null)
+        ? `${price} DF$`
+        : 'Free';
+      titleRow.appendChild(priceChip);
+      content.appendChild(titleRow);
+
+      if (isDevelopment) {
+        const typeLine = document.createElement('div');
+        typeLine.className = 'card-type md-typescale-body-small';
+        typeLine.textContent = (type ? type.toUpperCase() : 'UNKNOWN');
+        content.appendChild(typeLine);
+      }
+
+      const desc = document.createElement('p');
+      desc.className = 'card-desc md-typescale-body-medium';
+      desc.textContent = description || '';
+      content.appendChild(desc);
+
+      const bottom = document.createElement('div');
+      bottom.className = 'card-bottom';
+
+      if (downloadable) {
+        const dl = document.createElement('a');
+        dl.className = 'chip dl-chip';
+        dl.href = download_link || '#';
+        dl.target = '_blank';
+        dl.rel = 'noopener';
+        dl.textContent = 'Download';
+        bottom.appendChild(dl);
+      }
+
+      const author = document.createElement('div');
+      author.className = 'card-creator md-typescale-body-small';
+      author.textContent = creator || '';
+      bottom.appendChild(author);
+
+      content.appendChild(bottom);
+      card.appendChild(content);
+
+      return card;
+    }
+
+    // -----------------------
+    // rendering
+    // -----------------------
+    function renderItems(gridEl, docs, isDevelopment=false) {
+      gridEl.innerHTML = '';
+      docs.forEach(docSnap => {
+        const data = docSnap.data ? docSnap.data() : docSnap;
+        const item = {
+          id: docSnap.id || data.id,
+          name: data.name,
+          image: data.image,
+          description: data.description,
+          price: data.price,
+          on_sale: data.on_sale,
+          downloadable: data.downloadable,
+          download_link: data.download_link,
+          creator: data.creator,
+          type: data.type
+        };
+        const card = createItemCard(item, isDevelopment);
+        gridEl.appendChild(card);
+      });
+    }
+
+    // -----------------------
+    // subscriptions
+    // -----------------------
+    async function subscribeStoreItems(email) {
+      if (!email) return;
+      if (unsubStore) unsubStore();
+      const tryPaths = [email];
+      const lower = email.toLowerCase();
+      if (lower !== email) tryPaths.push(lower);
+      for (const p of tryPaths) {
+        const pathCol = collection(db, 'ugc', p, 'store-items');
+        const q = query(pathCol);
+        try {
+          unsubStore = onSnapshot(q, snap => {
+            clearPermissionBanner();
+            const storeGrid = document.getElementById(storeGridId);
+            const storeNoItems = document.getElementById(storeNoItemsId);
+            if (!storeGrid || !storeNoItems) return;
+            if (snap.empty) {
+              storeGrid.innerHTML = '';
+              storeNoItems.style.display = 'block';
+            } else {
+              storeNoItems.style.display = 'none';
+              renderItems(storeGrid, snap.docs, false);
+            }
+          }, err => {
+            console.error('store snapshot err', err);
+            if (err && err.code === 'permission-denied') {
+              showPermissionBanner('Permission denied reading Store items at: ' + pathCol.path);
+              if (unsubStore) { unsubStore(); unsubStore = null; }
+            } else {
+              showPermissionBanner('Error loading store items: ' + (err.message || err));
+            }
+          });
+          break;
+        } catch (e) {
+          console.warn('subscribe store path failed', p, e);
+          if (unsubStore) { unsubStore(); unsubStore = null; }
+        }
+      }
+    }
+
+    async function subscribeDevItems(email) {
+      if (!email) return;
+      if (unsubDev) unsubDev();
+      const tryPaths = [email];
+      const lower = email.toLowerCase();
+      if (lower !== email) tryPaths.push(lower);
+      for (const p of tryPaths) {
+        const pathCol = collection(db, 'ugc', p, 'development-items');
+        const q = query(pathCol);
+        try {
+          unsubDev = onSnapshot(q, snap => {
+            clearPermissionBanner();
+            const devGrid = document.getElementById(devGridId);
+            const devNoItems = document.getElementById(devNoItemsId);
+            if (!devGrid || !devNoItems) return;
+            if (snap.empty) {
+              devGrid.innerHTML = '';
+              devNoItems.style.display = 'block';
+            } else {
+              devNoItems.style.display = 'none';
+              renderItems(devGrid, snap.docs, true);
+            }
+          }, err => {
+            console.error('dev snapshot err', err);
+            if (err && err.code === 'permission-denied') {
+              showPermissionBanner('Permission denied reading Development items at: ' + pathCol.path);
+              if (unsubDev) { unsubDev(); unsubDev = null; }
+            } else {
+              showPermissionBanner('Error loading development items: ' + (err.message || err));
+            }
+          });
+          break;
+        } catch (e) {
+          console.warn('subscribe dev path failed', p, e);
+          if (unsubDev) { unsubDev(); unsubDev = null; }
+        }
+      }
+    }
+
+    // -----------------------
+    // validation utils
+    // -----------------------
+    const HOST_BLACKLIST = [
+      'mediafire.com','mega.nz','mega.com','catbox.moe','oshi.at','file.sh','transfer.sh',
+      'fileup.com','megaup.com','zippyshare.com','anonfiles.com','gofile.io','sendspace.com',
+      'dropapk.to','uptobox.com','userscloud.com','cloudmail.ru','we.tl'
+    ];
+    const CLOUD_WHITELIST = ['drive.google.com','onedrive.live.com','dropbox.com','dropboxusercontent.com'];
+    const IMAGE_EXTS = ['png','jpg','jpeg','webp','svg','gif','bmp','avif'];
+    const DEV_TYPE_EXT_MAP = {
+      'Package': ['apk','elf','bin','ipa','sh','bat'],
+      'File': ['*'],
+      'Plugin': ['js','ppaplugin','dpfplugin','sysplg','addplugin','debplugin','sovietplugin'],
+      'Sample': ['dpfhtml','html','beta','json','delta','data','dat']
+    };
+
+    function extractHostname(url) {
+      try { const u = new URL(url); return u.hostname.replace(/^www\./,'').toLowerCase(); }
+      catch (e) { return null; }
+    }
+    function getExtensionFromUrl(url) {
+      try { const u = new URL(url); const path = u.pathname; if (!path.includes('.')) return ''; return path.split('.').pop().toLowerCase(); }
+      catch (e) { return ''; }
+    }
+    function hostIsBlacklisted(hostname) {
+      if(!hostname) return true;
+      return HOST_BLACKLIST.some(b => hostname === b || hostname.endsWith('.'+b));
+    }
+    function hostIsCloudAllowed(hostname) {
+      if(!hostname) return false;
+      return CLOUD_WHITELIST.some(b => hostname === b || hostname.endsWith('.'+b));
+    }
+    function validateStoreTypeAndUrl(type, url) {
+      const ext = getExtensionFromUrl(url);
+      if (type === 'Sticker Pack') return ext === 'dpfsticker';
+      if (type === 'Profile Frame') return IMAGE_EXTS.includes(ext);
+      return false;
+    }
+    function validateDevTypeAndUrl(devType, url) {
+      const ext = getExtensionFromUrl(url);
+      const map = DEV_TYPE_EXT_MAP[devType];
+      if (!map) return false;
+      if (map.includes('*')) {
+        const otherExts = Object.entries(DEV_TYPE_EXT_MAP).filter(([k]) => k!=='File').flatMap(([k,arr])=>arr);
+        return !otherExts.includes(ext);
+      }
+      return map.includes(ext);
+    }
+  async function userDomainIsValidForUrl(email, url) {
+  // Helper: normalize a value into a hostname string (or null)
+  function normalizeHostname(value) {
+    if (!value) return null;
+    const s = String(value).trim();
+    // Try parsing as URL directly
+    try {
+      const u = new URL(s);
+      return u.hostname.replace(/^www\./i, '').toLowerCase();
+    } catch (_) {
+      // Try with https:// prefix (covers "example.com/path" or "example.com")
+      try {
+        const u2 = new URL('https://' + s);
+        return u2.hostname.replace(/^www\./i, '').toLowerCase();
+      } catch (_) {
+        // Fallback: strip scheme, path, port manually
+        let t = s.replace(/^[a-z]+:\/\//i, '');    // remove scheme if any
+        t = t.split('/')[0];                       // remove path
+        t = t.split(':')[0];                       // remove port
+        t = t.replace(/^www\./i, '').toLowerCase();
+        return t || null;
+      }
+    }
+  }
+
+  try {
+    if (!email) return { ok: false, reason: 'Not signed in' };
+    if (!url) return { ok: false, reason: 'No URL provided' };
+
+    // normalize both
+    const urlHost = normalizeHostname(url);
+    // load user doc
+    const userRef = doc(db, 'user_data', email);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return { ok: false, reason: 'No user domain registered' };
+    const ud = userSnap.data();
+
+    const rawDomain = ud?.domain_name || ud?.domain || null;
+    const domainHost = normalizeHostname(rawDomain);
+    const domain_verified = !!(ud?.domain_verified || ud?.is_verified || ud?.isVerified);
+
+    // debug - helps see why mismatches happen
+    console.debug('domain check:', { email, urlHost, rawDomain, domainHost, domain_verified });
+
+    if (!domainHost) return { ok: false, reason: 'No domain registered' };
+    if (!urlHost) return { ok: false, reason: 'Invalid URL' };
+
+    // match: exact host or any subdomain of registered domain
+    const matches = (urlHost === domainHost) || urlHost.endsWith('.' + domainHost);
+    if (!matches) return { ok: false, reason: 'Host does not match registered domain' };
+    if (!domain_verified) return { ok: false, reason: 'Domain not verified' };
+
+    return { ok: true };
+  } catch (e) {
+    console.error('domain check error', e);
+    return { ok: false, reason: 'Domain verification error' };
+  }
+}
+
+    // -----------------------
+    // dialog (Material Web) with radio type / downloadable / onstock in create mode
+    // options: { mode:'create'|'edit', isDev: boolean, item: {...} }
+    // -----------------------
+    async function openItemDialog(options = {}) {
+      if (!currentUser) { showPermissionBanner('Sign in to create or edit items.'); setTimeout(clearPermissionBanner,3000); return; }
+      const mode = options.mode || 'create';
+      const isDev = !!options.isDev;
+      const item = options.item || {};
+      const titleText = (mode === 'create') ? 'Create New Item' : `Edit ${item.name || ''}`;
+
+      const existing = document.getElementById('item-dialog-portal');
+      if (existing) existing.remove();
+
+      // single variable controlling mode
+      const isEditMode = (mode === 'edit');
+
+      // create portal DOM
+      const portal = document.createElement('div');
+      portal.id = 'item-dialog-portal';
+      portal.className = 'dialog-portal';
+      portal.innerHTML = `
+        <div class="dialog-backdrop" role="presentation"></div>
+        <div class="dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(titleText)}">
+          <div class="dialog-inner">
+            <header class="dialog-header">
+              <h3 class="dialog-title">${escapeHtml(titleText)}</h3>
+              <md-icon-button class="dialog-close" aria-label="Close" icon="close"></md-icon-button>
+            </header>
+
+            <div class="dialog-body">
+              <div class="dialog-left">
+                <form class="item-form" novalidate>
+                  <div class="field">
+                    <md-outlined-text-field id="dlg-name" label="Name" value="${escapeAttr(item.name||'')}" required></md-outlined-text-field>
+                    <div class="field-error" id="err-dlg-name"></div>
+                  </div>
+
+                  <div class="field">
+                    <md-outlined-text-field id="dlg-id" label="ID" value="${escapeAttr(item.id||'')}" helper="${mode==='create' ? 'ID can be set when creating' : 'ID cannot be changed'}"></md-outlined-text-field>
+                    <div class="field-error" id="err-dlg-id"></div>
+                  </div>
+
+                  <div class="field two-column-row">
+                    <md-outlined-text-field id="dlg-price" label="Price (DF$)" type="number" value="${typeof item.price!=='undefined' && item.price !== null ? item.price : ''}"></md-outlined-text-field>
+                    <div class="field-error" id="err-dlg-price"></div>
+                  </div>
+
+                  <div class="field">
+                    <md-outlined-text-field id="dlg-image" label="Image URL" type="url" value="${escapeAttr(item.image||'')}"></md-outlined-text-field>
+                    <div class="field-error" id="err-dlg-image"></div>
+                  </div>
+
+                  <!-- DOWNLOADABLE & ON-STOCK controls -->
+                  <div class="field row">
+                    <div style="flex:1">
+                      <label class="field-label">Downloadable</label>
+                      <div id="downloadable-control-inner"></div>
+                      <div class="field-note">Downloadable cannot be changed after saving if already true.</div>
+                      <div class="field-error" id="err-dlg-downloadable"></div>
+                    </div>
+
+                    <div style="width:16px"></div>
+
+                    <div style="flex:1">
+                      <label class="field-label">On Stock</label>
+                      <div id="onstock-control-inner"></div>
+                      <div class="field-error" id="err-dlg-onstock"></div>
+                    </div>
+                  </div>
+
+                  <!-- TYPE CONTROL -->
+                  <div class="field" id="type-control-area">
+                    <label class="field-label">Type</label>
+                    <div id="type-control-inner"></div>
+                    <div class="field-error" id="err-dlg-type"></div>
+                  </div>
+
+                  <div class="field">
+                    <md-outlined-text-field id="dlg-desc" label="Description" textarea rows="5" value="${escapeAttr(item.description||'')}"></md-outlined-text-field>
+                    <div class="field-error" id="err-dlg-desc"></div>
+                  </div>
+
+                  <div class="field" id="download-link-field" style="display:none;">
+                    <md-outlined-text-field id="dlg-download-link" label="Download Link (https://...)" type="url" value="${escapeAttr(item.download_link||'')}" helper="HTTPS required. Avoid blacklisted hosts."></md-outlined-text-field>
+                    <div class="field-error" id="err-dlg-download-link"></div>
+                  </div>
+
+                  <div class="dialog-errors" aria-live="polite"></div>
+                </form>
+              </div>
+
+              <div class="dialog-right">
+                <div class="preview-wrap">
+                  <div class="preview-card-placeholder">
+                    <div id="preview-card" class="preview-card">Preview</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <footer class="dialog-footer">
+              <div class="dialog-actions">
+                <md-outlined-button class="discard-btn">Discard</md-outlined-button>
+                <md-outlined-button class="save-btn" disabled>Save</md-outlined-button>
+              </div>
+            </footer>
+
+          </div>
+        </div>
+      `;
+      document.body.appendChild(portal);
+
+      // elements
+      const backdrop = portal.querySelector('.dialog-backdrop');
+      const closeBtn = portal.querySelector('.dialog-close');
+      const discardBtn = portal.querySelector('.discard-btn');
+      const saveBtn = portal.querySelector('.save-btn');
+
+      const nameFld = portal.querySelector('#dlg-name');
+      const idFld = portal.querySelector('#dlg-id');
+      const priceFld = portal.querySelector('#dlg-price');
+      const imageFld = portal.querySelector('#dlg-image');
+      const dlFieldWrap = portal.querySelector('#download-link-field');
+      const dlFld = portal.querySelector('#dlg-download-link');
+      const descFld = portal.querySelector('#dlg-desc');
+
+      // control containers
+      const typeControlInner = portal.querySelector('#type-control-inner');
+      const downloadableControlInner = portal.querySelector('#downloadable-control-inner');
+      const onstockControlInner = portal.querySelector('#onstock-control-inner');
+
+      // error nodes
+      const errName = portal.querySelector('#err-dlg-name');
+      const errId = portal.querySelector('#err-dlg-id');
+      const errPrice = portal.querySelector('#err-dlg-price');
+      const errImage = portal.querySelector('#err-dlg-image');
+      const errDownloadable = portal.querySelector('#err-dlg-downloadable');
+      const errOnstock = portal.querySelector('#err-dlg-onstock');
+      const errType = portal.querySelector('#err-dlg-type');
+      const errDesc = portal.querySelector('#err-dlg-desc');
+      const errDlLink = portal.querySelector('#err-dlg-download-link');
+
+      // populate types list
+      const storeTypes = ['Sticker Pack','Profile Frame'];
+      const devTypes = ['Package','File','Plugin','Sample'];
+      const types = isDev ? devTypes : storeTypes;
+
+      // selected values (for create mode radios)
+      let selectedType = item.type || types[0];
+      let selectedDownloadable = (typeof item.downloadable !== 'undefined') ? String(!!item.downloadable) : 'false';
+      let selectedOnStock = (typeof item.on_sale !== 'undefined') ? String(!!item.on_sale) : 'true';
+
+      // Render controls helpers ------------------------------------------------
+      function renderRadioBinaryControl(container, name, currentValue, onChange) {
+        // uses md-radio elements for true/false with white labels
+        container.innerHTML = '';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'type-radio-group';
+        ['true','false'].forEach(v => {
+          const label = document.createElement('label');
+          label.className = 'type-option';
+          const radio = document.createElement('md-radio');
+          radio.setAttribute('value', v);
+          if (v === currentValue) radio.checked = true;
+          radio.addEventListener('change', (ev) => {
+            if (ev.target.checked) {
+              onChange(String(v));
+              // uncheck siblings
+              wrapper.querySelectorAll('md-radio').forEach(r => { if (r !== ev.target) r.checked = false; });
+            }
+          });
+          const span = document.createElement('span');
+          span.className = 'radio-label';
+          span.textContent = (v === 'true') ? (name === 'downloadable' ? 'Yes' : 'Yes') : 'No';
+          span.style.color = '#ffffff';
+          span.style.marginLeft = '8px';
+          label.appendChild(radio);
+          label.appendChild(span);
+          label.addEventListener('click', (e) => {
+            e.preventDefault();
+            const r = label.querySelector('md-radio');
+            if (r) {
+              r.checked = true;
+              r.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          });
+          wrapper.appendChild(label);
+        });
+        container.appendChild(wrapper);
+      }
+
+      function renderSelectBinaryControl(container, id, currentValue, disabled) {
+        container.innerHTML = '';
+        const sel = document.createElement('md-select');
+        sel.id = id;
+        sel.style.width = '100%';
+        sel.style.color = '#fff';
+        if (disabled) sel.disabled = true;
+        const yes = document.createElement('md-list-item'); yes.setAttribute('value','true'); yes.textContent = 'Yes';
+        const no = document.createElement('md-list-item'); no.setAttribute('value','false'); no.textContent = 'No';
+        sel.appendChild(yes);
+        sel.appendChild(no);
+        sel.value = String(currentValue);
+        container.appendChild(sel);
+        return sel;
+      }
+
+      function renderTypeControl() {
+        typeControlInner.innerHTML = '';
+        if (!isEditMode) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'type-radio-group';
+          types.forEach(t => {
+            const label = document.createElement('label');
+            label.className = 'type-option';
+            const radio = document.createElement('md-radio');
+            radio.setAttribute('value', t);
+            if (t === selectedType) radio.checked = true;
+            radio.addEventListener('change', (ev) => {
+              if (ev.target.checked) {
+                selectedType = ev.target.getAttribute('value');
+                wrapper.querySelectorAll('md-radio').forEach(r => { if (r !== ev.target) r.checked = false; });
+                runValidationAndUpdateUI();
+                updatePreview();
+              }
+            });
+            const span = document.createElement('span');
+            span.className = 'radio-label';
+            span.textContent = t;
+            span.style.color = '#ffffff';
+            span.style.marginLeft = '8px';
+            label.appendChild(radio);
+            label.appendChild(span);
+            label.addEventListener('click', (e) => {
+              e.preventDefault();
+              const r = label.querySelector('md-radio');
+              if (r) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); }
+            });
+            wrapper.appendChild(label);
+          });
+          typeControlInner.appendChild(wrapper);
+        } else {
+          const sel = document.createElement('md-select');
+          sel.id = 'dlg-type';
+          sel.style.width = '100%';
+          sel.style.color = '#fff';
+          sel.disabled = true;
+          types.forEach(t => {
+            const li = document.createElement('md-list-item');
+            li.setAttribute('value', t);
+            li.textContent = t;
+            sel.appendChild(li);
+          });
+          sel.value = item.type || types[0];
+          typeControlInner.appendChild(sel);
+        }
+      }
+
+      // Render downloadable & onstock according to mode ------------------------
+      function renderBinaryControls() {
+        // download control
+        if (!isEditMode) {
+          renderRadioBinaryControl(downloadableControlInner, 'downloadable', selectedDownloadable, (v) => { selectedDownloadable = v; refreshDownloadVisibility(); runValidationAndUpdateUI(); updatePreview(); });
+        } else {
+          // md-select in edit mode; if item.downloadable true, make select disabled so can't change away from true
+          const disabled = !!item.downloadable;
+          const sel = renderSelectBinaryControl(downloadableControlInner, 'dlg-downloadable', String(item.downloadable === true ? 'true' : 'false'), disabled);
+          // reflect change to selectedDownloadable
+          sel.addEventListener('change', () => { selectedDownloadable = sel.value; refreshDownloadVisibility(); runValidationAndUpdateUI(); updatePreview(); });
+          // set variable to current
+          selectedDownloadable = sel.value;
+        }
+
+        // onstock control
+        if (!isEditMode) {
+          renderRadioBinaryControl(onstockControlInner, 'onstock', selectedOnStock, (v) => { selectedOnStock = v; runValidationAndUpdateUI(); updatePreview(); });
+        } else {
+          const sel = renderSelectBinaryControl(onstockControlInner, 'dlg-onstock', String(item.on_sale === true ? 'true' : 'false'), false);
+          sel.addEventListener('change', () => { selectedOnStock = sel.value; runValidationAndUpdateUI(); updatePreview(); });
+          selectedOnStock = sel.value;
+        }
+      }
+
+      // initial rendering of controls -----------------------------------------
+      renderTypeControl();
+      renderBinaryControls();
+
+      // set other initial fields
+      nameFld.value = item.name || '';
+      idFld.value = item.id || '';
+      priceFld.value = (typeof item.price !== 'undefined' && item.price !== null) ? item.price : '';
+      imageFld.value = item.image || '';
+      dlFld.value = item.download_link || '';
+      descFld.value = item.description || '';
+
+      // if edit mode enforce ID readonly
+      if (isEditMode) {
+        if (idFld.inputElement) {
+          idFld.inputElement.setAttribute('readonly', 'true');
+          idFld.inputElement.style.opacity = '0.7';
+          idFld.inputElement.style.pointerEvents = 'none'; // Prevent editing
+          idFld.inputElement.tabIndex = -1; // Prevent focusing
+        }
+      }
+
+      // download link visibility
+      function refreshDownloadVisibility() {
+        const val = (selectedDownloadable === 'true' || (isEditMode && (() => {
+          const sel = downloadableControlInner.querySelector('md-select');
+          return sel ? sel.value === 'true' : false;
+        })()));
+        dlFieldWrap.style.display = val ? 'block' : 'none';
+      }
+      refreshDownloadVisibility();
+
+      // style tweaks: make input text white & full width
+      function styleMaterialField(fld) {
+        try {
+          fld.style.width = '100%';
+          fld.style.display = 'block';
+          fld.style.marginBottom = '12px';
+          fld.style.setProperty('--md-sys-color-on-surface', '#FFFFFF');
+          if (fld.inputElement) fld.inputElement.style.color = '#FFF';
+        } catch(e) {}
+      }
+      [nameFld, idFld, priceFld, imageFld, dlFld, descFld].forEach(styleMaterialField);
+      // make md-selects (edit mode) show white text if present
+      portal.querySelectorAll('md-select').forEach(s => { try { s.style.color = '#fff'; } catch(e){} });
+
+      // preview helpers
+      function getCurrentTypeValue() {
+        if (!isEditMode) return selectedType;
+        const sel = typeControlInner.querySelector('md-select');
+        return (sel && sel.value) ? sel.value : (item.type || types[0]);
+      }
+      function getCurrentDownloadableValue() {
+        if (!isEditMode) return selectedDownloadable;
+        const sel = downloadableControlInner.querySelector('md-select');
+        return (sel && sel.value) ? sel.value : (String(item.downloadable === true ? 'true' : 'false'));
+      }
+      function getCurrentOnStockValue() {
+        if (!isEditMode) return selectedOnStock;
+        const sel = onstockControlInner.querySelector('md-select');
+        return (sel && sel.value) ? sel.value : (String(item.on_sale === true ? 'true' : 'false'));
+      }
+
+      function updatePreview() {
+        const nm = nameFld.value || '(no name)';
+        const pr = (priceFld.value !== '') ? `${priceFld.value} DF$` : 'Free';
+        const img = imageFld.value || 'https://darkpurpleof.github.io/org-owner.jpg';
+        const typ = getCurrentTypeValue() || (isDev ? 'UNKNOWN' : 'UNKNOWN');
+        const desc = descFld.value || '';
+        const previewCardEl = portal.querySelector('#preview-card');
+        previewCardEl.innerHTML = `
+          <div class="p-card-image" style="background-image:url('${escapeAttr(img)}');"></div>
+          <div class="p-card-body">
+            <div class="p-title-row"><div class="p-title">${escapeHtml(nm)}</div><div class="p-price">${escapeHtml(pr)}</div></div>
+            <div class="p-type">${escapeHtml(typ)}</div>
+            <div class="p-desc">${escapeHtml(desc)}</div>
+          </div>
+        `;
+      }
+      [nameFld, priceFld, imageFld, descFld].forEach(el => {
+        el.addEventListener('input', updatePreview);
+        el.addEventListener('change', updatePreview);
+      });
+      updatePreview();
+
+      // validation returns array of { field, msg }
+      // validation returns array of { field, msg }
+      // validation returns array of { field, msg }
+async function validateAll() {
+  const results = [];
+  const name = String(nameFld.value || '').trim();
+  const idVal = String(idFld.value || '').trim();
+  const priceVal = String(priceFld.value || '').trim();
+  const image = String(imageFld.value || '').trim();
+  const downloadable = (getCurrentDownloadableValue() === 'true');
+  const download_link = String(dlFld.value || '').trim();
+  const type = String(getCurrentTypeValue() || '').trim();
+
+  if (!name) results.push({ field:'name', msg:'Name is required' });
+  if (!isEditMode && (!idVal)) results.push({ field:'id', msg:'ID is required when creating' });
+
+  if (idVal) {
+    try {
+      const collNames = ['development-items', 'store-items'];
+
+      for (const collName of collNames) {
+        const q = query(collection(db, 'ugc', currentUser.email, collName), where('id', '==', idVal));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const conflicts = snap.docs.filter(d => {
+            if (!isEditMode) return true; // creating: any match is a conflict
+            const foundDocId = d.id;
+            const currentDocId = item.id || '';
+            const storedId = d.data()?.id || '';
+            // editing: allow if it's literally the same doc
+            return !(foundDocId === currentDocId || storedId === currentDocId);
+          });
+
+          if (conflicts.length > 0) {
+            results.push({ field:'id', msg:'ID already used by another item' });
+            break; // stop checking other collections
+          }
+        }
+      }
+    } catch (err) {
+      console.error('ID uniqueness check error', err);
+      results.push({ field:'id', msg:'Error checking ID uniqueness' });
+    }
+  }
+
+  // ---------- existing download / dev / coin checks ----------
+  if (downloadable) {
+    if (!download_link) { results.push({ field:'download_link', msg:'Download link required' }); return results; }
+    if (!download_link.startsWith('https://')) results.push({ field:'download_link', msg:'Download link must start with https://' });
+    const hostname = extractHostname(download_link);
+    if (!hostname) results.push({ field:'download_link', msg:'Invalid download link URL' });
+    else if (hostIsBlacklisted(hostname) && !hostIsCloudAllowed(hostname)) results.push({ field:'download_link', msg:'Download host not allowed' });
+
+    if (!isDev) {
+      if (!validateStoreTypeAndUrl(type, download_link)) results.push({ field:'download_link', msg:`For type ${type} the link must match expected extension` });
+    } else {
+      if (!validateDevTypeAndUrl(type, download_link)) results.push({ field:'download_link', msg:`Dev type "${type}" does not match download extension` });
+      const domCheck = await userDomainIsValidForUrl(currentUser.email, download_link);
+      if (!domCheck.ok) results.push({ field:'download_link', msg:'Dev item must be hosted on your verified domain' });
+    }
+  }
+
+  // dev creation coin check (only on create)
+  if (isDev && !isEditMode) {
+    try {
+      const userRef = doc(db, 'user_data', currentUser.email);
+      const userSnap = await getDoc(userRef);
+      const ud = userSnap.exists() ? userSnap.data() : {};
+      const coinsStr = typeof ud.coins === 'string' ? ud.coins : (ud.coins != null ? String(ud.coins) : '0');
+      const numeric = parseInt(coinsStr.replace(/[^\d-]/g,''), 10) || 0;
+      if (numeric < 500) results.push({ field:'coins', msg:'Not enough coins (500 DF$ needed)' });
+    } catch (e) {
+      results.push({ field:'coins', msg:'Error checking coins' });
+    }
+  }
+
+  return results;
+}
+
+
+
+
+      // map errors to fields and show them; return true if any errors
+      async function runValidationAndUpdateUI() {
+        [errName, errId, errPrice, errImage, errDownloadable, errOnstock, errType, errDesc, errDlLink].forEach(e => { if(e) e.textContent = ''; });
+        const errs = await validateAll();
+        if (errs && errs.length > 0) {
+          const byField = {};
+          for (const e of errs) if (!byField[e.field]) byField[e.field] = e.msg;
+          if (byField.name) errName.textContent = byField.name;
+          if (byField.id) errId.textContent = byField.id;
+          if (byField.price) errPrice.textContent = byField.price;
+          if (byField.image) errImage.textContent = byField.image;
+          if (byField.downloadable) errDownloadable.textContent = byField.downloadable;
+          if (byField.onstock) errOnstock.textContent = byField.onstock;
+          if (byField.type) errType.textContent = byField.type;
+          if (byField.desc) errDesc.textContent = byField.desc;
+          if (byField.download_link) errDlLink.textContent = byField.download_link;
+          if (byField.coins) errDlLink.textContent = byField.coins;
+          saveBtn.disabled = true;
+          return true;
+        } else {
+          saveBtn.disabled = false;
+          return false;
+        }
+      }
+
+      // set save button label depending on mode/isDev
+      function refreshSaveButtonLabel() {
+        if (!isEditMode && isDev) saveBtn.textContent = 'Save for 500 DF$';
+        else saveBtn.textContent = 'Save';
+      }
+      refreshSaveButtonLabel();
+
+      // wire validation on inputs
+      // note: for md-select rendered later in edit mode we added change listeners on render
+      const watchEls = [nameFld, idFld, priceFld, imageFld, dlFld, descFld];
+      watchEls.forEach(el => {
+        el.addEventListener('input', () => runValidationAndUpdateUI());
+        el.addEventListener('change', () => runValidationAndUpdateUI());
+      });
+
+      // initial validation
+      runValidationAndUpdateUI();
+
+      // close handlers
+      function closeDialog() { portal.remove(); }
+      backdrop.addEventListener('click', closeDialog);
+      closeBtn.addEventListener('click', closeDialog);
+      discardBtn.addEventListener('click', (e) => { e.preventDefault(); closeDialog(); });
+
+      // Save handler (charges only on create dev items)
+      saveBtn.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        const errs = await validateAll();
+        if (errs.length > 0) { await runValidationAndUpdateUI(); return; }
+
+        const name = String(nameFld.value || '').trim();
+        const idVal = String(idFld.value || '').trim();
+        const price = (String(priceFld.value||'') === '') ? null : Number(priceFld.value);
+        const image = String(imageFld.value || '').trim();
+        const downloadable = (getCurrentDownloadableValue() === 'true');
+        const download_link = String(dlFld.value || '').trim();
+        const on_stock = (getCurrentOnStockValue() === 'true');
+        const type = String(getCurrentTypeValue() || '');
+        const description = String(descFld.value || '').trim();
+
+        const payload = {
+  name, description, price, image, on_sale: on_stock, downloadable: downloadable, download_link: downloadable ? download_link : null,
+  type, creator: currentUser.email, updated_at: new Date()
+};
+
+// if the user provided an explicit ID, keep it in the document's 'id' field
+if (idVal) {
+  payload.id = idVal;
+} else if (isEditMode && item.id) {
+  // preserve existing id if editing (some docs use doc.id instead)
+  payload.id = item.id;
+}
+
+
+        try {
+          if (!isEditMode) {
+            // CREATE
+            if (isDev) {
+              // charge 500 DF$ (non-transactional here). Deduct coins, write item, then write transaction record.
+              const userRef = doc(db, 'user_data', currentUser.email);
+              const userSnap = await getDoc(userRef);
+              const ud = userSnap.exists() ? userSnap.data() : {};
+              const coinsStr = typeof ud.coins === 'string' ? ud.coins : (ud.coins != null ? String(ud.coins) : '0');
+              const numeric = parseInt(coinsStr.replace(/[^\d-]/g,''), 10) || 0;
+              if (numeric < 500) {
+                errDlLink.textContent = 'Not enough coins to publish dev item.';
+                saveBtn.disabled = true;
+                return;
+              }
+              const newVal = numeric - 500;
+
+              // write dev item
+              let createdRef = null;
+              if (idVal) {
+                const docRef = doc(db, 'ugc', currentUser.email, 'development-items', idVal);
+                await setDoc(docRef, payload);
+                createdRef = docRef;
+              } else {
+                createdRef = await createDevItem(payload);
+              }
+
+              // update coins on user doc
+              await setDoc(userRef, { coins: String(newVal) }, { merge: true });
+
+              // save transaction record under transactions/{email}/records
+              try {
+                const txPayload = {
+                  amount: 500,
+                  date: serverTimestamp(),
+                  description: `Upload ${name}`,
+                  image: image || null,
+                  source: "system@ðarkpurpleof.github.io",
+                  type: "outgoing"
+                };
+                await addDoc(collection(db, 'transactions', currentUser.email, 'records'), txPayload);
+              } catch (txErr) {
+                // log but don't prevent item creation
+                console.error('failed to write transaction record', txErr);
+              }
+
+            } else {
+              // store item create
+              if (idVal) {
+                const docRef = doc(db, 'ugc', currentUser.email, 'store-items', idVal);
+                await setDoc(docRef, payload);
+              } else {
+                await createStoreItem(payload);
+              }
+            }
+          } else {
+            // EDIT (no charge)
+            const docId = idVal || item.id;
+            if (!docId) throw new Error('Missing doc id to update');
+            if (isDev) await updateDevItem(docId, payload);
+            else await updateStoreItem(docId, payload);
+          }
+
+          closeDialog();
+        } catch (err) {
+          console.error('save err', err);
+          errDlLink.textContent = 'Failed to save: ' + (err.message || String(err));
+          saveBtn.disabled = true;
+        }
+      });
+
+      // focus first field quickly
+      setTimeout(()=>{ try{ nameFld.inputElement && nameFld.inputElement.focus(); }catch(e){} }, 80);
+    } // end openItemDialog
+
+    // -----------------------
+    // escape helpers
+    // -----------------------
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
+    }
+    function escapeAttr(s) { if (!s) return ''; return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    // -----------------------
+    // wire up auth state and new buttons
+    // -----------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      const profile = document.getElementById(profileElId);
+      const userNameEl = document.getElementById('user-name');
+      const welcomeEl = document.getElementById('welcome-message');
+      const tabsContainer = document.getElementById('tabs');
+      const devWarningEl = document.getElementById('dev-warning');
+
+      function setActiveTab(index) {
+        const tabEls = Array.from(tabsContainer.querySelectorAll('md-primary-tab, md-secondary-tab'));
+        tabEls.forEach((t, i) => {
+          if (i === index) { t.setAttribute('active',''); t.setAttribute('aria-selected','true'); }
+          else { t.removeAttribute('active'); t.removeAttribute('aria-selected'); }
+        });
+        if (index === 0) {
+          document.getElementById(storeTabId).style.display = 'block';
+          document.getElementById(devTabId).style.display = 'none';
+        } else {
+          document.getElementById(storeTabId).style.display = 'none';
+          document.getElementById(devTabId).style.display = 'block';
+        }
+      }
+
+      onAuthStateChanged(auth, async (user) => {
+        const newDevBtn = document.getElementById('new-dev-btn');
+        if (user) {
+          currentUser = user;
+          const email = user.email;
+          try {
+            const userRef = doc(db, 'user_data', email);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.exists() ? userSnap.data() : {};
+            const pic = userData.profile_picture ? userData.profile_picture : 'https://darkpurpleof.github.io/org-owner.jpg';
+            profile.style.backgroundImage = `url(${pic})`;
+            const displayName = userData['display name'] || userData.displayName || user.displayName || user.email;
+            userNameEl.textContent = displayName || '';
+            welcomeEl.style.display = 'flex';
+            const devAllowed = typeof userData.dev_items_allowed !== 'undefined' ? !!userData.dev_items_allowed : (typeof userData.devItemsAllowed !== 'undefined' ? !!userData.devItemsAllowed : false);
+            if (!devAllowed) {
+              if (devWarningEl) devWarningEl.style.display = 'flex';
+              if (newDevBtn) newDevBtn.style.display = 'none';
+            } else {
+              if (devWarningEl) devWarningEl.style.display = 'none';
+              if (newDevBtn) newDevBtn.style.display = 'inline-flex';
+            }
+          } catch (e) {
+            console.warn('user doc read err', e);
+            profile.style.backgroundImage = "url('https://darkpurpleof.github.io/org-owner.jpg')";
+            userNameEl.textContent = user.email || 'No Display Name';
+            welcomeEl.style.display = 'flex';
+            if (devWarningEl) devWarningEl.style.display = 'flex';
+            if (newDevBtn) newDevBtn.style.display = 'none';
+          }
+
+          subscribeStoreItems(email);
+          subscribeDevItems(email);
+
+          // wire New Store -> dialog
+          const storeNewBtn = document.querySelector('#store-tab md-outlined-button');
+          if (storeNewBtn) {
+            storeNewBtn.removeAttribute('onclick');
+            storeNewBtn.addEventListener('click', (e)=>{ e.preventDefault(); openItemDialog({ mode:'create', isDev:false }); });
+          }
+          // wire New Dev -> dialog
+          if (newDevBtn) {
+            newDevBtn.removeAttribute('onclick');
+            newDevBtn.addEventListener('click', (e)=>{ e.preventDefault(); openItemDialog({ mode:'create', isDev:true }); });
+          }
+
+        } else {
+          currentUser = null;
+          profile.style.backgroundImage = "url('https://darkpurpleof.github.io/org-owner.jpg')";
+          userNameEl.textContent = '';
+          welcomeEl.style.display = 'none';
+          if (unsubStore) { unsubStore(); unsubStore = null; }
+          if (unsubDev) { unsubDev(); unsubDev = null; }
+          if (newDevBtn) newDevBtn.style.display = 'none';
+        }
+      });
+
+      // tabs
+      const tabEls = Array.from(tabsContainer.querySelectorAll('md-primary-tab, md-secondary-tab'));
+      tabEls.forEach((t, i) => t.addEventListener('click', ()=>setActiveTab(i)));
+      setActiveTab(0);
+    });
+  </script>
+
+  <style>
+    :root{
+      --bg:#0f0f10;
+      --surface:#121214;
+      --on-surface:#E8E6E3;
+      --accent:#7C4DFF;
+      --card-radius:16px;
+      --card-width:300px;
+      --card-height:420px; /* taller cards */
+      --gap:10px; /* closer together */
+      font-family: Roboto, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial;
+    }
+
+    md-tabs::part(divider), md-tabs::part(indicator), md-tabs::part(active-indicator) { display:none !important; }
+    md-tabs { --md-sys-color-surface: var(--bg); --md-sys-color-surface-container: var(--bg); background: var(--bg); }
+
+    *,*::before,*::after{ box-sizing:border-box; }
+    html,body{ height:100%; overflow-x:hidden; margin:0; background:linear-gradient(180deg,#0b0b0c 0%,#121213 100%); color:var(--on-surface); }
+
+    header.topbar{ display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); backdrop-filter: blur(6px); border-bottom:1px solid rgba(255,255,255,0.03); position:sticky; top:0; z-index:10; }
+    h1.title{ margin:0; font-weight:500; font-size:18px; }
+    #profile-pic{ width:40px; height:40px; border-radius:10px; background-size:cover; background-position:center; border:2px solid rgba(255,255,255,0.06); box-shadow: 0 6px 14px rgba(0,0,0,0.6); }
+
+    main.container{ padding:16px; display:flex; flex-direction:column; gap:16px; max-width:1200px; margin:0 auto; }
+    md-primary-tab, md-secondary-tab{ padding:8px 12px; border-radius:10px; cursor:pointer; user-select:none; color: rgba(255,255,255,0.78); }
+    md-primary-tab[active], md-secondary-tab[active]{ color: var(--accent); background: rgba(124,77,255,0.06); font-weight:600; }
+
+    .panel-header{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:6px; }
+    .panel-title{ margin:0; font-size:16px; }
+    .panel-actions{ display:flex; gap:8px; }
+
+    .cards-grid {
+  display: grid;
+  gap: var(--gap);
+  align-items: start;
+  padding-bottom: 12px;
+  width: 100%;
+  /* Desktop default: 4 columns */
+  grid-template-columns: repeat(4, 1fr);
+  justify-items: stretch;
+}
+
+   /* make cards fill their grid cell rather than using a fixed width */
+.creator-card {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--card-height);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--card-radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.03);
+  position: relative;
+  transition: transform .14s ease, box-shadow .14s ease;
+  padding: 12px;
+  gap: 10px;
+}
+
+
+/* tablet: 3 columns */
+@media (max-width: 999px) and (min-width: 601px) {
+  .cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: calc(var(--gap) - 2px);
+  }
+  :root { --card-height: 380px; }
+}
+
+/* mobile: 2 columns */
+@media (max-width: 600px) {
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  :root { --card-height: 320px; }
+}
+
+    .creator-card:hover{ transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    .edit-link{ position:absolute; right:10px; top:10px; width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.02); border-radius:8px; border:none; cursor:pointer; }
+    .edit-link img{ width:18px; height:18px; filter: invert(1) sepia(0.1) saturate(800%); pointer-events:none; }
+.card-image { width: 100%; aspect-ratio: 16/9; border-radius: 10px; background-size: cover; background-position: center; flex-shrink: 0; }
+    .card-content{ display:flex; flex-direction:column; gap:8px; flex:1 1 auto; min-height:0; }
+    .card-title-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .card-title{ margin:0; font-weight:600; color:var(--on-surface); font-size:15px; }
+    .card-desc{
+      margin:0;
+      color:rgba(255,255,255,0.95);
+      display:-webkit-box;
+      -webkit-line-clamp:4; /* show more lines */
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      line-height:1.25;
+      font-size:14px;
+    }
+    .card-bottom{ display:flex; gap:8px; align-items:center; justify-content:space-between; margin-top:auto; }
+    .chip{ padding:6px 8px; border-radius:999px; font-size:12px; background: rgba(255,255,255,0.03); color:var(--on-surface); border:1px solid rgba(255,255,255,0.03); display:inline-flex; align-items:center; gap:6px; }
+    .price-chip{ background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); font-weight:600; padding:6px 10px; }
+    .sale-chip{ background: linear-gradient(90deg, #FF8A80, #FF5252); color:#111; font-weight:600; }
+    .card-creator{ margin-left:auto; color:rgba(255,255,255,0.6); padding-left:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; text-align:right; }
+    .empty-state{ padding:18px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005)); border:1px dashed rgba(255,255,255,0.03); color:rgba(255,255,255,0.6); }
+
+    /* Dialog */
+    .dialog-portal { position:fixed; inset:0; z-index:2000; display:flex; align-items:center; justify-content:center; }
+    .dialog-backdrop { position:absolute; inset:0; background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
+    .dialog { position:relative; max-width:1100px; width: calc(100% - 32px); border-radius:14px; box-shadow: 0 30px 80px rgba(2,6,23,0.7); background: var(--surface); overflow:hidden; }
+    .dialog-inner { display:flex; flex-direction:column; min-height:320px; max-height: calc(100vh - 80px); }
+    .dialog-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.03); }
+    .dialog-title{ margin:0; font-size:18px; font-weight:600; color:var(--on-surface); }
+    .dialog-body { display:flex; gap:12px; padding:14px; overflow:hidden; flex:1 1 auto; }
+    .dialog-left { flex:1 1 55%; min-width:320px; overflow:auto; padding-right:8px; }
+    .dialog-right { flex:0 0 40%; display:flex; align-items:flex-start; justify-content:center; padding:8px 8px 8px 0; min-width:260px; }
+
+    .field { margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
+    .field.row { display:flex; gap:12px; align-items:flex-start; }
+    .field.two-column-row md-outlined-text-field { flex:1; }
+    .field-label{ font-size:13px; color:rgba(255,255,255,0.85); font-weight:600; margin-bottom:6px; }
+    .field-note{ font-size:12px; color:rgba(255,255,255,0.55); margin-top:4px; }
+    .field-error { color:#ff9b9b; font-size:12px; min-height:16px; margin-top:4px; }
+
+    md-outlined-text-field { width:100%; display:block; margin-bottom:4px; }
+    md-select { width:100%; display:block; margin-bottom:4px; color:#fff; }
+
+    /* radio group styling */
+    .type-radio-group { display:flex; gap:12px; flex-wrap:wrap; }
+    .type-option { display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:8px; background: transparent; cursor:pointer; }
+    .type-option .radio-label { color:#fff; font-weight:600; font-size:14px; user-select:none; }
+
+    .dialog-footer { padding:12px 16px; border-top:1px solid rgba(255,255,255,0.03); display:flex; justify-content:flex-end; gap:12px; align-items:center; }
+    .dialog-actions { display:flex; gap:12px; align-items:center; }
+    .dialog-errors { margin-top:6px; color:#ffb4b4; font-weight:600; min-height:20px; }
+
+    /* preview */
+    .preview-wrap { width:100%; display:flex; align-items:flex-start; justify-content:center; }
+    .preview-card-placeholder { width:100%; max-width:360px; }
+    .preview-card { border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.03); background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005)); color:var(--on-surface); }
+    .p-card-image { width:100%; height:200px; background-size:cover; background-position:center; }
+    .p-card-body { padding:12px; display:flex; flex-direction:column; gap:8px; }
+    .p-title-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .p-title { font-weight:700; font-size:16px; }
+    .p-price { font-weight:700; font-size:13px; color:rgba(255,255,255,0.8); }
+    .p-type { font-size:12px; color:rgba(255,255,255,0.6); letter-spacing:0.6px; }
+    .p-desc { font-size:13px; color:rgba(255,255,255,0.9); overflow:hidden; display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; }
+
+    @media (max-width:840px) {
+      .dialog-body { flex-direction:column; }
+      .dialog-left, .dialog-right { flex:1 1 100%; min-width:auto; }
+      .dialog-right { order:2; padding-top:8px; }
+    }
+
+    @media (max-width:960px){ :root{ --card-width:220px; --card-height:380px; } }
+    @media (max-width:600px) {
+      :root{ --card-width:180px; --card-height:320px; --gap:10px; }
+      header.topbar{ padding:10px 12px; } h1.title{ font-size:16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" role="banner">
+    <div class="topbar-left"><h1 class="title">Creator Dashboard</h1></div>
+    <div class="topbar-right"><div id="profile-pic" aria-hidden="true"></div></div>
+  </header>
+
+  <main class="container">
+    <div id="welcome-message" class="welcome" style="display:none;">
+      <div class="md-typescale-body-large">Welcome to the creator dashboard, <span id="user-name" class="name"></span></div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Creator dashboard tabs">
+      <md-tabs id="tabs">
+        <md-primary-tab>Store</md-primary-tab>
+        <md-primary-tab>Development Items</md-primary-tab>
+      </md-tabs>
+    </div>
+
+    <section id="store-tab" class="tab-panel" role="tabpanel">
+      <div class="panel-header">
+        <h2 class="panel-title md-typescale-headline-small">Store Items</h2>
+        <div class="panel-actions"><md-outlined-button onclick="">New Store Item</md-outlined-button></div>
+      </div>
+      <div id="store-no-items" class="empty-state" style="display:none;">No store items yet. Create one with the "New Store Item" button.</div>
+      <div id="store-grid" class="cards-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="dev-tab" class="tab-panel" role="tabpanel" style="display:none;">
+      <div class="panel-header">
+        <h2 class="panel-title md-typescale-headline-small">Development Items</h2>
+        <div class="panel-actions"><md-outlined-button id="new-dev-btn" onclick="">New Dev Item</md-outlined-button></div>
+      </div>
+
+      <div id="dev-warning" class="dev-warning" role="alert" style="display:none;">
+        <img class="warning-img" src="/assets/warning.png" alt="warning" />
+        <div class="msg">You're currently not allowed to publish development items, check later</div>
+      </div>
+
+      <div id="dev-no-items" class="empty-state" style="display:none;">No development items yet. Add a plugin, sample, or file to get started.</div>
+      <div id="dev-grid" class="cards-grid" aria-live="polite"></div>
+    </section>
+  </main>
+</body>
+</html>
