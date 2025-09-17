@@ -6,6 +6,7 @@ com.android.systemui
 com.android.launcher3
 com.trebuchet.launcher
 org.lineageos.updater
+org.lineageos.trebuchet
 com.cyanogenmod.trebuchet
 com.android.settings.wifi
 com.android.settings.accounts
