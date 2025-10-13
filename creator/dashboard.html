@@ -963,7 +963,7 @@ if (idVal) {
                   date: serverTimestamp(),
                   description: `Upload ${name}`,
                   image: image || null,
-                  source: "system@ðarkpurpleof.github.io",
+                  source: "system@darkpurpleof.github.io",
                   type: "outgoing"
                 };
                 await addDoc(collection(db, 'transactions', currentUser.email, 'records'), txPayload);
