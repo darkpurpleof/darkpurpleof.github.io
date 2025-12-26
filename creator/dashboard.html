@@ -323,7 +323,7 @@
     }
     function validateStoreTypeAndUrl(type, url) {
       const ext = getExtensionFromUrl(url);
-      if (type === 'Sticker Pack') return ext === 'dpfsticker';
+      if (type === 'Sticker Pack') return ext === 'dpfstickers';
       if (type === 'Profile Frame') return IMAGE_EXTS.includes(ext);
       return false;
     }
