@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Login</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
     <script src="https://www.darkpurpleof.github.io/favicon.js"></script>
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
 
@@ -232,7 +232,7 @@
         </div>
         <button type="submit">Login</button>
     </form>
-    
+
     <!-- Forgot Password Link -->
     <div class="forgot-password">
         <p><a href="forgot.html">Forgot password?</a></p>
@@ -244,6 +244,8 @@
     const idToken = urlParams.get('token');
 
     if (idToken) {
+        // NOTE: this uses the namespaced firebase SDK loaded earlier.
+        // It remains as-is from your original file.
         firebase.auth().signInWithCustomToken(idToken)
             .then(() => {
                 // Notify parent that authentication succeeded
@@ -280,23 +282,55 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Check if the user is already logged in
-    onAuthStateChanged(auth, (user) => {
+    // Check if the user is already logged in; if they are, check ban status and
+    // redirect to /not-approved when appropriate.
+    onAuthStateChanged(auth, async (user) => {
         if (user) {
-            window.location.href = "https://darkpurpleof.github.io"; // Redirect to dashboard if logged in
+            try {
+                const email = user.email;
+                if (email) {
+                    const bannedSnap = await getDoc(doc(db, "banned_users", email));
+                    if (bannedSnap.exists()) {
+                        // If the logged-in user is banned, send them to /not-approved
+                        window.location.href = "https://darkpurpleof.github.io/not-approved";
+                        return;
+                    }
+                }
+            } catch (e) {
+                // If any error happens while checking ban status, fall back to normal redirect
+                console.error("Error checking ban status on auth state change:", e);
+            }
+
+            // Not banned — proceed to normal dashboard
+            window.location.href = "https://darkpurpleof.github.io";
         }
     });
 
     document.getElementById("loginForm").addEventListener("submit", function(event) {
         event.preventDefault();
-        const email = document.getElementById("email").value;
+        const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
 
         // Check if the user is banned by email
         const userRef = doc(db, "banned_users", email);
         getDoc(userRef).then((docSnap) => {
             if (docSnap.exists()) {
-                showToast("You are banned from accessing the site.", "red");
+                // The user is listed in banned_users. Per your request:
+                // Allow login *if their account exists* — attempt sign-in.
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        showToast("Login successful! Redirecting to not-approved...", "purple");
+                        // Redirect banned-but-authenticated users to /not-approved
+                        setTimeout(() => {
+                            window.location.href = "https://darkpurpleof.github.io/not-approved";
+                        }, 900);
+                    })
+                    .catch((error) => {
+                        // If sign-in fails, show banned message (either wrong credentials or account doesn't exist)
+                        console.warn("Banned user attempted login but sign-in failed:", error);
+                        showToast("You are banned from accessing the site.", "red");
+                    });
+
                 return;
             }
 
@@ -313,18 +347,18 @@
     });
 
     function showToast(message, color = "purple", duration = 3500) {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.className = `${color} show`;
-    toast.style.display = "block";
-    setTimeout(() => {
-        toast.className = `${color} hide`;
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.className = `${color} show`;
+        toast.style.display = "block";
         setTimeout(() => {
-            toast.style.display = "none";
-            toast.className = color;
-        }, 400);
-    }, duration);
-}
+            toast.className = `${color} hide`;
+            setTimeout(() => {
+                toast.style.display = "none";
+                toast.className = color;
+            }, 400);
+        }, duration);
+    }
 
     function checkBannedIP() {
         fetch("https://ipinfo.io/json")
@@ -355,7 +389,7 @@
                 showToast("Login successful!", "purple");
                 setTimeout(() => {
                     window.location.href = "https://darkpurpleof.github.io";
-                }, 3900);
+                }, 900);
             })
             .catch((error) => {
                 showToast("Whoops! Login failed because " + error.message, "red");
