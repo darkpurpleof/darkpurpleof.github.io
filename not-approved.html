@@ -4,10 +4,10 @@
   <title>Banned</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
-<style>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
 
     :root {
@@ -128,7 +128,7 @@
     }
 
     #agreement-box {
-      display: flex;
+      display: none; /* hidden by default; shown only when reactivation allowed */
       align-items: center;
       justify-content: center;
       gap: 10px;
@@ -180,11 +180,11 @@
       </button>
       <div id="profile" class="profile-pic"></div>
     </div>
-  
+
     <h1>What's the square root of a fish?</h1>
     <p id="message">Fetching user data...</p>
     <div id="ban-label" class="ban-label" style="display:none;"></div>
-  
+
     <div id="error-box" class="error-box" style="display:none;">
       <p id="ban-description"></p>
       <code id="moderator-note"></code>
@@ -195,126 +195,188 @@
       </div>
       <p id="reminder"></p>
       <p id="reactivate-message"></p>
-      <label id="agreement-box" style="display:none;">
+      <label id="agreement-box">
         <input type="checkbox" id="agree-checkbox"> I agree
       </label><br><br>
       <button id="reactivate-btn" onclick="reactivateAccount()" disabled>Reactivate</button>
       <button onclick="logout()">Log out</button>
     </div>
-  
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script>
       const firebaseConfig = {
-      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-      authDomain: "darkpurpleof-s-website.firebaseapp.com",
-      projectId: "darkpurpleof-s-website",
-      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-      messagingSenderId: "520651082420",
-      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
-    };
+        apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+        authDomain: "darkpurpleof-s-website.firebaseapp.com",
+        projectId: "darkpurpleof-s-website",
+        storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+        messagingSenderId: "520651082420",
+        appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+      };
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
-  
+
       function toggleTheme() {
         document.body.classList.toggle('light');
         document.getElementById("theme-icon").textContent =
           document.body.classList.contains('light') ? '☀️' : '🌙';
       }
-  
-      document.getElementById("agree-checkbox").addEventListener("change", e => {
-        document.getElementById("reactivate-btn").disabled = !e.target.checked;
+
+      const agreeCheckbox = document.getElementById("agree-checkbox");
+      const reactivateBtn = document.getElementById("reactivate-btn");
+      agreeCheckbox.addEventListener("change", e => {
+        reactivateBtn.disabled = !e.target.checked;
       });
-  
+
       function formatDate(ts) {
-        return ts.toDate().toLocaleString();
+        return ts.toLocaleString();
       }
-  
+
       async function reactivateAccount() {
         const user = firebase.auth().currentUser;
         if (!user) return;
-        await db.doc(`banned_users/${user.email}`).delete();
-        window.location.href = "/index";
+        try {
+          await db.doc(`banned_users/${user.email}`).delete();
+          // optional: you might want to write an audit log here
+          window.location.href = "/index";
+        } catch (err) {
+          console.error("Failed to reactivate:", err);
+          alert("Failed to reactivate account: " + err.message);
+        }
       }
-  
+
       async function logout() {
         await auth.signOut();
         window.location.href = "/login";
       }
-  
+
       auth.onAuthStateChanged(async user => {
         const msg = document.getElementById('message');
         const box = document.getElementById('error-box');
         const label = document.getElementById('ban-label');
         const note = document.getElementById('moderator-note');
-        const reason = document.getElementById('reason');
+        const reasonEl = document.getElementById('reason');
         const offensive = document.getElementById('offensive-item');
         const preview = document.getElementById('offensive-preview');
         const reminder = document.getElementById('reminder');
         const reactivateMsg = document.getElementById('reactivate-message');
         const agreeBox = document.getElementById('agreement-box');
         const profile = document.getElementById('profile');
-  
+
+        // default hide/reactivate states
+        agreeBox.style.display = 'none';
+        reactivateBtn.disabled = true;
+        agreeCheckbox.checked = false;
+
         if (user) {
           const email = user.email;
-          const profileSnap = await db.doc(`user_data/${email}`).get();
-          profile.style.backgroundImage = `url('${profileSnap.exists ? profileSnap.data().profile_picture : "https://darkpurpleof.github.io/org-owner.jpg"}')`;
-  
+          // load profile pic safely
+          try {
+            const profileSnap = await db.doc(`user_data/${email}`).get();
+            const pic = (profileSnap.exists && profileSnap.data().profile_picture) ? profileSnap.data().profile_picture : "https://darkpurpleof.github.io/org-owner.jpg";
+            profile.style.backgroundImage = `url('${pic}')`;
+          } catch (e) {
+            profile.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+          }
+
           const banRef = db.doc(`banned_users/${email}`);
           const banSnap = await banRef.get();
-  
+
           if (banSnap.exists) {
             const data = banSnap.data();
-            const since = data.banned_since?.toDate?.() || new Date();
-            const until = data.until?.toDate?.() || null;
+            const sinceRaw = data.banned_since;
+            const untilRaw = data.until;
             const noteVal = data.ban_extra_note || "None provided";
             const reasonVal = data.ban_reason || "Unspecified";
             const offensiveVal = data.ban_offensive || "Unspecified";
-  
+
+            // normalize timestamps: support Firestore Timestamp, ISO string, or millis
+            let since = new Date();
+            if (sinceRaw) {
+              if (typeof sinceRaw.toDate === 'function') since = sinceRaw.toDate();
+              else since = new Date(sinceRaw);
+            }
+
+            let until = null;
+            if (untilRaw !== undefined && untilRaw !== null) {
+              if (typeof untilRaw.toDate === 'function') {
+                until = untilRaw.toDate();
+              } else {
+                // try number or string parse
+                const n = Number(untilRaw);
+                until = !Number.isNaN(n) ? new Date(n) : new Date(untilRaw);
+                if (isNaN(until.getTime())) until = null;
+              }
+            }
+
             const now = new Date();
             const isWarning = data.type === "warning";
-            const expired = until && now > until;
-  
+            const expired = !!until && now >= until; // consider equal as expired
+
+            // label: show difference in days if both since and until exist
             let labelText = "";
             if (isWarning) labelText = "Warning";
             else if (!until) labelText = "Account Terminated";
-            else labelText = `Banned for ${Math.ceil((until - since) / (1000 * 60 * 60 * 24))} days`;
-  
+            else {
+              const days = Math.ceil(Math.max(0, (until - since) / (1000 * 60 * 60 * 24)));
+              labelText = `Banned for ${days} day${days !== 1 ? 's' : ''}`;
+            }
+
             label.textContent = labelText;
             label.style.display = "inline-block";
             box.style.display = "block";
-  
+
             msg.textContent = "Your behavior in the DarkPurpleOF's website is in violation of our Terms of Service.";
             note.textContent = "Moderator Note: " + noteVal;
-            reason.textContent = "Reason: " + reasonVal;
-  
+            reasonEl.textContent = "Reason: " + reasonVal;
+
             if (/^https?:\/\//.test(offensiveVal)) {
               const assetId = offensiveVal.split('/').pop();
               offensive.textContent = `Offensive Item: AssetID: ${assetId}`;
               preview.innerHTML = `<img src="${offensiveVal}" style="max-width:100%; margin-top:10px; border:1px solid var(--border-color);">`;
             } else {
               offensive.textContent = `Offensive Item: TextContent: ${offensiveVal}`;
+              preview.innerHTML = "";
             }
-  
+
             reminder.textContent = "Please abide by the Terms of Service and Community Guidelines so the DarkPurpleOF's Website is a fun place for everyone.";
-  
-            if (isWarning || expired) {
-              reactivateMsg.textContent = isWarning ?
-                "You may re-activate your account now by agreeing to the terms of service" :
-                `Your account has been disabled, you may re-activate it after ${formatDate(until)}`;
-              agreeBox.style.display = "block";
+
+            // Show reactivation UI if this is a warning OR the ban has expired
+            if (isWarning) {
+              reactivateMsg.textContent = "This is a warning — you may re-activate your account now by agreeing to the terms of service.";
+              agreeBox.style.display = 'flex';
+              agreeCheckbox.checked = false;
+              reactivateBtn.disabled = true;
+            } else if (expired) {
+              reactivateMsg.textContent = `Your ban expired on ${formatDate(until)} — you may re-activate your account by agreeing to the terms of service.`;
+              agreeBox.style.display = 'flex';
+              agreeCheckbox.checked = false;
+              reactivateBtn.disabled = true;
             } else {
-              reactivateMsg.textContent = until ? `Ban active until: ${formatDate(until)}` : "Your account has been terminated.";
+              // active ban (not a warning and not expired)
+              if (until) {
+                reactivateMsg.textContent = `Ban active until: ${formatDate(until)}`;
+              } else {
+                // permanent
+                reactivateMsg.textContent = "Your account has been terminated.";
+              }
+              agreeBox.style.display = 'none';
+              reactivateBtn.disabled = true;
             }
-  
+
           } else {
+            // not banned
             msg.textContent = "You're not actually banned. You're just viewing this page for fun.";
+            box.style.display = "none";
+            label.style.display = "none";
           }
         } else {
           msg.textContent = "You're not logged in. This is just a demo ban screen.";
+          box.style.display = "none";
+          label.style.display = "none";
         }
       });
     </script>
