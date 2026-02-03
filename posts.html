@@ -1,627 +1,569 @@
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Post</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Post — DarkPurpleOF</title>
 
-    :root {
-        --bg-color: #000;
-        --text-color: purple;
-        --box-bg: rgba(128, 0, 128, 0.05);
-        --border-color: purple;
+  <!-- Firebase compat (matches other pages) -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #171717;
+      --card:#1f1f1f;
+      --text:#e9e9e9;
+      --muted:#9ca3af;
+      --accent:#6b21a8;
+      --accent-strong:#5b21b6;
+      --border: rgba(255,255,255,0.04);
+      --card-radius:12px;
+      --max-width:920px;
+    }
+    body.light{
+      --bg:#f6f8fb; --card:#fff; --text:#0f172a; --muted:#475569; --border: rgba(0,0,0,0.06);
     }
 
-    body.light {
-        --bg-color: #fff;
-        --text-color: purple;
-        --box-bg: rgba(128, 0, 128, 0.1);
-        --border-color: purple;
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased; box-sizing:border-box; overflow-x:hidden;}
+    body{display:flex;flex-direction:column;min-height:100vh;}
+
+    /* Topbar component */
+    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+
+    /* Page container */
+    main.wrapper { width:100%; max-width:var(--max-width); margin:22px auto; padding:0 16px; box-sizing:border-box; }
+    .post-wrap { display:flex; gap:20px; align-items:flex-start; flex-direction:column; }
+
+    /* Post card */
+    .card {
+      background: var(--card);
+      border-radius: var(--card-radius);
+      padding:16px;
+      border:1px solid var(--border);
+      box-shadow: 0 6px 18px rgba(2,6,23,0.45);
+      width:100%;
+      box-sizing:border-box;
     }
 
-    body {
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        font-family: 'Orbitron', sans-serif;
-        margin: 0;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        min-height: 100vh;
-        transition: background 0.4s, color 0.4s;
-        box-sizing: border-box;
-        position: relative;
+    /* Author row */
+    .author {
+      display:flex; gap:12px; align-items:center;
     }
+    /* ensure pfp overlay frames position correctly */
+    .author .pfp, .comment .pfp { position:relative; width:52px; height:52px; border-radius:10px; background-size:cover; background-position:center; border:1px solid var(--border); flex-shrink:0; }
+    .comment .pfp { width:38px; height:38px; border-radius:8px; }
+    .author .meta { display:flex; flex-direction:column; min-width:0; }
+    .author .name { font-weight:700; font-size:15px; display:flex; gap:8px; align-items:center; color:var(--text); }
+    .author .sub { font-size:13px; color:var(--muted); word-break:break-word; }
 
-    .top-bar {
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 20px;
+    .verified { width:16px; height:16px; display:inline-block; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; }
+
+    /* post content */
+    .post-text { margin-top:12px; white-space:pre-wrap; line-height:1.45; color:var(--text); font-size:15px; }
+    .post-media { margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+    .post-media img { max-width:100%; width:calc(50% - 6px); max-height:360px; object-fit:cover; border-radius:10px; border:1px solid var(--border); }
+
+    /* action bar with borderless icon buttons */
+    .actions { display:flex; gap:8px; align-items:center; margin-top:12px; flex-wrap:wrap; }
+    .icon-btn {
+      --size:44px;
+      width:var(--size); height:var(--size);
+      border-radius:10px;
+      display:inline-flex;
+      align-items:center; justify-content:center;
+      background:transparent;
+      border:none;
+      cursor:pointer;
+      color:var(--muted);
+      transition:background .12s, color .12s, transform .08s;
+      padding:6px;
     }
+    .icon-btn:hover { background: rgba(255,255,255,0.02); color:var(--text); transform:translateY(-1px); }
+    .icon-btn[aria-pressed="true"] { color:var(--accent); background: rgba(107,33,168,0.06); }
 
-    .dark-light-toggle {
-        cursor: pointer;
-        background: none;
-        border: none;
-        font-size: 1.5em;
-        color: var(--text-color);
-        transition: color 0.3s;
+    .icon-label { font-size:13px; color:var(--muted); margin-left:6px; user-select:none; }
+
+    /* comments */
+    .comments { margin-top:18px; }
+    .comment { display:flex; gap:10px; margin-bottom:12px; align-items:flex-start; }
+    .comment .body { background: rgba(255,255,255,0.01); padding:10px; border-radius:8px; border:1px solid var(--border); flex:1; }
+    .comment .who { font-weight:700; font-size:13px; color:var(--text); display:flex; gap:8px; align-items:center; }
+    .comment .text { margin-top:6px; color:var(--text); white-space:pre-wrap; line-height:1.35; }
+
+    .comment-form { display:flex; gap:8px; margin-top:12px; align-items:center; }
+    .comment-input { flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); box-sizing:border-box; min-width:0; }
+    .send-icon { width:40px; height:40px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; background:transparent; border:none; cursor:pointer; color:var(--accent); }
+    .send-icon[disabled] { opacity:0.4; cursor:not-allowed; color:var(--muted); }
+
+    .towall-label { margin-bottom:12px; display:flex; gap:10px; align-items:center; justify-content:space-between; background: rgba(255,255,255,0.02); padding:8px 10px; border-radius:8px; border:1px solid var(--border); color:var(--muted); }
+
+    /* responsive: keep wrapping, avoid horizontal scroll */
+    @media (max-width:720px) {
+      .post-media img { width:100%; }
+      .author .name { font-size:14px; }
     }
-
-    .profile-pic-frame {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-    z-index: 2;
-    display: none;
-}
-.comment .profile-pic-frame {
-    border-radius: 50%;
-}
-
-    .dark-light-toggle:hover {
-        opacity: 0.7;
-    }
-
-    h1.page-title {
-        font-size: 2.5em;
-        margin-bottom: 20px;
-        text-shadow: 0 0 6px var(--text-color);
-        animation: glitch 1.5s infinite;
-    }
-
-    @keyframes glitch {
-        0% { transform: none; }
-        20% { transform: skewX(3deg); }
-        40% { transform: skewX(-3deg); }
-        60% { transform: none; }
-        100% { transform: none; }
-    }
-
-    .post-card {
-        background-color: var(--box-bg);
-        border: 1.5px solid var(--border-color);
-        border-radius: 10px;
-        width: 100%;
-        max-width: 600px;
-        padding: 20px;
-        text-align: left;
-        box-sizing: border-box;
-        margin-bottom: 30px;
-        box-shadow: 0 0 10px rgba(128, 0, 128, 0.3);
-    }
-
-    .author-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 10px;
-        flex-wrap: wrap;
-    }
-
-    .profile-pic {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background-color: var(--box-bg);
-        background-position: center;
-        background-size: cover;
-        border: 1.5px solid var(--border-color);
-        flex-shrink: 0;
-    }
-
-    .author-details {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .author-name-verif {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: bold;
-        font-size: 1.2em;
-        color: var(--text-color);
-    }
-
-    .author-email {
-        font-size: 0.9em;
-        color: var(--text-color);
-        opacity: 0.8;
-        word-break: break-word;
-    }
-
-    .verified-badge {
-        width: 20px;
-        height: 20px;
-        object-fit: contain;
-        filter: drop-shadow(0 0 2px purple);
-    }
-
-    .post-text {
-        margin-top: 20px;
-        font-size: 1.1em;
-        white-space: pre-wrap;
-    }
-
-    .post-images {
-        margin-top: 15px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        justify-content: flex-start;
-    }
-
-    .post-images img {
-        max-width: 100%;
-        max-height: 200px;
-        border-radius: 10px;
-        object-fit: contain;
-        border: 1.5px solid var(--border-color);
-    }
-
-    .blocked-message {
-        font-size: 1.3em;
-        color: red;
-        margin-top: 50px;
-        font-weight: bold;
-    }
-
-    .interact-button {
-        background-color: var(--box-bg);
-        color: var(--text-color);
-        padding: 16px 28px;
-        border: 2px solid var(--border-color);
-        border-radius: 12px;
-        font-size: 1.4em;
-        cursor: pointer;
-        max-width: 600px;
-        width: 100%;
-        transition: opacity 0.3s;
-        user-select: none;
-    }
-
-    .interact-button:hover {
-        opacity: 0.8;
-    }
-    
-    .button-row {
-    margin-top: 15px;
-    display: flex;
-    gap: 20px;
-  }
-
-  .action-button {
-    flex: 1;
-    background-color: var(--box-bg);
-    border: 1.5px solid var(--border-color);
-    border-radius: 10px;
-    padding: 12px 0;
-    font-weight: bold;
-    cursor: pointer;
-    color: var(--text-color);
-    user-select: none;
-    transition: opacity 0.3s;
-  }
-  .action-button:hover:not(:disabled) {
-    opacity: 0.75;
-  }
-  .action-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.4;
-  }
-
-  .comments-section {
-    max-width: 600px;
-    width: 100%;
-    margin-top: 30px;
-    text-align: left;
-  }
-
-  .comment {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 18px;
-  }
-
-  .comment .profile-pic {
-    width: 40px;
-    height: 40px;
-  }
-
-  .comment-content {
-    flex: 1;
-  }
-
-  .comment-author {
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-color);
-  }
-
-  .comment-text {
-    margin-top: 4px;
-    white-space: pre-wrap;
-  }
-
-  .comment-input-row {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-  }
-
-  .comment-input {
-    flex: 1;
-    padding: 10px;
-    border: 1.5px solid var(--border-color);
-    border-radius: 10px;
-    background-color: var(--box-bg);
-    color: var(--text-color);
-    font-size: 1em;
-    box-sizing: border-box;
-  }
-
-  .comment-send-btn {
-    background-color: var(--box-bg);
-    border: 1.5px solid var(--border-color);
-    border-radius: 10px;
-    padding: 0 20px;
-    font-weight: bold;
-    color: var(--text-color);
-    cursor: pointer;
-    transition: opacity 0.3s;
-    user-select: none;
-  }
-  .comment-send-btn:hover:not(:disabled) {
-    opacity: 0.75;
-  }
-  .comment-send-btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.4;
-  }
-
-  .comments-disabled-message {
-    color: red;
-    font-weight: bold;
-    margin-top: 15px;
-  }
-</style>
+  </style>
 </head>
 <body>
+  <!-- consistent topbar -->
+  <script type="module" src="/dp-topbar.js"></script>
+  <dp-topbar></dp-topbar>
 
-<div class="top-bar">
-    <button id="toggleTheme" class="dark-light-toggle" title="Toggle Light/Dark Mode">🌓</button>
-</div>
+  <main class="wrapper" role="main" aria-label="Post">
+    <div class="post-wrap">
+      <div id="postCard" class="card" aria-live="polite">
+        <!-- injected by JS -->
+        <div style="text-align:center;" class="muted">Loading post…</div>
+      </div>
 
-<h1 class="page-title" id="pageTitle">Post</h1>
+      <!-- comments area is inside the card, but keep separate for clarity if needed -->
+    </div>
+  </main>
 
-<div id="postContainer">
-  <!-- Post card or blocked message will appear here -->
-</div>
+  <div id="toast" role="status" aria-live="polite" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);display:none;padding:10px 14px;border-radius:10px;color:#fff;z-index:99999;"></div>
 
-<button id="interactBtn" class="interact-button" style="display:none;">
-  Interact with this post in the app!
-</button>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script>
-  // Initialize Firebase here with your config
+  // Firebase compat assumed to be loaded above
   const firebaseConfig = {
-  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-  authDomain: "darkpurpleof-s-website.firebaseapp.com",
-  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
-  projectId: "darkpurpleof-s-website",
-  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-  messagingSenderId: "520651082420",
-  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-  measurementId: "G-S2X2JYC8Z0"
-};
-  firebase.initializeApp(firebaseConfig);
+    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+    authDomain: "darkpurpleof-s-website.firebaseapp.com",
+    projectId: "darkpurpleof-s-website",
+    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+    messagingSenderId: "520651082420",
+    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+  };
+  if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
   const auth = firebase.auth();
 
-  // Theme toggle logic
-  const toggleBtn = document.getElementById('toggleTheme');
-  toggleBtn.onclick = () => {
-    document.body.classList.toggle('light');
-    localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
-  };
-  // Load saved theme on start
-  if(localStorage.getItem('theme') === 'light') document.body.classList.add('light');
-
-  // Grab post ID from URL param
   const params = new URLSearchParams(window.location.search);
-  const postId = params.get('post');
+  const postId = (params.get('post') || '').trim();
+  const postCard = document.getElementById('postCard');
 
-  const postContainer = document.getElementById('postContainer');
-  const interactBtn = document.getElementById('interactBtn');
-  const pageTitle = document.getElementById('pageTitle');
-
-  if (!postId || postId.trim() === '') {
-    postContainer.innerHTML = '<p style="color:red;">No post ID provided in URL.</p>';
-  } else {
-    // Wait for auth user - anonymous or signed in
-    auth.onAuthStateChanged(async (user) => {
-      const currentUserEmail = user?.email?.toLowerCase() || null;
-
-      try {
-      // Get post doc
-      const postDoc = await db.collection('posts').doc(postId).get();
-      if (!postDoc.exists) {
-        postContainer.innerHTML = '<p style="color:red;">Post not found.</p>';
-        interactBtn.style.display = 'none';
-        return;
-      }
-
-      const editorEmailRaw = postDoc.get('editor');
-      if (!editorEmailRaw) {
-        postContainer.innerHTML = '<p style="color:red;">Post editor info missing.</p>';
-        interactBtn.style.display = 'none';
-        return;
-      }
-      const editorEmail = editorEmailRaw.toLowerCase();
-
-      // Author user data
-      const editorUserDoc = await db.collection('user_data').doc(editorEmail).get();
-      if (!editorUserDoc.exists) {
-        postContainer.innerHTML = '<p style="color:red;">Author data not found.</p>';
-        interactBtn.style.display = 'none';
-        return;
-      }
-      const displayName = editorUserDoc.get('display name') || editorEmail;
-      const profilePicUrl = editorUserDoc.get('profile_picture') || 'https://darkpurpleof.github.io/org-owner.jpg';
-      const blockedUsers = editorUserDoc.get('blockedUsers') || [];
-      const verified = editorUserDoc.get('is_verified') === true;
-      const frameUrl = editorUserDoc.get('profile_picture_frame') || '';
-
-      // Check if viewer blocked
-      const isBlocked = currentUserEmail && blockedUsers.includes(currentUserEmail);
-
-      // Post content
-      const postText = postDoc.get('text') || '';
-      const postImages = postDoc.get('images') || [];
-      const likedBy = postDoc.get('likedBy') || [];
-      const commentsSetting = (postDoc.get('comments') || 'everyone').toLowerCase();
-
-      // Set titles
-      document.title = `${displayName}'s post`;
-      pageTitle.textContent = `${displayName}'s post`;
-
-      if (isBlocked) {
-        postContainer.innerHTML = `<p class="blocked-message">You don't have permission to view this post.</p>`;
-        interactBtn.style.display = 'none';
-        return;
-      }
-
-      // Build verification badge html
-      const verifiedBadgeHTML = verified
-        ? `<img src="/assets/verified.png" alt="Verified" class="verified-badge" title="Verified User" />`
-        : '';
-
-      // Profile pic style inline
-      const profilePicStyle = profilePicUrl
-        ? `background-image: url('${profilePicUrl}');`
-        : 'background-color: rgba(128,0,128,0.2);';
-
-      // Build images HTML
-      let imagesHTML = '';
-      if (Array.isArray(postImages) && postImages.length > 0) {
-        imagesHTML = `<div class="post-images">` + postImages.map(url => {
-          const safeUrl = encodeURI(url);
-          return `<img src="${safeUrl}" alt="Post image" loading="lazy" />`;
-        }).join('') + `</div>`;
-      }
-
-      let userLiked = false; // <-- FIXED
-
-      userLiked = currentUserEmail ? likedBy.includes(currentUserEmail) : false; // <-- FIXED
-
-      // Compose post card with buttons & comments container
-      postContainer.innerHTML = `
-        <div class="post-card">
-          <div class="author-info" style="position:relative;">
-            <div class="profile-pic" style="${profilePicStyle}; position:relative;">
-              ${frameUrl && frameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${frameUrl}')"></div>` : ""}
-            </div>
-            <div class="author-details">
-              <div class="author-name-verif">
-                ${displayName} ${verifiedBadgeHTML}
-              </div>
-              <div class="author-email">${editorEmail}</div>
-            </div>
-          </div>
-          <div class="post-text">${postText.replace(/\n/g, '<br>')}</div>
-          ${imagesHTML}
-          <div class="button-row">
-            <button id="likeBtn" class="action-button">${userLiked ? 'Unlike' : 'Like'}</button>
-            <button id="reportBtn" class="action-button">Report</button>
-          </div>
-          <div id="commentsSection" class="comments-section">
-            <h3>Comments</h3>
-            <div id="commentsList"></div>
-            <div id="commentsDisabledMsg" class="comments-disabled-message" style="display:none;"></div>
-            <div class="comment-input-row" style="display:none;">
-              <input id="commentInput" class="comment-input" type="text" placeholder="Write a comment..." maxlength="500" />
-              <button id="sendCommentBtn" class="comment-send-btn" disabled>Send</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      interactBtn.style.display = 'block';
-      interactBtn.onclick = () => {
-        window.location.href = `darkpurpleof://posts/${encodeURIComponent(postId)}`;
-      };
-
-      // Like button logic
-      const likeBtn = document.getElementById('likeBtn');
-likeBtn.onclick = async () => {
-  if (!currentUserEmail) return alert('You must be logged in to like posts.');
-  try {
-    likeBtn.disabled = true;
-    const postRef = db.collection('posts').doc(postId);
-    if (userLiked) {
-      await postRef.update({
-        likedBy: firebase.firestore.FieldValue.arrayRemove(currentUserEmail),
-      });
-      likeBtn.textContent = 'Like';
-    } else {
-      await postRef.update({
-        likedBy: firebase.firestore.FieldValue.arrayUnion(currentUserEmail),
-      });
-      likeBtn.textContent = 'Unlike';
-    }
-    userLiked = !userLiked; // <-- Now safe, it's declared as `let`
-  } catch (e) {
-    alert('Error updating like status: ' + e.message);
+  function showToast(msg, color='purple', t=2500){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.display = 'block';
+    el.style.background = (color === 'red') ? '#C00' : (color === 'yellow' ? '#E6B800' : 'linear-gradient(180deg,var(--accent-strong),var(--accent))');
+    setTimeout(()=> el.style.display = 'none', t);
   }
-  likeBtn.disabled = false;
-};
 
-      // Report button logic
+  if (!postId) {
+    postCard.innerHTML = `<div class="muted" style="color:#f66">No post id provided.</div>`;
+  } else {
+    let currentUserEmail = null;
+    let currentUserData = null; // fetched from user_data/currentEmail
+    let userLiked = false;
+    let userReposted = false;
+    let postData = null;
+    let unsubscribeComments = null;
+
+    auth.onAuthStateChanged(async user => {
+      currentUserEmail = user?.email?.toLowerCase() || null;
+      // fetch current user's user_data doc (if signed in)
+      currentUserData = null;
+      if (currentUserEmail) {
+        try {
+          const udoc = await db.collection('user_data').doc(currentUserEmail).get();
+          if (udoc.exists) currentUserData = udoc.data();
+        } catch (err) {
+          console.error('failed to fetch current user_data', err);
+        }
+      }
+      await loadPost();
+    });
+
+    async function loadPost(){
+      try {
+        const docRef = db.collection('posts').doc(postId);
+        const snap = await docRef.get();
+        if (!snap.exists) {
+          postCard.innerHTML = `<div class="muted" style="color:#f66">Post not found.</div>`;
+          return;
+        }
+        postData = snap.data();
+
+        // editor/author
+        const editor = (postData.editor || '').toLowerCase();
+        if (!editor) { postCard.innerHTML = `<div class="muted" style="color:#f66">Author missing.</div>`; return; }
+
+        const authorSnap = await db.collection('user_data').doc(editor).get();
+        const author = authorSnap.exists ? authorSnap.data() : {};
+        const displayName = author['display name'] || editor;
+        const pfp = author.profile_picture || '/org-owner.jpg';
+        const isVerified = !!author.is_verified;
+        const frame = author.profile_picture_frame || '';
+
+        // check blocked list
+        const blockedUsers = Array.isArray(author.blockedUsers) ? author.blockedUsers.map(s=>s.toLowerCase()) : [];
+        const viewer = currentUserEmail;
+        if (viewer && blockedUsers.includes(viewer)) {
+          postCard.innerHTML = `<div class="muted" style="color:#f66">You don't have permission to view this post.</div>`;
+          return;
+        }
+
+        // post text and images
+        const text = postData.text || '';
+        const images = Array.isArray(postData.images) ? postData.images : [];
+
+        // likes / reposts
+        const likedBy = Array.isArray(postData.likedBy) ? postData.likedBy.map(s=>s.toLowerCase()) : [];
+        const repostedBy = Array.isArray(postData.repostedBy) ? postData.repostedBy.map(s=>s.toLowerCase()) : [];
+        userLiked = viewer ? likedBy.includes(viewer) : false;
+        userReposted = viewer ? repostedBy.includes(viewer) : false;
+
+        // comments setting
+        const commentsSetting = (postData.comments || 'everyone').toLowerCase();
+
+        // Build images HTML
+        const imagesHtml = images.length ? `<div class="post-media">${images.map(url=>`<img src="${escapeHtml(url)}" alt="post image" loading="lazy">`).join('')}</div>` : '';
+
+        postCard.innerHTML = `
+          <div class="author">
+            <div class="pfp" id="authorPfp" style="background-image:url('${escapeHtml(pfp)}')">
+              ${frame ? `<div style="position:absolute;inset:0;background-image:url('${escapeHtml(frame)}');background-size:cover;border-radius:10px;pointer-events:none"></div>` : ''}
+            </div>
+            <div class="meta">
+              <div class="name">${escapeHtml(displayName)} ${isVerified ? '<span class="verified" title="Verified"></span>' : ''}</div>
+              <div class="sub">${escapeHtml(editor)}</div>
+            </div>
+          </div>
+
+          <div class="post-text" id="postText">${escapeHtml(text)}</div>
+
+          ${imagesHtml}
+
+          <div class="actions" role="toolbar" aria-label="post actions">
+            <button id="likeBtn" class="icon-btn" aria-pressed="${userLiked ? 'true' : 'false'}" aria-label="Like post">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </button>
+            <div id="likeCount" class="icon-label">${likedBy.length || 0}</div>
+
+            <button id="commentToggle" class="icon-btn" aria-label="Toggle comments">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </button>
+            <div id="commentCount" class="icon-label">0</div>
+
+            <button id="repostBtn" class="icon-btn" aria-pressed="${userReposted ? 'true' : 'false'}" aria-label="Repost post" title="Repost">
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666"><path d="M280-80 120-240l160-160 56 58-62 62h406v-160h80v240H274l62 62-56 58Zm-80-440v-240h486l-62-62 56-58 160 160-160 160-56-58 62-62H280v160h-80Z"/></svg>            </button>
+            <div id="repostCount" class="icon-label">${repostedBy.length || 0}</div>
+
+            <button id="shareBtn" class="icon-btn" aria-label="Share post">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v13"></path></svg>
+            </button>
+
+            <button id="reportBtn" class="icon-btn" aria-label="Report post">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666"><path d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80v-240h-80v240ZM330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm34-80h232l164-164v-232L596-760H364L200-596v232l164 164Zm116-280Z"/></svg>
+            </button>
+          </div>
+
+          <div id="commentsRoot" class="comments" style="display:none;">
+            <!-- optional towallLabel will be inserted here by JS -->
+            <div id="commentsList"></div>
+
+            <div class="comment-form" id="commentForm" style="display:none;">
+              <input id="commentInput" class="comment-input" placeholder="Write a comment..." maxlength="500" />
+              <button id="sendComment" class="send-icon" aria-label="Send comment" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><path d="M22 2l-7 20  -3-9-9-3 19-8z"></path></svg>
+              </button>
+            </div>
+          </div>
+        `;
+        // wire actions - pass author email (lowercase) and currentUserData for 'verified' checks
+        wireActions(editor, db.collection('posts').doc(postId), postData, commentsSetting, currentUserData);
+      } catch (e) {
+        console.error(e);
+        postCard.innerHTML = `<div class="muted" style="color:#f66">Failed to load post.</div>`;
+      }
+    }
+
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function wireActions(authorEmail, docRef, postData, commentsSetting, currentUserData){
+      const likeBtn = document.getElementById('likeBtn');
+      const likeCountEl = document.getElementById('likeCount');
+      const commentToggle = document.getElementById('commentToggle');
+      const commentCountEl = document.getElementById('commentCount');
+      const shareBtn = document.getElementById('shareBtn');
       const reportBtn = document.getElementById('reportBtn');
-      reportBtn.onclick = () => {
-        window.location.href = `/reportabuse?reporting=${encodeURIComponent(editorEmail)}`;
-      };
+      const repostBtn = document.getElementById('repostBtn');
+      const repostCountEl = document.getElementById('repostCount');
 
-      // Comments logic
+      let localLiked = userLiked;
+      let localReposted = userReposted;
+      const viewer = currentUserEmail;
+
+      likeCountEl.textContent = (postData.likedBy && postData.likedBy.length) || 0;
+      repostCountEl.textContent = (postData.repostedBy && postData.repostedBy.length) || 0;
+
+      likeBtn.addEventListener('click', async () => {
+        if (!viewer) { showToast('Sign in to like posts', 'yellow'); return; }
+        try {
+          likeBtn.disabled = true;
+          if (localLiked) {
+            await docRef.update({ likedBy: firebase.firestore.FieldValue.arrayRemove(viewer) });
+            localLiked = false;
+            likeBtn.setAttribute('aria-pressed','false');
+            likeCountEl.textContent = Math.max(0, Number(likeCountEl.textContent || 0) - 1);
+          } else {
+            await docRef.update({ likedBy: firebase.firestore.FieldValue.arrayUnion(viewer) });
+            localLiked = true;
+            likeBtn.setAttribute('aria-pressed','true');
+            likeCountEl.textContent = Number(likeCountEl.textContent || 0) + 1;
+          }
+        } catch (err) {
+          console.error('like err', err);
+          showToast('Failed to update like', 'red');
+        } finally { likeBtn.disabled = false; }
+      });
+
+      // Repost behaves like like (repostedBy array)
+      repostBtn.addEventListener('click', async () => {
+        if (!viewer) { showToast('Sign in to repost', 'yellow'); return; }
+        try {
+          repostBtn.disabled = true;
+          if (localReposted) {
+            await docRef.update({ repostedBy: firebase.firestore.FieldValue.arrayRemove(viewer) });
+            localReposted = false;
+            repostBtn.setAttribute('aria-pressed','false');
+            repostCountEl.textContent = Math.max(0, Number(repostCountEl.textContent || 0) - 1);
+          } else {
+            await docRef.update({ repostedBy: firebase.firestore.FieldValue.arrayUnion(viewer) });
+            localReposted = true;
+            repostBtn.setAttribute('aria-pressed','true');
+            repostCountEl.textContent = Number(repostCountEl.textContent || 0) + 1;
+          }
+        } catch (err) {
+          console.error('repost err', err);
+          showToast('Failed to update repost', 'red');
+        } finally { repostBtn.disabled = false; }
+      });
+
+      // comment toggle / load
+      let commentsVisible = false;
+      const commentsRoot = document.getElementById('commentsRoot');
       const commentsList = document.getElementById('commentsList');
-      const commentsDisabledMsg = document.getElementById('commentsDisabledMsg');
-      const commentInputRow = postContainer.querySelector('.comment-input-row');
+      const commentForm = document.getElementById('commentForm');
       const commentInput = document.getElementById('commentInput');
-      const sendCommentBtn = document.getElementById('sendCommentBtn');
+      const sendComment = document.getElementById('sendComment');
 
-      // Helper: can current user comment based on commentsSetting?
-      const canComment = (() => {
-        if (!currentUserEmail) return false;
-        switch (commentsSetting) {
-          case 'none': return false;
-          case 'verified': return verified;
-          case 'admins': return currentUserEmail.endsWith('@darkpurpleof.github.io');
-          case 'everyone': return true;
-          default: return true;
+      // Show comments root area by default (we'll hide/show the form depending on permissions)
+      commentsRoot.style.display = 'block';
+      commentForm.style.display = 'none'; // default hidden until permission check
+
+      // Insert "This post is in your wall" label if postData.towall matches viewer
+      (function maybeInsertTowallLabel(){
+        try {
+          if (!viewer) return;
+          const tw = postData?.towall;
+          if (typeof tw === 'string' && tw.toLowerCase() === viewer.toLowerCase()) {
+            const label = document.createElement('div');
+            label.className = 'towall-label';
+            label.id = 'towallLabel';
+            label.innerHTML = `<div>This post is in your wall</div><div><button id="removeFromWall" class="icon-btn" style="--size:36px;border-radius:8px;padding:6px;">Remove from my wall</button></div>`;
+            commentsRoot.insertBefore(label, commentsList);
+            document.getElementById('removeFromWall').addEventListener('click', async () => {
+              try {
+                await docRef.update({ towall: firebase.firestore.FieldValue.delete() });
+                // reload to reflect change (you asked to reload)
+                location.reload();
+              } catch (err) {
+                console.error('remove towall err', err);
+                showToast('Failed to remove from wall', 'red');
+              }
+            });
+          }
+        } catch (err) {
+          console.error('towall label err', err);
         }
       })();
 
-      if (commentsSetting === 'none') {
-        commentsDisabledMsg.style.display = 'block';
-        commentsDisabledMsg.textContent = 'Comments Disabled';
-        commentInputRow.style.display = 'none';
-      } else {
-        commentsDisabledMsg.style.display = 'none';
-        if (canComment) {
-          commentInputRow.style.display = 'flex';
-        } else {
-          commentInputRow.style.display = 'none';
+      // helper to compute whether viewer can comment
+      function canViewerComment() {
+        const v = (viewer || '').toLowerCase();
+        if (!v) return false;
+        const cs = (commentsSetting || 'everyone').toLowerCase();
+        switch (cs) {
+          case 'none':
+            // only the post author can comment
+            return v === (authorEmail || '').toLowerCase();
+          case 'admins':
+            return v.endsWith('@darkpurpleof.github.io');
+          case 'verified':
+            // only if current user's user_data/currentEmail.is_verified == true
+            return Boolean(currentUserData && currentUserData.is_verified === true);
+          default:
+            return true;
         }
       }
 
-      // Enable send button only when input has content
-      commentInput.addEventListener('input', () => {
-        sendCommentBtn.disabled = commentInput.value.trim().length === 0;
+      // when comments are toggled visible, show/hide the comment input based on permission
+      commentToggle.addEventListener('click', () => {
+        commentsVisible = !commentsVisible;
+        commentsRoot.style.display = commentsVisible ? 'block' : 'none';
+        if (commentsVisible) {
+          // determine if viewer can comment
+          const allowed = canViewerComment();
+          commentForm.style.display = allowed ? 'flex' : 'none';
+          // reset input/disabled
+          if (commentInput) { commentInput.value = ''; sendComment.disabled = true; }
+          // always start listening to comments when visible
+          loadComments();
+        } else {
+          // unsubscribe immediately when hiding
+          if (unsubscribeComments) { unsubscribeComments(); unsubscribeComments = null; }
+        }
       });
 
-      // Fetch & listen to comments
-      const commentsRef = db.collection('posts').doc(postId).collection('comments').orderBy('timestamp', 'asc');
-      commentsRef.onSnapshot(async (snapshot) => {
-        commentsList.innerHTML = ''; // clear existing comments
+      // also set the initial state of the form (if comments area visible by default)
+      // (we keep comments area shown but form hidden until the user toggles comments)
+      // If you want the comments open by default and form visible if allowed, uncomment:
+      loadComments();
+      const initialAllowed = canViewerComment();
+      commentForm.style.display = initialAllowed ? 'flex' : 'none';
 
-        // Fetch all comment authors user_data in parallel to check block status
-        const commentDocs = snapshot.docs;
-        const authorEmailsSet = new Set(commentDocs.map(d => d.get('author').toLowerCase()));
-        const authorEmails = Array.from(authorEmailsSet);
-
-        // Batch fetch authors user_data
-        const authorDocs = await Promise.all(authorEmails.map(email =>
-          db.collection('user_data').doc(email).get()
-        ));
-        const authorDataMap = {};
-        authorDocs.forEach(doc => {
-          if (doc.exists) authorDataMap[doc.id.toLowerCase()] = doc.data();
+      // safe-guard listeners in case elements are missing
+      if (commentInput) {
+        commentInput.addEventListener('input', () => {
+          sendComment.disabled = commentInput.value.trim().length === 0;
         });
+      }
 
-        // Render each comment
-        for (const doc of commentDocs) {
-          const cAuthorEmail = doc.get('author').toLowerCase();
-          const cText = doc.get('text') || '';
-          const cAuthorData = authorDataMap[cAuthorEmail];
+      if (sendComment) {
+  sendComment.addEventListener('click', async () => {
+    const text = commentInput.value.trim();
+    if (!text) { // prevent empty comments
+      showToast('Comment cannot be empty', 'yellow');
+      return;
+    }
+    if (!viewer) { // must be logged in
+      showToast('Sign in to comment', 'yellow');
+      return;
+    }
+    // double-check permissions
+    if (!canViewerComment()) {
+      showToast('You do not have permission to comment', 'red');
+      return;
+    }
 
-          // Skip comment if current user is blocked by the commentator
-          if (cAuthorData?.blockedUsers && currentUserEmail && cAuthorData.blockedUsers.includes(currentUserEmail)) {
-            continue;
-          }
-
-          const cDisplayName = cAuthorData?.['display name'] || cAuthorEmail;
-          const cPfp = cAuthorData?.profile_picture || '';
-          const cVerified = cAuthorData?.is_verified === true;
-          const cFrameUrl = cAuthorData?.profile_picture_frame || '';
-
-          const cVerifiedBadgeHTML = cVerified
-            ? `<img src="/assets/verified.png" alt="Verified" class="verified-badge" style="width:16px;height:16px;" title="Verified User" />`
-            : '';
-
-          const cProfilePicStyle = cPfp
-            ? `background-image: url('${cPfp}');`
-            : 'background-color: rgba(128,0,128,0.2);';
-
-          const commentHTML = `
-            <div class="comment">
-              <div class="profile-pic" style="${cProfilePicStyle}; position:relative;">
-                ${cFrameUrl && cFrameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${cFrameUrl}')"></div>` : ""}
-              </div>
-              <div class="comment-content">
-                <div class="comment-author">${cDisplayName} ${cVerifiedBadgeHTML}</div>
-                <div class="comment-text">${cText.replace(/\n/g, '<br>')}</div>
-              </div>
-            </div>
-          `;
-
-          commentsList.insertAdjacentHTML('beforeend', commentHTML);
-        }
+    sendComment.disabled = true;
+    try {
+      await docRef.collection('comments').add({
+        author: viewer,
+        text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
-
-      // Send comment button
-      sendCommentBtn.onclick = async () => {
-        const text = commentInput.value.trim();
-        if (!text) return;
-
-        try {
-          await db.collection('posts').doc(postId).collection('comments').add({
-            author: currentUserEmail,
-            text,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          });
-          commentInput.value = '';
-          sendCommentBtn.disabled = true;
-        } catch (e) {
-          alert('Error sending comment: ' + e.message);
-        }
-      };
-
+      commentInput.value = '';
+      sendComment.disabled = true;
+      showToast('Comment posted', 'purple');
     } catch (err) {
-      console.error('Error loading post:', err);
-      postContainer.innerHTML = '<p style="color:red;">Error loading post data.</p>';
-      interactBtn.style.display = 'none';
+      console.error('comment err', err);
+      showToast('Failed to post comment', 'red');
+    } finally {
+      sendComment.disabled = false;
     }
   });
 }
-</script>
 
+// helper function to check commenting permission
+function canViewerComment() {
+  if (!viewer) return false;
+  switch ((commentsSetting || 'everyone').toLowerCase()) {
+    case 'none':
+      return viewer === (postData.editor || '').toLowerCase();
+    case 'admins':
+      return viewer.endsWith('@darkpurpleof.github.io');
+    case 'verified':
+      return postData.is_verified_viewer === true; // you'll need to fetch this field from Firestore
+    default:
+      return true;
+  }
+}
+
+
+      shareBtn.addEventListener('click', async () => {
+        const url = location.href;
+        try {
+          if (navigator.share) {
+            await navigator.share({ title: document.title, url });
+            showToast('Shared successfully!', 'green');
+          } else if (navigator.clipboard) {
+            await navigator.clipboard.writeText(url);
+            showToast('Link copied', 'purple');
+          } else {
+            prompt('Copy this link:', url);
+          }
+        } catch (e) {
+          console.error(e);
+          showToast('Failed to share', 'red');
+        }
+      });
+
+      reportBtn.addEventListener('click', () => {
+        window.location.href = `/reportabuse?post=${encodeURIComponent(postId)}`;
+      });
+
+      // Live comments listener (only active while visible)
+      function loadComments(){
+        if (unsubscribeComments) unsubscribeComments();
+        unsubscribeComments = docRef.collection('comments').orderBy('timestamp','asc').onSnapshot(async snap => {
+          commentsList.innerHTML = '';
+          commentCountEl.textContent = `${snap.size}`;
+          if (snap.empty) { commentsList.innerHTML = '<div class="muted">No comments yet</div>'; return; }
+
+          // fetch unique authors for block checks, skipping empty ids
+          const rawAuthors = snap.docs.map(d => (d.data().author||'').toLowerCase()).filter(a => !!a);
+          const authors = Array.from(new Set(rawAuthors));
+          let authorMap = {};
+          if (authors.length) {
+            try {
+              const authorDocs = await Promise.all(authors.map(a => db.collection('user_data').doc(a).get()));
+              authorDocs.forEach(d => { if (d.exists) authorMap[d.id.toLowerCase()] = d.data(); });
+            } catch (err) {
+              console.error('author fetch err', err);
+            }
+          }
+
+          for (const doc of snap.docs) {
+            const c = doc.data();
+            const authorEmail = (c.author || '').toLowerCase();
+            const authorData = authorMap[authorEmail] || {};
+            // skip comment if its author blocks current viewer
+            if (authorData.blockedUsers && currentUserEmail && authorData.blockedUsers.map(x=>x.toLowerCase()).includes(currentUserEmail)) continue;
+
+            const who = authorData['display name'] || authorEmail || 'Unknown';
+            const pfp = authorData.profile_picture || '/org-owner.jpg';
+            const verified = authorData.is_verified ? '<span class="verified" style="width:14px;height:14px;background-image:url(/assets/verified.png);background-size:contain;background-repeat:no-repeat;display:inline-block"></span>' : '';
+            const frame = authorData.profile_picture_frame || '';
+
+            const commentHtml = document.createElement('div');
+            commentHtml.className = 'comment';
+            commentHtml.innerHTML = `
+              <div class="pfp" style="background-image:url('${escapeHtml(pfp)}')">
+                ${frame ? `<div style="position:absolute;inset:0;background-image:url('${escapeHtml(frame)}');background-size:cover;border-radius:8px;pointer-events:none"></div>` : ''}
+              </div>
+              <div class="body">
+                <div class="who">${escapeHtml(who)} ${verified}</div>
+                <div class="text">${escapeHtml(c.text || '')}</div>
+              </div>
+            `;
+            commentsList.appendChild(commentHtml);
+          }
+        }, err => {
+          console.error('comments onSnapshot err', err);
+          commentsList.innerHTML = '<div class="muted" style="color:#f66">Failed to load comments.</div>';
+        });
+      }
+
+      // Unsubscribe on page unload
+      window.addEventListener('beforeunload', () => { if (unsubscribeComments) unsubscribeComments(); });
+    }
+
+  }
+</script>
 </body>
 </html>

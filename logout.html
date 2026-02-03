@@ -1,202 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logging Out...</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Logging Out...</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="manifest" href="/site.webmanifest">
-    <style>
-        :root {
-            --bg-color: #000;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.05);
-            --border-color: purple;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-        body.light {
-            --bg-color: #fff;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.1);
-            --border-color: purple;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-            transition: background-color 0.4s, color 0.4s;
-        }
-
-        .dark-light-toggle {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-size: 1.6em;
-            color: var(--text-color);
-        }
-
-        h1 {
-            font-size: 2.7em;
-            margin-top: 2rem;
-            text-shadow: 0 0 6px var(--text-color);
-            animation: glitch 1.5s infinite;
-        }
-
-        h2 {
-            font-size: 1.3em;
-            margin: 0.5rem 0 1rem 0;
-        }
-
-        .info-box {
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            border-radius: 10px;
-            padding: 1.2rem;
-            max-width: 600px;
-            margin: 2rem auto;
-            text-align: left;
-        }
-
-        .info-box p {
-            margin: 0.5rem 0;
-        }
-
-        .info-box a {
-            color: var(--text-color);
-            text-decoration: underline;
-        }
-
-        .footer-options {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .footer-options a {
-            color: var(--text-color);
-            font-size: 1em;
-            border: 1.5px solid var(--border-color);
-            padding: 10px 20px;
-            border-radius: 8px;
-            background-color: var(--box-bg);
-            text-decoration: none;
-            transition: background-color 0.3s;
-        }
-
-        .footer-options a:hover {
-            background-color: rgba(128, 0, 128, 0.2);
-        }
-
-        @keyframes glitch {
-            0% { transform: none; }
-            20% { transform: skewX(3deg); }
-            40% { transform: skewX(-3deg); }
-            60% { transform: none; }
-            100% { transform: none; }
-        }
-    </style>
+<style>
+:root{
+  --bg:#171717;
+  --card:#1f1f1f;
+  --muted:#a8a8a8;
+  --accent:#6b21a8;
+  --accent-strong:#5b21b6;
+  --text:#eaeaea;
+  --border: rgba(255,255,255,0.04);
+}
+body.light{
+  --bg:#f6f8fb;
+  --card:#fff;
+  --muted:#475569;
+  --text:#0f172a;
+  --border: rgba(0,0,0,0.06);
+}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);transition:background .25s,color .25s;}
+body{display:flex;flex-direction:column;min-height:100vh;}
+dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+main.wrapper{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;}
+.card{background:var(--card);border-radius:12px;padding:24px;border:1px solid var(--border);box-shadow:0 6px 18px rgba(2,6,23,0.45);max-width:480px;width:100%;text-align:center;color:var(--text);}
+h1{margin:0 0 6px 0;font-size:22px;font-weight:700;}
+h2{margin:0 0 16px 0;font-size:16px;color:var(--muted);}
+button, .footer-btn{background:var(--accent);color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;cursor:pointer;margin-top:10px;width:100%;}
+button:hover,.footer-btn:hover{opacity:.95;}
+.footer{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;justify-content:center;}
+.footer-btn{background:var(--card);color:var(--text);border:1px solid var(--border);text-decoration:none;text-align:center;}
+#toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:10px 14px;border-radius:10px;font-weight:700;display:none;z-index:99999;color:#fff;box-sizing:border-box;}
+#toast.purple{background:var(--accent-strong);}
+#toast.red{background:#c00;}
+#toast.yellow{background:#e6b800;color:#222;}
+</style>
+<script type="module" src="/dp-topbar.js"></script>
 </head>
 <body>
-    <button class="dark-light-toggle" id="themeToggle">🌙</button>
+<dp-topbar></dp-topbar>
 
+<main class="wrapper">
+  <div class="card" role="region" aria-label="Logout status">
     <h1 id="title">Logging you out...</h1>
     <h2 id="subtitle">Please wait while we finish up</h2>
 
-    <div class="info-box" id="extraInfo" style="display:none;">
-        <p><strong>Email:</strong> <span id="email">Fetching...</span></p>
-        <p><strong>Logout Time:</strong> <span id="timestamp">Fetching...</span></p>
-        <p>It's recommended that you close all browser windows if using a public or shared device.</p>
+    <div id="extraInfo" style="display:none;margin-top:12px;text-align:left;">
+      <p><strong>Email:</strong> <span id="email">Fetching...</span></p>
+      <p><strong>Logout Time:</strong> <span id="timestamp">Fetching...</span></p>
+      <p>Close your browser if you’re on a public or shared device.</p>
     </div>
 
-    <div class="footer-options" id="footerLinks" style="display:none;">
-        <a href="https://darkpurpleof.github.io/login">🔑 Log Back In</a>
-        <a href="https://darkpurpleof.github.io"> Homepage</a>
-        <a href="mailto:javiercorzo387@gmail.com">✉️ Contact Support</a>
+    <div class="footer" id="footerLinks" style="display:none;">
+      <a href="https://darkpurpleof.github.io/login" class="footer-btn">🔑 Log Back In</a>
+      <a href="https://darkpurpleof.github.io" class="footer-btn">Homepage</a>
+      <a href="mailto:javiercorzo387@gmail.com" class="footer-btn">✉️ Contact Support</a>
     </div>
+  </div>
+</main>
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
+<div id="toast"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+<script>
+function showToast(msg,color="purple",duration=3500){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.className=color+" show";
+  t.style.display="block";
+  setTimeout(()=>{t.className=color+" hide";setTimeout(()=>{t.style.display="none";t.className="";},400);},duration);
+}
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-            authDomain: "darkpurpleof-s-website.firebaseapp.com",
-            projectId: "darkpurpleof-s-website",
-            storageBucket: "darkpurpleof-s-website.appspot.com",
-            messagingSenderId: "520651082420",
-            appId: "G-S2X2JYC8Z0"
-        };
+// Dark/Light toggle
+const toggleBtn=document.createElement("button");
+toggleBtn.textContent="🌙";
+toggleBtn.style.position="absolute";
+toggleBtn.style.top="10px";
+toggleBtn.style.right="10px";
+toggleBtn.style.fontSize="1.5em";
+toggleBtn.style.background="none";
+toggleBtn.style.border="none";
+toggleBtn.style.cursor="pointer";
+document.body.appendChild(toggleBtn);
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+toggleBtn.addEventListener("click",()=>{
+  const isLight=document.body.classList.contains("light");
+  document.body.classList.toggle("light",!isLight);
+  toggleBtn.textContent=isLight?"🌙":"☀️";
+  localStorage.setItem("theme",!isLight?"light":"dark");
+});
+if(localStorage.getItem("theme")==="light"){document.body.classList.add("light");toggleBtn.textContent="☀️";}
+</script>
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                document.title = "Error";
-                document.getElementById("title").innerText = "You're not logged in!";
-                document.getElementById("subtitle").innerHTML = 'To log out, please <a href="https://darkpurpleof.github.io/login" style="color: purple; text-decoration: underline;">log in</a> first.';
-            } else {
-                const email = user.email;
-                const now = new Date().toLocaleString();
-                signOut(auth).then(() => {
-                    document.title = "Logged Out";
-                    document.getElementById("title").innerText = "You're now logged out.";
-                    document.getElementById("subtitle").innerText = "Session ended successfully.";
-                    document.getElementById("email").innerText = email;
-                    document.getElementById("timestamp").innerText = now;
-                    document.getElementById("extraInfo").style.display = "block";
-                    document.getElementById("footerLinks").style.display = "flex";
-                }).catch((err) => {
-                    console.error("Logout error:", err);
-                });
-            }
-        });
-    </script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    <script>
-        // Dynamic theme toggle
-        const body = document.body;
-        const toggleBtn = document.getElementById("themeToggle");
+const firebaseConfig={
+  apiKey:"AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain:"darkpurpleof-s-website.firebaseapp.com",
+  projectId:"darkpurpleof-s-website",
+  storageBucket:"darkpurpleof-s-website.appspot.com",
+  messagingSenderId:"520651082420",
+  appId:"G-S2X2JYC8Z0"
+};
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
 
-        function setTheme(mode) {
-            if (mode === "light") {
-                body.classList.add("light");
-                toggleBtn.textContent = "🌞";
-            } else {
-                body.classList.remove("light");
-                toggleBtn.textContent = "🌙";
-            }
-        }
+onAuthStateChanged(auth,(user)=>{
+  if(!user){
+    showToast("You're not logged in","red");
+    document.getElementById("title").innerHTML="Not logged in!";
+    document.getElementById("subtitle").innerHTML='Please <a href="https://darkpurpleof.github.io/login" style="color:var(--accent);text-decoration:underline;">log in</a> first.';
+    return;
+  }
 
-        toggleBtn.addEventListener("click", () => {
-            const isLight = body.classList.contains("light");
-            const newMode = isLight ? "dark" : "light";
-            localStorage.setItem("theme", newMode);
-            setTheme(newMode);
-        });
+  const email=user.email;
+  const now=new Date().toLocaleString();
 
-        const savedTheme = localStorage.getItem("theme") || "dark";
-        setTheme(savedTheme);
-    </script>
+  signOut(auth).then(()=>{
+    showToast("Logged out successfully!","purple");
+    document.title="Logged Out";
+    document.getElementById("title").innerText="You're now logged out.";
+    document.getElementById("subtitle").innerText="Session ended successfully.";
+    document.getElementById("email").innerText=email;
+    document.getElementById("timestamp").innerText=now;
+    document.getElementById("extraInfo").style.display="block";
+    document.getElementById("footerLinks").style.display="flex";
+  }).catch(err=>{
+    console.error("Logout error:",err);
+    showToast("Failed to log out!","red");
+  });
+});
+</script>
 </body>
 </html>

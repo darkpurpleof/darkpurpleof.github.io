@@ -1,79 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Purple OF | Not Found</title>
-    <script>
-        document.title = "Dark Purple OF | Not Found";
-        window.onload = function() {
-            var path = window.location.pathname; // Gets the current page path
-            var page = path.substring(path.lastIndexOf('/') + 1); // Extracts the filename after '/'
-            document.getElementById("missing-file").innerText = "/"+page; // Sets the dynamic page
-            document.getElementById("header-text").innerText = "Not Found » " + "/"+page; // Sets the dynamic header
-        }
-    </script>
-    <!-- Favicon Links -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-    <style>
-        body {
-            font-family: "Georgia", serif;
-            background-color: #ffffff;
-            color: #0F0529;
-            margin: 20px;
-        }
-        h1 {
-            font-size: 2rem;
-            color: #7C0A02;
-        }
-        p {
-            font-size: 1.25rem;
-            line-height: 1.8;
-        }
-        a {
-            text-decoration: none;
-        }
-        .back-link {
-            color: #3366ff;
-            font-weight: bold;
-        }
-        .back-link:hover {
-            color: #4D79FF;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DarkPurpleOF — Not Found</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* same CSS as before */
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --text: #e9e9e9;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --border: rgba(255,255,255,0.04);
+      --radius: 12px;
+      --max-width: 920px;
+    }
+    body.light {
+      --bg:#f6f8fb;
+      --card:#fff;
+      --text:#0f172a;
+      --muted:#475569;
+      --border: rgba(0,0,0,0.06);
+    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow-x:hidden;}
+    body{display:flex;flex-direction:column;min-height:100vh;}
+    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+    main.container{ width:100%; max-width:var(--max-width); margin:28px auto; padding:20px; box-sizing:border-box; }
+    .card{ background:var(--card); border-radius:var(--radius); padding:22px; border:1px solid var(--border); box-shadow:0 8px 26px rgba(2,6,23,0.45); color:var(--text); }
+    .header { display:flex; gap:16px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+    h1 { margin:0; font-size:20px; font-weight:700; color:var(--text); }
+    .sub { color:var(--muted); margin-top:8px; font-size:14px; }
+    .poem { margin-top:18px; font-size:16px; line-height:1.6; color:var(--text); white-space:pre-wrap; }
+    .meta { margin-top:16px; color:var(--muted); font-size:13px; }
+    .file-path { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; background:rgba(255,255,255,0.02); padding:6px 8px; border-radius:8px; display:inline-block; color:var(--text); border:1px solid var(--border); }
+    @media (max-width:720px){
+      .poem { font-size:15px; }
+      main.container { margin:16px auto; padding:14px; }
+    }
+  </style>
 </head>
 <body>
-    <h1 id="header-text">Not Found » </h1>
-    <p>The Requested URL wasn’t found on this server.</p>
-    <p>
-        Once upon a midnight dreary,<br>
-        While I web surfed, weak and weary,<br>
-        Over many a strange site of "<strong>Dark Purple OF</strong>",<br>
-        While I clicked on my fav’rite HTML,<br>
-        Suddenly there came a warning,<br>
-        And my heart was filled with mourning,<br>
-        Mourning for my dear <span id="missing-file"></span>.
-    </p>
-    <p>
-        "’Tis not possible!", I pleaded,<br>
-        But my browser, it denied.<br>
-        Remained blank, I then repeated,<br>
-        Just a blank and nothing more.
-    </p>
-    <p>
-        With a scream, I was defeated,<br>
-        For my cookies were deleted.<br>
-        So I begged, no longer seated,<br>
-        "Give me back my HTML!"
-    </p>
-    <p>
-        Then, in answer to my query,<br>
-        Through the net I loved so dearly,<br>
-        Came its answer, dark and dreary:<br>
-        <strong>Quoth The Server — 404 - Go <a href="https://darkpurpleof.github.io" class="back-link">Back</a></strong>
-    </p>
+  <dp-topbar></dp-topbar>
+
+  <main class="container" role="main" aria-labelledby="pageTitle">
+    <div class="card" role="region" aria-label="Not Found">
+      <div class="header">
+        <div>
+          <h1 id="pageTitle">Not Found</h1>
+          <div id="header-sub" class="sub">The requested resource was not found on this server.</div>
+        </div>
+        <div class="meta" id="meta-right" aria-hidden="true"></div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div class="sub">Requested path:</div>
+        <div style="margin-top:8px;"><span id="missing-file" class="file-path">/unknown</span></div>
+      </div>
+
+      <div id="poemContainer" class="poem" role="article" aria-live="polite"></div>
+
+      <div class="meta" id="langMeta" style="margin-top:18px;"></div>
+    </div>
+  </main>
+
+  <!-- Firebase initialization for dp-topbar -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.appspot.com",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // make Firebase available globally exactly like dp-topbar expects
+    window.firebase = {
+      app,
+      auth: () => auth,
+      firestore: () => db
+    };
+
+    // now import topbar AFTER Firebase is ready
+    import("/dp-topbar.js");
+  </script>
+
+  <script>
+    const POEMS = {
+      en: `Once late at night, my cursor crept,\nThrough lists of pages I had kept;\nI clicked a link — a sudden hush —\nA silent page, a broken flush.\n\nI begged the server, “Show it true!”\nBut only 404 came through.\nQuoth the Server — the page's gone,\nNo file to sing, no file to spawn.`,
+      es: `En la noche mi cursor vagó,\npor páginas que el alma amó;\nhice clic — y en vez de luz y flor,\nhallé silencio, hallé error.\n\nClamé al servidor con afán:\n“¿Dónde está mi página, en qué plan?”\nRespondió liso: ya no está —\n404, la ruta se fue ya.`,
+      ru: `Ночью курсор путь нашёл,\nпо страницам, что я вёл;\nя кликнул — тишина кругом,\nпустота и лишь один лом.\n\nЯ воскликнул: "Где ж мой html?"\nНо сервер тихо: "Нет, он в тлен".\nСказал Сервер — и речи нет:\nКод 404 — ушёл ответ.`,
+      ja: `夜にカーソル 静かに巡り\n大事な頁を探し回り\nクリック一つで 空っぽの窓\n音もなく 消えたその道\n\n問いかける「頁はどこだ？」\n返る声は 無情の合図\nサーバーは言う — 404だよ\nそこに頁は もうないよ`,
+      de: `Spät in der Nacht kroch mein Cursor sacht,\nDurch Seitenlisten, die ich bewacht;\nIch klickte einen Link — Stille erwacht —\nEine leere Seite, nichts entfacht.\n\nIch bat den Server: "Zeig mir die Wahrheit!"\nDoch nur 404 in voller Klarheit.\nDer Server sprach — die Seite fort,\nKein Text, kein Bild, kein einziger Ort.`
+    };
+
+    function chooseLang() {
+      const nav = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || navigator.userLanguage || 'en'];
+      for (const code of nav) {
+        if (!code) continue;
+        const lang = code.slice(0,2).toLowerCase();
+        if (POEMS[lang]) return lang;
+      }
+      return 'en';
+    }
+
+    (function init() {
+      const path = decodeURI(window.location.pathname || '/');
+      const page = path.substring(path.lastIndexOf('/') + 1) || '';
+      const displayPath = page ? ('/' + page) : path;
+      document.getElementById('missing-file').textContent = displayPath;
+
+      document.getElementById('pageTitle').textContent = 'Not Found » ' + displayPath;
+      document.getElementById('header-sub').textContent = 'The requested resource was not found on this server.';
+
+      const lang = chooseLang();
+      try { document.documentElement.lang = lang; } catch(e){}
+
+      document.getElementById('poemContainer').textContent = POEMS[lang] || POEMS.en;
+
+      const labels = { en: 'English', es: 'Español', ru: 'Русский', ja: '日本語', de: 'Deutsch' };
+      document.getElementById('langMeta').textContent = `Detected language: ${labels[lang] || lang}. Poem shown in that language.`;
+
+      document.getElementById('meta-right').textContent = new Date().toLocaleString();
+    })();
+  </script>
 </body>
 </html>

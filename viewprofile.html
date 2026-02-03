@@ -1,789 +1,183 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Profile</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Profile</title>
 
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+  <!-- Firebase compat (works with other pages that use compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-    :root {
-        --bg-color: #000;
-        --text-color: purple;
-        --box-bg: rgba(128, 0, 128, 0.05);
-        --border-color: purple;
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#171717;
+      --card:#1f1f1f;
+      --muted:#9ca3af;
+      --accent:#6b21a8;
+      --accent-strong:#5b21b6;
+      --text:#eaeaea;
+      --border:rgba(255,255,255,0.06);
+      --danger:#c01b1b;
+      --danger-dark:#6a0f0f; /* darker red text */
+      --white-btn-bg: rgba(255,255,255,0.03);
+      --btn-border-muted: rgba(255,255,255,0.04);
     }
-
-    body.light {
-        --bg-color: #fff;
-        --text-color: purple;
-        --box-bg: rgba(128, 0, 128, 0.1);
-        --border-color: purple;
-    }
-
-    body {
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        font-family: 'Orbitron', sans-serif;
-        margin: 0;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        min-height: 100vh;
-        transition: background 0.4s, color 0.4s;
-        box-sizing: border-box;
-        position: relative;
+    body.light{
+      --bg:#f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border:rgba(0,0,0,0.06);
+      --white-btn-bg: rgba(0,0,0,0.04);
     }
 
-    h1 {
-        font-size: 2.5em;
-        margin-bottom: 20px;
-        text-shadow: 0 0 6px var(--text-color);
-        animation: glitch 1.5s infinite;
-    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow-x:hidden;}
+    body{display:flex;flex-direction:column;min-height:100vh;}
 
-    @keyframes glitch {
-        0% { transform: none; }
-        20% { transform: skewX(3deg); }
-        40% { transform: skewX(-3deg); }
-        60% { transform: none; }
-        100% { transform: none; }
-    }
+    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
 
-    .card {
-        background-color: var(--box-bg);
-        border: 1.5px solid var(--border-color);
-        border-radius: 12px;
-        max-width: 600px;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0;
-        overflow: hidden;
-        text-align: left;
-        user-select: none;
-    }
+    main.container{max-width:1100px;margin:22px auto;padding:20px;display:grid;grid-template-columns:1fr 360px;gap:20px;box-sizing:border-box;}
+    @media (max-width:920px){ main.container{grid-template-columns:1fr;padding:16px 12px;} }
+    @media (max-width:740px){ main.container{grid-template-columns:1fr; } }
 
-    .banner {
-        width: 100%;
-        height: 140px;
-        background-color: #333;
-        background-position: center;
-        background-size: cover;
-        cursor: pointer;
-        border-bottom: 1.5px solid var(--border-color);
-        transition: filter 0.3s ease;
-    }
-    .banner:hover {
-        filter: brightness(0.8);
-    }
+    .card{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--border);box-shadow:0 6px 18px rgba(2,6,23,0.45);color:var(--text);}
 
-    .post-card {
-        background-color: var(--box-bg);
-        border: 1.5px solid var(--border-color);
-        border-radius: 10px;
-        width: 100%;
-        max-width: 600px;
-        padding: 20px;
-        text-align: left;
-        box-sizing: border-box;
-        margin-bottom: 30px;
-        box-shadow: 0 0 10px rgba(128, 0, 128, 0.3);
-    }
+    .heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .title { font-size:18px; font-weight:700; margin:0; }
+    .subtitle { color:var(--muted); font-size:13px; margin-top:6px; }
 
-    .author-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 10px;
-        flex-wrap: wrap;
-    }
+    .banner { width:100%; height:160px; border-radius:10px; background: #2a2a2a center/cover no-repeat; display:block; border:1px solid var(--border); }
+    .profile-row { display:flex; gap:18px; align-items:flex-start; margin-top:14px; flex-wrap:wrap; }
+    .pfp-wrap { position:relative; width:120px; flex:0 0 120px; }
+    .pfp { width:120px;   background-repeat: no-repeat;height:120px; border-radius:14px; background-size:cover; background-position:center; border:1px solid var(--border); }
+    .pfp-frame { position:absolute; inset:0; border-radius:14px; pointer-events:none; display:none; }
 
-    .profile-pic {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background-color: var(--box-bg);
-        background-position: center;
-        background-size: cover;
-        border: 1.5px solid var(--border-color);
-        flex-shrink: 0;
-    }
+    .meta { flex:1; min-width:220px; }
+    .display-name { font-size:20px; font-weight:700; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .verified { width:18px; height:18px; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; display:inline-block; }
+    .email { color:var(--muted); font-size:13px; margin-top:6px; word-break:break-all; }
+    .bio { margin-top:12px; color:var(--text); line-height:1.4; }
+    .small-muted { color:var(--muted); font-size:13px; margin-top:8px; }
 
-    .author-details {
-        display: flex;
-        flex-direction: column;
-    }
+    .controls { margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .btn { padding:8px 12px; border-radius:8px; border:1px solid var(--btn-border-muted); background:var(--white-btn-bg); color:var(--text); cursor:pointer; font-weight:600; min-height:36px; display:inline-flex; gap:8px; align-items:center; }
+    .btn.primary { background:var(--accent); color:#fff; border:none; }
+    .btn.ghost { background:transparent; }
+    /* destructive/text-only red: keep the same button background but red text and slightly stronger border */
+    .btn.red { background:var(--white-btn-bg); color:var(--danger-dark); border:1px solid rgba(106,15,15,0.13); }
+    .btn.iconless { padding-left:12px; }
+    .field-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:8px; }
 
-    .verified-icon {
-  height: 1em;
-  margin-left: 0.3em;
-  vertical-align: middle;
-}
+    .list { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
 
+    .role-item { display:flex; gap:10px; align-items:center; }
+    .role-item img { width:30px; height:30px; object-fit:cover; border-radius:3px; }
 
-    .author-name-verif {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: bold;
-        font-size: 1.2em;
-        color: var(--text-color);
-    }
+    #toast { position:fixed; top:18px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999; color:#fff; }
+    #toast.purple{ background:var(--accent-strong); } #toast.red{ background:#c00; } #toast.yellow{ background:#e6b800; color:#222; }
 
-    /* Add inside <style> */
-#toast {
-    position: fixed;
-    top: -80px;
-    left: 0;
-    width: 100vw;
-    min-width: 0;
-    max-width: 100vw;
-    padding: 18px 0;
-    border-radius: 0 0 16px 16px;
-    font-size: 1.1em;
-    font-family: inherit;
-    color: #fff;
-    z-index: 10002; /* <-- Make sure this is higher than #block-blur-overlay */
-    box-shadow: 0 4px 16px rgba(128,0,128,0.15);
-    opacity: 0;
-    pointer-events: none;
-    text-align: center;
-    transition: opacity 0.4s, top 0.4s;
-}
-#toast.show {
-    opacity: 1;
-    pointer-events: auto;
-    top: 0;
-    animation: toast-slide-down 0.4s cubic-bezier(.77,0,.175,1);
-}
-#toast.hide {
-    opacity: 0;
-    top: -80px;
-    animation: toast-slide-up 0.4s cubic-bezier(.77,0,.175,1);
-}
-#toast.purple { background: purple; }
-#toast.yellow { background: #e6b800; color: #222; }
-#toast.red { background: #c00; }
+    .stats-row { display:flex; gap:14px; margin-top:10px; align-items:center; flex-wrap:wrap; }
+    .stat { background:transparent; border-radius:8px; padding:8px 10px; border:1px solid var(--border); color:var(--muted); font-weight:600; font-size:13px; }
 
-@keyframes toast-slide-down {
-    from { top: -80px; opacity: 0; }
-    to   { top: 0; opacity: 1; }
-}
-@keyframes toast-slide-up {
-    from { top: 0; opacity: 1; }
-    to   { top: -80px; opacity: 0; }
-}
+    .right-column .card + .card { margin-top:12px; }
 
-    .author-email {
-        font-size: 0.9em;
-        color: var(--text-color);
-        opacity: 0.8;
-        word-break: break-word;
-    }
+    .actions-vertical { display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+    .muted { color:var(--muted); }
 
-    .verified-badge {
-        width: 20px;
-        height: 20px;
-        object-fit: contain;
-        filter: drop-shadow(0 0 2px purple);
-    }
-
-    .post-text {
-        margin-top: 20px;
-        font-size: 1.1em;
-        white-space: pre-wrap;
-    }
-
-    .post-images {
-        margin-top: 15px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        justify-content: flex-start;
-    }
-
-    .post-images img {
-        max-width: 100%;
-        max-height: 200px;
-        border-radius: 10px;
-        object-fit: contain;
-        border: 1.5px solid var(--border-color);
-    }
-
-    .blocked-message {
-        font-size: 1.3em;
-        color: red;
-        margin-top: 50px;
-        font-weight: bold;
-    }
-
-    .interact-button {
-        background-color: var(--box-bg);
-        color: var(--text-color);
-        padding: 16px 28px;
-        border: 2px solid var(--border-color);
-        border-radius: 12px;
-        font-size: 1.4em;
-        cursor: pointer;
-        max-width: 600px;
-        width: 100%;
-        transition: opacity 0.3s;
-        user-select: none;
-    }
-
-    .interact-button:hover {
-        opacity: 0.8;
-    }
-    
-    .button-row {
-    margin-top: 15px;
-    display: flex;
-    gap: 20px;
-    }
-
-    .profile-info {
-        display: flex;
-        align-items: center;
-        padding: 1rem 1.5rem;
-        gap: 15px;
-        position: relative;
-    }
-
-    .profile-pic {
-        width: 80px;
-        height: 80px;
-        border-radius: 16px;
-        background-color: var(--box-bg);
-        border: 1.5px solid var(--border-color);
-        background-position: center;
-        background-size: cover;
-        cursor: pointer;
-        flex-shrink: 0;
-        transition: filter 0.3s ease;
-    }
-    .profile-pic:hover {
-        filter: brightness(0.8);
-    }
-
-    .name-section {
-        flex-grow: 1;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 1.5em;
-        font-weight: 600;
-        color: var(--text-color);
-    }
-
-    .verified-icon {
-        width: 22px;
-        height: 22px;
-        background-image: url('/assets/verified.png');
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-        filter: drop-shadow(0 0 1px purple);
-    }
-
-    .edit-btn {
-        cursor: pointer;
-        width: 28px;
-        height: 28px;
-        background-image: url('/assets/edit.png');
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-        border: none;
-        background-color: transparent;
-        transition: opacity 0.3s ease;
-    }
-    .edit-btn:hover {
-        opacity: 0.7;
-    }
-
-    .email {
-        padding: 0 1.5rem 1rem 1.5rem;
-        color: var(--text-color);
-        font-size: 1em;
-        opacity: 0.7;
-        user-select: text;
-    }
-
-    .view-profile-btn {
-        display: block;
-        margin: 0 1.5rem 1.5rem 1.5rem;
-        width: calc(100% - 3rem);
-        padding: 12px 0;
-        border-radius: 8px;
-        border: 1.5px solid var(--border-color);
-        background-color: var(--box-bg);
-        color: var(--text-color);
-        font-size: 1.2em;
-        cursor: pointer;
-        text-align: center;
-        text-decoration: none;
-        user-select: none;
-        transition: opacity 0.3s ease;
-    }
-    .view-profile-btn1 {
-        display: block;
-        margin: 0 1.5rem 1.5rem 1.5rem;
-        width: calc(100% - 3rem);
-        padding: 12px 0;
-        border-radius: 8px;
-        border: 1.5px solid var(--border-color);
-        background-color: var(--box-bg);
-        color: var(--text-color);
-        font-size: 1.2em;
-        cursor: pointer;
-        text-align: center;
-        text-decoration: none;
-        user-select: none;
-        transition: opacity 0.3s ease;
-    }
-    .view-profile-btn2 {
-        display: block;
-        margin: 0 1.5rem 1.5rem 1.5rem;
-        width: calc(100% - 3rem);
-        padding: 12px 0;
-        border-radius: 8px;
-        border: 1.5px solid var(--border-color);
-        background-color: var(--box-bg);
-        color: var(--text-color);
-        font-size: 1.2em;
-        cursor: pointer;
-        text-align: center;
-        text-decoration: none;
-        user-select: none;
-        transition: opacity 0.3s ease;
-    }
-    .view-profile-btn:hover {
-        opacity: 0.8;
-    }
-    .view-profile-btn1:hover {
-        opacity: 0.8;
-    }
-    .view-profile-btn2:hover {
-        opacity: 0.8;
-    }
-
-    /* Dialog Overlay */
-    .dialog-overlay {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100vw; height: 100vh;
-        background: rgba(0, 0, 0, 0.7);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-
-    .dialog-overlay.active {
-        display: flex;
-    }
-
-    /* Dialog Box */
-    .dialog {
-        background-color: var(--bg-color);
-        border: 2px solid var(--border-color);
-        border-radius: 14px;
-        width: 90%;
-        max-width: 400px;
-        padding: 1.5rem;
-        box-sizing: border-box;
-        color: var(--text-color);
-        font-family: 'Orbitron', sans-serif;
-        text-align: center;
-        user-select: text;
-        position: relative;
-    }
-
-    .dialog h2 {
-        margin-top: 0;
-        margin-bottom: 1rem;
-        font-size: 1.7em;
-        text-shadow: 0 0 6px var(--text-color);
-        animation: glitch 1.5s infinite;
-    }
-
-    .dialog input[type="text"] {
-        width: 100%;
-        padding: 12px;
-        border-radius: 8px;
-        border: 1.5px solid var(--border-color);
-        background-color: var(--box-bg);
-        color: var(--text-color);
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1em;
-        box-sizing: border-box;
-        margin-bottom: 1.2rem;
-    }
-
-    .dialog-buttons {
-        display: flex;
-        justify-content: space-between;
-        gap: 15px;
-    }
-
-    .dialog-buttons button {
-        flex-grow: 1;
-        padding: 10px;
-        font-size: 1.1em;
-        border-radius: 8px;
-        border: 1.5px solid var(--border-color);
-        background-color: var(--box-bg);
-        color: var(--text-color);
-        cursor: pointer;
-        transition: opacity 0.3s ease;
-    }
-    .dialog-buttons button:hover {
-        opacity: 0.8;
-    }
-    .bio-section .edit-btn {
-    width: 20px;
-    height: 20px;
-    background-image: url('/assets/edit.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    border: none;
-    background-color: transparent;
-    cursor: pointer;
-    transition: opacity 0.3s ease;
-}
-.bio-section .edit-btn:hover {
-    opacity: 0.7;
-}
-.profile-pic-frame {
-    position: absolute;
-    left: 1.5rem;
-    top: 1rem;
-    width: 80px;
-    height: 80px;
-    pointer-events: none;
-    border-radius: 16px;
-    background-size: cover;
-    background-position: center;
-    z-index: 2;
-    display: none;
-}
-
-/* Add this helper for blurring */
-#block-blur-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.45);
-    backdrop-filter: blur(7px);
-    z-index: 10001;
-    display: none;
-    align-items: center;
-    justify-content: center;
-}
-
-#block-blur-overlay.active {
-    display: flex;
-}
-</style>
+    /* ensures no horizontal scroll */
+    html,body { overflow-x:hidden; }
+  </style>
 </head>
 <body>
+  <script type="module" src="/dp-topbar.js"></script>
+  <dp-topbar></dp-topbar>
 
-<h1>Profile</h1>
-
-<div class="card" id="profile-card">
-    <div class="banner" id="banner"></div>
-    <div class="profile-info">
-        <div class="profile-pic" id="profile-pic" title="Profile picture"></div>
-        <div class="profile-pic-frame" id="profile-pic-frame"></div>
-        <div class="name-section">
-            <span id="display-name"></span>
-            <div class="verified-icon" id="verified-icon" style="display:none;" title="Verified User"></div>
+  <main class="container" role="main" aria-label="View profile">
+    <section class="card">
+      <div class="heading">
+        <div>
+          <div class="title" id="page-title">Profile</div>
+          <div class="subtitle">Public user information</div>
         </div>
-        <button class="edit-btn" id="edit-name-btn" title="Edit display name"></button>
-    </div>
-    <div class="email" id="email"></div>
-    <div class="bio-section" style="padding: 0 1.5rem 1rem 1.5rem; color: var(--text-color); font-size: 1em; user-select: text;">
-        <strong>Bio:</strong> <span id="bio-text">Loading bio...</span>
-        <button class="edit-btn" id="edit-bio-btn" title="Edit bio" style="margin-left: 8px; vertical-align: middle;"></button>
-    </div>    
-    <div id="website-row" style="display: none; padding: 0 1.5rem 1.2rem 1.5rem; color: var(--text-color); font-size: 1em; display: flex; align-items: center; gap: 10px;">
-        <img id="icon" src="/assets/verified2.png" alt="Verified Domain" style="width: 20px; height: 20px;" />
-        <a id="domain-link" href="#" target="_blank" style="color: var(--text-color); text-decoration: underline; word-break: break-all;"></a>
-    </div>
-    <div id="domain-note" style="display: none; padding: 0 1.5rem 1.5rem 1.5rem; font-size: 0.9em; color: var(--text-color); opacity: 0.7;">
-    </div>   
-    <div id="role-section" style="padding: 0 1.5rem 1rem 1.5rem; display: none; flex-direction: column; gap: 10px;"></div> 
-    <div class="public-profile-toggle" style="padding: 0 1.5rem 1.5rem 1.5rem; color: var(--text-color); font-size: 1em; user-select: none; display: flex; align-items: center; gap: 10px;">
-        <label for="publicProfileCheckbox" style="cursor: pointer;">Public Profile</label>
-        <input type="checkbox" id="publicProfileCheckbox" style="width: 20px; height: 20px; cursor: pointer;" />
-    </div>    
-    <a href="#" class="view-profile-btn" id="view-profile-btn">View your public profile</a>
-    <a href="#" class="view-profile-btn1" id="view-profile-btn1">Manage Blocked Users</a>
-</div>
+        <div class="muted" id="last-updated"> </div>
+      </div>
 
-<!-- Dialog -->
-<div class="dialog-overlay" id="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
-    <div class="dialog">
-        <h2 id="dialog-title">Edit</h2>
-        <input type="text" id="dialog-input" placeholder="Enter URL or text..." />
-        <div class="dialog-buttons">
-            <button id="dialog-cancel-btn">Cancel</button>
-            <button id="dialog-save-btn">Save</button>
+      <div id="banner" class="banner" title="Profile banner"></div>
+
+      <div class="profile-row">
+        <div class="pfp-wrap">
+          <div id="profile-pic" class="pfp" title="Profile picture"></div>
+          <div id="pfp-frame" class="pfp-frame"></div>
         </div>
-    </div>
-</div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import {
-      getFirestore, doc, getDoc, collection, query, where, getDocs
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-    import {
-      getAuth, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    
-    const app = initializeApp({
-        apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-  authDomain: "darkpurpleof-s-website.firebaseapp.com",
-  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
-  projectId: "darkpurpleof-s-website",
-  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-  messagingSenderId: "520651082420",
-  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-  measurementId: "G-S2X2JYC8Z0"
-    });
-    
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    
-    const queryParams = new URLSearchParams(window.location.search);
-    const targetEmail = queryParams.get('profile');
-    const viewProfileBtn2 = document.getElementById('view-profile-btn2');
-    
-    if (!targetEmail) {
-      showToast("Missing profile parameter.", "red");
-denyAccess("Missing profile parameter.");
-throw new Error("No profile email specified");
-    }
-
-function showToast(message, color = "purple", duration = 3500) {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.className = `${color} show`;
-    toast.style.display = "block";
-    setTimeout(() => {
-        toast.className = `${color} hide`;
-        setTimeout(() => {
-            toast.style.display = "none";
-            toast.className = color;
-        }, 400);
-    }, duration);
-}
-
-function denyAccess(reason = "You don't have permission to view this profile.") {
-    showToast(reason, "red");
-    document.getElementById('profile-card').innerHTML = `
-      <div style="padding: 2.2rem 1.2rem; font-size: 1.13em; text-align: center;">
-        <div style="display:flex;align-items:center;justify-content:center;gap:18px;">
-          <div class="profile-pic" style="width:72px;height:72px;background-image:url('https://darkpurpleof.github.io/org-owner.jpg');box-shadow:0 2px 8px rgba(128,0,128,0.10);border-radius:16px;border:2px solid var(--border-color);"></div>
-          <div style="text-align:left;">
-            <div style="font-size:1.7em;font-weight:700;color:var(--text-color);margin-bottom:2px;letter-spacing:0.5px;">Profile Unavailable</div>
-            <div style="font-size:1.08em;color:var(--text-color);opacity:0.7;line-height:1.5;">
-              This user's profile cannot be displayed.<br>
-              <span style="font-size:0.97em;opacity:0.8;">Possible reasons:</span>
-              <ul style="margin:0.5em 0 0 1.2em;padding:0;font-size:0.97em;opacity:0.8;text-align:left;">
-                <li>The user is banned</li>
-                <li>The profile is private</li>
-                <li>The profile does not exist</li>
-              </ul>
-            </div>
+        <div class="meta">
+          <div class="display-name">
+            <div id="display-name">Loading…</div>
+            <div id="verified" class="verified" title="Verified" style="display:none;"></div>
           </div>
-        </div>
-        <div style="margin-top:1.2em;color:var(--text-color);opacity:0.85;font-size:1.05em;">
-          <span style="display:inline-block;background:rgba(128,0,128,0.08);padding:8px 18px;border-radius:8px;box-shadow:0 1px 6px rgba(128,0,128,0.04);">
-            ${reason}
-          </span>
+          <div id="email" class="email"></div>
+
+          <div class="bio">
+            <strong>Bio</strong>
+            <div id="bio-text" style="margin-top:8px;">Loading…</div>
+          </div>
+
+          <div class="stats-row" id="counters">
+            <div class="stat" id="followers-count">Followers: 0</div>
+            <div class="stat" id="following-count">Following: 0</div>
+            <div class="stat" id="friends-count">Friends: 0</div>
+          </div>
+
+          <div class="small-muted" style="margin-top:10px">Roles & info:</div>
+          <div id="rolesList" class="list"></div>
+          <div class="small-muted" style="margin-top:8px">Note: some roles don't have icons and won't be visible here — see additional roles in the app for the full list.</div>
         </div>
       </div>
-    `;
-}
+    </section>
 
-// Add this helper for blurring
-function setPageBlurred(blurred, onYes) {
-    const body = document.body;
-    if (blurred) {
-        if (!document.getElementById('block-blur-overlay')) {
-            const overlay = document.createElement('div');
-            overlay.id = 'block-blur-overlay';
-            overlay.style = `
-                position: fixed;
-                top: 0; left: 0; width: 100vw; height: 100vh;
-                background: rgba(0,0,0,0.45);
-                backdrop-filter: blur(7px);
-                z-index: 10001;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            `;
-            overlay.innerHTML = `
-                <div style="background: var(--bg-color); border: 2px solid var(--border-color); border-radius: 14px; max-width: 350px; width: 90%; padding: 2rem 1.2rem; color: var(--text-color); text-align: center; box-shadow: 0 4px 32px rgba(128,0,128,0.13);">
-                    <div style="font-size: 1.25em; font-weight: 600; margin-bottom: 1.2em;">You have blocked this user.</div>
-                    <div style="font-size: 1em; opacity: 0.8; margin-bottom: 1.5em;">Do you want to view this profile anyway?</div>
-                    <div style="display: flex; gap: 18px; justify-content: center;">
-                        <button id="block-view-yes" style="flex:1;padding:10px 0;border-radius:8px;border:1.5px solid var(--border-color);background:var(--box-bg);color:var(--text-color);font-size:1.1em;cursor:pointer;">Yes</button>
-                        <button id="block-view-no" style="flex:1;padding:10px 0;border-radius:8px;border:1.5px solid var(--border-color);background:var(--box-bg);color:var(--text-color);font-size:1.1em;cursor:pointer;">No</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(overlay);
+    <aside class="right-column">
+      <div class="card">
+        <div style="font-weight:700">Profile Details</div>
+        <div class="small-muted" style="margin-top:8px" id="detailsList">
+          Loading…
+        </div>
+      </div>
 
-            document.getElementById('block-view-yes').onclick = () => {
-                setPageBlurred(false); // Remove blur
-                if (typeof onYes === "function") onYes();
-            };
-            document.getElementById('block-view-no').onclick = () => {
-                window.history.back();
-            };
-        }
-        // Blur everything except the toast and overlay
-        Array.from(document.body.children).forEach(el => {
-            if (el.id !== 'toast' && el.id !== 'block-blur-overlay') {
-                el.style.filter = 'blur(7px)';
-                el.style.pointerEvents = 'none';
-                el.style.userSelect = 'none';
-            }
-        });
-    } else {
-        const overlay = document.getElementById('block-blur-overlay');
-        if (overlay) overlay.remove();
-        Array.from(document.body.children).forEach(el => {
-            el.style.filter = '';
-            el.style.pointerEvents = '';
-            el.style.userSelect = '';
-        });
-    }
-}
+      <div class="card">
+        <div style="font-weight:700">About special posts</div>
+        <div class="small-muted" style="margin-top:8px">
+          To view special post categories you'll need to use the app. You can still view this user's regular posts in the Posts section. Development Items and Store entries are coming very soon.
+        </div>
+      </div>
 
-onAuthStateChanged(auth, async (currentUser) => {
-    if (!currentUser) {
-        window.location.href = "/login.html";
-        return;
-    }
+      <!-- interactions moved to right column below special posts -->
+      <div id="interactionArea" class="card" style="margin-top:12px; padding:12px;">
+        <div style="font-weight:700">Interactions</div>
+        <div id="interactionButtons" class="actions-vertical" style="margin-top:10px;">
+          <div style="color:var(--muted)">Loading actions…</div>
+        </div>
+      </div>
 
-    // Fetch current user's block list
-    let currentUserBlocked = [];
-    try {
-        const currentUserDoc = await getDoc(doc(db, 'user_data', currentUser.email));
-        if (currentUserDoc.exists()) {
-            currentUserBlocked = currentUserDoc.data().blockedUsers || [];
-        }
-    } catch (e) {
-        // ignore
-    }
+    </aside>
+  </main>
 
-    // Priority: banned > not found > private > blocked by them > blocked by you
-    const ignoreBlock = new URLSearchParams(window.location.search).get('ignoreblock') === 'true';
+  <div id="toast" role="status" aria-live="polite"></div>
 
-    // Check if target user is banned
-    const bannedDocRef = doc(db, "banned_users", targetEmail);
-    const bannedDocSnap = await getDoc(bannedDocRef);
-    if (bannedDocSnap.exists()) {
-        setPageBlurred(false);
-        denyAccess("You can't view banned users' profiles.");
-        return;
-    }
+  <script>
+    // Firebase init (compat)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    // Check if target user exists
-    const userDocRef = doc(db, 'user_data', targetEmail);
-    const userDocSnap = await getDoc(userDocRef);
-    if (!userDocSnap.exists()) {
-        setPageBlurred(false);
-        return denyAccess("Profile not found.");
-    }
-
-    const targetData = userDocSnap.data();
-
-    // Check if profile is private
-    if (targetData.isProfilePublic === false) {
-        setPageBlurred(false);
-        return denyAccess("This profile is private.");
-    }
-
-    // Check if current user is blocked by target (do NOT reveal, just generic)
-    const blockedUsers = targetData.blockedUsers || [];
-    if (blockedUsers.includes(currentUser.email)) {
-        setPageBlurred(false);
-        return denyAccess();
-    }
-
-    // If current user has blocked the target profile
-    if (currentUserBlocked.includes(targetEmail) && !ignoreBlock) {
-        showToast("You have blocked this user.", "yellow");
-        setPageBlurred(true, async () => {
-            // After confirmation, reload page with ignoreblock param
-            const url = new URL(window.location.href);
-            url.searchParams.set('ignoreblock', 'true');
-            window.location.href = url.toString();
-        });
-        return;
-    } else if (ignoreBlock && currentUserBlocked.includes(targetEmail)) {
-        // Show the "Viewing blocked user's profile" toast only if ignoreblock param is present
-        showToast("Viewing blocked user's profile", "yellow");
-        setPageBlurred(false);
-    } else {
-        setPageBlurred(false);
-    }
-
-    // Load readonly info
-    const bannerEl = document.getElementById('banner');
-    const profilePicEl = document.getElementById('profile-pic');
-    const displayNameEl = document.getElementById('display-name');
-    const verifiedIconEl = document.getElementById('verified-icon');
-    const emailEl = document.getElementById('email');
-    const bioTextEl = document.getElementById('bio-text');
-    const domainLink = document.getElementById('domain-link');
-    const websiteRow = document.getElementById('website-row');
-    const domainNote = document.getElementById('domain-note');
-    const roleSection = document.getElementById("role-section");
-    const icon = document.getElementById("icon");
-    const headerEl = document.querySelector('h1');
-    const profilePicFrameEl = document.getElementById('profile-pic-frame');
-    const frameUrl = targetData.profile_picture_frame;
-
-    bannerEl.style.backgroundImage = `url(${targetData.banner || '/assets/default_banner.png'})`;
-    profilePicEl.style.backgroundImage = `url(${targetData.profile_picture || 'https://darkpurpleof.github.io/org-owner.jpg'})`;
-    const displayName = targetData['display name'] || targetEmail;
-    displayNameEl.textContent = displayName;
-    emailEl.textContent = targetEmail;
-    bioTextEl.textContent = targetData.bio || "Bio not yet set";
-  
-    if (targetData.is_verified) verifiedIconEl.style.display = 'inline-block';
-    if (targetData.domain_verified && targetData.domain_name?.trim()) {
-      domainLink.href = targetData.domain_name.startsWith("http") ? targetData.domain_name : "https://" + targetData.domain_name;
-      domainLink.textContent = targetData.domain_name;
-      websiteRow.style.display = 'flex';
-    } else {
-      domainNote.style.display = 'none';
-      icon.style.display = 'none';
-    }
-
-    if (frameUrl && frameUrl.trim() !== "") {
-  profilePicFrameEl.style.backgroundImage = `url(${frameUrl})`;
-  profilePicFrameEl.style.display = "block";
-} else {
-  profilePicFrameEl.style.backgroundImage = "";
-  profilePicFrameEl.style.display = "none";
-}
-
-    if (headerEl) {
-  headerEl.textContent = `${displayName}'s Profile`;
-    }
-  
-    const roles = Array.isArray(targetData.roles) && targetData.roles.length > 0 ? targetData.roles : ['Member'];
+    // role map provided by user
     const roleMap = {
       "Administrator": { icon: "/assets/ic_admin.webp", desc: "Official Administrator of the platform, can manage users" },
       "Member": { icon: "/assets/ic_member.webp", desc: "Normal member of the platform" },
@@ -800,163 +194,573 @@ onAuthStateChanged(auth, async (currentUser) => {
       "Feedback Contributor": { icon: "/assets/feedback.png", desc: "Users whose contributions or ideas have been added to the app or website" },
       "Unbannable": { icon: "/assets/ic_unbannable.webp", desc: "Users who can't be banned by moderation tools or the system" }
     };
-    const importantRoles = roles.filter(role => roleMap[role]);
-  
-    if (importantRoles.length > 0) {
-      roleSection.style.display = 'flex';
-      roleSection.innerHTML = '';
-      importantRoles.forEach(role => {
-        const { icon, desc } = roleMap[role];
-        const row = document.createElement("div");
-        row.style.display = "flex";
-        row.style.alignItems = "center";
-        row.style.gap = "12px";
-        row.innerHTML = `
-          <img src="${icon}" alt="${role}" style="width: 32px; height: 32px; flex-shrink: 0;" />
-          <div style="display: flex; flex-direction: column;">
-            <strong style="font-size: 1em; color: var(--text-color);">${role}</strong>
-            <span style="font-size: 0.9em; opacity: 0.8;">${desc}</span>
-          </div>
-        `;
-        roleSection.appendChild(row);
+
+    // DOM refs
+    const bannerEl = document.getElementById('banner');
+    const profilePicEl = document.getElementById('profile-pic');
+    const pfpFrameEl = document.getElementById('pfp-frame');
+    const displayNameEl = document.getElementById('display-name');
+    const emailEl = document.getElementById('email');
+    const verifiedEl = document.getElementById('verified');
+    const bioTextEl = document.getElementById('bio-text');
+    const rolesList = document.getElementById('rolesList');
+    const lastUpdatedEl = document.getElementById('last-updated');
+    const detailsList = document.getElementById('detailsList');
+    const interactionButtons = document.getElementById('interactionButtons');
+    const interactionArea = document.getElementById('interactionArea');
+    const followersCountEl = document.getElementById('followers-count');
+    const followingCountEl = document.getElementById('following-count');
+    const friendsCountEl = document.getElementById('friends-count');
+
+    const toastEl = document.getElementById('toast');
+    function showToast(msg, color='purple', duration=3000){ toastEl.textContent = msg; toastEl.className = color; toastEl.style.display='block'; setTimeout(()=>{ toastEl.style.display='none'; toastEl.className=''; }, duration); }
+
+    // helper: read URL param "profile"
+    function getProfileParam(){
+      const params = new URLSearchParams(window.location.search);
+      const p = params.get('profile');
+      return p ? decodeURIComponent(p) : null;
+    }
+
+    // fallback values per user request
+    function fallbackProfile(emailArg){
+      return {
+        displayName: "No Display Name",
+        email: emailArg,
+        profile_picture: '/org-owner.jpg',
+        banner: '/assets/def_banner.png',
+        bannedBanner: '/assets/def_banner.png',
+        roles: ['Member'],
+        bio: "No bio available",
+        is_verified: false,
+        profile_picture_frame: ''
+      };
+    }
+
+    // sanitize doc id if necessary (current codebase uses plain emails as doc ids)
+    function docIdFromEmail(email){ return email; }
+
+    // permission-denied tracking per-listener key
+    const permissionDeniedFor = {};
+
+    // relationship state cache
+    let relationshipState = {
+      isBlockedByCurrent: false,
+      hasBlockedCurrent: false,
+      isFollowing: false,
+      isFollowedBy: false,
+      friendExists: false,
+      requestSent: false,
+      requestReceived: false
+    };
+
+    let currentUser = null;
+    let viewedEmail = null;
+    let viewedData = null;
+    let isFallbackProfile = false;
+
+
+    // subscription handles to unsubscribe on change
+    let unsubscribes = [];
+
+    function clearUnsubscribes(){
+      for(const u of unsubscribes){
+        try { if (typeof u === 'function') u(); } catch(e){ /* ignore */ }
+      }
+      unsubscribes = [];
+    }
+
+    // check for Firestore permission errors
+    function isFirestorePermissionError(err){
+      if (!err) return false;
+      try {
+        if (err.code === 'permission-denied' || err.code === 'PERMISSION_DENIED') return true;
+        const msg = String(err.message || err);
+        if (/missing|insufficient permissions|permission-denied/i.test(msg)) return true;
+      } catch(e){ }
+      return false;
+    }
+
+    function renderProfileFallbackFields(emailArg, reason){
+      // only replace profile fields — do NOT hide interactions
+      console.warn('Rendering fallback profile fields for', emailArg, 'reason:', reason);
+      const fb = fallbackProfile(emailArg);
+      viewedData = fb;
+
+      bannerEl.style.backgroundImage = `url(${fb.banner})`;
+      isFallbackProfile = true;
+      profilePicEl.style.backgroundImage = `url(${fb.profile_picture})`;
+      displayNameEl.textContent = fb.displayName;
+      emailEl.textContent = fb.email;
+      bioTextEl.textContent = fb.bio;
+      verifiedEl.style.display = fb.is_verified ? 'inline-block' : 'none';
+      pfpFrameEl.style.display = 'none';
+
+      // roles
+      rolesList.innerHTML = '';
+      (fb.roles || []).forEach(r => {
+        const el = document.createElement('div');
+        el.className = 'role-item muted';
+        if (roleMap[r]){
+          const img = document.createElement('img'); img.src = roleMap[r].icon; img.alt = r; img.title = `${r} — ${roleMap[r].desc}`; el.appendChild(img);
+          const txt = document.createElement('div'); txt.textContent = r; el.appendChild(txt);
+        } else {
+          el.textContent = r;
+        }
+        rolesList.appendChild(el);
       });
+
+      detailsList.innerHTML = '';
+      const dlist = [
+        `<div><strong>Profile email:</strong> ${escapeHtml(fb.email)}</div>`,
+        `<div><strong>Verified:</strong> ${fb.is_verified ? 'Yes' : 'No'}</div>`,
+        `<div style=\"color:var(--muted);margin-top:6px;\">Limited access.</div>`
+      ];
+      detailsList.innerHTML = dlist.join('');
+
+      showToast('Limited access', 'yellow', 4500);
     }
-  
-    // Remove edit controls
-    document.getElementById('edit-name-btn').remove();
-    document.getElementById('edit-bio-btn').remove();
-    document.getElementById('publicProfileCheckbox').closest('div').remove();
-    document.getElementById('view-profile-btn1').remove();
-    document.title = `${displayName}'s Profile`;
-  
-    // Replace view-profile-btn
-    const viewBtn = document.getElementById('view-profile-btn');
-    viewBtn.textContent = 'View more in the app';
-    viewBtn.href = `/profiles?profile=${encodeURIComponent(targetEmail)}`;
 
-    function renderSectionTitle(title) {
-  const titleEl = document.createElement('h2');
-  titleEl.style = 'font-size: 1.5em; margin-top: 2rem;';
-  titleEl.textContent = title;
-  document.body.appendChild(titleEl);
-}
-
-async function renderPostCard(docSnap) {
-  const post = docSnap.data();
-  let authorData = null;
-
-  try {
-    const authorSnap = await getDoc(doc(db, 'user_data', post.editor));
-    if (authorSnap.exists()) {
-      authorData = authorSnap.data();
+    function handleFirestoreError(err, emailArg, key){
+      console.error('Firestore listener error for', key, err);
+      if (isFirestorePermissionError(err)){
+        // mark which listener had permission issues
+        permissionDeniedFor[key] = true;
+        // special case: if main profile doc is denied, show fallback fields
+        if (key === 'viewedUser') {
+          renderProfileFallbackFields(emailArg || viewedEmail, err && err.message ? err.message : 'permission error');
+        } else {
+          // for other listeners just update UI indicators and keep interactions available
+          if (key === 'followers') followersCountEl.textContent = 'Followers: —';
+          if (key === 'following') followingCountEl.textContent = 'Following: —';
+          if (key === 'friends') friendsCountEl.textContent = 'Friends: —';
+          if (key === 'friendDocs' || key === 'friendExists') relationshipState.friendExists = false;
+          // show a small toast but not the big fallback
+        }
+        // re-render buttons so permissions apply
+        renderInteractionButtons();
+      } else {
+        // non-permission error: log and show user-facing error
+        showToast('Data loading error', 'red');
+      }
     }
-  } catch (e) {
-    console.warn("Failed to fetch author data", e);
-  }
 
-  // Render images if present
-  let imagesHTML = '';
-  if (Array.isArray(post.images) && post.images.length > 0) {
-    imagesHTML = `
-      <div class="post-images">
-        ${post.images.map(url => `<img src="${url}" class="post-image" />`).join('')}
-      </div>
-    `;
-  }
+    // main init
+    auth.onAuthStateChanged(async (u) => {
+      if (!u) {
+        window.location.href = '/login';
+        return;
+      }
+      currentUser = u;
+      const emailArg = getProfileParam();
+      viewedEmail = emailArg || currentUser.email;
 
-  // Build display name with optional verification badge
-  const displayName = authorData?.['display name'] || post.editor;
-  const isVerified = authorData?.domain_verified;
-  const verifiedIconHTML = isVerified ? `<img src="/assets/verified.png" alt="Verified" class="verified-icon" style="height: 1em; margin-left: 0.3em; vertical-align: middle;">` : '';
+      // reset permission tracking (fresh view)
+      for (const k in permissionDeniedFor) delete permissionDeniedFor[k];
 
-  // Profile picture and frame
-  const profilePicUrl = authorData?.profile_picture || 'https://darkpurpleof.github.io/org-owner.jpg';
-  const frameUrl = authorData?.profile_picture_frame;
-  const profilePicHTML = `
-    <div style="position: relative; width: 48px; height: 48px;">
-      <div class="profile-pic" style="width:48px;height:48px;background-image:url('${profilePicUrl}'); position: absolute; left: 0; top: 0; z-index: 1;"></div>
-      ${frameUrl && frameUrl.trim() !== "" ? `<div style="position:absolute;left:0;top:0;width:48px;height:48px;border-radius:50%;background-image:url('${frameUrl}');background-size:cover;background-position:center;z-index:2;pointer-events:none;"></div>` : ""}
-    </div>
-  `;
+      // remove old listeners (if any)
+      clearUnsubscribes();
 
-  const card = document.createElement('div');
-  card.className = 'post-card';
-  card.style.cursor = 'pointer';
-  card.onclick = (e) => {
-    if (e.target.tagName !== 'BUTTON') {
-      window.location.href = `/posts.html?post=${docSnap.id}`;
-    }
-  };
-
-  card.innerHTML = `
-    <div class="author-info">
-      ${profilePicHTML}
-      <div class="author-details">
-        <div class="author-name-verif">${displayName}${verifiedIconHTML}</div>
-        <div class="author-email">${post.editor}</div>
-      </div>
-    </div>
-    <div class="post-text">${(post.text || '').slice(0, 100)}</div>
-    ${imagesHTML}
-  `;
-  document.body.appendChild(card);
-}
-
-onAuthStateChanged(auth, async (currentUser) => {
-  if (!currentUser) {
-    window.location.href = "/login.html";
-    return;
-  }
-
-  const userDocRef = doc(db, 'user_data', targetEmail);
-  const userDocSnap = await getDoc(userDocRef);
-
-  if (!userDocSnap.exists()) return denyAccess();
-
-  const targetData = userDocSnap.data();
-  if (targetData.isProfilePublic === false) return denyAccess();
-
-  const blockedUsers = targetData.blockedUsers || [];
-  if (blockedUsers.includes(currentUser.email)) return denyAccess();
-
-  const displayName = targetData['display name'] || targetEmail;
-
-  // Section 1: Pinned Posts
-  const pinnedQuery = query(
-    collection(db, 'posts'),
-    where('editor', '==', targetEmail),
-    where('pinnedByOwner', '==', true)
-  );
-  const pinnedSnap = await getDocs(pinnedQuery);
-  if (!pinnedSnap.empty) {
-    renderSectionTitle(`Posts Pinned by ${displayName}`);
-    for (const doc of pinnedSnap.docs) await renderPostCard(doc);
-  }
-
-  // Section 2: Own Posts
-  const userPostsQuery = query(
-    collection(db, 'posts'),
-    where('editor', '==', targetEmail),
-  );
-  const userPostsSnap = await getDocs(userPostsQuery);
-  if (!userPostsSnap.empty) {
-    renderSectionTitle(`Posts by ${displayName}`);
-    for (const doc of userPostsSnap.docs) await renderPostCard(doc);
-  }
-
-  // Section 3: Wall Posts
-  const wallPostsQuery = query(
-    collection(db, 'posts'),
-    where('towall', '==', targetEmail)
-  );
-  const wallPostsSnap = await getDocs(wallPostsQuery);
-  if (!wallPostsSnap.empty) {
-    renderSectionTitle(`Posts by other users on ${displayName}'s wall`);
-    for (const doc of wallPostsSnap.docs) await renderPostCard(doc);
-  }
-});
+      // set up snapshot listeners for the viewed profile and relationship docs
+      setupListenersForViewedEmail(viewedEmail);
     });
-</script>
-<div id="toast" style="display:none;"></div>
+
+    // helper to check whether a specific action should be disabled due to permission issues
+    function isActionDisabled(reason){
+      // reasons: 'follow', 'friend', 'post', 'block' (block always allowed UI-wise), 'report'
+      if (reason === 'follow') return !!(permissionDeniedFor.followers || permissionDeniedFor.following || permissionDeniedFor.followDoc);
+      if (reason === 'friend') return !!(permissionDeniedFor.friends || permissionDeniedFor.friendDocs || permissionDeniedFor.requests);
+      if (reason === 'post') return !!permissionDeniedFor.posts;
+      return false;
+    }
+
+    // set up all listeners for viewed email
+    function setupListenersForViewedEmail(emailArg){
+      if (!emailArg) return;
+
+      const fallback = fallbackProfile(emailArg);
+
+      // interactions area visibility (hide only if viewing your own profile)
+      if (currentUser && currentUser.email === emailArg) {
+        interactionArea.style.display = 'none';
+      } else {
+        interactionArea.style.display = 'block';
+      }
+
+      // user_data doc for viewed user
+      const viewedUserDocRef = db.collection('user_data').doc(docIdFromEmail(emailArg));
+      const unsubViewedUser = viewedUserDocRef.onSnapshot(snap => {
+        const data = snap.exists ? snap.data() : null;
+        viewedData = {
+          displayName: data && (data['display name'] || data.displayName || data.display_name) ? (data['display name'] || data.displayName || data.display_name) : fallback.displayName,
+          email: emailArg,
+          profile_picture: data && data.profile_picture ? data.profile_picture : (data && data.profile_picture_url ? data.profile_picture_url : fallback.profile_picture),
+          banner: data && data.banner ? data.banner : (data && data.banner_url ? data.banner_url : fallback.banner),
+          roles: data && (Array.isArray(data.roles) ? data.roles : (data.role ? [data.role] : fallback.roles)),
+          bio: data && data.bio ? data.bio : fallback.bio,
+          is_verified: data && data.is_verified ? !!data.is_verified : false,
+          profile_picture_frame: data && data.profile_picture_frame ? data.profile_picture_frame : ''
+        };
+
+        // UI set
+        bannerEl.style.backgroundImage = `url(${viewedData.banner})`;
+        profilePicEl.style.backgroundImage = `url(${viewedData.profile_picture})`;
+        displayNameEl.textContent = viewedData.displayName || fallback.displayName;
+        emailEl.textContent = viewedData.email;
+        bioTextEl.textContent = viewedData.bio;
+        verifiedEl.style.display = viewedData.is_verified ? 'inline-block' : 'none';
+        if (viewedData.profile_picture_frame) { pfpFrameEl.style.backgroundImage = `url(${viewedData.profile_picture_frame})`; pfpFrameEl.style.display = 'block'; } else { pfpFrameEl.style.display = 'none'; }
+
+        // roles render using roleMap icons when present
+        rolesList.innerHTML = '';
+        (viewedData.roles || ['Member']).forEach(r => {
+          const el = document.createElement('div');
+          el.className = 'role-item muted';
+          if (roleMap[r]) {
+            const img = document.createElement('img'); img.src = roleMap[r].icon; img.alt = r;
+            img.title = `${r} — ${roleMap[r].desc}`;
+            el.appendChild(img);
+            const txt = document.createElement('div'); txt.textContent = r;
+            el.appendChild(txt);
+          } else {
+            el.textContent = r; // role without icon
+          }
+          rolesList.appendChild(el);
+        });
+
+        // details / last updated
+        detailsList.innerHTML = '';
+        const dlist = [
+          `<div><strong>Profile email:</strong> ${escapeHtml(viewedData.email)}</div>`,
+          `<div><strong>Verified:</strong> ${viewedData.is_verified ? 'Yes' : 'No'}</div>`
+        ];
+        detailsList.innerHTML = dlist.join('');
+
+        if (snap.exists && snap.data().last_updated) {
+          const lu = snap.data().last_updated;
+          const d = new Date(lu.seconds ? lu.seconds * 1000 : lu);
+          lastUpdatedEl.textContent = 'Updated: ' + d.toLocaleString();
+        } else lastUpdatedEl.textContent = '';
+
+        // clear any previous permission flag for this listener if it succeeded
+        if (permissionDeniedFor.viewedUser) delete permissionDeniedFor.viewedUser;
+        renderInteractionButtons();
+
+      }, err => {
+        handleFirestoreError(err, emailArg, 'viewedUser');
+      });
+      unsubscribes.push(unsubViewedUser);
+
+      // followers / following / friends counters: collection listeners
+      const followersColRef = db.collection('followers').doc(docIdFromEmail(emailArg)).collection('usersWhoFollowMe');
+      const unsubFollowers = followersColRef.onSnapshot(snap => {
+        followersCountEl.textContent = `Followers: ${snap.size || 0}`;
+        if (permissionDeniedFor.followers) delete permissionDeniedFor.followers;
+      }, err => { handleFirestoreError(err, emailArg, 'followers'); followersCountEl.textContent = 'Followers: 0'; });
+      unsubscribes.push(unsubFollowers);
+
+      const followingColRef = db.collection('following').doc(docIdFromEmail(emailArg)).collection('usersIFollow');
+      const unsubFollowing = followingColRef.onSnapshot(snap => {
+        followingCountEl.textContent = `Following: ${snap.size || 0}`;
+        if (permissionDeniedFor.following) delete permissionDeniedFor.following;
+      }, err => { handleFirestoreError(err, emailArg, 'following'); followingCountEl.textContent = 'Following: 0'; });
+      unsubscribes.push(unsubFollowing);
+
+      const friendsColRef = db.collection('friends').doc(docIdFromEmail(emailArg)).collection('friendlist');
+      const unsubFriends = friendsColRef.onSnapshot(snap => {
+        friendsCountEl.textContent = `Friends: ${snap.size || 0}`;
+        if (permissionDeniedFor.friends) delete permissionDeniedFor.friends;
+      }, err => { handleFirestoreError(err, emailArg, 'friends'); friendsCountEl.textContent = 'Friends: 0'; });
+      unsubscribes.push(unsubFriends);
+
+      // current user's user_data (for blockedUsers)
+      if (currentUser) {
+        const currentUserRef = db.collection('user_data').doc(docIdFromEmail(currentUser.email));
+        const unsubCurrentUser = currentUserRef.onSnapshot(snap => {
+          const data = snap.exists ? snap.data() : {};
+          relationshipState.isBlockedByCurrent = Array.isArray(data.blockedUsers) && data.blockedUsers.includes(emailArg);
+          // hide interactions if currentUser is viewing self
+          if (currentUser.email === emailArg) interactionArea.style.display = 'none';
+          // clear permission flag if it was a transient issue
+          if (permissionDeniedFor.currentUser) delete permissionDeniedFor.currentUser;
+          renderInteractionButtons();
+        }, err => { handleFirestoreError(err, emailArg, 'currentUser'); });
+        unsubscribes.push(unsubCurrentUser);
+      }
+
+      // other user's user_data (to detect if they blocked current)
+      const otherUserRef = db.collection('user_data').doc(docIdFromEmail(emailArg));
+      const unsubOtherUser = otherUserRef.onSnapshot(snap => {
+        const data = snap.exists ? snap.data() : {};
+        relationshipState.hasBlockedCurrent = Array.isArray(data.blockedUsers) && currentUser ? data.blockedUsers.includes(currentUser.email) : false;
+        if (permissionDeniedFor.otherUser) delete permissionDeniedFor.otherUser;
+        renderInteractionButtons();
+      }, err => { handleFirestoreError(err, emailArg, 'otherUser'); });
+      unsubscribes.push(unsubOtherUser);
+
+      // relationship doc listeners (many small doc listeners):
+      if (currentUser) {
+        const currentId = docIdFromEmail(currentUser.email);
+        const otherId = docIdFromEmail(emailArg);
+
+        const followDocRef = db.collection('following').doc(currentId).collection('usersIFollow').doc(otherId);
+        const unsubFollowDoc = followDocRef.onSnapshot(snap => {
+          relationshipState.isFollowing = snap.exists;
+          if (permissionDeniedFor.followDoc) delete permissionDeniedFor.followDoc;
+          renderInteractionButtons();
+        }, err => { handleFirestoreError(err, emailArg, 'followDoc'); });
+        unsubscribes.push(unsubFollowDoc);
+
+        const followedByDocRef = db.collection('followers').doc(currentId).collection('usersWhoFollowMe').doc(otherId);
+        const unsubFollowedByDoc = followedByDocRef.onSnapshot(snap => {
+          relationshipState.isFollowedBy = snap.exists;
+          if (permissionDeniedFor.followedByDoc) delete permissionDeniedFor.followedByDoc;
+          renderInteractionButtons();
+        }, err => { handleFirestoreError(err, emailArg, 'followedByDoc'); });
+        unsubscribes.push(unsubFollowedByDoc);
+
+        const friendARef = db.collection('friends').doc(currentId).collection('friendlist').doc(otherId);
+        const unsubFriendA = friendARef.onSnapshot(snap => {
+          renderInteractionButtons();
+        }, err => { handleFirestoreError(err, emailArg, 'friendA'); });
+        unsubscribes.push(unsubFriendA);
+
+        const friendBRef = db.collection('friends').doc(otherId).collection('friendlist').doc(currentId);
+        const unsubFriendB = friendBRef.onSnapshot(async snap => {
+          try {
+            const aSnap = await db.collection('friends').doc(currentId).collection('friendlist').doc(otherId).get();
+            const bSnap = await db.collection('friends').doc(otherId).collection('friendlist').doc(currentId).get();
+            relationshipState.friendExists = aSnap.exists && bSnap.exists;
+            if (permissionDeniedFor.friendDocs) delete permissionDeniedFor.friendDocs;
+          } catch(e) {
+            if (isFirestorePermissionError(e)) {
+              // mark friend_docs as denied so friend actions get disabled but keep UI available
+              permissionDeniedFor.friendDocs = true;
+              relationshipState.friendExists = false;
+              handleFirestoreError(e, emailArg, 'friendDocs');
+            } else {
+              console.error('friend exists check failed', e);
+              relationshipState.friendExists = false;
+            }
+          }
+          renderInteractionButtons();
+        }, err => { handleFirestoreError(err, emailArg, 'friendDocs'); });
+        unsubscribes.push(unsubFriendB);
+
+        // requests
+        const requestSentRef = db.collection('friends').doc(currentId).collection('requests').doc(otherId);
+        const unsubRequestSent = requestSentRef.onSnapshot(snap => {
+          relationshipState.requestSent = snap.exists;
+          if (permissionDeniedFor.requests) delete permissionDeniedFor.requests;
+          renderInteractionButtons();
+        }, err => { handleFirestoreError(err, emailArg, 'requests'); });
+        unsubscribes.push(unsubRequestSent);
+
+        const requestReceivedRef = db.collection('friends').doc(otherId).collection('requests').doc(currentId);
+        const unsubRequestReceived = requestReceivedRef.onSnapshot(snap => {
+          relationshipState.requestReceived = snap.exists;
+          if (permissionDeniedFor.requestReceived) delete permissionDeniedFor.requestReceived;
+          renderInteractionButtons();
+        }, err => { handleFirestoreError(err, emailArg, 'requestReceived'); });
+        unsubscribes.push(unsubRequestReceived);
+      }
+
+      // initial render (will hide if own profile)
+      renderInteractionButtons();
+    }
+
+    // escape for simple HTML insertion
+    function escapeHtml(s){ return String(s).replace(/[&<>\"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":"&#39;"}[m];}); }
+
+    // render the action buttons area based on relationshipState
+    function renderInteractionButtons(){
+      // if viewing own profile, keep interactions hidden
+      if (currentUser && viewedEmail && currentUser.email === viewedEmail) {
+        interactionArea.style.display = 'none';
+        return;
+      } else {
+        // always show interaction area for others, even if some listeners lack permission
+        interactionArea.style.display = 'block';
+      }
+
+      // Clear
+      interactionButtons.innerHTML = '';
+
+      const nameForButtons = (viewedData && viewedData.displayName) ? viewedData.displayName : viewedEmail;
+      const otherEmailEsc = encodeURIComponent(viewedEmail);
+
+      // Post to Wall (white)
+      const postBtn = document.createElement('button');
+      postBtn.className = 'btn';
+      postBtn.textContent = `Post to Wall`;
+      if (isActionDisabled('post')) {
+        postBtn.disabled = true; postBtn.title = 'Unavailable due to limited permissions'; postBtn.style.opacity = 0.6;
+      } else {
+        postBtn.addEventListener('click', () => { window.location.href = `/createpost?wall=${otherEmailEsc}`; });
+      }
+      interactionButtons.appendChild(postBtn);
+
+      // Follow / Unfollow
+      const followBtn = document.createElement('button');
+      followBtn.className = 'btn';
+      followBtn.id = 'followBtn';
+      followBtn.textContent = relationshipState.isFollowing ? `Unfollow ${nameForButtons}` : `Follow ${nameForButtons}`;
+
+      if (relationshipState.isBlockedByCurrent) {
+        followBtn.disabled = true;
+        followBtn.title = "You have blocked this user — unblock to follow";
+        followBtn.style.opacity = 0.6;
+      } else if (isFallbackProfile) {
+        followBtn.disabled = true;
+  followBtn.title = 'Unavailable in limited profile view';
+  followBtn.style.opacity = 0.6;
+      } else {
+        followBtn.addEventListener('click', async () => {
+          followBtn.disabled = true;
+          try {
+            if (relationshipState.isFollowing) {
+              // unfollow
+              await db.collection('followers').doc(viewedEmail).collection('usersWhoFollowMe').doc(currentUser.email).delete().catch(()=>{});
+              await db.collection('following').doc(currentUser.email).collection('usersIFollow').doc(viewedEmail).delete().catch(()=>{});
+              showToast('Unfollowed', 'purple');
+            } else {
+              // follow
+              await db.collection('followers').doc(viewedEmail).collection('usersWhoFollowMe').doc(currentUser.email).set({ email: currentUser.email, created: firebase.firestore.FieldValue.serverTimestamp() });
+              await db.collection('following').doc(currentUser.email).collection('usersIFollow').doc(viewedEmail).set({ email: viewedEmail, created: firebase.firestore.FieldValue.serverTimestamp() });
+              showToast('Following', 'purple');
+            }
+          } catch (err) {
+            console.error('follow/unfollow', err);
+            if (isFirestorePermissionError(err)) handleFirestoreError(err, viewedEmail, 'followAction');
+            else showToast('Action failed', 'red');
+          } finally {
+            followBtn.disabled = false;
+          }
+        });
+      }
+      interactionButtons.appendChild(followBtn);
+
+      // Friend Request / Accept / Remove Friend
+      const friendBtn = document.createElement('button');
+      friendBtn.className = 'btn';
+      friendBtn.id = 'friendBtn';
+
+      if (relationshipState.friendExists) {
+        friendBtn.textContent = `Remove Friend`;
+        if (isActionDisabled('friend')) {
+          friendBtn.disabled = true; friendBtn.title = 'Unavailable due to limited permissions'; friendBtn.style.opacity = 0.6;
+        } else {
+          friendBtn.addEventListener('click', async () => {
+            if (!confirm(`Remove ${nameForButtons} from friends?`)) return;
+            try {
+              await db.collection('friends').doc(currentUser.email).collection('friendlist').doc(viewedEmail).delete().catch(()=>{});
+              await db.collection('friends').doc(viewedEmail).collection('friendlist').doc(currentUser.email).delete().catch(()=>{});
+              showToast('Friend removed', 'purple');
+            } catch (err) { console.error('remove friend', err); if (isFirestorePermissionError(err)) handleFirestoreError(err, viewedEmail, 'friendAction'); else showToast('Failed', 'red'); }
+          });
+        }
+      } else if (relationshipState.requestReceived) {
+        friendBtn.textContent = `Accept Friend Request`;
+        if (isActionDisabled('friend')) {
+          friendBtn.disabled = true; friendBtn.title = 'Unavailable due to limited permissions'; friendBtn.style.opacity = 0.6;
+        } else {
+          friendBtn.addEventListener('click', async () => {
+            try {
+              await db.collection('friends').doc(viewedEmail).collection('requests').doc(currentUser.email).delete().catch(()=>{});
+              await db.collection('friends').doc(currentUser.email).collection('friendlist').doc(viewedEmail).set({ email: viewedEmail, created: firebase.firestore.FieldValue.serverTimestamp() });
+              await db.collection('friends').doc(viewedEmail).collection('friendlist').doc(currentUser.email).set({ email: currentUser.email, created: firebase.firestore.FieldValue.serverTimestamp() });
+              showToast('Friend request accepted', 'purple');
+            } catch (err) { console.error('accept friend', err); if (isFirestorePermissionError(err)) handleFirestoreError(err, viewedEmail, 'friendAction'); else showToast('Failed', 'red'); }
+          });
+        }
+      } else if (relationshipState.requestSent) {
+        friendBtn.textContent = `Request Pending`;
+        friendBtn.disabled = true;
+        friendBtn.title = "You have already sent a friend request";
+      } else {
+        friendBtn.textContent = `Send Friend Request`;
+        if (relationshipState.isBlockedByCurrent) {
+          friendBtn.disabled = true;
+          friendBtn.title = "You have blocked this user — unblock to send request";
+          friendBtn.style.opacity = 0.6;
+        } else if (isActionDisabled('friend')) {
+          friendBtn.disabled = true; friendBtn.title = 'Unavailable due to limited permissions'; friendBtn.style.opacity = 0.6;
+        } else {
+          friendBtn.addEventListener('click', async () => {
+            try {
+              const friendExistsDoc = await db.collection('friends').doc(viewedEmail).collection('friendlist').doc(currentUser.email).get();
+              if (friendExistsDoc.exists) { showToast('You are already friends', 'yellow'); return; }
+
+              const alreadySent = await db.collection('friends').doc(currentUser.email).collection('requests').doc(viewedEmail).get();
+              if (alreadySent.exists) { showToast('Request already pending', 'yellow'); return; }
+
+              await db.collection('friends').doc(currentUser.email).collection('requests').doc(viewedEmail).set({ from: currentUser.email, to: viewedEmail, created: firebase.firestore.FieldValue.serverTimestamp() });
+              showToast('Friend request sent', 'purple');
+            } catch (err) { console.error('send request', err); if (isFirestorePermissionError(err)) handleFirestoreError(err, viewedEmail, 'friendAction'); else showToast('Failed', 'red'); }
+          });
+        }
+      }
+      interactionButtons.appendChild(friendBtn);
+
+      // Block / Unblock (red text only) - must always be present per requirement
+      const blockBtn = document.createElement('button');
+      blockBtn.className = 'btn red';
+      blockBtn.id = 'blockBtn';
+      blockBtn.textContent = relationshipState.isBlockedByCurrent ? `Unblock ${nameForButtons}` : `Block ${nameForButtons}`;
+      blockBtn.addEventListener('click', async () => {
+        try {
+          if (!relationshipState.isBlockedByCurrent) {
+            if (!confirm(`Block ${nameForButtons}? This will remove follow/friend links.`)) return;
+            // add to blockedUsers array
+            await db.collection('user_data').doc(currentUser.email).set({ blockedUsers: firebase.firestore.FieldValue.arrayUnion(viewedEmail) }, { merge: true });
+            // delete social links per user rule
+            const ops = [
+              db.collection('followers').doc(currentUser.email).collection('usersWhoFollowMe').doc(viewedEmail).delete().catch(()=>{}),
+              db.collection('following').doc(currentUser.email).collection('usersIFollow').doc(viewedEmail).delete().catch(()=>{}),
+              db.collection('friends').doc(currentUser.email).collection('friendlist').doc(viewedEmail).delete().catch(()=>{}),
+              db.collection('friends').doc(viewedEmail).collection('friendlist').doc(currentUser.email).delete().catch(()=>{}),
+              db.collection('friends').doc(currentUser.email).collection('requests').doc(viewedEmail).delete().catch(()=>{})
+            ];
+            await Promise.all(ops);
+            showToast('User blocked', 'purple');
+          } else {
+            await db.collection('user_data').doc(currentUser.email).set({ blockedUsers: firebase.firestore.FieldValue.arrayRemove(viewedEmail) }, { merge: true });
+            showToast('User unblocked', 'purple');
+          }
+        } catch (err) {
+          console.error('block/unblock', err);
+          // don't fallback UI — inform user it's blocked
+          if (isFirestorePermissionError(err)) showToast('Blocked: insufficient permissions to change block state', 'red');
+          else showToast('Failed', 'red');
+        }
+      });
+      interactionButtons.appendChild(blockBtn);
+
+      // Report (red text only) - always available as navigation
+      const reportBtn = document.createElement('button');
+      reportBtn.className = 'btn red';
+      reportBtn.textContent = `Report ${nameForButtons}`;
+      reportBtn.addEventListener('click', () => {
+        window.location.href = `/reporabuse?email=${otherEmailEsc}`;
+      });
+      interactionButtons.appendChild(reportBtn);
+
+      if (relationshipState.hasBlockedCurrent) {
+        [postBtn, followBtn, friendBtn].forEach(b => { if (b) { b.disabled = true; b.title = "Action unavailable"; b.style.opacity = 0.6; } });
+      }
+    }
+
+    // defensive cleanup for leftover edit UI elements
+    window.addEventListener('load', () => {
+      const uploadEls = document.querySelectorAll('input[type=file], .upload-box, #saveNameBtn, #saveBioBtn');
+      uploadEls.forEach(e => e?.remove?.());
+      // hide interactions until initial auth check runs
+      interactionArea.style.display = 'none';
+    });
+
+    // unsubscribe when page unloads
+    window.addEventListener('beforeunload', () => clearUnsubscribes());
+
+  </script>
 </body>
 </html>

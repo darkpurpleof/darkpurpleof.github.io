@@ -1,376 +1,444 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Posts</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Topbar component (your site has this) -->
+<script type="module" src="/dp-topbar.js"></script>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+
 <style>
-    /* Reusing the Orbitron style and purple aesthetic */
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
-
-    :root {
-        --bg-color: #000;
-        --text-color: purple;
-        --box-bg: rgba(128, 0, 128, 0.05);
-        --border-color: purple;
-    }
-
-    body.light {
-        --bg-color: #fff;
-        --text-color: purple;
-        --box-bg: rgba(128, 0, 128, 0.1);
-        --border-color: purple;
-    }
-
-    body {
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        font-family: 'Orbitron', sans-serif;
-        margin: 0;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        min-height: 100vh;
-        transition: background 0.4s, color 0.4s;
-        box-sizing: border-box;
-    }
-
-    .top-bar {
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-
-    .profile-pic-frame {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 48px;
-    height: 48px;
-    pointer-events: none;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-    z-index: 2;
-    display: none;
+:root{
+  --bg: #171717;
+  --card: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.03));
+  --muted: #9aa0b2;
+  --text: #e9e6ef;
+  --accent-1: #1f1f1f;
+  --accent-2: #1f1f1f;
+  --glass: rgba(255,255,255,0.03);
+  --border: rgba(255,255,255,0.06);
+  --radius: 14px;
+  --max-width: 960px;
+  --card-gap: 18px;
 }
 
-    .dark-light-toggle {
-        cursor: pointer;
-        background: none;
-        border: none;
-        font-size: 1.5em;
-        color: var(--text-color);
-    }
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+/* Remove margin/padding from body for topbar */
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0; /* removed 20px */
+}
 
-    h1.page-title {
-        font-size: 2.5em;
-        margin-bottom: 20px;
-        text-shadow: 0 0 6px var(--text-color);
-        animation: glitch 1.5s infinite;
-    }
+/* Make topbar full width and flush to top */
+dp-topbar {
+  width: 100%;
+  margin: 0;      /* remove previous margin-bottom */
+  display: block;
+  flex-shrink: 0;
+}
 
-    @keyframes glitch {
-        0%, 60%, 100% { transform: none; }
-        20% { transform: skewX(3deg); }
-        40% { transform: skewX(-3deg); }
-    }
+.container{ width:100%; max-width:var(--max-width); }
 
-    /* Post cards */
-    .post-card {
-        background-color: var(--box-bg);
-        border: 1.5px solid var(--border-color);
-        border-radius: 10px;
-        width: 100%;
-        max-width: 600px;
-        padding: 20px;
-        text-align: left;
-        margin-bottom: 30px;
-        box-shadow: 0 0 10px rgba(128, 0, 128, 0.3);
-    }
+/* header */
+.header{
+  display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;
+}
+.page-title{
+  font-family: 'Orbitron', system-ui, sans-serif;
+  font-size:28px; letter-spacing:0.6px; margin:0;
+  text-shadow: 0 6px 20px rgba(255,255,255,0.06);
+  color:var(--text);
+}
+.header-controls{ display:flex; gap:12px; align-items:center; }
 
-    .author-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 10px;
-    }
+/* mobile adjustments */
+@media (max-width: 700px) {
+  /* make container narrower than screen */
+  .container {
+    width: calc(100% - 24px); /* 12px padding each side */
+    max-width: none; /* ignore desktop max-width on small screens */
+    margin: 0 auto;
+  }
 
-    .profile-pic {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        border: 1.5px solid var(--border-color);
-        background-size: cover;
-        background-position: center;
-    }
+  /* card gets full container width but has some internal padding */
+  .post-card {
+    padding: 12px;
+  }
 
-    .author-details {
-        display: flex;
-        flex-direction: column;
-    }
+  /* avatar smaller but keep aspect ratio */
+/* Strong avatar rules — forces a perfect circle and prevents stretching */
+.avatar{
+  display: block;               /* avoid flex stretch shenanigans */
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;               /* don't let flex change size */
+  min-width: 48px;
+  border-radius: 50%;           /* circle */
+  overflow: hidden;             /* crop background or child img */
+  background-repeat: no-repeat;
+  background-size: cover;       /* fill without distortion */
+  background-position: center;
+  aspect-ratio: 1 / 1;          /* ensures a square shape */
+  border: 2px solid var(--border);
+  position: relative;           /* for overlay/frame positioning */
+}
 
-    .author-name-verif {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: bold;
-        font-size: 1.2em;
-    }
+/* Make sure any frame overlay matches the avatar perfectly */
+.profile-pic-frame {
+  position: absolute;
+  inset: 0;                     /* fills the avatar exactly */
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+}
 
-    .verified-badge {
-        width: 20px;
-        height: 20px;
-        filter: drop-shadow(0 0 2px purple);
-    }
+  /* post images should not stretch full width */
+  .post-images img {
+    max-width: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+}
+@media (min-width: 701px){
+  .avatar{ width:56px; height:56px; min-width:56px; aspect-ratio:1/1; }
+}
 
-    .author-email {
-        font-size: 0.9em;
-        opacity: 0.8;
-    }
+/* Slightly smaller on small phones */
+@media (max-width: 360px){
+  .avatar{ width:40px; height:40px; min-width:40px; }
+}
 
-    .post-text {
-        margin-top: 15px;
-        font-size: 1.1em;
-        white-space: pre-wrap;
-    }
 
-    .post-images {
-        margin-top: 15px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
 
-    .post-images img {
-        max-width: 100%;
-        max-height: 200px;
-        border-radius: 10px;
-        object-fit: contain;
-        border: 1.5px solid var(--border-color);
-    }
+/* posts list */
+.posts-list{ display:flex; flex-direction:column; gap:var(--card-gap); }
 
-    .button-row {
-        margin-top: 15px;
-        display: flex;
-        gap: 20px;
-    }
+/* card */
+.post-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px;
+  transition: transform .14s ease, box-shadow .14s ease;
+}
 
-    .action-button {
-        flex: 1;
-        background-color: var(--box-bg);
-        border: 1.5px solid var(--border-color);
-        border-radius: 10px;
-        padding: 12px 0;
-        font-weight: bold;
-        cursor: pointer;
-        color: var(--text-color);
-        transition: opacity 0.3s;
-    }
+.author-row{ display:flex; gap:12px; align-items:center; justify-content:space-between; }
+.author-left{ display:flex; gap:12px; align-items:center; min-width:0; }
+.avatar{
+  width:56px; height:56px; background-repeat: no-repeat; border-radius:50%; background-size:cover; background-position:center; flex:0 0 56px;
+  border:2px solid var(--border);
+}
+.author-meta{ min-width:0; overflow:hidden; }
+.display-name{ display:flex; gap:8px; align-items:center; font-weight:700; font-size:1.05rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.email-text{ font-size:13px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.verified-badge{ width:18px; height:18px; display:inline-block; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; margin-left:4px; }
 
-    .action-button:hover:not(:disabled) {
-        opacity: 0.75;
-    }
+/* post content */
+.post-text{ margin-top:12px; font-size:15px; color:var(--text); line-height:1.5; white-space:pre-wrap; }
+.post-images{ margin-top:12px; display:flex; background-repeat: no-repeat; gap:10px; flex-wrap:wrap; }
+.post-images img{ max-width:100%; max-height:320px; object-fit:cover; border-radius:10px; border:1px solid var(--border); }
 
-    .action-button:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
+/* actions row */
+.actions-row{ display:flex; gap:8px; margin-top:12px; align-items:center; flex-wrap:wrap; }
+.icon-btn{
+  display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px; background:transparent; border:1px solid var(--border);
+  color:var(--text); cursor:pointer; transition: background .12s ease, transform .06s ease, box-shadow .12s ease;
+}
+.icon{ width:18px; height:18px; display:inline-block; vertical-align:middle; fill:currentColor; opacity:0.95; }
 
-    @media (max-width: 600px) {
-    .post-card {
-        max-width: 98vw;
-        width: 100%;
-        margin-left: auto;
-        margin-right: auto;
-        padding: 12px;
-        box-sizing: border-box;
-    }
-    .author-info {
-        flex-direction: row;
-        gap: 10px;
-    }
-    .profile-pic {
-        width: 40px;
-        height: 40px;
-    }
-    .profile-pic-frame {
-        width: 40px;
-        height: 40px;
-    }
-    .post-images img {
-        max-width: 98vw;
-        max-height: 140px;
-    }
-    .button-row {
-        flex-direction: column;
-        gap: 10px;
-    }
-    .action-button {
-        padding: 10px 0;
-        font-size: 1em;
-    }
+/* like active */
+.icon-btn.liked{ background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:white; box-shadow:0 8px 30px rgba(255,255,255,0.03); border-color:transparent; }
+.like-count{ font-size:13px; color:inherit; }
+
+/* responsive */
+@media (max-width:700px){ .avatar{ width:48px; height:48px; } .display-name{ font-size:1rem; } .post-images img{ max-height:180px; } .page-title{ font-size:22px; } }
+
+/* small helpers */
+.sep{ height:1px; background:var(--border); margin:12px 0; border-radius:2px; }
+.muted{ color:var(--muted); font-size:13px; }
+
+/* accessibility: prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce){
+  .post-card, .icon-btn{ transition:none; animation:none; transform:none; }
 }
 </style>
 </head>
 <body>
+  <dp-topbar></dp-topbar>
 
-<div class="top-bar">
-    <button id="toggleTheme" class="dark-light-toggle" title="Toggle Light/Dark Mode">🌓</button>
-</div>
+  <div class="container">
+    <div class="header">
+    </div>
 
-<h1 class="page-title">Posts</h1>
+    <div id="postsList" class="posts-list" aria-live="polite"></div>
+  </div>
 
-<div id="postsContainer">
-  <!-- Cards will be injected here -->
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script>
-  // Initialize Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-    authDomain: "darkpurpleof-s-website.firebaseapp.com",
-    projectId: "darkpurpleof-s-website",
-    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-    messagingSenderId: "520651082420",
-    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-    measurementId: "G-S2X2JYC8Z0"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const auth = firebase.auth();
+/* Firebase init */
+const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+};
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
 
-  // Theme toggle
-  const toggleBtn = document.getElementById('toggleTheme');
-  toggleBtn.onclick = () => {
-    document.body.classList.toggle('light');
-    localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
-  };
-  if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+/* Utility: attempt to fetch user doc by a few keys for robustness */
+async function getUserDoc(email){
+  if(!email) return null;
+  const lower = String(email).toLowerCase();
+  // 1) direct doc
+  try{
+    let snap = await db.collection('user_data').doc(lower).get();
+    if(snap.exists) return { id: snap.id, data: snap.data() };
+    // 2) encoded key
+    snap = await db.collection('user_data').doc(encodeURIComponent(lower)).get();
+    if(snap.exists) return { id: snap.id, data: snap.data() };
+    // 3) fallback query
+    const q = await db.collection('user_data').where('email','==', lower).limit(1).get();
+    if(!q.empty) return { id: q.docs[0].id, data: q.docs[0].data() };
+    // nothing
+    return null;
+  }catch(err){
+    console.warn('getUserDoc error', err);
+    return null;
+  }
+}
 
-  const postsContainer = document.getElementById('postsContainer');
+/* Small helper to safely escape text content for insertion into DOM elements (we use textContent so it's usually safe) */
+function safeText(s){ return (s === undefined || s === null) ? '' : String(s); }
 
-  // Load all posts
-  auth.onAuthStateChanged(async (user) => {
-    const currentUserEmail = user?.email?.toLowerCase() || null;
-
-    try {
-      const snapshot = await db.collection('posts').orderBy('timestamp', 'desc').get();
-
-      if (snapshot.empty) {
-        postsContainer.innerHTML = '<p style="color:red;">No posts yet.</p>';
-        return;
-      }
-
-      for (const doc of snapshot.docs) {
-        const postData = doc.data();
-        const postId = doc.id;
-        const editorEmail = postData.editor?.toLowerCase();
-        if (!editorEmail) continue;
-
-        // Fetch author data
-        const userDoc = await db.collection('user_data').doc(editorEmail).get();
-        if (!userDoc.exists) continue;
-
-        const displayName = userDoc.get('display name') || editorEmail;
-        const profilePic = userDoc.get('profile_picture') || 'https://darkpurpleof.github.io/org-owner.jpg';
-        const verified = userDoc.get('is_verified') === true;
-        const blockedUsers = userDoc.get('blockedUsers') || [];
-
-        if (currentUserEmail && blockedUsers.includes(currentUserEmail)) continue;
-
-        const text = postData.text || '';
-        const images = postData.images || [];
-        const likedBy = postData.likedBy || [];
-        let userLiked = currentUserEmail ? likedBy.includes(currentUserEmail) : false;
-
-        // Build card HTML
-        const verifiedBadgeHTML = verified
-          ? `<img src="/assets/verified.png" class="verified-badge" alt="Verified" />`
-          : '';
-
-        const profileStyle = profilePic
-          ? `background-image: url('${profilePic}');`
-          : 'background-color: rgba(128,0,128,0.2);';
-
-        let imagesHTML = '';
-        if (images.length > 0) {
-          imagesHTML = `<div class="post-images">` + images.map(url =>
-            `<img src="${encodeURI(url)}" alt="Post image" loading="lazy" />`
-          ).join('') + `</div>`;
-        }
-
-        const frameUrl = userDoc.get('profile_picture_frame') || '';
-
-        const cardHTML = `
-          <div class="post-card" id="post-${postId}">
-            <div class="author-info" style="position:relative;">
-              <div class="profile-pic" style="${profileStyle}; position:relative;">
-                ${frameUrl && frameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${frameUrl}')"></div>` : ""}
-              </div>
-              <div class="author-details">
-                <div class="author-name-verif">${displayName} ${verifiedBadgeHTML}</div>
-                <div class="author-email">${editorEmail}</div>
-              </div>
-            </div>
-            <div class="post-text">${text.replace(/\n/g, '<br>')}</div>
-            ${imagesHTML}
-            <div class="button-row">
-              <button class="action-button like-btn">${userLiked ? 'Unlike' : 'Like'}</button>
-              <button class="action-button report-btn">Report</button>
-              <button class="action-button app-btn">Open</button>
-            </div>
-          </div>
-        `;
-
-        postsContainer.insertAdjacentHTML('beforeend', cardHTML);
-
-        // Event listeners
-        const postCard = document.getElementById(`post-${postId}`);
-        const likeBtn = postCard.querySelector('.like-btn');
-        const reportBtn = postCard.querySelector('.report-btn');
-        const appBtn = postCard.querySelector('.app-btn');
-
-        likeBtn.onclick = async () => {
-          if (!currentUserEmail) return alert('You must be logged in to like posts.');
-          likeBtn.disabled = true;
-          const ref = db.collection('posts').doc(postId);
-          if (userLiked) {
-            await ref.update({
-              likedBy: firebase.firestore.FieldValue.arrayRemove(currentUserEmail)
-            });
-            likeBtn.textContent = 'Like';
-          } else {
-            await ref.update({
-              likedBy: firebase.firestore.FieldValue.arrayUnion(currentUserEmail)
-            });
-            likeBtn.textContent = 'Unlike';
-          }
-          userLiked = !userLiked;
-          likeBtn.disabled = false;
-        };
-
-        reportBtn.onclick = () => {
-          window.location.href = `/reportabuse?reporting=${encodeURIComponent(editorEmail)}`;
-        };
-
-        appBtn.onclick = () => {
-          window.location.href = `https://darkpurpleof.github.io/posts?post=${encodeURIComponent(postId)}`;
-        };
-      }
-    } catch (err) {
-      console.error(err);
-      postsContainer.innerHTML = '<p style="color:red;">Error loading posts.</p>';
+/* Icon SVGs */
+const ICONS = {
+  heart: function(filled){
+    filled = filled || false; // fallback for plain JS
+    if(filled){
+      return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 21s-7.5-4.5-10-8c-1.9-2.6-1-6 2-7.5C6 4 8.5 5 9.5 6.2 10.5 5 13 4 16 5.5c3 1.5 3.9 4.9 2 7.5-2.5 3.5-10 8-10 8z"/>
+      </svg>`;
+    } else {
+      return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="none" stroke="currentColor" stroke-width="1.6" d="M12 21s-7.5-4.5-10-8c-1.9-2.6-1-6 2-7.5C6 4 8.5 5 9.5 6.2 10.5 5 13 4 16 5.5c3 1.5 3.9 4.9 2 7.5-2.5 3.5-10 8-10 8z"/>
+      </svg>`;
     }
-  });
-</script>
+  },
 
+  flag: `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 3v18" stroke="currentColor" stroke-width="1.6" fill="none"/>
+    <path d="M19 7s-3 0-5 1-4-1-6-1v8s3 1 6 0 5 1 5 1V7z" fill="currentColor"/>
+  </svg>`,
+
+  open: `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M14 3h7v7" stroke="currentColor" stroke-width="1.6" fill="none"/>
+    <path d="M10 14L21 3" stroke="currentColor" stroke-width="1.6" fill="none"/>
+    <path d="M21 21H3V3" stroke="currentColor" stroke-width="1.2" fill="none"/>
+  </svg>`
+};
+
+
+/* Render a single post card DOM element */
+function createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy }, currentUserEmail){
+  const userLiked = currentUserEmail ? likedBy.map(e=>String(e).toLowerCase()).includes(currentUserEmail) : false;
+  const likeCount = likedBy.length || 0;
+
+  const card = document.createElement('article');
+  card.className = 'post-card';
+  card.id = `post-${postId}`;
+
+  // header
+  const avatarUrl = profilePic || '/org-owner.jpg';
+  const verifiedHtml = verified ? `<span class="verified-badge" title="Verified"></span>` : '';
+
+  card.innerHTML = `
+    <div class="author-row">
+      <div class="author-left">
+        <div class="avatar" style="background-image:url('${encodeURI(avatarUrl)}');" title="${escapeHtml(displayName)}"></div>
+        <div class="author-meta">
+          <div class="display-name">${escapeHtml(displayName)} ${verifiedHtml}</div>
+          <div class="email-text">${escapeHtml(editorEmail)}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="post-text" role="article">${escapeHtml(text)}</div>
+    ${ images && images.length ? `<div class="post-images">${images.map(u => `<img src="${encodeURI(u)}" loading="lazy" alt="post image" />`).join('')}</div>` : '' }
+
+    <div class="sep" aria-hidden="true"></div>
+
+    <div class="actions-row">
+      <button class="icon-btn like-btn ${userLiked ? 'liked' : ''}" aria-pressed="${userLiked}" title="${userLiked ? 'Unlike' : 'Like'}">
+        ${ICONS.heart(userLiked)} <span class="like-count">${likeCount}</span>
+      </button>
+
+      <button class="icon-btn report-btn" title="Report">
+        ${ICONS.flag} <span class="muted" style="font-size:13px">Report</span>
+      </button>
+
+      <button class="icon-btn open-btn" title="Open post">
+        ${ICONS.open} <span class="muted" style="font-size:13px">Open</span>
+      </button>
+    </div>
+  `;
+
+  return card;
+}
+
+/* Escape helper for attributes/text inserted as textContent */
+function escapeHtml (unsafe) {
+  return String(unsafe || '').replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
+}
+
+/* main: load posts */
+const postsListEl = document.getElementById('postsList');
+
+auth.onAuthStateChanged(async user => {
+  postsListEl.innerHTML = ''; // clear
+  const currentUserEmail = user?.email?.toLowerCase?.() || null;
+
+  try{
+    const snapshot = await db.collection('posts').orderBy('timestamp','desc').get();
+    if(snapshot.empty){
+      postsListEl.innerHTML = `<div class="muted" style="padding:18px; text-align:center">No posts yet.</div>`;
+      return;
+    }
+
+    for(const doc of snapshot.docs){
+      const postData = doc.data();
+      const postId = doc.id;
+      const editorEmailRaw = postData.editor || '';
+      const editorEmail = String(editorEmailRaw).toLowerCase();
+
+      if(!editorEmail) continue;
+
+      // attempt to fetch author data robustly
+      const userDocSnapshot = await (async ()=>{
+        try{
+          let snap = await db.collection('user_data').doc(editorEmail).get();
+          if(snap.exists) return snap;
+          snap = await db.collection('user_data').doc(encodeURIComponent(editorEmail)).get();
+          if(snap.exists) return snap;
+          const q = await db.collection('user_data').where('email','==', editorEmail).limit(1).get();
+          if(!q.empty) return q.docs[0];
+          return null;
+        }catch(e){
+          console.warn('author fetch error', e);
+          return null;
+        }
+      })();
+
+      // derive author info with fallbacks
+      let displayName = editorEmail;
+      let profilePic = '/org-owner.jpg';
+      let verified = false;
+      let blockedUsers = [];
+      let frameUrl = '';
+
+      if(userDocSnapshot && userDocSnapshot.exists){
+        const ud = userDocSnapshot.data();
+        displayName = ud['display name'] || ud.displayName || ud.name || editorEmail;
+        profilePic = ud.profile_picture || ud.avatar || '/org-owner.jpg';
+        verified = !!ud.is_verified || !!ud.verified;
+        blockedUsers = Array.isArray(ud.blockedUsers) ? ud.blockedUsers.map(x=>String(x).toLowerCase()) : [];
+        frameUrl = ud.profile_picture_frame || '';
+      }
+
+      // respect block lists: if author blocked current user, skip
+      if(currentUserEmail && blockedUsers.includes(currentUserEmail)) continue;
+
+      // prepare post properties
+      const text = postData.text || '';
+      const images = Array.isArray(postData.images) ? postData.images : [];
+      const likedBy = Array.isArray(postData.likedBy) ? postData.likedBy : [];
+
+      // create card
+      const card = createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy }, currentUserEmail);
+      postsListEl.appendChild(card);
+
+      // frame overlay if provided
+      if(frameUrl){
+        const avatarEl = card.querySelector('.avatar');
+        const frameEl = document.createElement('div');
+        frameEl.className = 'profile-pic-frame';
+        frameEl.style.cssText = `position:absolute; left:0; top:0; width:56px; height:56px; border-radius:50%; background-image:url('${encodeURI(frameUrl)}'); background-size:cover; background-position:center; pointer-events:none;`;
+        avatarEl.style.position = 'relative';
+        avatarEl.appendChild(frameEl);
+      }
+
+      // wire actions
+      const likeBtn = card.querySelector('.like-btn');
+      const likeCountEl = card.querySelector('.like-count');
+      const reportBtn = card.querySelector('.report-btn');
+      const openBtn = card.querySelector('.open-btn');
+
+      // Like handler (atomic update)
+      likeBtn.addEventListener('click', async ()=>{
+        if(!currentUserEmail){
+          alert('You must sign in to like posts.');
+          return;
+        }
+        likeBtn.disabled = true;
+        const postRef = db.collection('posts').doc(postId);
+        try{
+          const already = likeBtn.classList.contains('liked');
+          if(already){
+            await postRef.update({ likedBy: firebase.firestore.FieldValue.arrayRemove(currentUserEmail) });
+            likeBtn.classList.remove('liked');
+            likeBtn.setAttribute('aria-pressed','false');
+            // update count locally (decrement)
+            let n = Math.max(0, Number(likeCountEl.textContent || 0) - 1);
+            likeCountEl.textContent = n;
+          } else {
+            await postRef.update({ likedBy: firebase.firestore.FieldValue.arrayUnion(currentUserEmail) });
+            likeBtn.classList.add('liked');
+            likeBtn.setAttribute('aria-pressed','true');
+            let n = Math.max(0, Number(likeCountEl.textContent || 0) + 1);
+            likeCountEl.textContent = n;
+          }
+        }catch(err){
+          console.error('like failed', err);
+          alert('Could not update like. Try again.');
+        }finally{
+          likeBtn.disabled = false;
+        }
+      });
+
+      // Report handler
+      reportBtn.addEventListener('click', ()=>{
+        // navigate to report page with reporting param
+        window.location.href = `/reportabuse?reporting=${encodeURIComponent(editorEmail)}`;
+      });
+
+      // Open handler
+      openBtn.addEventListener('click', ()=>{
+        window.location.href = `/posts?post=${encodeURIComponent(postId)}`;
+      });
+
+    } // end for each post
+
+  }catch(err){
+    console.error('load posts failed', err);
+    postsListEl.innerHTML = `<div class="muted" style="padding:18px; text-align:center; color:#ff6b6b">Error loading posts.</div>`;
+  }
+});
+</script>
 </body>
 </html>

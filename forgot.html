@@ -1,250 +1,133 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forgot Password</title>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Forgot Password</title>
 
-        :root {
-            --bg-color: #000;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.05);
-            --border-color: purple;
-        }
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-        body.light {
-            --bg-color: #fff;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.1);
-            --border-color: purple;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            min-height: 100vh;
-            transition: background 0.4s, color 0.4s;
-            padding: 1rem;
-            box-sizing: border-box;
-        }
+<style>
+:root{
+  --bg:#171717;
+  --card:#1f1f1f;
+  --muted:#a8a8a8;
+  --accent:#6b21a8;
+  --accent-strong:#5b21b6;
+  --text:#eaeaea;
+  --border: rgba(255,255,255,0.04);
+}
+body.light {
+  --bg:#f6f8fb;
+  --card:#fff;
+  --muted:#475569;
+  --text:#0f172a;
+  --border: rgba(0,0,0,0.06);
+}
 
-        .top-bar {
-            width: 100%;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);transition:background .25s,color .25s;}
+body{display:flex;flex-direction:column;min-height:100vh;}
+dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+main.wrapper{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;}
+.card{background:var(--card);border-radius:12px;padding:24px;border:1px solid var(--border);box-shadow:0 6px 18px rgba(2,6,23,0.45);max-width:480px;width:100%;color:var(--text);}
+h1{margin:0 0 6px 0;font-size:20px;font-weight:700;}
+p.lead{margin:0 0 16px 0;color:var(--muted);font-size:14px;}
+.input{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);box-sizing:border-box;margin-bottom:12px;}
+.register-button, button{background:var(--accent);color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;cursor:pointer;}
+.register-button:hover, button:hover{opacity:0.95;}
+.small-note{font-size:13px;color:var(--muted);}
+#toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:10px 14px;border-radius:10px;font-weight:700;display:none;z-index:99999;color:#fff;box-sizing:border-box;}
+#toast.purple{background:var(--accent-strong);}
+#toast.red{background:#c00;}
+#toast.yellow{background:#e6b800;color:#222;}
+</style>
 
-        .icon-btn {
-            font-size: 22px;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            padding: 6px;
-            transition: opacity 0.3s;
-        }
-
-        .icon-btn:hover {
-            opacity: 0.7;
-        }
-
-        .profile-pic {
-            width: 32px;
-            height: 32px;
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-        }
-
-        h2 {
-            font-size: 2em;
-            margin: 20px 0;
-            text-shadow: 0 0 6px var(--text-color);
-            animation: glitch 1.5s infinite;
-        }
-
-        .info-chart {
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px var(--text-color);
-            max-width: 400px;
-            width: 100%;
-            text-align: left;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-top: 5px;
-            border-radius: 8px;
-            border: 1.5px solid var(--border-color);
-            background-color: var(--box-bg);
-            color: var(--text-color);
-            box-sizing: border-box;
-        }
-
-        .error-message {
-            color: red;
-            font-size: 0.85em;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--box-bg);
-            color: var(--text-color);
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            opacity: 0.8;
-        }
-
-        .forgot-password {
-            margin-top: 10px;
-        }
-
-        .forgot-password a {
-            color: purple;
-            text-decoration: none;
-        }
-
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-
-        @keyframes glitch {
-            0% { transform: none; }
-            20% { transform: skewX(3deg); }
-            40% { transform: skewX(-3deg); }
-            60% { transform: none; }
-            100% { transform: none; }
-        }
-    </style>
+<script type="module" src="/dp-topbar.js"></script>
 </head>
+
 <body>
-    <div class="top-bar">
-        <button class="icon-btn" onclick="toggleDarkMode()" id="themeToggle">🌙</button>
-        <div id="profilePic" class="profile-pic" style="background-image: url('https://darkpurpleof.github.io/org-owner.jpg');"></div>
+<dp-topbar></dp-topbar>
+
+<main class="wrapper" role="main">
+  <div class="card" role="region" aria-label="Forgot password form">
+    <h1>Forgot Password</h1>
+    <p class="lead">Enter your email to receive a password reset link.</p>
+
+    <form id="forgotPasswordForm" autocomplete="on" novalidate>
+      <input type="email" id="email" class="input" placeholder="you@example.com" required>
+      <button type="submit">Reset Password</button>
+    </form>
+
+    <div class="small-note" style="margin-top:12px;">
+      Admin accounts (<b>@darkpurpleof.github.io</b>) must reset via <a href="https://darkpurpleof.github.io/adminhelp/resetpassword" style="color:var(--accent);text-decoration:none;" target="_blank">this link</a>.
     </div>
+  </div>
+</main>
 
-    <div class="info-chart">
-        <h2>Forgot Password</h2>
-        <p>Enter your email address below to receive a password reset link.</p>
-        <form id="forgotPasswordForm">
-            <input type="email" id="email" placeholder="Enter your email" required>
-            <button type="submit">Reset Password</button>
-        </form>
-        <p class="error-message" id="errorMessage"></p>
-        <p id="successMessage" class="success-message"></p>
+<div id="toast" role="status" aria-live="polite"></div>
 
-        <div class="forgot-password">
-            <p>If you have an admin account (<b>@darkpurpleof.github.io</b>), follow the instructions <a href="https://darkpurpleof.github.io/adminhelp/resetpassword" target="_blank">here</a> to reset your password.</p>
-        </div>
-    </div>
-  
-  <script>
-    function toggleDarkMode() {
-        const themeButton = document.getElementById('themeToggle');
-        const isDarkMode = document.body.classList.contains('light');
+<script>
+function showToast(message, color="purple", duration=3500){
+  const t=document.getElementById("toast");
+  t.textContent=message;
+  t.className=color+" show";
+  t.style.display="block";
+  setTimeout(()=>{t.className=color+" hide";setTimeout(()=>{t.style.display="none";t.className="";},400);},duration);
+}
 
-        if (isDarkMode) {
-            document.body.classList.remove('light');
-            themeButton.innerHTML = '🌙'; // Moon icon
-            localStorage.setItem('lightMode', 'disabled');
-        } else {
-            document.body.classList.add('light');
-            themeButton.innerHTML = '☀️'; // Sun icon
-            localStorage.setItem('lightMode', 'enabled');
-        }
-    }
-
-    // Check for saved theme
-    if (localStorage.getItem('lightMode') === 'enabled') {
-        document.body.classList.add('light');
-        document.getElementById('themeToggle').innerHTML = '☀️'; // Sun icon
-    }
+// Dark/Light toggle
+function toggleDarkMode(){
+  const btn=document.getElementById("themeToggle");
+  if(document.body.classList.contains("light")){
+    document.body.classList.remove("light");btn.innerHTML="🌙";localStorage.setItem("lightMode","disabled");
+  }else{
+    document.body.classList.add("light");btn.innerHTML="☀️";localStorage.setItem("lightMode","enabled");
+  }
+}
+if(localStorage.getItem("lightMode")==="enabled"){document.body.classList.add("light");if(document.getElementById("themeToggle"))document.getElementById("themeToggle").innerHTML="☀️";}
 </script>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain:"darkpurpleof-s-website.firebaseapp.com",
+  projectId:"darkpurpleof-s-website",
+  storageBucket:"darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId:"520651082420",
+  appId:"1:520651082420:web:bb05c0c3fd64517952e5e1"
+};
+if(!window.firebase||!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-            authDomain: "darkpurpleof-s-website.firebaseapp.com",
-            projectId: "darkpurpleof-s-website",
-            storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-            messagingSenderId: "520651082420",
-            appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-        };
+// check auth state -> redirect if banned
+auth.onAuthStateChanged(async (user)=>{
+  if(!user)return;
+  try{
+    const bannedSnap=await db.collection("banned_users").doc(user.email).get();
+    if(bannedSnap.exists)window.location.href="/not-approved";
+  }catch(e){console.warn("banned check failed",e);}
+});
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const firestore = getFirestore(app);
+document.getElementById("forgotPasswordForm").addEventListener("submit", async (ev)=>{
+  ev.preventDefault();
+  const email=(document.getElementById("email").value||"").trim().toLowerCase();
+  if(!email){showToast("Email is required.","yellow");return;}
+  if(email.endsWith("@darkpurpleof.github.io")){showToast("Admin accounts must reset via admin help.","red");return;}
 
-        document.getElementById("forgotPasswordForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            const email = document.getElementById("email").value;
-            const errorMessage = document.getElementById("errorMessage");
-            const successMessage = document.getElementById("successMessage");
-
-            sendPasswordResetEmail(auth, email)
-                .then(() => {
-                    successMessage.innerText = "A password reset link has been sent to your email!";
-                    errorMessage.innerText = "";
-                })
-                .catch((error) => {
-                    errorMessage.innerText = "Failed to send reset email: " + error.message;
-                    successMessage.innerText = "";
-                });
-        });
-
-        // Profile Picture Handling
-        onAuthStateChanged(auth, async (user) => {
-            const profilePic = document.getElementById("profilePic");
-
-            if (user) {
-                const email = user.email;
-
-                try {
-                    const profileRef = doc(firestore, "user_data", email);
-                    const profileSnap = await getDoc(profileRef);
-                    const profilePicUrl = profileSnap.exists() ? profileSnap.data().profile_picture : null;
-
-                    profilePic.style.backgroundImage = `url('${profilePicUrl || "https://darkpurpleof.github.io/org-owner.jpg"}')`;
-                } catch (error) {
-                    console.error("Error fetching profile picture:", error);
-                    profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
-                }
-            }
-        });
-    </script>
+  try{
+    await auth.sendPasswordResetEmail(email);
+    showToast("Password reset link sent to your email!","purple");
+  }catch(err){
+    console.warn("reset failed",err);
+    showToast("Failed to send reset email: "+(err.message||"unknown"),"red");
+  }
+});
+</script>
 </body>
 </html>

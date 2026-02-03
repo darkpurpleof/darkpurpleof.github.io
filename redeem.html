@@ -1,244 +1,429 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Redeem Code</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Redeem Code</title>
 
-        :root {
-            --bg-color: #000;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.05);
-            --border-color: purple;
-        }
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-        body.light {
-            --bg-color: #fff;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.1);
-            --border-color: purple;
-        }
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            min-height: 100vh;
-            transition: background 0.4s, color 0.4s;
-        }
+  <style>
+    :root{
+      --bg:#171717;
+      --card:#1f1f1f;
+      --text:#eaeaea;
+      --muted:#9ca3af;
+      --accent:#6b21a8;
+      --accent-strong:#5b21b6;
+      --border:rgba(255,255,255,0.06);
+      --radius:12px;
+      --max-width:920px;
+    }
+    body.light{ --bg:#f6f8fb; --card:#fff; --text:#0f172a; --muted:#475569; --border:rgba(0,0,0,0.06); }
 
-        .top-bar {
-            width: 100%;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow-x:hidden;}
+    body{display:flex;flex-direction:column;min-height:100vh;}
 
-        .icon-btn {
-            font-size: 22px;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            padding: 6px;
-            transition: opacity 0.3s;
-        }
+    /* topbar */
+    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
 
-        .profile-pic {
-            width: 32px;
-            height: 32px;
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-        }
+    main.container{ width:100%; max-width:var(--max-width); margin:20px auto; padding:16px; box-sizing:border-box; }
+    .card{ background:var(--card); border-radius:var(--radius); padding:16px; border:1px solid var(--border); box-shadow:0 6px 18px rgba(2,6,23,0.45); }
 
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            text-shadow: 0 0 6px var(--text-color);
-            animation: glitch 1.5s infinite;
-        }
+    h1{ margin:0 0 8px 0; font-size:18px; font-weight:700; color:var(--text); }
+    p.lead{ margin:6px 0 12px 0; color:var(--muted); }
 
-        .info-chart {
-            margin: 20px auto;
-            padding: 15px;
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            border-radius: 10px;
-            max-width: 500px;
-        }
+    .form-row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .input { flex:1; min-width:160px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); box-sizing:border-box; }
+    .btn { padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700; background:var(--accent); color:#fff; }
+    .btn.ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
 
-        .input-field, .register-button {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
-            background-color: var(--box-bg);
-            color: var(--text-color);
-            font-size: 1em;
-            box-sizing: border-box;
-        }
+    .muted { color:var(--muted); font-size:13px; }
 
-        .register-button:hover {
-            opacity: 0.8;
-        }
+    /* confirm card */
+    .confirm { display:flex; gap:12px; align-items:center; padding:12px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid var(--border); margin-top:12px; }
+    .confirm img { width:72px; height:72px; border-radius:10px; object-fit:cover; border:1px solid var(--border); }
+    .confirm .meta { flex:1; min-width:0; }
+    .confirm .title { font-weight:700; font-size:16px; color:var(--text); display:flex; gap:8px; align-items:center; }
+    .confirm .by { font-size:13px; color:var(--muted); margin-top:6px; }
 
-        .error-message {
-            color: red;
-            margin-top: 10px;
-        }
+    .actions { display:flex; gap:8px; margin-left:auto; }
+    .actions .btn { padding:8px 12px; font-size:14px; }
 
-        .success-message {
-            color: purple;
-            margin-top: 10px;
-        }
+    .result { margin-top:12px; padding:12px; border-radius:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); }
 
-        @keyframes glitch {
-            0%, 60%, 100% { transform: none; }
-            20% { transform: skewX(3deg); }
-            40% { transform: skewX(-3deg); }
-        }
-    </style>
+    /* responsive */
+    @media(max-width:720px){
+      .confirm{ flex-direction:row; align-items:center; }
+      .confirm img{ width:64px; height:64px; }
+      .actions{ margin-top:8px; width:100%; justify-content:flex-end; }
+    }
+  </style>
 </head>
 <body>
-<div class="top-bar">
-    <button id="theme-toggle" class="icon-btn">🌙</button>
-    <div id="profile" class="profile-pic"></div>
-</div>
+  <script type="module" src="/dp-topbar.js"></script>
+  <dp-topbar></dp-topbar>
 
-<h1>REDEEM CODE</h1>
+  <main class="container">
+    <div class="card" id="ui-root" role="region" aria-label="Redeem code">
+      <h1>Redeem Code</h1>
+      <p class="lead">Enter a redemption code to receive coins or items. New codes look like <code>ABCDE-ABCDE-ABCDE-ABCDE-ABCDE</code>.</p>
 
-<div class="info-chart">
-    <p>Enter a redemption code to earn bonus coins.</p>
-    <button id="open-app" class="register-button" style="background: purple; color: white;">Redeem on the App</button>
-    <input id="code-input" class="input-field" placeholder="Enter your code">
-    <button id="redeem-btn" class="register-button">Redeem</button>
-    <div id="redeem-message" class="error-message" style="display: none;"></div>
-</div>
+      <div id="entry-area" class="form-row">
+        <input id="codeInput" class="input" placeholder="Enter code (legacy or new)" autocomplete="off" />
+        <button id="redeemBtn" class="btn">Redeem</button>
+        <button id="openApp" class="btn ghost">Open App</button>
+      </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+      <div id="message" class="muted" style="margin-top:10px;"></div>
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-        authDomain: "darkpurpleof-s-website.firebaseapp.com",
-        projectId: "darkpurpleof-s-website",
-        storageBucket: "darkpurpleof-s-website.appspot.com",
-        messagingSenderId: "520651082420",
-        appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
-    };
+      <!-- confirmation area (hidden until valid code found) -->
+      <div id="confirmArea" style="display:none; margin-top:12px;"></div>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+      <!-- result area -->
+      <div id="resultArea" style="display:none;margin-top:12px;"></div>
+    </div>
+  </main>
 
-    const profile = document.getElementById("profile");
-    const redeemBtn = document.getElementById("redeem-btn");
-    const codeInput = document.getElementById("code-input");
-    const msg = document.getElementById("redeem-message");
-    const openApp = document.getElementById("open-app");
-    let currentUser = null;
+  <div id="toast" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);display:none;padding:10px 14px;border-radius:10px;color:#fff;z-index:99999;"></div>
 
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            currentUser = user;
-            const email = user.email;
-            const userRef = doc(db, "user_data", email);
-            try {
-                const userSnap = await getDoc(userRef);
-                const pic = userSnap.exists() && userSnap.data().profile_picture
-                    ? userSnap.data().profile_picture
-                    : "https://darkpurpleof.github.io/org-owner.jpg";
-                profile.style.backgroundImage = `url(${pic})`;
-            } catch {
-                profile.style.backgroundImage = "url('https://darkpurpleof.github.io/org-owner.jpg')";
-            }
+<script>
+  // config: compat SDK already loaded above
+  const firebaseConfig = {
+    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+    authDomain: "darkpurpleof-s-website.firebaseapp.com",
+    projectId: "darkpurpleof-s-website",
+    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+    messagingSenderId: "520651082420",
+    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+  };
+  if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const codeInput = document.getElementById('codeInput');
+  const redeemBtn = document.getElementById('redeemBtn');
+  const openApp = document.getElementById('openApp');
+  const messageEl = document.getElementById('message');
+  const confirmArea = document.getElementById('confirmArea');
+  const resultArea = document.getElementById('resultArea');
+  const toast = document.getElementById('toast');
+  let currentUser = null;
+
+  function showToast(text, color='purple', t=3000){
+    toast.textContent = text;
+    toast.style.display = 'block';
+    toast.style.background = (color==='red')? '#c00': (color==='yellow'? '#e6b800' : 'linear-gradient(180deg,var(--accent-strong),var(--accent))');
+    setTimeout(()=> toast.style.display='none', t);
+  }
+
+  auth.onAuthStateChanged(u => {
+    currentUser = u || null;
+  });
+
+  openApp.addEventListener('click', ()=> location.href = 'darkpurpleof://redeem');
+
+  // new code pattern: 5 groups of 5 alnum separated by dashes
+  const NEW_CODE_RE = /^[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}$/i;
+
+  redeemBtn.addEventListener('click', onRedeem);
+
+  async function onRedeem(){
+    clearMessage();
+    confirmArea.style.display='none';
+    resultArea.style.display='none';
+
+    if (!currentUser) { showError('You must be signed in to redeem codes.'); return; }
+    const codeRaw = (codeInput.value||'').trim();
+    if (!codeRaw) { showError('Enter a code.'); return; }
+
+    const code = codeRaw.toUpperCase();
+
+    // check new code pattern
+    const isNew = NEW_CODE_RE.test(code);
+
+    try {
+      const codeRef = db.collection('redeemable').doc(code);
+      const codeSnap = await codeRef.get();
+      if (!codeSnap.exists) {
+        showError('Code not found or already used.');
+        return;
+      }
+
+      const data = codeSnap.data() || {};
+      if (isNew) {
+        // NEW codes have structure: type: "dev"|"shop"|"coins"
+        const type = (data.type || '').toLowerCase();
+        if (!type) { showError('Invalid new code payload.'); return; }
+
+        if (type === 'coins') {
+          // coins: data.amount
+          const amount = Number(data.amount || 0);
+          if (!amount || amount <= 0) { showError('Invalid coin amount.'); return; }
+          // show confirm card for coins
+          showConfirmCoins(code, amount, data, codeRef);
+        } else if (type === 'shop' || type === 'dev') {
+          // expect author and id inside code doc
+          const author = data.author;
+          const itemId = data.id;
+          if (!author || !itemId) { showError('Invalid code payload (missing author/id).'); return; }
+          // fetch item from corresponding path
+          const path = (type === 'dev') ? `ugc/${author}/development-items/${itemId}` : `ugc/${author}/store-items/${itemId}`;
+          const itemSnap = await db.doc(path).get();
+          if (!itemSnap.exists) { showError('Referenced item not found.'); return; }
+          const item = itemSnap.data();
+          showConfirmItem(code, type, data, item, author, itemId, codeRef);
         } else {
-            currentUser = null;
-            profile.style.backgroundImage = "url('https://darkpurpleof.github.io/org-owner.jpg')";
+          showError('Unknown code type.');
+          return;
         }
-    });
-
-    redeemBtn.addEventListener("click", async () => {
-        const code = codeInput.value.trim().toUpperCase();
-        msg.style.display = "none";
-        msg.textContent = "";
-
-        if (!currentUser) {
-            return showError("You must be logged in to redeem!");
+      } else {
+        // Legacy flow: keep current behavior (assume legacy codes contain digits for amount)
+        // For safety use digits extraction
+        const digits = (code.match(/\d+/g) || []).join('');
+        const coins = digits ? parseInt(digits,10) : 0;
+        if (!coins || coins <= 0) {
+          // If legacy can be other behavior, but follow your previous approach: error
+          showError('Legacy code did not contain a coin amount.');
+          return;
         }
+        // Confirm legacy redemption immediately (small confirm)
+        showConfirmLegacy(code, coins, codeRef);
+      }
+    } catch (err) {
+      console.error(err);
+      showError('Failed to validate code. Try again.');
+    }
+  }
 
-        if (!code || code.length < 5) {
-            return showError("Invalid code format.");
-        }
+  function clearMessage(){ messageEl.textContent=''; messageEl.className='muted'; }
+  function showError(txt){ messageEl.textContent=txt; messageEl.className='muted'; showToast(txt,'red',3500); }
 
-        const codeRef = doc(db, "redeemable", code);
-        const userRef = doc(db, "user_data", currentUser.email);
+  // Helper: write transaction per spec
+  async function writeTransaction(userEmail, docId, payload){
+    // path: transactions/(currentEmail)/records/{docId}
+    const txRef = db.collection('transactions').doc(userEmail).collection('records').doc(docId);
+    await txRef.set(payload);
+  }
 
-        try {
-            const codeSnap = await getDoc(codeRef);
-            if (!codeSnap.exists()) return showError("Code not found or already used.");
+  // Helper update coins
+ async function addCoinsToUser(userEmail, amount){
+  const userRef = db.collection('user_data').doc(userEmail);
+  const userSnap = await userRef.get();
+  let current = 0;
 
-            const match = code.match(/\d+/g);
-            const coinsToAdd = match ? parseInt(match.join(""), 10) : 0;
-            if (coinsToAdd <= 0) return showError("Code doesn't contain a valid reward.");
+  if (userSnap.exists){  // correct: no parentheses
+    const c = userSnap.data().coins;
+    // parse string to number safely
+    current = parseInt(c || '0', 10) || 0;
+  }
 
-            const userSnap = await getDoc(userRef);
-            let currentCoins = "0";
-            if (userSnap.exists()) {
-                const coinsStr = userSnap.data().coins || "0";
-                currentCoins = isNaN(coinsStr) ? "0" : coinsStr;
-            }
+  const newVal = current + Number(amount || 0);
+  // save back as string
+  await userRef.set({ coins: String(newVal) }, { merge: true });
 
-            const updatedCoins = (parseInt(currentCoins) + coinsToAdd).toString();
+  return newVal; // you can return number for UI display
+}
 
-            await updateDoc(userRef, { coins: updatedCoins });
-            await deleteDoc(codeRef);
 
-            msg.className = "success-message";
-            msg.textContent = `🎉 Success! ${coinsToAdd} coins added.`;
-            msg.style.display = "block";
-            codeInput.value = "";
+  // Confirm UI for legacy
+  function showConfirmLegacy(code, coins, codeRef){
+    confirmArea.innerHTML = `
+      <div class="confirm">
+        <img src="https://darkpurpleof.github.io/org-owner.jpg" alt="coins">
+        <div class="meta">
+          <div class="title">${coins} Coins</div>
+          <div class="by">by System</div>
+          <div class="muted" style="margin-top:6px;">After redeeming, the coins will be added to your account immediately.</div>
+        </div>
+        <div class="actions">
+          <button id="cancelBtn" class="btn ghost">Cancel</button>
+          <button id="confirmBtn" class="btn">Continue</button>
+        </div>
+      </div>
+    `;
+    confirmArea.style.display='block';
+    document.getElementById('cancelBtn').onclick = ()=> { confirmArea.style.display='none'; };
+    document.getElementById('confirmBtn').onclick = async ()=>{
+      try {
+        // add coins
+        const newCoins = await addCoinsToUser(currentUser.email, coins);
 
-        } catch (e) {
-            console.error(e);
-            showError("Redemption failed. Try again.");
-        }
-    });
+        // transaction payload for legacy codes
+        const payload = {
+          amount: Number(coins),
+          date: firebase.firestore.FieldValue.serverTimestamp(),
+          description: "Redeemed Code",
+          image: "https://darkpurpleof.github.io/org-owner.jpg",
+          source: "system@darkpurpleof.github.io",
+          type: "incoming"
+        };
+        await writeTransaction(currentUser.email, code, payload);
 
-    function showError(text) {
-        msg.className = "error-message";
-        msg.textContent = text;
-        msg.style.display = "block";
+        // delete code doc (mark used)
+        await codeRef.delete();
+
+        // show success
+        resultArea.style.display='block';
+        resultArea.innerHTML = `<div class="result"><strong>Success!</strong> ${coins} coins added to your account. You now have ${newCoins} coins. <div style="margin-top:8px;"><button id="backBtn" class="btn ghost">Redeem another</button> <button id="txBtn" class="btn">View transactions</button></div></div>`;
+        document.getElementById('backBtn').onclick = ()=> { resultArea.style.display='none'; confirmArea.style.display='none'; codeInput.value=''; };
+        document.getElementById('txBtn').onclick = ()=> { window.location.href = '/transactions'; };
+      } catch (err) {
+        console.error(err); showError('Failed to finalize redemption.');
+      }
+    };
+  }
+
+  // Confirm UI for coins (new codes)
+  async function showConfirmCoins(code, amount, codeData, codeRef){
+  // fetch author display name & verified if author exists
+  let authorDisplay = 'system@darkpurpleof.github.io';
+  let authorVerified = false;
+  if (codeData.author) {
+    try {
+      const aSnap = await db.collection('user_data').doc(codeData.author).get();
+      if (aSnap.exists()) {
+        const a = aSnap.data();
+        authorDisplay = a['display name'] || codeData.author || authorDisplay;
+        authorVerified = !!a.is_verified;
+      }
+    } catch(e){ console.warn(e); }
+  }
+
+  confirmArea.innerHTML = `
+    <div class="confirm">
+      <img src="${escapeHtml(codeData.image || 'https://darkpurpleof.github.io/org-owner.jpg')}" alt="coins">
+      <div class="meta">
+        <div class="title">${amount} Coins <span class="muted" style="font-weight:600">(DF$)</span></div>
+        <div class="by">
+          by ${escapeHtml(authorDisplay)}
+          ${authorVerified ? '<img src="/assets/verified.png" style="width:14px;height:14px;margin-left:6px;vertical-align:middle;">' : ''}
+        </div>
+        <div class="muted" style="margin-top:6px;">After redeeming, the coins will be added to your account immediately.</div>
+      </div>
+      <div class="actions">
+        <button id="cancelBtn" class="btn ghost">Cancel</button>
+        <button id="confirmBtn" class="btn">Continue</button>
+      </div>
+    </div>
+  `;
+  confirmArea.style.display='block';
+  document.getElementById('cancelBtn').onclick = ()=> { confirmArea.style.display='none'; };
+  document.getElementById('confirmBtn').onclick = async ()=>{
+    try {
+      const newCoins = await addCoinsToUser(currentUser.email, amount);
+
+      const payload = {
+        amount: Number(amount),
+        date: firebase.firestore.FieldValue.serverTimestamp(),
+        description: "DF$",
+        image: codeData.image || "https://darkpurpleof.github.io/org-owner.jpg",
+        source: codeData.author || "system@darkpurpleof.github.io",
+        type: "incoming"
+      };
+      await writeTransaction(currentUser.email, code, payload);
+
+      await codeRef.delete();
+
+      resultArea.style.display='block';
+      resultArea.innerHTML = `<div class="result"><strong>Success!</strong> ${amount} coins added. You now have ${newCoins} coins. <div style="margin-top:8px;"><button id="backBtn" class="btn ghost">Redeem another</button> <button id="txBtn" class="btn">View transactions</button></div></div>`;
+      document.getElementById('backBtn').onclick = ()=> { resultArea.style.display='none'; confirmArea.style.display='none'; codeInput.value=''; };
+      document.getElementById('txBtn').onclick = ()=> { window.location.href = '/transactions'; };
+    } catch (err) {
+      console.error(err); showError('Failed to finalize redemption.');
+    }
+  };
+}
+
+  // Confirm UI for item (shop/dev)
+  async function showConfirmItem(code, type, codeData, itemDocData, authorEmail, itemId, codeRef){
+    // fetch author display name & verified
+    let authorDisplay = authorEmail;
+    let authorVerified = false;
+    try {
+      const aSnap = await db.collection('user_data').doc(authorEmail).get();
+      if (aSnap.exists){
+        const a = aSnap.data();
+        authorDisplay = a['display name'] || authorEmail;
+        authorVerified = !!a.is_verified;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch author info:", e);
     }
 
-    document.getElementById("theme-toggle").addEventListener("click", () => {
-        document.body.classList.toggle("light");
-        document.getElementById("theme-toggle").textContent = document.body.classList.contains("light") ? "☀️" : "🌙";
-    });
+    const itemImage = itemDocData.image || itemDocData.img || "https://darkpurpleof.github.io/org-owner.jpg";
+    const itemName = itemDocData.name || itemDocData.title || ("Item " + itemId);
 
-    openApp.addEventListener("click", () => {
-        window.location.href = "darkpurpleof://redeem";
-    });
+    // Build verified badge html separately
+    const verifiedBadge = authorVerified
+      ? '<img src="/assets/verified.png" style="width:14px;height:14px;margin-left:6px;display:inline-block;vertical-align:middle;">'
+      : '';
+
+    confirmArea.innerHTML = `
+      <div class="confirm">
+        <img src="${escapeHtml(itemImage)}" alt="${escapeHtml(itemName)}">
+        <div class="meta">
+          <div class="title">${escapeHtml(itemName)}</div>
+          <div class="by">by ${escapeHtml(authorDisplay)} ${verifiedBadge}</div>
+          <div class="muted" style="margin-top:6px;">After you redeem this code, the object will be added to your account immediately.</div>
+        </div>
+        <div class="actions">
+          <button id="cancelBtn" class="btn ghost">Cancel</button>
+          <button id="confirmBtn" class="btn">Continue</button>
+        </div>
+      </div>
+    `;
+
+    confirmArea.style.display='block';
+    document.getElementById('cancelBtn').onclick = ()=> { confirmArea.style.display='none'; };
+
+    document.getElementById('confirmBtn').onclick = async ()=>{
+      try {
+        // Add item to user's purchasedIds
+        const userRef = db.collection('user_data').doc(currentUser.email);
+        await userRef.set({ purchasedIds: firebase.firestore.FieldValue.arrayUnion(itemId) }, { merge: true });
+
+        // create transaction
+        const payload = {
+          amount: 0,
+          date: firebase.firestore.FieldValue.serverTimestamp(),
+          description: String(itemName),
+          image: itemImage,
+          source: authorEmail,
+          type: "outgoing"
+        };
+        await writeTransaction(currentUser.email, itemId, payload);
+
+        // delete code
+        await codeRef.delete();
+
+        // show success
+        resultArea.style.display='block';
+        resultArea.innerHTML = `
+          <div class="result">
+            <strong>Success!</strong> ${escapeHtml(itemName)} has been added to your account.
+            <div style="margin-top:8px;">
+              <button id="backBtn" class="btn ghost">Redeem another</button>
+              <button id="txBtn" class="btn">View transactions</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('backBtn').onclick = ()=> { resultArea.style.display='none'; confirmArea.style.display='none'; codeInput.value=''; };
+        document.getElementById('txBtn').onclick = ()=> { window.location.href = '/transactions'; };
+      } catch (err) {
+        console.error(err); showError('Failed to grant item: ' + (err.message || err));
+      }
+    };
+}
+
+
+  // helper escape
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 </script>
 </body>
 </html>

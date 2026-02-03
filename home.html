@@ -1,931 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Home | DarkPurpleOF's Website</title>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-        :root {
-            --bg-color: #000;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.05);
-            --border-color: purple;
-        }
+  <style>
+    /* Global box-sizing and overflow guard to prevent any accidental horizontal scroll */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; } /* hard guard: no horizontal scroll anywhere */
+    img { max-width: 100%; display: block; }
 
-        body.light {
-            --bg-color: #fff;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.1);
-            --border-color: purple;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            min-height: 100vh;
-            transition: background 0.4s, color 0.4s;
-            padding: 1rem;
-            box-sizing: border-box;
-        }
-
-        .profile-preview {
-        background-color: #141414;
-        border-radius: 10px;
-        width: 80%;
-        max-width: 500px;
-        overflow: hidden;
-        margin-top: 20px;
-        cursor: pointer;
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --friend-row-height: 110px; /* approx height per friend card on desktop */
+      --friend-row-height-mobile: 84px; /* approx height per friend card on mobile */
+    }
+    body.light {
+      --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06);
     }
 
-    .profile-banner {
-        width: 100%;
-        height: 100px;
-        background-color: #333;
-        background-size: cover;
-        background-position: center;
+    body {
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background-color: var(--bg);
+      color:var(--text);
+      transition: background .25s, color .25s;
+      min-height:100vh;
     }
 
-    .profile-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+    .top-bar { display:none !important; }
+
+    main.container {
+      max-width:1200px;
+      width:100%;
+      margin:24px auto;
+      padding:20px;
+      display:grid;
+      grid-template-columns:1fr 340px;
+      gap:20px;
+      box-sizing:border-box;
+      overflow-x: hidden; /* ensure main never overflows horizontally */
+    }
+    @media (max-width:920px){
+      main.container{ grid-template-columns:1fr; padding:16px; }
+      aside.right-column{ order:2; }
+    }
+
+    .card { background:var(--card); border-radius:12px; padding:18px; border:1px solid var(--border); color:var(--text); box-shadow:0 6px 18px rgba(2,6,23,0.45); overflow:visible; }
+    .hero {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border-radius: 12px;
+      min-width: 0; /* prevent children from forcing width */
+    }
+
+    /* ensure right-side hero column won't push page width */
+    .hero > div { min-width: 0; }
+    .hero > div:last-child { min-width: 0; }
+
+    .muted { color:var(--muted); font-size:13px; }
+
+    /* FRIENDS GRID: grid-first approach (no horizontal scroll) */
+    .friends-container {
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0; /* allow children to shrink */
+      /* default: 5 equal columns (will shrink to fit) */
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-auto-rows: var(--friend-row-height);
+      align-items: start;
+      overflow-x: hidden; /* important: never allow horizontal scrolling */
+      box-sizing: border-box;
+      border-radius: 8px;
+    }
+
+    /* Desktop: limit visible height to 4 rows, vertical scroll if more */
+    @media (min-width: 921px) {
+      .friends-container {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-auto-rows: var(--friend-row-height);
+        max-height: calc( (var(--friend-row-height) * 4) + (12px * 3) ); /* 4 rows + gaps */
+        overflow-y: auto;
+      }
+    }
+
+    /* Tablet / small desktop: keep 5 columns but allow rows to expand; still no horizontal scroll */
+    @media (min-width: 601px) and (max-width: 920px) {
+      .friends-container {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-auto-rows: var(--friend-row-height);
+        max-height: calc( (var(--friend-row-height) * 4) + (12px * 3) );
+        overflow-y: auto;
+      }
+    }
+
+    /* MOBILE: 5 columns max, shrink cards, show only 2 rows (vertical scroll if more) */
+    @media (max-width: 600px) {
+      .friends-container {
+        gap: 8px;
         padding: 10px;
+        /* keep 5 columns max but allow them to shrink to 0 fraction; using minmax(0,1fr) prevents overflow */
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-auto-rows: var(--friend-row-height-mobile);
+        max-height: calc( (var(--friend-row-height-mobile) * 2) + (8px * 1) ); /* 2 rows + gap */
+        overflow-y: auto;
+      }
     }
 
-    .profile-pfp {
-        width: 64px;
-        height: 64px;
-        border-radius: 12px;
-        background-size: cover;
-        background-position: center;
-        flex-shrink: 0;
+    /* friend card styles: flexible and cannot overflow horizontally */
+    .friend-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-width: 0; /* allow shrinking */
+      text-align: center;
+      cursor: pointer;
+      background: var(--card);
+      padding: 10px;
+      box-sizing: border-box;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .profile-text {
-        display: flex;
-        flex-direction: column;
-        text-align: left;
-        overflow: hidden;
+    .friend-pfp {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  margin: 0 auto 8px auto;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid rgba(0,0,0,0.06);
+  flex-shrink: 0;
+  background-repeat: no-repeat; /* <-- add this */
+}
+
+
+    .friend-name {
+      font-size:13px;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+    }
+    .friend-name img { width:12px; height:12px; margin-left:6px; }
+
+    .profile-preview { display:flex; gap:14px; align-items:center; background:var(--card); border-radius:12px; padding:12px; border:1px solid var(--border); }
+    .profile-pfp { width:72px; height:72px; border-radius:12px; background-size:cover; background-position:center; border:1px solid var(--border); }
+    .profile-text { display:flex; flex-direction:column; gap:6px; }
+    .profile-name-verif { font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px; }
+    .profile-name-verif img { width:14px; height:14px; margin-left:6px; }
+
+    .action-button { display:inline-flex; gap:10px; align-items:center; padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:transparent; cursor:pointer; font-weight:600; color:var(--text); }
+    .action-button img{ width:18px; height:18px; }
+
+    #toast { position:fixed; top:18px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999; }
+    #toast.purple { background:var(--accent-strong); color:#fff; } #toast.yellow{ background:#e6b800; color:#222; } #toast.red{ background:#c00; color:#fff; }
+
+    /* smaller visuals for small screens */
+    @media (max-width: 600px) {
+      .friend-card { padding: 6px; }
+      .friend-pfp { width: 40px; height: 40px; margin-bottom:6px; }
+      .friend-name { font-size: 11px; }
+      .profile-preview { flex-direction:row; gap:10px; padding:10px; }
+      main.container { margin: 12px auto; padding: 12px; max-width: 100%; overflow-x: hidden; }
     }
 
-    .profile-name-verif img {
-    width: 14px;
-    height: 14px;
-    display: inline-block;
-    vertical-align: middle;
-}
+    /* subtle scrollbar styling so vertical scroll inside friends-list doesn't feel ugly (optional) */
+    .friends-container::-webkit-scrollbar { width: 8px; }
+    .friends-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.04); border-radius: 6px; }
+  </style>
 
-    .profile-bio {
-        font-size: 0.9rem;
-        opacity: 0.8;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 250px;
-    }
+  <!-- dp-topbar -->
+  <script type="module" src="/dp-topbar.js"></script>
 
-    .profile-bio,
-.profile-name-verif span,
-#preview-name {
-    color: #fff;
-}
+  <script>
+    // make isMobile and isWebView global so all later scripts can call them
+    window.isMobile = function() {
+      try {
+        const mm = window.matchMedia && window.matchMedia('(max-width: 600px)').matches;
+        if (typeof mm === 'boolean') return mm;
+        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+      } catch (e) { return false; }
+    };
 
-        .friends-container {
-    display: flex;
-    overflow-x: auto;
-    gap: 15px;
-    padding: 10px;
-    margin-top: 20px;
-    scroll-behavior: smooth;
-}
-
-.friends-container::-webkit-scrollbar {
-    height: 8px;
-}
-
-.friends-container::-webkit-scrollbar-thumb {
-    background: purple;
-    border-radius: 4px;
-}
-
-.friend-card {
-    flex: 0 0 auto;
-    width: 80px;
-    text-align: center;
-    cursor: pointer;
-}
-
-.friend-pfp {
-    width: 64px;
-    height: 64px;
-    border-radius: 12px;
-    border: 2px solid var(--border-color);
-    background-size: cover;
-    background-position: center;
-    margin: auto;
-}
-
-.friend-name {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    font-size: 0.8rem;
-    margin-top: 5px;
-    word-break: break-word;
-}
-
-.friend-name img {
-    width: 14px;
-    height: 14px;
-}
-
-iframe {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE 10+ */
-}
-iframe::-webkit-scrollbar {
-    display: none; /* Chrome, Safari */
-}
-
-        .top-bar {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .action-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background-color: var(--box-bg);
-    border: 1.5px solid var(--border-color);
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 15px;
-    width: 80%;
-    max-width: 300px;
-    transition: background 0.2s;
-}
-
-.action-button:hover {
-    background-color: rgba(128, 0, 128, 0.15);
-}
-
-.action-button img {
-    width: 20px;
-    height: 20px;
-}
-
-        .top-bar-left {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .top-bar-right {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .icon-btn {
-            font-size: 22px;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            padding: 6px;
-            transition: opacity 0.3s;
-        }
-
-        .icon-btn:hover {
-            opacity: 0.7;
-        }
-
-        .profile-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-
-        .profile-pic {
-            width: 32px;
-            height: 32px;
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-        }
-
-        .info-chart {
-            margin: 20px auto;
-            padding: 15px;
-            background-color: #202016;
-            border: 1.5px solid var(--border-color);
-            border-radius: 10px;
-            text-align: center;
-            width: 80%;
-            max-width: 400px;
-        }
-
-        .info-chart button {
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            color: var(--text-color);
-            padding: 10px 20px;
-            font-size: 1rem;
-            cursor: pointer;
-            border-radius: 8px;
-        }
-
-        .row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .announcement-title {
-            font-size: 1.2rem;
-            margin: 5px 0;
-        }
-
-        .announcement-message {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        .card {
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-            width: 80%;
-            max-width: 500px;
-        }
-
-        .action-button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 80%;
-            max-width: 300px;
-        }
-
-        .action-button img {
-            width: 20px;
-            height: 20px;
-        }
-
-        .profile-pic-frame {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    border-radius: 12px;
-    background-size: cover;
-    background-position: center;
-    z-index: 2;
-    display: none;
-}
-
-/* Add to your <style> section or at the end of your CSS in home.html */
-#toast {
-    position: fixed;
-    top: -80px;
-    left: 0;
-    width: 100vw;
-    min-width: 0;
-    max-width: 100vw;
-    padding: 18px 0;
-    border-radius: 0 0 16px 16px;
-    font-size: 1.1em;
-    font-family: inherit;
-    color: #fff;
-    z-index: 9999;
-    box-shadow: 0 4px 16px rgba(128,0,128,0.15);
-    opacity: 0;
-    pointer-events: none;
-    text-align: center;
-    transition: opacity 0.4s, top 0.4s;
-}
-#toast.show {
-    opacity: 1;
-    pointer-events: auto;
-    top: 0;
-    animation: toast-slide-down 0.4s cubic-bezier(.77,0,.175,1);
-}
-#toast.hide {
-    opacity: 0;
-    top: -80px;
-    animation: toast-slide-up 0.4s cubic-bezier(.77,0,.175,1);
-}
-#toast.purple { background: purple; }
-#toast.yellow { background: #e6b800; color: #222; }
-#toast.red { background: #c00; }
-
-@keyframes toast-slide-down {
-    from { top: -80px; opacity: 0; }
-    to   { top: 0; opacity: 1; }
-}
-@keyframes toast-slide-up {
-    from { top: 0; opacity: 1; }
-    to   { top: -80px; opacity: 0; }
-}
-    </style>
+    window.isWebView = function() {
+      try {
+        const ua = navigator.userAgent || '';
+        const standalone = window.navigator.standalone === true;
+        const isAndroidWebView = /\bwv\b/.test(ua) || (/Version\/[\d.]+.*Chrome/.test(ua) && !/Chrome\/[\d.]+ Mobile/.test(ua));
+        const isNoChrome = !window.chrome && /Safari/.test(ua) && !/Chrome/.test(ua);
+        return standalone || isAndroidWebView || isNoChrome;
+      } catch (e) { return false; }
+    };
+  </script>
 </head>
+
 <body>
+  <dp-topbar></dp-topbar>
 
-<div class="top-bar">
-    <div class="top-bar-left">Home</div>
-    <div class="top-bar-right">
-        <button id="coin-display" class="icon-btn">DF$ - 0</button>
-        <img src="/assets/search.png" class="icon-btn" onclick="location.href='/search'" alt="Search">
-        <svg class="icon-btn" onclick="location.href='/ugc/posts'" viewBox="0 0 2000 2000" width="24" height="24">
-            <path fill="#F1F1F1" d="m1657,116h47l19,2 20,6 9,6 7,8 4,11 2,18 2,43 1,48v1278l-3,31 -4,16 -5,12 -9,11 -14,11 -16,8 -12,4 -23,2h-343l-2,-5 -2,-23 -1,-19v-14l3,-36 3,-23 2,-11 2,-2 257,-1v-320l1,-13 5,-14 8,-31 10,-33 11,-31 14,-38 13,-41 7,-25 7,-32 7,-47 2,-20 1,-21v-107l-2,-21 -7,-29 -11,-33 -12,-25 -10,-15 -11,-14 -9,-10 -17,-17 -6,-5 -1,-2 -1,-266 -546,1h-108l-548,-1 1,678v578l1,46v42l-1,1h-118l-9,-3 -8,-6 -11,-12 -10,-14 -5,-11 -4,-16 -1,-24 -1,-10 -1,-36 -1,-692 -1,-27 -2,-23 -1,-36v-507l2,-23 4,-15 5,-12 9,-13 9,-11 7,-7 15,-9 17,-6 9,-2h1328z"/>
-  <path fill="#F1F1F1" d="m1561,573 l12,1 12,5 12,11 15,15 13,17 10,18 10,25 7,22 4,21 3,23 1,21v46l-2,42 -1,12 -1,14 -4,40 -1,12 5,5 -2,13 -6,14 -8,30 -10,35 -12,38 -8,22 -5,22 -8,26 -8,19 -7,14 -12,29 -9,17 -15,24 -10,19 -8,16 -9,15 -9,11 -12,13 -13,12 -19,14 -17,13 -28,21 -13,10 -25,20 -13,11 -11,9 -11,10 -11,9 -7,7 -8,7 -8,8 -8,14 -5,13 -1,8 -3,60 -2,39 -1,44 -1,2 -667,1h-171l-2,-1 1,-17 1,-15 2,-72 1,-138 2,-16 6,-21 10,-25 9,-15 13,-16 10,-11 7,-8 30,-30 14,-11 21,-14 6,-8 9,-6 21,-12 44,-22 29,-13 16,-8 25,-11 21,-4 11,-2 37,-11 36,-9 35,-7 43,-7 32,-3 18,-1h68l31,2 29,3 48,8 23,5 24,4 26,1 15,-1 15,-3 16,-3 10,-5 14,-12 11,-9 14,-12 11,-9 14,-12 7,-7 10,-14 12,-20 8,-15 10,-21 11,-27 12,-42 13,-48 9,-35 10,-42 13,-44 13,-43 13,-54 5,-13 7,-11 8,-10 8,-8 12,-9 12,-8 20,-8z"/>
-  <path fill="#F1F1F1" d="m943,560h59l22,3 26,6 21,7 20,9 19,12 16,12 14,12 14,14 9,12 13,12 9,14 7,15 9,28 16,64 4,17 2,18v15l-2,17 -7,25 -10,28 -11,26 -11,22 -11,18 -10,13 -12,13 -12,11 -13,10 -21,14 -18,10 -23,10 -27,8 -27,5 -13,2 -12,1h-21l-24,-3 -23,-4 -28,-8 -21,-9 -23,-12 -22,-15 -11,-9 -10,-9 -13,-13 -6,-5 -10,-14 -16,-28 -8,-16 -8,-21 -5,-17 -7,-34 -6,-47v-15l6,-35 6,-20 8,-21 10,-20 11,-17 9,-12 9,-10 7,-8 20,-20 8,-7 14,-11 13,-8 20,-11 24,-10 21,-7 27,-6z"/>
-  <path fill="#F1F1F1" d="m632,809h57l2,1 4,18 10,53 7,26 8,21 12,25 8,14 4,8v2h-50l-70,-1 -21,-4 -11,-4 -14,-7 -13,-11 -9,-12 -8,-16 -4,-13 -1,-8v-15l2,-14 5,-13 7,-12 7,-9 10,-10 11,-7 10,-5 19,-5z"/>
-  <path fill="#F1F1F1" d="m1262,808h82l36,1 10,2 5,2 -1,11 -20,78 -11,37 -8,23 -7,14 -3,1 -113,1h-32l-1,-2 13,-24 13,-27 14,-36 8,-25 13,-52z"/>
-  <path fill="#F1F1F1" d="m615,1138h51l-2,3 -54,25 -24,12 -17,10 -19,12 -20,12 -11,6h-4v-10l4,-14 8,-15 10,-13 11,-10 11,-7 14,-6 13,-3 8,-1z"/>
-</svg>
-        <div class="profile-container" id="topbar-profile">
-    <div id="profile-pic" class="profile-pic" style="position:relative;">
-        <div id="profile-pic-frame" class="profile-pic-frame"></div>
-    </div>
-    <span id="profile-name">Loading...</span>
-</div>
-    </div>
-</div>
+  <main class="container">
+    <section>
+      <div class="card hero" role="region" aria-label="Welcome">
+        <div>
+          <h1>Welcome back</h1>
+          <div style="height:12px;"></div>
 
-<h2 class="auth-required">Your Friends</h2>
-<div class="friends-container auth-required" id="friends-list"></div>
-
-<div class="announcement-title" id="announcement-title">Loading...</div>
-<div class="announcement-message" id="announcement-message">Please wait...</div>
-
-<h2>Random Quote</h2>
-<div class="card" id="quote-card">Loading quote...</div>
-
-<div class="action-button auth-required" onclick="location.href='/shop.html'">
-    <span>Shop</span>
-    <img src="/assets/forward.png" alt="Arrow">
-</div>
-
-<div class="action-button auth-required" onclick="location.href='/redeem'">
-    <span>Redeem a code</span>
-    <img src="/assets/redeem.png" alt="Arrow">
-</div>
-
-<div class="action-button auth-required" onclick="location.href='/manageblockedusers'">
-    <span>Manage Blocked Users</span>
-    <img src="/assets/block.png" alt="Arrow">
-</div>
-
-<div id="profile-preview" class="profile-preview" style="display:none;" onclick="location.href='/editprofile'">
-    <div class="profile-banner" id="profile-banner"></div>
-    <div class="profile-info" style="position:relative;">
-        <div class="profile-pfp" id="preview-pfp" style="position:relative;">
-            <div id="preview-pfp-frame" class="profile-pic-frame"></div>
+          <h3 class="muted auth-required" style="margin:0 0 8px 0">Your Friends</h3>
+          <div class="friends-container auth-required" id="friends-list" aria-live="polite"></div>
         </div>
+      </div>
+
+      <div style="height:16px;"></div>
+
+      <div class="card" aria-live="polite">
+        <div class="announcement-title" id="announcement-title">Loading...</div>
+        <div class="announcement-message" id="announcement-message">Please wait...</div>
+      </div>
+
+      <div style="height:12px;"></div>
+
+      <div class="card">
+        <h4 style="margin:0 0 10px 0">Random Quote</h4>
+        <div id="quote-card">Loading quote...</div>
+      </div>
+
+      <div style="height:12px;"></div>
+
+      <div id="profile-preview" class="profile-preview" style="display:none;">
+        <div style="position:relative;">
+          <div class="profile-pfp" id="preview-pfp"></div>
+          <div id="preview-pfp-frame" style="position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; border-radius:12px; display:none; background-size:cover; background-position:center;"></div>
+        </div>
+
         <div class="profile-text">
-            <div class="profile-name-verif">
-                <span id="preview-name">Loading...</span>
-                <img id="preview-verified" src="/assets/verified.png" alt="Verified" style="display:none;">
-            </div>
-            <div class="profile-bio" id="preview-bio"></div>
+          <div class="profile-name-verif">
+            <span id="preview-name">Loading...</span>
+            <img id="preview-verified" src="/assets/verified.png" alt="Verified" style="display:none; width:14px; height:14px;">
+          </div>
+          <div class="profile-bio" id="preview-bio"></div>
         </div>
-    </div>
-</div>
+      </div>
+    </section>
 
-<div id="android-promo" style="margin-top: 20px; width: 80%; max-width: 500px; text-align: center; color: var(--text-color); font-family: 'Orbitron', sans-serif;">
-    <p style="margin-bottom: 10px; font-weight: bold;">Even more sections and options in the app for android!</p>
-    <div class="action-button" onclick="location.href='/release/download'">
-        <span>Download it now</span>
-        <img src="/assets/download.png" alt="Download">
-    </div>
-</div>
+    <aside class="right-column">
+      <div class="card">
+        <h4 style="margin-top:0">Quick Actions</h4>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+          <button class="action-button auth-required" onclick="location.href='/redeem'"><img src="/assets/redeem.png" alt=""> Redeem</button>
+          <button class="action-button auth-required" onclick="location.href='/manageblockedusers'"><img src="/assets/block.png" alt=""> Manage Blocked Users</button>
+          <div style="height:6px"></div>
+          <div style="font-size:12px; color:var(--muted)">Android app</div>
+          <div class="action-button" onclick="location.href='/release/download'"><img src="/assets/download.png" alt=""> Download it now</div>
+        </div>
+      </div>
+    </aside>
+  </main>
 
-
-<script>
-    // Firebase config (replace with your own)
+  <!-- ORIGINAL SCRIPTS (adapted so they won't force horizontal scroll) -->
+  <script>
     const firebaseConfig = {
-  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-  authDomain: "darkpurpleof-s-website.firebaseapp.com",
-  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
-  projectId: "darkpurpleof-s-website",
-  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-  messagingSenderId: "520651082420",
-  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-  measurementId: "G-S2X2JYC8Z0"
-};
-    firebase.initializeApp(firebaseConfig);
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // Format numbers into compact (T, B, k, etc.)
-    function formatNumber(num) {
-        return Intl.NumberFormat('en', { notation: 'compact' }).format(num);
-    }
+    function formatNumber(num) { return Intl.NumberFormat('en',{notation:'compact'}).format(num); }
 
     function showToast(message, color = "purple", duration = 3500) {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.className = `${color} show`;
-    toast.style.display = "block";
-    setTimeout(() => {
-        toast.className = `${color} hide`;
-        setTimeout(() => {
-            toast.style.display = "none";
-            toast.className = color;
-        }, 400);
-    }, duration);
-}
-
-    auth.onAuthStateChanged(async user => {
-    if (!user) {
-        // Add ?nologin=1 to URL if not present
-        const url = new URL(window.location.href);
-        if (!url.searchParams.has("nologin")) {
-            url.searchParams.set("nologin", "1");
-            window.history.replaceState({}, '', url);
-        }
-        showToast("You are not logged in.", "yellow");
-        return;
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.className = `${color}`;
+      toast.style.display = "block";
+      setTimeout(()=>{ toast.style.display='none'; toast.className=''; }, duration);
     }
 
-    const friendsListRef = db.collection("friends").doc(user.email).collection("friendlist");
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[s]);
+    }
 
-    friendsListRef.onSnapshot(async snapshot => {
-        const container = document.getElementById("friends-list");
-        container.innerHTML = ""; // clear old friends
-
-        // Collect unique friends by email (no duplicates)
-        const friendEmailsSet = new Set();
-        const friends = [];
-        for (const doc of snapshot.docs) {
-            const friendEmail = doc.id.toLowerCase();
-            if (friendEmailsSet.has(friendEmail)) continue; // skip duplicates
-            friendEmailsSet.add(friendEmail);
-
-            const friendDataRef = db.collection("user_data").doc(friendEmail);
-            const friendSnap = await friendDataRef.get();
-            const friendData = friendSnap.exists ? friendSnap.data() : {};
-
-            friends.push({
-                displayName: friendData["display name"] || friendEmail,
-                profilePic: friendData.profile_picture || "/org-owner.jpg",
-                verified: friendData.is_verified === true,
-                frameUrl: friendData.profile_picture_frame,
-                email: friendEmail
-            });
-        }
-
-        // Render friends (mobile/webview: pyramid, desktop: horizontal)
-        if (isMobile() || isWebView()) {
-            let idx = 0;
-            while (idx < friends.length) {
-                const remaining = friends.length - idx;
-                const rowCount = Math.min(4, remaining);
-                const row = document.createElement("div");
-                row.style.display = "flex";
-                row.style.justifyContent = "center";
-                row.style.gap = "15px";
-                row.style.marginBottom = "10px";
-                row.style.width = "100%";
-
-                for (let i = 0; i < rowCount; i++) {
-                    const f = friends[idx + i];
-                    const card = document.createElement("div");
-                    card.className = "friend-card";
-                    card.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(f.email)}`;
-                    card.innerHTML = `
-                        <div class="friend-pfp" style="background-image:url('${f.profilePic}'); position:relative;">
-                            ${f.frameUrl && f.frameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${f.frameUrl}')"></div>` : ""}
-                        </div>
-                        <div class="friend-name">
-                            <span>${f.displayName}</span>
-                            ${f.verified ? `<img src="/assets/verified.png" alt="Verified">` : ""}
-                        </div>
-                    `;
-                    row.appendChild(card);
-                }
-                container.appendChild(row);
-                idx += rowCount;
-            }
-        } else {
-            for (const f of friends) {
-                const card = document.createElement("div");
-                card.className = "friend-card";
-                card.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(f.email)}`;
-                card.innerHTML = `
-                    <div class="friend-pfp" style="background-image:url('${f.profilePic}'); position:relative;">
-                        ${f.frameUrl && f.frameUrl.trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${f.frameUrl}')"></div>` : ""}
-                    </div>
-                    <div class="friend-name">
-                        <span>${f.displayName}</span>
-                        ${f.verified ? `<img src="/assets/verified.png" alt="Verified">` : ""}
-                    </div>
-                `;
-                container.appendChild(card);
-            }
-        }
+    // announcements
+    db.collection('announcements').orderBy('timestamp','desc').limit(1).onSnapshot(snapshot=>{
+      snapshot.forEach(doc=>{
+        const data = doc.data();
+        const t = document.getElementById('announcement-title'), m = document.getElementById('announcement-message');
+        if (t) t.textContent = data.title || '';
+        if (m) m.textContent = data.message || '';
+      });
     });
-});
 
-    // Load user data from Firestore
+    // quote
+    fetch("https://api.quotable.io/random").then(r=>r.json()).then(d=>{
+      const q = document.getElementById('quote-card');
+      if (q) q.textContent = `${d.content} — ${d.author}`;
+    }).catch(()=>{ const q=document.getElementById('quote-card'); if(q) q.textContent='Failed to load quote.'; });
+  </script>
+
+  <script>
+    // profile preview
     auth.onAuthStateChanged(async user => {
-    if (!user) {
-        document.getElementById('profile-name').textContent = "Not signed in";
-        return;
-    }
-    const docRef = db.collection('user_data').doc(user.email);
-    const docSnap = await docRef.get();
+      const card = document.getElementById('profile-preview');
+      if (!card) return;
+      if (!user) { card.style.display='none'; return; }
 
-    if (docSnap.exists) {
+      try {
+        const docRef = db.collection('user_data').doc(user.email);
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) { card.style.display='none'; return; }
         const data = docSnap.data();
 
-        // Coins
-        const coins = parseFloat(data.coins || 0);
-        document.getElementById('coin-display').textContent = `DF$ - ${formatNumber(coins)}`;
+        card.style.display = 'flex';
+        const pfp = document.getElementById('preview-pfp');
+        if (pfp) pfp.style.backgroundImage = `url(${data.profile_picture || '/org-owner.jpg'})`;
 
-        // Profile picture
-        document.getElementById('profile-pic').style.backgroundImage =
-            `url(${data.profile_picture || '/org-owner.jpg'})`;
-
-        // Display name or email
-        const nameElement = document.getElementById('profile-name');
-        nameElement.textContent = data['display name'] || user.email;
-
-        // Check verification
-        if (data.is_verified === true) {
-            const verifiedIcon = document.createElement('img');
-            verifiedIcon.src = '/assets/verified.png';
-            verifiedIcon.alt = 'Verified';
-            verifiedIcon.style.width = '14px';
-            verifiedIcon.style.height = '14px';
-            verifiedIcon.style.marginLeft = '4px';
-
-            nameElement.appendChild(verifiedIcon);
+        const previewFrame = document.getElementById('preview-pfp-frame');
+        if (previewFrame) {
+          if (data.profile_picture_frame && data.profile_picture_frame.trim()!=='') {
+            previewFrame.style.backgroundImage = `url(${data.profile_picture_frame})`;
+            previewFrame.style.display = 'block';
+          } else previewFrame.style.display = 'none';
         }
 
-        // Top bar profile
-        const profilePicEl = document.getElementById('profile-pic');
-        const profilePicFrameEl = document.getElementById('profile-pic-frame');
-
-        if (data.profile_picture_frame && data.profile_picture_frame.trim() !== "") {
-            profilePicFrameEl.style.backgroundImage = `url(${data.profile_picture_frame})`;
-            profilePicFrameEl.style.display = "block";
-        } else {
-            profilePicFrameEl.style.backgroundImage = "";
-            profilePicFrameEl.style.display = "none";
-        }
-    }
-});
-
-    // Load latest announcement
-    db.collection('announcements')
-        .orderBy('timestamp', 'desc')
-        .limit(1)
-        .onSnapshot(snapshot => {
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                document.getElementById('announcement-title').textContent = data.title;
-                document.getElementById('announcement-message').textContent = data.message;
-            });
-        });
-
-    // Load random quote (disable SSL)
-    fetch("https://api.quotable.io/random")
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('quote-card').textContent = `${data.content} — ${data.author}`;
-        })
-        .catch(() => {
-            document.getElementById('quote-card').textContent = "Failed to load quote.";
-        });
-
-</script>
-
-<script>
-auth.onAuthStateChanged(async user => {
-    const card = document.getElementById('profile-preview');
-    if (!user) {
-        card.style.display = 'none';
-        return;
-    }
-
-    const docRef = db.collection('user_data').doc(user.email);
-    const docSnap = await docRef.get();
-
-    if (docSnap.exists) {
-        const data = docSnap.data();
-        card.style.display = 'block';
-
-        // Banner
-        document.getElementById('profile-banner').style.backgroundImage =
-            `url(${data.banner || '/default-banner.jpg'})`;
-
-        // Profile Picture
-        document.getElementById('preview-pfp').style.backgroundImage =
-            `url(${data.profile_picture || '/org-owner.jpg'})`;
-
-        // Name / Email
         const displayName = data['display name'] || user.email;
-        document.getElementById('preview-name').textContent = displayName;
+        const nameEl = document.getElementById('preview-name');
+        if (nameEl) nameEl.textContent = displayName;
 
-        // Verification
-        document.getElementById('preview-verified').style.display =
-            data.is_verified ? 'inline' : 'none';
+        const verifiedEl = document.getElementById('preview-verified');
+        if (verifiedEl) verifiedEl.style.display = data.is_verified ? 'inline' : 'none';
 
-        // Bio (truncate if too long)
-        const bio = data.bio || '';
-        document.getElementById('preview-bio').textContent =
-            bio.length > 50 ? bio.substring(0, 47) + '...' : bio;
-
-        // Profile preview
-        const previewPfpEl = document.getElementById('preview-pfp');
-        const previewPfpFrameEl = document.getElementById('preview-pfp-frame');
-
-        if (data.profile_picture_frame && data.profile_picture_frame.trim() !== "") {
-            previewPfpFrameEl.style.backgroundImage = `url(${data.profile_picture_frame})`;
-            previewPfpFrameEl.style.display = "block";
-        } else {
-            previewPfpFrameEl.style.backgroundImage = "";
-            previewPfpFrameEl.style.display = "none";
+        const bioEl = document.getElementById('preview-bio');
+        if (bioEl) {
+          const bio = data.bio || '';
+          bioEl.textContent = bio.length > 50 ? bio.substring(0,47)+'...' : bio;
         }
-    }
-});
-</script>
+      } catch (e) {
+        console.warn('profile preview failed', e);
+        const card = document.getElementById('profile-preview');
+        if (card) card.style.display='none';
+      }
+    });
+  </script>
 
-<script>
-auth.onAuthStateChanged(async user => {
-    const authElements = document.querySelectorAll('.auth-required');
-    const profileContainer = document.getElementById('topbar-profile');
+  <div id="toast"></div>
 
-    if (!user) {
-        // Hide friends & buttons
-        authElements.forEach(el => el.style.display = 'none');
+  <script>
+    (function () {
+      if (window.__friendsInit) return;
+      window.__friendsInit = true;
 
-        // Show "Not signed in" and set click to login
-        document.getElementById('profile-name').textContent = "Not signed in";
-        document.getElementById('profile-pic').style.backgroundImage = "url('/org-owner.jpg')";
-        profileContainer.onclick = () => location.href = '/login';
-        return;
-    }
+      const state = { unsub:null, friends:[] };
 
-    // Check if user is banned
-    const bannedDoc = await db.collection("banned_users").doc(user.email).get();
-    if (bannedDoc.exists) {
-        window.location.href = "/not-approved";
-        return;
-    }
-
-    // Show friends & buttons if logged in
-    authElements.forEach(el => el.style.display = '');
-
-    // Profile click → editprofile
-    profileContainer.onclick = () => location.href = '/editprofile';
-
-    // Load profile data
-    const docRef = db.collection('user_data').doc(user.email);
-    const docSnap = await docRef.get();
-
-    if (docSnap.exists) {
-        const data = docSnap.data();
-
-        // Coins
-        const coins = parseFloat(data.coins || 0);
-        document.getElementById('coin-display').textContent = `DF$ - ${formatNumber(coins)}`;
-
-        // Profile pic & name
-        document.getElementById('profile-pic').style.backgroundImage =
-            `url(${data.profile_picture || '/org-owner.jpg'})`;
-        const nameElement = document.getElementById('profile-name');
-        nameElement.textContent = data['display name'] || user.email;
-
-        // Verification badge
-        if (data.is_verified) {
-            const verifiedIcon = document.createElement('img');
-            verifiedIcon.src = '/assets/verified.png';
-            verifiedIcon.alt = 'Verified';
-            verifiedIcon.style.width = '14px';
-            verifiedIcon.style.height = '14px';
-            verifiedIcon.style.marginLeft = '4px';
-            nameElement.appendChild(verifiedIcon);
-        }
-
-        // Top bar profile
-        const profilePicEl = document.getElementById('profile-pic');
-        const profilePicFrameEl = document.getElementById('profile-pic-frame');
-
-        if (data.profile_picture_frame && data.profile_picture_frame.trim() !== "") {
-            profilePicFrameEl.style.backgroundImage = `url(${data.profile_picture_frame})`;
-            profilePicFrameEl.style.display = "block";
-        } else {
-            profilePicFrameEl.style.backgroundImage = "";
-            profilePicFrameEl.style.display = "none";
-        }
-    }
-});
-</script>
-<div id="toast" style="display:none;"></div>
-
-<script>
-(function () {
-    const MOBILE_MAX = 600;
-
-    // guard against double-initialization
-    if (window.__friendsInit) return;
-    window.__friendsInit = true;
-
-    const state = {
-        unsub: null,
-        friends: []
-    };
-
-    function isMobile() {
-        return window.matchMedia
-            ? window.matchMedia(`(max-width: ${MOBILE_MAX}px)`).matches
-            : window.innerWidth <= MOBILE_MAX;
-    }
-
-    function isWebView() {
-        const standalone = window.navigator.standalone === true;
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        const isAndroidWebView =
-            /\bwv\b/.test(ua) ||
-            (/Version\/[\d.]+.*Chrome/.test(ua) && !/Chrome\/[\d.]+ Mobile/.test(ua));
-        const isNoChrome = !window.chrome && /Safari/.test(ua) && !/Chrome/.test(ua);
-        return standalone || isAndroidWebView || isNoChrome;
-    }
-
-    function updateCoinDisplayVisibility() {
-        const coinDisplay = document.getElementById('coin-display');
-        if (!coinDisplay) return;
-        coinDisplay.style.display = isMobile() ? 'none' : '';
-    }
-
-    function makeCard(f) {
+      function makeCard(f) {
         const card = document.createElement("div");
         card.className = "friend-card";
         card.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(f.email)}`;
+        const pfpUrl = f.profilePic ? f.profilePic.replace(/'/g, "\\'") : '/org-owner.jpg';
         card.innerHTML = `
-            <div class="friend-pfp" style="background-image:url('${f.profilePic}'); position:relative;">
-                ${f.frameUrl && String(f.frameUrl).trim() !== "" ? `<div class="profile-pic-frame" style="display:block; background-image:url('${f.frameUrl}')"></div>` : ""}
-            </div>
-            <div class="friend-name">
-                <span>${f.displayName}</span>
-                ${f.verified ? `<img src="/assets/verified.png" alt="Verified">` : ""}
-            </div>
+          <div class="friend-pfp" style="background-image:url('${pfpUrl}'); position:relative;"></div>
+          <div class="friend-name"><span title="${escapeHtml(f.displayName)}">${escapeHtml(f.displayName)}</span>${f.verified ? `<img src="/assets/verified.png" alt="Verified">` : ''}</div>
         `;
         return card;
-    }
+      }
 
-    function renderDesktop(container, friends) {
-        // enforce desktop container layout
-        container.innerHTML = "";
-        container.style.display = "flex";
-        container.style.flexWrap = "nowrap";
-        container.style.overflowX = "auto";
-        container.style.gap = "15px";
-        container.style.alignItems = "stretch";
-
-        for (const f of friends) {
-            container.appendChild(makeCard(f));
-        }
-    }
-
-    function renderPyramid(container, friends) {
-        // enforce pyramid container layout
-        container.innerHTML = "";
-        container.style.display = "block";
-        container.style.overflowX = "visible";
-        container.style.gap = "0";
-
-        let idx = 0;
-        let rowSize = 1; // 1→2→3→4→1...
-        while (idx < friends.length) {
-            const rowCount = Math.min(rowSize, friends.length - idx);
-            const row = document.createElement("div");
-            row.style.display = "flex";
-            row.style.justifyContent = "center";
-            row.style.gap = "15px";
-            row.style.marginBottom = "10px";
-            row.style.width = "100%";
-
-            for (let i = 0; i < rowCount; i++) {
-                row.appendChild(makeCard(friends[idx + i]));
-            }
-            container.appendChild(row);
-            idx += rowCount;
-            rowSize = rowSize < 4 ? rowSize + 1 : 1;
-        }
-    }
-
-    function renderLayout() {
+      function renderLayout() {
         const container = document.getElementById("friends-list");
         if (!container) return;
-        if (isMobile() || isWebView()) {
-            renderPyramid(container, state.friends);
-        } else {
-            renderDesktop(container, state.friends);
+
+        // Ensure container stays grid-based and doesn't get flex/nowrap set
+        container.style.display = ''; // let CSS handle it (grid)
+        container.style.overflowX = 'hidden'; // extra guard
+        container.innerHTML = "";
+        for (const f of state.friends) {
+          container.appendChild(makeCard(f));
         }
-    }
+      }
 
-    window.addEventListener('resize', () => {
-        updateCoinDisplayVisibility();
-        renderLayout();
-    });
+      window.addEventListener('resize', ()=>{ renderLayout(); });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        updateCoinDisplayVisibility();
-        if (isWebView()) {
-            showToast("For better compatibility, set URLs to open in this app instead of on your default browser", "purple", 6000);
-        }
-    });
-
-    auth.onAuthStateChanged(async user => {
+      auth.onAuthStateChanged(async user => {
         const container = document.getElementById("friends-list");
-
-        // cleanup any previous listener to avoid duplicate renders
-        if (state.unsub) {
-            state.unsub();
-            state.unsub = null;
-        }
-
-        if (!user || !container) {
-            if (container) container.innerHTML = "";
-            state.friends = [];
-            return;
-        }
-
-        const friendsListRef = db.collection("friends")
-            .doc(user.email)
-            .collection("friendlist");
-
+        if (state.unsub) { state.unsub(); state.unsub = null; }
+        if (!user || !container) { if (container) container.innerHTML = ""; state.friends = []; return; }
+        const friendsListRef = db.collection("friends").doc(user.email).collection("friendlist");
         state.unsub = friendsListRef.onSnapshot(async snapshot => {
-            // normalize & dedupe by trimmed, lowercased id
-            const emails = [];
-            snapshot.forEach(d => {
-                const id = String(d.id || "").trim().toLowerCase();
-                if (id && !emails.includes(id)) emails.push(id);
-            });
-
-            // fetch friend docs in parallel
-            const docs = await Promise.all(
-                emails.map(email => db.collection("user_data").doc(email).get())
-            );
-
-            state.friends = docs.map((snap, i) => {
-                const email = emails[i];
-                const data = snap.exists ? snap.data() : {};
-                return {
-                    displayName: data && data["display name"] ? data["display name"] : email,
-                    profilePic: (data && data.profile_picture) || "/org-owner.jpg",
-                    verified: !!(data && data.is_verified === true),
-                    frameUrl: data ? data.profile_picture_frame : undefined,
-                    email
-                };
-            });
-
-            renderLayout();
+          const emails=[];
+          snapshot.forEach(d => { const id = String(d.id||"").trim().toLowerCase(); if (id && !emails.includes(id)) emails.push(id); });
+          const docs = await Promise.all(emails.map(email => db.collection("user_data").doc(email).get()));
+          state.friends = docs.map((snap,i)=> {
+            const email = emails[i]; const data = snap.exists ? snap.data() : {};
+            return {
+              displayName: data && data["display name"] ? data["display name"] : email,
+              profilePic: (data && data.profile_picture) || "/org-owner.jpg",
+              verified: !!(data && data.is_verified === true),
+              frameUrl: data ? data.profile_picture_frame : undefined,
+              email
+            };
+          });
+          renderLayout();
         });
-    });
-})();
-</script>
-
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Create Post</title>
+
+<!-- Firebase (kept as in your original) -->
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+<script type="module" src="/dp-topbar.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#0f0f10; --card:#141417; --text:#e9e6ef; --muted:#9aa0a6;
+  --accent:#7c2bd6; --accent-strong:#5820b0; --border:rgba(255,255,255,0.06);
+  --radius:14px; --max-width:920px; --glass: rgba(255,255,255,0.03);
+  --focus-shadow: 0 8px 30px rgba(88,33,182,0.18);
+}
+body.light{
+  --bg:#f6f8fb; --card:#ffffff; --text:#0b1220; --muted:#475569; --border:rgba(0,0,0,0.06); --glass: rgba(0,0,0,0.02);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+body{display:flex;flex-direction:column;min-height:100vh;}
+dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+
+main.container{ width:100%; max-width:var(--max-width); margin:20px auto; padding:18px; box-sizing:border-box; }
+.card{ background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent), var(--card); border-radius:var(--radius); padding:18px; border:1px solid var(--border); box-shadow:0 8px 30px rgba(2,6,23,0.55); }
+h1{ margin:0 0 10px 0; font-size:20px; font-weight:700; color:var(--text); letter-spacing:0.2px; }
+.muted{ color:var(--muted); font-size:13px; }
+
+/* layout */
+.top-row{ display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap; margin-bottom:10px; }
+.input-wrap{ position:relative; width:100%; }
+
+/* fancy textarea with floating label */
+.editor {
+  position:relative;
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+  border-radius:12px;
+  border:1px solid var(--border);
+  padding:12px;
+  transition: box-shadow .18s ease, border-color .18s ease, transform .12s ease;
+  overflow:hidden;
+  min-height:110px;
+}
+.editor:focus-within{ box-shadow:var(--focus-shadow); border-color:var(--accent); transform:translateY(-1px); }
+
+.editor textarea{
+  width:100%;
+  min-height:90px;
+  max-height:420px;
+  resize:vertical;
+  background:transparent;
+  color:var(--text);
+  border:0;
+  outline:0;
+  font-size:15px;
+  line-height:1.45;
+  font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  padding:6px 0 8px 0;
+}
+
+/* floating label */
+.flabel{
+  position:absolute;
+  left:14px;
+  top:12px;
+  font-size:13px;
+  color:var(--muted);
+  pointer-events:none;
+  transition: transform .16s ease, font-size .16s ease, top .16s ease, opacity .12s ease;
+  transform-origin:left top;
+}
+.editor.has-content .flabel, .editor:focus-within .flabel{
+  transform:translateY(-18px) scale(.92);
+  font-size:12px;
+  top:8px;
+  opacity:0.92;
+  color:var(--accent);
+}
+
+/* small toolbar */
+.toolbar{
+  display:flex; gap:8px; align-items:center; margin-bottom:8px;
+}
+.tool-btn{
+  background:transparent; border:1px solid transparent; color:var(--muted); padding:6px 8px; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px;
+  transition: background .12s ease, transform .08s ease, color .12s ease;
+}
+.tool-btn:hover{ background:var(--glass); color:var(--text); transform:translateY(-1px); }
+.tool-btn:active{ transform:translateY(0); }
+
+/* select and controls */
+.controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+.select{
+  appearance:none; -webkit-appearance:none;
+  padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); font-weight:600; min-width:170px;
+  display:inline-flex; align-items:center; gap:8px;
+}
+.btn{ padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700; background:var(--accent); color:#fff; margin-top:8px; display:inline-flex; align-items:center; gap:8px; }
+.btn.ghost{ background:transparent; border:1px solid var(--border); color:var(--text); }
+.btn:active{ transform:translateY(1px); }
+
+/* publish button spinner */
+.btn .spinner{
+  width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,0.18); border-top-color:#fff; animation:spin .9s linear infinite; display:inline-block; visibility:hidden;
+}
+.btn.loading .spinner{ visibility:visible; margin-left:4px; }
+
+/* image banner */
+.image-banner{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:flex-start; }
+.img-wrapper{ position:relative; width:120px; height:80px; border-radius:10px; overflow:hidden; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border:1px solid var(--border); box-shadow:0 6px 18px rgba(2,6,23,0.45); transform-origin:center; animation:thumb-in .22s ease; }
+.img-wrapper img{ width:100%; height:100%; object-fit:cover; display:block; }
+.remove-btn{ position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.45); border:none; color:#fff; border-radius:8px; padding:4px 8px; font-size:13px; cursor:pointer; opacity:0.95; transition: transform .12s ease, opacity .12s ease; }
+.img-wrapper:hover{ transform:translateY(-6px) scale(1.02); }
+.img-wrapper:hover .remove-btn{ transform:translateY(-2px); }
+
+/* wall card */
+.wall-card{ display:flex; align-items:center; gap:12px; border:1px solid var(--border); padding:10px; border-radius:10px; margin-bottom:12px; background:rgba(255,255,255,0.01);}
+.wall-card img{ width:48px; height:48px; border-radius:50%; object-fit:cover; border:1px solid var(--border);}
+.wall-card .meta{ display:flex; flex-direction:column; }
+.wall-card .meta .name{ display:flex; align-items:center; gap:6px; font-weight:700; font-size:15px; }
+.wall-card .meta .verified{ width:16px; height:16px; background-image:url(/assets/verified.png); background-size:contain; background-repeat:no-repeat; display:inline-block; margin-left:2px; }
+.wall-card .meta .desc{ font-size:13px; color:var(--muted);}
+
+/* modal (dialog) */
+.modal{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:220;
+  pointer-events:none; opacity:0; transition:opacity .18s ease; backdrop-filter: blur(4px);
+}
+.modal.visible{ pointer-events:auto; opacity:1; }
+.modal .overlay{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.7)); }
+.modal .dialog{
+  position:relative; z-index:10; width:92%; max-width:480px; border-radius:12px; padding:18px; background:linear-gradient(180deg, var(--card), rgba(255,255,255,0.01)); border:1px solid var(--border);
+  transform: translateY(14px) scale(.98); opacity:0; transition: transform .26s cubic-bezier(.2,.9,.2,1), opacity .22s ease;
+  box-shadow:0 12px 40px rgba(2,6,23,0.6);
+}
+.modal.visible .dialog{ transform:translateY(0) scale(1); opacity:1; }
+
+/* dialog header */
+.dialog h3{ margin:0 0 8px 0; font-size:16px; font-weight:700; }
+
+/* modal actions */
+.modal .modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+
+/* small helpers */
+.counter{ font-size:12px; color:var(--muted); margin-left:6px; }
+.msg{ margin-top:8px; font-size:13px; color:var(--muted); }
+
+/* animations */
+@keyframes spin{ to{ transform:rotate(360deg); } }
+@keyframes thumb-in{ from{ opacity:0; transform:translateY(6px) scale(.98);} to{ opacity:1; transform:none;} }
+
+/* accessibility: respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce){
+  .btn .spinner{ animation:none }
+  .img-wrapper, .modal .dialog, .editor{ transition:none; animation:none; }
+}
+
+/* small responsive adjustments */
+@media (max-width:520px){
+  .controls{ flex-direction:column; align-items:stretch; }
+  .img-wrapper{ width:44%; height:84px; }
+}
+</style>
+</head>
+<body>
+<dp-topbar></dp-topbar>
+
+<main class="container">
+  <div id="wallCardContainer"></div>
+
+  <div class="card">
+    <div class="top-row">
+      <div>
+        <h1>Create a New Post</h1>
+        <div class="muted">Write something interesting — be kind, be concise.</div>
+      </div>
+      <div class="muted" id="userHint">Not signed in</div>
+    </div>
+
+    <div class="input-wrap">
+      <div class="toolbar" aria-hidden="true">
+        <div style="flex:1"></div>
+        <div class="counter" id="charCounter">700</div>
+      </div>
+
+      <div class="editor" id="editorBox" aria-labelledby="postLabel">
+        <label class="flabel" id="postLabel">Title and Text (max 700 chars)</label>
+        <textarea id="postText" maxlength="700" placeholder="" aria-describedby="charCounter"></textarea>
+      </div>
+    </div>
+
+    <div class="controls">
+      <select id="commentSelect" class="select" aria-label="Who can comment">
+        <option value="all">Who can comment: Everyone</option>
+        <option value="admins">Admins</option>
+        <option value="verified">Verified</option>
+        <option value="none">None</option>
+      </select>
+
+      <button id="addImageBtn" class="btn ghost" type="button">Add Image</button>
+
+      <div style="flex:1"></div>
+
+      <button id="publishBtn" class="btn" type="button">
+        <span id="publishLabel">Publish</span>
+        <span class="spinner" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <div class="image-banner" id="imageBanner" aria-live="polite" style="min-height:0;"></div>
+
+    <div id="msg" class="msg muted"></div>
+  </div>
+</main>
+
+<!-- Image Modal -->
+<div class="modal" id="imageModal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="overlay" tabindex="-1"></div>
+  <div class="dialog" role="document">
+    <h3>Add Image URL</h3>
+    <input type="url" id="imageURLInput" placeholder="https://example.com/image.jpg" style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-size:14px;">
+    <div class="modal-actions">
+      <button id="cancelImage" class="btn ghost" type="button">Cancel</button>
+      <button id="confirmImage" class="btn" type="button">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Firebase init (unchanged) */
+const firebaseConfig = { apiKey:"AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA", authDomain:"darkpurpleof-s-website.firebaseapp.com", projectId:"darkpurpleof-s-website", storageBucket:"darkpurpleof-s-website.firebasestorage.app", messagingSenderId:"520651082420", appId:"1:520651082420:web:bb05c0c3fd64517952e5e1" };
+if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* state */
+let currentUser = null;
+let images = [];
+
+auth.onAuthStateChanged(u=>{
+  currentUser = u || null;
+  document.getElementById('userHint').textContent = currentUser ? currentUser.email : 'Not signed in';
+});
+
+/* wall card logic (kept mostly as-is) */
+const urlParams = new URLSearchParams(window.location.search);
+const wallParam = urlParams.get('wall');
+const wallCardContainer = document.getElementById('wallCardContainer');
+
+async function fetchWallUser(email){
+  if(!email) return null;
+  try{
+    const snap = await db.collection('user_data').doc(email).get();
+    if(!snap.exists) return null;
+    const data = snap.data();
+    return { name:data['display name']||email, pfp:data.profile_picture||'/org-owner.jpg', verified:!!data.is_verified };
+  } catch(e){ console.warn(e); return {name:email,pfp:'/org-owner.jpg',verified:false}; }
+}
+
+async function initWallCard(){
+  if(!wallParam) return;
+
+  // fetch user data
+  let wallUser = await fetchWallUser(wallParam);
+  
+  // fallback handling
+  if(!wallUser) wallUser = { name: wallParam, pfp:'/org-owner.jpg', verified:false };
+  if(!wallUser.name) wallUser.name = wallParam;
+  if(!wallUser.pfp) wallUser.pfp = '/org-owner.jpg';
+
+  // create wall card above editor
+  const card = document.createElement('div');
+  card.className = 'wall-card';
+  card.innerHTML = `
+    <img src="${wallUser.pfp}" alt="${wallUser.name}" onerror="this.src='/org-owner.jpg'">
+    <div class="meta">
+      <div class="name">
+        ${wallUser.name}
+        ${wallUser.verified ? '<span class="verified" title="Verified"></span>' : ''}
+      </div>
+      <div class="desc">You're posting to ${wallUser.name}'s wall</div>
+    </div>
+  `;
+
+  const container = document.getElementById('wallCardContainer');
+  container.insertBefore(card, container.firstChild);
+}
+initWallCard();
+
+/* elements */
+const postText = document.getElementById('postText');
+const editorBox = document.getElementById('editorBox');
+const charCounter = document.getElementById('charCounter');
+const commentSelect = document.getElementById('commentSelect');
+const addImageBtn = document.getElementById('addImageBtn');
+const imageBanner = document.getElementById('imageBanner');
+const publishBtn = document.getElementById('publishBtn');
+const publishLabel = document.getElementById('publishLabel');
+const msg = document.getElementById('msg');
+
+const imageModal = document.getElementById('imageModal');
+const imageURLInput = document.getElementById('imageURLInput');
+const cancelImage = document.getElementById('cancelImage');
+const confirmImage = document.getElementById('confirmImage');
+
+/* utilities */
+function showMsg(txt, color='muted'){ msg.textContent = txt; msg.style.color = (color==='red' ? '#ff6b6b' : 'var(--muted)'); }
+function setLoading(on){
+  if(on){ publishBtn.classList.add('loading'); publishBtn.disabled = true; publishLabel.textContent = 'Publishing'; }
+  else { publishBtn.classList.remove('loading'); publishBtn.disabled = false; publishLabel.textContent = 'Publish'; }
+}
+
+/* autosize textarea */
+function autosize(el){
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight) + 'px';
+}
+postText.addEventListener('input', e=>{
+  const val = e.target.value || '';
+  charCounter.textContent = 700 - val.length;
+  if(val.length) editorBox.classList.add('has-content'); else editorBox.classList.remove('has-content');
+  autosize(e.target);
+});
+window.addEventListener('load', ()=>{ autosize(postText); charCounter.textContent = 700 - (postText.value || '').length; });
+
+/* toolbar actions (simple markdown insertion) */
+document.querySelectorAll('.tool-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const action = btn.dataset.action;
+    const textarea = postText;
+    const start = textarea.selectionStart, end = textarea.selectionEnd;
+    const selected = textarea.value.slice(start, end);
+    let insert = '';
+    let newPos = end;
+    if(action === 'bold'){ insert = `**${selected || 'bold text'}**`; newPos = start + insert.length; }
+    if(action === 'italic'){ insert = `*${selected || 'italic text'}*`; newPos = start + insert.length; }
+    if(action === 'h1'){ insert = `# ${selected || 'Heading'}`; newPos = start + insert.length; }
+    textarea.setRangeText(insert, start, end, 'end');
+    textarea.focus();
+    textarea.setSelectionRange(newPos, newPos);
+    textarea.dispatchEvent(new Event('input'));
+  });
+});
+
+/* image modal open/close with animation and accessibility */
+function openImageModal(){
+  imageURLInput.value = '';
+  imageModal.classList.add('visible');
+  imageModal.setAttribute('aria-hidden', 'false');
+  setTimeout(()=> imageURLInput.focus(), 160);
+}
+function closeImageModal(){
+  imageModal.classList.remove('visible');
+  imageModal.setAttribute('aria-hidden', 'true');
+  imageURLInput.value = '';
+}
+addImageBtn.addEventListener('click', ()=> {
+  if(images.length >= 9){ showMsg('Maximum 9 images', 'red'); return; }
+  openImageModal();
+});
+cancelImage.addEventListener('click', closeImageModal);
+confirmImage.addEventListener('click', ()=>{
+  const url = (imageURLInput.value || '').trim();
+  if(!url){ showMsg('Please enter a valid image URL','red'); return; }
+  // naive URL validation
+  try{
+    const u = new URL(url);
+    images.push(u.href);
+    renderImages();
+    closeImageModal();
+    showMsg('Image added');
+  }catch(e){
+    showMsg('Invalid URL','red');
+  }
+});
+
+/* close modal on overlay click or ESC */
+imageModal.querySelector('.overlay').addEventListener('click', closeImageModal);
+document.addEventListener('keydown', (ev)=>{
+  if(ev.key === 'Escape') closeImageModal();
+});
+
+/* render images thumbnails with animation */
+function renderImages(){
+  imageBanner.innerHTML = '';
+  images.forEach((url,i)=>{
+    const div = document.createElement('div');
+    div.className = 'img-wrapper';
+    div.innerHTML = `<img src="${url}" alt="image-${i}" loading="lazy"><button class="remove-btn" aria-label="Remove image ${i}" data-i="${i}">×</button>`;
+    // add subtle fade-in by forcing reflow (animation uses CSS already)
+    imageBanner.appendChild(div);
+  });
+}
+/* delegated listener for remove buttons */
+imageBanner.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.remove-btn');
+  if(!btn) return;
+  const i = Number(btn.getAttribute('data-i'));
+  if(Number.isFinite(i)){ images.splice(i,1); renderImages(); showMsg('Image removed'); }
+});
+
+/* publish */
+publishBtn.addEventListener('click', async ()=>{
+  if(!currentUser){ showMsg('You must be signed in','red'); return; }
+  const text = (postText.value || '').trim();
+  if(!text){ showMsg('Post cannot be empty','red'); return; }
+  setLoading(true);
+  showMsg('Publishing...');
+  try{
+    const postRef = db.collection('posts').doc();
+    const payload = { comments:commentSelect.value, editor:currentUser.email, images, likedBy:[], text, timestamp:Date.now() };
+    if(wallParam) payload.towall = wallParam;
+
+    await postRef.set(payload);
+    // immediate redirect
+    window.location.href = '/posts?post='+postRef.id;
+  }catch(e){
+    console.error(e);
+    showMsg('Failed to publish: '+(e.message || e),'red');
+    setLoading(false);
+  }
+});
+
+/* small UX: prevent horizontal scroll from long words/urls */
+document.documentElement.style.wordBreak = 'break-word';
+document.body.style.overflowX = 'hidden';
+</script>
+</body>
+</html>

@@ -1,248 +1,482 @@
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Manage Blocked Users</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Your Orbitron Theme -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Manage Blocked Users</title>
 
-        :root {
-            --bg-color: #000;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.05);
-            --border-color: purple;
-        }
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-        body.light {
-            --bg-color: #fff;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.1);
-            --border-color: purple;
-        }
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
+  <style>
+    /* Avoid horizontal scroll globally (user hates it) */
+    html,body { overflow-x: hidden; }
 
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            text-shadow: 0 0 6px var(--text-color);
-            animation: glitch 1.5s infinite;
-        }
+    :root{
+      --bg:#171717;
+      --card:#1f1f1f;
+      --muted:#9ca3af;
+      --accent:#6b21a8;
+      --accent-strong:#5b21b6;
+      --text:#eaeaea;
+      --border:rgba(255,255,255,0.06);
+    }
+    body.light{
+      --bg:#f6f8fb;
+      --card:#fff;
+      --muted:#475569;
+      --text:#0f172a;
+      --border:rgba(0,0,0,0.06);
+    }
 
-        @keyframes glitch {
-            0% { transform: none; }
-            20% { transform: skewX(3deg); }
-            40% { transform: skewX(-3deg); }
-            60% { transform: none; }
-            100% { transform: none; }
-        }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;background:var(--bg);color:var(--text);transition:background .25s,color .25s;}
+    body{display:flex;flex-direction:column;min-height:100vh;}
 
-        .blocked-user {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px 15px;
-            margin: 10px;
-            width: 100%;
-            max-width: 500px;
-            box-sizing: border-box;
-        }
+    /* Topbar component */
+    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
 
-        .blocked-email {
-            font-size: 1.1em;
-            word-break: break-all;
-        }
+    /* Page layout - responsive, no horizontal overflow, wraps on small screens */
+    main.wrapper{
+      flex:1;
+      display:flex;
+      gap:20px;
+      align-items:flex-start;
+      justify-content:center;
+      padding:24px;
+      box-sizing:border-box;
+      max-width:1200px;
+      margin:0 auto;
+      width:100%;
+      flex-wrap:wrap; /* ensure wrapping */
+    }
+    .panel{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--border);box-sizing:border-box;color:var(--text);}
+    .left { flex:1 1 560px; min-width:280px; max-width:880px; }
+    .right { flex: 0 0 320px; min-width:260px; }
 
-        .unblock-btn {
-            padding: 6px 14px;
-            border: 1.5px solid var(--border-color);
-            background-color: transparent;
-            color: var(--text-color);
-            border-radius: 6px;
-            cursor: pointer;
-        }
+    h1{margin:0 0 6px 0;font-size:20px;font-weight:700;}
+    p.lead { margin:0 0 16px 0; color:var(--muted); font-size:14px; }
 
-        .unblock-btn:hover {
-            opacity: 0.8;
-        }
+    /* controls */
+    .controls { display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+    .search { flex:1; min-width:160px; }
+    input[type="text"], input[type="email"] { width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); box-sizing:border-box; }
+    .btn { display:inline-flex; gap:8px; align-items:center; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font-weight:600; white-space:nowrap; }
+    .btn.primary { background:var(--accent); color:#fff; border:none; }
+    .btn.critical { background:#c53737; color:#fff; border:none; }
+    .meta { color:var(--muted); font-size:13px; }
 
-        .message {
-            margin-top: 20px;
-            font-size: 1em;
-        }
-        /* ...existing code... */
-#toast {
-    position: fixed;
-    top: -80px;
-    left: 0;
-    width: 100vw;
-    min-width: 0;
-    max-width: 100vw;
-    padding: 18px 0;
-    border-radius: 0 0 16px 16px;
-    font-size: 1.1em;
-    font-family: inherit;
-    color: #fff;
-    z-index: 9999;
-    box-shadow: 0 4px 16px rgba(128,0,128,0.15);
-    opacity: 0;
-    pointer-events: none;
-    text-align: center;
-    transition: opacity 0.4s, top 0.4s;
-}
-#toast.show {
-    opacity: 1;
-    pointer-events: auto;
-    top: 0;
-    animation: toast-slide-down 0.4s cubic-bezier(.77,0,.175,1);
-}
-#toast.hide {
-    opacity: 0;
-    top: -80px;
-    animation: toast-slide-up 0.4s cubic-bezier(.77,0,.175,1);
-}
-#toast.purple { background: purple; }
-#toast.yellow { background: #e6b800; color: #222; }
-#toast.red { background: #c00; }
+    /* list */
+    .list { display:grid; gap:10px; max-height:60vh; overflow:auto; padding-right:6px; box-sizing:border-box; }
+    .blocked-item {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.01);
+      min-width:0; /* important to prevent horizontal overflow */
+    }
+    .pfp { width:48px; height:48px; border-radius:8px; background-size:cover; background-position:center; background-repeat:no-repeat; border:1px solid var(--border); flex-shrink:0; }
+    .info { flex:1 1 0; min-width:0; } /* allow text to wrap and avoid overflow */
+    .name { font-weight:700; font-size:14px; display:flex; gap:8px; align-items:center; color:var(--text); }
+    .tag { font-size:13px; color:var(--muted); word-break:break-all; }
+    .item-actions { display:flex; gap:8px; align-items:center; flex-shrink:0; }
 
-@keyframes toast-slide-down {
-    from { top: -80px; opacity: 0; }
-    to   { top: 0; opacity: 1; }
-}
-@keyframes toast-slide-up {
-    from { top: 0; opacity: 1; }
-    to   { top: -80px; opacity: 0; }
-}
-/* ...existing code... */
-    </style>
+    /* right column cards */
+    .card { margin-bottom:12px; padding:12px; border-radius:8px; border:1px solid var(--border); background:transparent; }
+    .small { font-size:13px; color:var(--muted); }
+
+    /* responsive adjustments */
+    @media (max-width:920px){
+      main.wrapper{flex-direction:column;padding:16px;align-items:stretch;}
+      .right{width:100%;flex:1 1 auto;}
+      .list{max-height:45vh;}
+    }
+
+    /* toast */
+    #toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 14px; border-radius: 10px; font-weight:700; display:none; z-index:99999; color:#fff; box-sizing:border-box; }
+    #toast.purple{ background: var(--accent-strong); } #toast.yellow{ background:#e6b800; color:#222 } #toast.red{ background:#c00; }
+
+    /* subtle helper */
+    .muted { color:var(--muted); font-size:13px; }
+    .spaced { margin-top:12px; }
+  </style>
 </head>
 <body>
-    <h1>Manage Blocked Users</h1>
-    <div id="toast" style="display:none;"></div>
+  <script type="module" src="/dp-topbar.js"></script>
+  <dp-topbar></dp-topbar>
 
-    <div id="blockedList"></div>
+  <main class="wrapper" role="main" aria-label="Manage blocked users">
+    <section class="panel left" aria-label="Blocked users list">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="min-width:0;">
+          <h1>Manage Blocked Users</h1>
+          <p class="lead">View, search, unblock, or export the users you've blocked. Changes sync to your account immediately.</p>
+        </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        // Firebase v9+ imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, arrayRemove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        <div class="meta" id="stats">Loading…</div>
+      </div>
 
-        // TODO: Replace with your Firebase config
-        const firebaseConfig = {
-  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-  authDomain: "darkpurpleof-s-website.firebaseapp.com",
-  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
-  projectId: "darkpurpleof-s-website",
-  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-  messagingSenderId: "520651082420",
-  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-  measurementId: "G-S2X2JYC8Z0"
-};
+      <!-- controls -->
+      <div class="controls spaced">
+        <input id="searchInput" class="search" type="text" placeholder="Search by name or email" aria-label="Search blocked users">
+        <button id="refreshBtn" class="btn" title="Refresh list">Refresh</button>
+        <button id="exportBtn" class="btn" title="Export CSV">Export</button>
+      </div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+      <!-- add block -->
+      <div class="card">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="blockEmail" type="email" placeholder="Block user by email (example@domain.com)" aria-label="Email to block" />
+          <button id="addBlockBtn" class="btn primary" title="Block user">Block</button>
+        </div>
+        <div class="small muted spaced">Blocking an email adds it to your personal blocked list — this prevents them from interacting with you. Admin accounts can be blocked.</div>
+      </div>
 
-        const blockedList = document.getElementById('blockedList');
+      <!-- blocked list -->
+      <div id="listContainer" class="list spaced" aria-live="polite"></div>
 
-        function renderBlockedUsers(email, blockedUsers) {
-    blockedList.innerHTML = "";
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button id="unblockAllBtn" class="btn critical">Unblock All</button>
+        <button id="clearSearchBtn" class="btn">Clear</button>
+      </div>
+    </section>
 
-    if (!blockedUsers || blockedUsers.length === 0) {
-        blockedList.innerHTML = "<p>No users blocked.</p>";
-        return;
+    <!-- right column - info / help -->
+    <aside class="panel right" aria-label="Help & info">
+      <div class="card">
+        <div class="muted">Blocked users</div>
+        <div id="count" style="font-weight:700;font-size:18px;margin-top:6px">—</div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Quick actions</div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-direction:column;">
+          <button id="openBlockedProfileBtn" class="btn">Open Selected Profile</button>
+          <button id="copyListBtn" class="btn">Copy Emails</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="muted">FAQ</div>
+        <ul style="margin:8px 0 0 16px;color:var(--muted);">
+          <li>Unblocking restores interactions from that user.</li>
+          <li>Blocked users are private to your account.</li>
+          <li>Admins can be blocked.</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // UI refs
+    const listContainer = document.getElementById('listContainer');
+    const stats = document.getElementById('stats');
+    const countEl = document.getElementById('count');
+    const searchInput = document.getElementById('searchInput');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const addBlockBtn = document.getElementById('addBlockBtn');
+    const blockEmailInput = document.getElementById('blockEmail');
+    const unblockAllBtn = document.getElementById('unblockAllBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const copyListBtn = document.getElementById('copyListBtn');
+    const openProfileBtn = document.getElementById('openBlockedProfileBtn');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const toastEl = document.getElementById('toast');
+
+    // state
+    let currentUserEmail = null;
+    let blockedList = [];
+    let blockedDetails = [];
+    let selectedEmail = null;
+
+    function showToast(message, color = 'purple', duration = 3000) {
+      toastEl.textContent = message;
+      toastEl.className = color;
+      toastEl.style.display = 'block';
+      setTimeout(() => {
+        toastEl.style.display = 'none';
+        toastEl.className = '';
+      }, duration);
     }
 
-    blockedUsers.forEach(blockedEmail => {
-        const div = document.createElement('div');
-        div.className = "blocked-user";
+    async function fetchUserData(email) {
+      try {
+        const snap = await db.collection('user_data').doc(email).get();
+        if (!snap.exists) return null;
+        return snap.data();
+      } catch (e) {
+        console.warn('fetchUserData error', e);
+        return null;
+      }
+    }
 
-        const emailSpan = document.createElement('span');
-        emailSpan.className = "blocked-email";
-        emailSpan.textContent = blockedEmail;
+    function renderList(filter = '') {
+      listContainer.innerHTML = '';
+      const normalized = (filter || '').toLowerCase().trim();
 
-        const btn = document.createElement('button');
-        btn.className = "unblock-btn";
-        btn.textContent = "Unblock";
+      const visible = blockedDetails.filter(b => {
+        if (!b) return false;
+        return !normalized || (b.displayName && b.displayName.toLowerCase().includes(normalized)) || b.email.toLowerCase().includes(normalized) || (b.tagline && b.tagline.toLowerCase().includes(normalized));
+      });
 
-        btn.onclick = async () => {
-            try {
-                const userDocRef = doc(db, "user_data", email);
-                await updateDoc(userDocRef, {
-                    blockedUsers: arrayRemove(blockedEmail)
-                });
-                showToast("User unblocked successfully", "purple");
-                // Re-render
-                loadBlockedUsers(email);
-            } catch (err) {
-                console.error("Failed to unblock:", err);
-                showToast("Error: " + err.message, "red");
-            }
+      if (visible.length === 0) {
+        listContainer.innerHTML = '<div class="muted">No blocked users found.</div>';
+        countEl.textContent = `${visible.length}`;
+        return;
+      }
+
+      visible.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'blocked-item';
+        el.tabIndex = 0;
+
+        const pfp = document.createElement('div');
+        pfp.className = 'pfp';
+        pfp.style.backgroundImage = `url('${item.profile_picture || '/org-owner.jpg'}')`;
+
+        const info = document.createElement('div');
+        info.className = 'info';
+
+        const nameLine = document.createElement('div');
+        nameLine.className = 'name';
+        nameLine.innerHTML = `<span>${escapeHtml(item.displayName || item.email)}</span>`;
+
+        const tag = document.createElement('div');
+        tag.className = 'tag muted';
+        tag.textContent = item.tagline || item.email;
+
+        info.appendChild(nameLine);
+        info.appendChild(tag);
+
+        const actions = document.createElement('div');
+        actions.className = 'item-actions';
+
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'btn';
+        viewBtn.textContent = 'View';
+        viewBtn.onclick = () => { window.location.href = `/viewprofile?profile=${encodeURIComponent(item.email)}`; };
+
+        const unblockBtn = document.createElement('button');
+        unblockBtn.className = 'btn';
+        unblockBtn.textContent = 'Unblock';
+        unblockBtn.onclick = async () => {
+          if (!confirm(`Unblock ${item.email}?`)) return;
+          await unblockEmail(item.email);
         };
 
-        div.appendChild(emailSpan);
-        div.appendChild(btn);
-        blockedList.appendChild(div);
-    });
-}
+        actions.appendChild(viewBtn);
+        actions.appendChild(unblockBtn);
 
-async function loadBlockedUsers(email) {
-    try {
-        const userDocRef = doc(db, "user_data", email);
-        const userSnap = await getDoc(userDocRef);
+        el.appendChild(pfp);
+        el.appendChild(info);
+        el.appendChild(actions);
 
-        if (userSnap.exists()) {
-            const data = userSnap.data();
-            renderBlockedUsers(email, data.blockedUsers);
-        } else {
-            blockedList.innerHTML = "<p>User data not found.</p>";
-            showToast("User data not found.", "yellow");
+        el.addEventListener('click', () => {
+          document.querySelectorAll('.blocked-item').forEach(n => n.style.outline = '');
+          el.style.outline = '2px solid rgba(107,33,168,0.18)';
+          selectedEmail = item.email;
+        });
+
+        listContainer.appendChild(el);
+      });
+
+      countEl.textContent = `${visible.length}`;
+    }
+
+    async function loadBlockedUsers(email) {
+      showLoading(true);
+      try {
+        const userSnap = await db.collection('user_data').doc(email).get();
+        if (!userSnap.exists) {
+          blockedList = [];
+          blockedDetails = [];
+          renderList(searchInput.value);
+          stats.textContent = 'No profile data';
+          showToast('User data not found', 'yellow', 2000);
+          return;
         }
-    } catch (err) {
-        showToast("Failed to load data: " + err.message, "red");
+        const data = userSnap.data();
+        blockedList = Array.isArray(data.blockedUsers) ? data.blockedUsers.slice() : [];
+        stats.textContent = `${blockedList.length} blocked`;
+        const emails = blockedList.slice(0, 200);
+        const detailPromises = emails.map(async e => {
+          const ud = await fetchUserData(e).catch(()=>null);
+          return {
+            email: e,
+            displayName: ud && ud['display name'] ? ud['display name'] : e,
+            profile_picture: ud && ud.profile_picture ? ud.profile_picture : '/org-owner.jpg',
+            tagline: ud && ud.tagline ? ud.tagline : ''
+          };
+        });
+        blockedDetails = await Promise.all(detailPromises);
+        renderList(searchInput.value);
+      } catch (err) {
+        console.error('loadBlockedUsers', err);
+        showToast('Failed to load blocked users', 'red', 3000);
+      } finally {
+        showLoading(false);
+      }
     }
-}
 
-onAuthStateChanged(auth, user => {
-    if (user) {
-        const email = user.email;
-        loadBlockedUsers(email);
-    } else {
-        showToast("Please log in to manage blocked users.", "yellow");
+    function showLoading(on) {
+      if (on) {
+        stats.textContent = 'Loading…';
+      } else {
+        stats.textContent = `${blockedList.length} blocked`;
+      }
     }
-});
 
-function showToast(message, color = "purple", duration = 3500) {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.className = `${color} show`;
-    toast.style.display = "block";
-    setTimeout(() => {
-        toast.className = `${color} hide`;
-        setTimeout(() => {
-            toast.style.display = "none";
-            toast.className = color;
-        }, 400);
-    }, duration);
-}
-    </script>
+    async function unblockEmail(email) {
+      if (!currentUserEmail) return showToast('Not signed in', 'yellow');
+      try {
+        await db.collection('user_data').doc(currentUserEmail).update({
+          blockedUsers: firebase.firestore.FieldValue.arrayRemove(email)
+        });
+        showToast(`Unblocked ${email}`, 'purple', 2000);
+        await loadBlockedUsers(currentUserEmail);
+      } catch (e) {
+        console.error('unblockEmail', e);
+        showToast('Failed to unblock', 'red', 3000);
+      }
+    }
+
+    async function unblockAll() {
+      if (!currentUserEmail) return showToast('Not signed in', 'yellow');
+      if (!confirm('Unblock all users? This cannot be undone.')) return;
+      try {
+        await db.collection('user_data').doc(currentUserEmail).update({
+          blockedUsers: []
+        });
+        showToast('All users unblocked', 'purple', 2000);
+        await loadBlockedUsers(currentUserEmail);
+      } catch (e) {
+        console.error('unblockAll', e);
+        showToast('Failed to unblock all', 'red', 3000);
+      }
+    }
+
+    // add block w/ deletion of social links and self-block prevention
+    async function addBlock(emailToBlock) {
+      if (!currentUserEmail) return showToast('Not signed in', 'yellow');
+
+      emailToBlock = (emailToBlock || '').trim().toLowerCase();
+      if (!emailToBlock || !/\S+@\S+\.\S+/.test(emailToBlock)) return showToast('Enter a valid email', 'yellow');
+      if (emailToBlock === currentUserEmail) return showToast("You can't block yourself", 'red');
+
+      try {
+        // add to blockedUsers (create array if needed)
+        try {
+          await db.collection('user_data').doc(currentUserEmail).update({
+            blockedUsers: firebase.firestore.FieldValue.arrayUnion(emailToBlock)
+          });
+        } catch (updateErr) {
+          // if field doesn't exist, set it
+          await db.collection('user_data').doc(currentUserEmail).set({ blockedUsers: [emailToBlock] }, { merge: true });
+        }
+
+        // delete social connections in batch
+        const batch = db.batch();
+        batch.delete(db.doc(`followers/${currentUserEmail}/usersWhoFollowMe/${emailToBlock}`));
+        batch.delete(db.doc(`following/${currentUserEmail}/usersIFollow/${emailToBlock}`));
+        batch.delete(db.doc(`friends/${currentUserEmail}/friendlist/${emailToBlock}`));
+        batch.delete(db.doc(`friends/${emailToBlock}/friendlist/${currentUserEmail}`));
+        batch.delete(db.doc(`friends/${currentUserEmail}/requests/${emailToBlock}`));
+        await batch.commit();
+
+        showToast(`Blocked ${emailToBlock} and removed social connections`, 'purple', 2500);
+        blockEmailInput.value = '';
+        await loadBlockedUsers(currentUserEmail);
+
+      } catch (e) {
+        console.error('addBlock', e);
+        showToast('Failed to block user', 'red', 3000);
+      }
+    }
+
+    function exportCSV() {
+      if (!blockedDetails.length) return showToast('No blocked users to export', 'yellow');
+      const csvRows = [['displayName','email','tagline']];
+      blockedDetails.forEach(b => csvRows.push([`"${(b.displayName||'').replace(/"/g,'""')}"`, b.email, `"${(b.tagline||'').replace(/"/g,'""')}"`]));
+      const csv = csvRows.map(r => r.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'blocked_users.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Export started', 'purple', 2000);
+    }
+
+    async function copyEmails() {
+      if (!blockedList.length) return showToast('No emails to copy', 'yellow');
+      try {
+        await navigator.clipboard.writeText(blockedList.join('\n'));
+        showToast('Copied to clipboard', 'purple', 2000);
+      } catch (e) {
+        showToast('Failed to copy', 'red', 2000);
+      }
+    }
+
+    function escapeHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function openSelectedProfile() {
+      if (!selectedEmail) return showToast('Select a user first', 'yellow');
+      window.location.href = `/viewprofile?profile=${encodeURIComponent(selectedEmail)}`;
+    }
+
+    // events
+    refreshBtn.addEventListener('click', ()=>{ if (currentUserEmail) loadBlockedUsers(currentUserEmail); });
+    searchInput.addEventListener('input', () => renderList(searchInput.value));
+    addBlockBtn.addEventListener('click', () => addBlock((blockEmailInput.value||'').trim().toLowerCase()));
+    unblockAllBtn.addEventListener('click', unblockAll);
+    exportBtn.addEventListener('click', exportCSV);
+    copyListBtn.addEventListener('click', copyEmails);
+    openProfileBtn.addEventListener('click', openSelectedProfile);
+    clearSearchBtn.addEventListener('click', ()=>{ searchInput.value=''; renderList(''); });
+
+    // disable block button when input equals your email (quick UX guard)
+    blockEmailInput.addEventListener('input', () => {
+      const v = (blockEmailInput.value||'').trim().toLowerCase();
+      addBlockBtn.disabled = !v || (v === (currentUserEmail || '').toLowerCase());
+      addBlockBtn.style.opacity = addBlockBtn.disabled ? 0.6 : 1;
+    });
+
+    // auth state
+    auth.onAuthStateChanged(async user => {
+      if (!user) {
+        showToast('Please log in to manage blocked users', 'yellow', 3000);
+        currentUserEmail = null;
+        blockedList = []; blockedDetails = [];
+        renderList();
+        stats.textContent = 'Signed out';
+        countEl.textContent = '—';
+        return;
+      }
+      currentUserEmail = user.email;
+      addBlockBtn.disabled = false;
+      await loadBlockedUsers(currentUserEmail);
+    });
+  </script>
 </body>
 </html>

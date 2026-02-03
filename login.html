@@ -1,423 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Login</title>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
-    <script src="https://www.darkpurpleof.github.io/favicon.js"></script>
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login</title>
 
-        :root {
-            --bg-color: #000;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.05);
-            --border-color: purple;
-        }
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-        body.light {
-            --bg-color: #fff;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.1);
-            --border-color: purple;
-        }
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            min-height: 100vh;
-            transition: background 0.4s, color 0.4s;
-            padding: 1rem;
-            box-sizing: border-box;
-        }
-
-        .top-bar {
-            width: 100%;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .icon-btn {
-            font-size: 22px;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            padding: 6px;
-            transition: opacity 0.3s;
-        }
-
-        .icon-btn:hover {
-            opacity: 0.7;
-        }
-
-        .profile-pic {
-            width: 32px;
-            height: 32px;
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-        }
-
-        h2 {
-            font-size: 2em;
-            margin: 20px 0;
-            text-shadow: 0 0 6px var(--text-color);
-            animation: glitch 1.5s infinite;
-        }
-
-        .login-container {
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px var(--text-color);
-            max-width: 400px;
-            width: 100%;
-            text-align: left;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-top: 5px;
-            border-radius: 8px;
-            border: 1.5px solid var(--border-color);
-            background-color: var(--box-bg);
-            color: var(--text-color);
-            box-sizing: border-box;
-        }
-
-        .error-message {
-            color: red;
-            font-size: 0.85em;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--box-bg);
-            color: var(--text-color);
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            opacity: 0.8;
-        }
-
-        .forgot-password {
-            margin-top: 10px;
-        }
-
-        .forgot-password a {
-            color: purple;
-            text-decoration: none;
-        }
-
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-
-        @keyframes glitch {
-            0% { transform: none; }
-            20% { transform: skewX(3deg); }
-            40% { transform: skewX(-3deg); }
-            60% { transform: none; }
-            100% { transform: none; }
-        }
-        /* ...existing code... */
-#toast {
-    position: fixed;
-    top: -80px;
-    left: 0;
-    width: 100vw;
-    min-width: 0;
-    max-width: 100vw;
-    padding: 18px 0;
-    border-radius: 0 0 16px 16px;
-    font-size: 1.1em;
-    font-family: inherit;
-    color: #fff;
-    z-index: 9999;
-    box-shadow: 0 4px 16px rgba(128,0,128,0.15);
-    opacity: 0;
-    pointer-events: none;
-    text-align: center;
-    transition: opacity 0.4s, top 0.4s;
-}
-#toast.show {
-    opacity: 1;
-    pointer-events: auto;
-    top: 0;
-    animation: toast-slide-down 0.4s cubic-bezier(.77,0,.175,1);
-}
-#toast.hide {
-    opacity: 0;
-    top: -80px;
-    animation: toast-slide-up 0.4s cubic-bezier(.77,0,.175,1);
-}
-#toast.purple { background: purple; }
-#toast.yellow { background: #e6b800; color: #222; }
-#toast.red { background: #c00; }
-
-@keyframes toast-slide-down {
-    from { top: -80px; opacity: 0; }
-    to   { top: 0; opacity: 1; }
-}
-@keyframes toast-slide-up {
-    from { top: 0; opacity: 1; }
-    to   { top: -80px; opacity: 0; }
-}
-
-/* Responsive scaling for mobile */
-@media (max-width: 600px) {
-    .login-container {
-        max-width: 98vw;
-        padding: 10px;
-        font-size: 1em;
+  <style>
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
     }
-    input, button {
-        font-size: 1em;
-        padding: 10px;
+    body.light {
+      --bg: #f6f8fb;
+      --card:#fff;
+      --muted:#475569;
+      --text:#0f172a;
+      --border: rgba(0,0,0,0.06);
     }
-    h2 {
-        font-size: 1.5em;
+
+    /* Page layout:
+       - Topbar stays at top
+       - Main centered below topbar
+    */
+    html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background-color: var(--bg); color:var(--text); transition: background .25s, color .25s; }
+    body { display:flex; flex-direction:column; min-height:100vh; }
+
+    /* dp-topbar (web component) sits at top */
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+
+    /* main wrapper centers content below topbar */
+    main.wrapper {
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      box-sizing:border-box;
     }
-}
-    </style>
+
+    .card {
+      background:var(--card);
+      border-radius:12px;
+      padding:24px;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:0 6px 18px rgba(2,6,23,0.45);
+      max-width:420px;
+      width:100%;
+    }
+
+    h1 { margin:0 0 18px 0; font-size:22px; font-weight:700; }
+
+    .input-group { margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
+    label { font-size:13px; color:var(--muted); }
+    input {
+      padding:12px;
+      border-radius:8px;
+      border:1px solid var(--border);
+      background:var(--card);
+      color:var(--text);
+      font-size:14px;
+      box-sizing:border-box;
+    }
+    .actions { display:flex; gap:12px; flex-direction:column; margin-top:8px; }
+
+    button[type="submit"] {
+      width:100%;
+      padding:12px;
+      background:var(--accent);
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+      transition:opacity .15s;
+    }
+    button[type="submit"]:hover { opacity:.9; }
+
+    .forgot-password { margin-top:8px; font-size:13px; text-align:left; color:var(--muted); }
+    .forgot-password a { color:var(--accent); text-decoration:none; }
+    .forgot-password a:hover { text-decoration:underline; }
+
+    /* Toast (matches /home style) */
+    #toast {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      display: none;
+      z-index: 99999;
+      color: #fff;
+      box-sizing: border-box;
+    }
+    #toast.purple { background: var(--accent-strong); color:#fff; }
+    #toast.yellow { background: #e6b800; color:#222; }
+    #toast.red { background: #c00; color:#fff; }
+
+    @media (max-width:600px){
+      main.wrapper { padding:16px; }
+      .card { padding:16px; }
+      input, button[type="submit"] { padding:10px; font-size:14px; }
+    }
+  </style>
+
+  <!-- dp-topbar -->
+  <script type="module" src="/dp-topbar.js"></script>
 </head>
 <body>
-<div class="top-bar">
-    <button class="icon-btn" id="themeToggle" onclick="toggleDarkMode()">🌙</button>
-</div>
+  <dp-topbar></dp-topbar>
 
-<div id="toast" style="display:none;"></div>
+  <main class="wrapper" role="main" aria-label="Login area">
+    <div class="card" role="region" aria-label="Login form">
+      <h1>Login</h1>
 
-
-<h2>Login</h2>
-<div class="login-container">
-    <form id="loginForm">
+      <form id="loginForm" autocomplete="on" novalidate>
         <div class="input-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" placeholder="Enter your email" required>
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" inputmode="email" placeholder="you@provider.com" required>
         </div>
-        <div class="input-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Enter your password" required>
-        </div>
-        <button type="submit">Login</button>
-    </form>
 
-    <!-- Forgot Password Link -->
-    <div class="forgot-password">
-        <p><a href="forgot.html">Forgot password?</a></p>
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="Your password" required>
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="loginBtn">Login</button>
+          <div class="forgot-password"><a href="/forgot.html">Forgot password?</a></div>
+          <div class="forgot-password"><a href="/registration.html">Don't have an account?</a></div>
+        </div>
+      </form>
     </div>
-</div>
+  </main>
 
-<script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const idToken = urlParams.get('token');
+  <div id="toast" role="status" aria-live="polite"></div>
 
-    if (idToken) {
-        // NOTE: this uses the namespaced firebase SDK loaded earlier.
-        // It remains as-is from your original file.
-        firebase.auth().signInWithCustomToken(idToken)
-            .then(() => {
-                // Notify parent that authentication succeeded
-                if (window.opener) {
-                    window.opener.postMessage('auth-success', 'https://darkpurpleof.github.io');
-                } else if (window.parent !== window) {
-                    window.parent.postMessage('auth-success', 'https://darkpurpleof.github.io');
-                }
-            })
-            .catch((error) => {
-                // Optional: post error back to parent
-                if (window.parent !== window) {
-                    window.parent.postMessage('auth-failed', 'https://darkpurpleof.github.io');
-                }
-            });
-    }
-</script>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+  <script>
+    // ensure firebase compat has been initialized
     const firebaseConfig = {
-        apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-        authDomain: "darkpurpleof-s-website.firebaseapp.com",
-        projectId: "darkpurpleof-s-website",
-        storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-        messagingSenderId: "520651082420",
-        appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-    }
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    // Check if the user is already logged in; if they are, check ban status and
-    // redirect to /not-approved when appropriate.
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            try {
-                const email = user.email;
-                if (email) {
-                    const bannedSnap = await getDoc(doc(db, "banned_users", email));
-                    if (bannedSnap.exists()) {
-                        // If the logged-in user is banned, send them to /not-approved
-                        window.location.href = "https://darkpurpleof.github.io/not-approved";
-                        return;
-                    }
-                }
-            } catch (e) {
-                // If any error happens while checking ban status, fall back to normal redirect
-                console.error("Error checking ban status on auth state change:", e);
-            }
-
-            // Not banned — proceed to normal dashboard
-            window.location.href = "https://darkpurpleof.github.io";
-        }
-    });
-
-    document.getElementById("loginForm").addEventListener("submit", function(event) {
-        event.preventDefault();
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
-
-        // Check if the user is banned by email
-        const userRef = doc(db, "banned_users", email);
-        getDoc(userRef).then((docSnap) => {
-            if (docSnap.exists()) {
-                // The user is listed in banned_users. Per your request:
-                // Allow login *if their account exists* — attempt sign-in.
-                signInWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                        showToast("Login successful! Redirecting to not-approved...", "purple");
-                        // Redirect banned-but-authenticated users to /not-approved
-                        setTimeout(() => {
-                            window.location.href = "https://darkpurpleof.github.io/not-approved";
-                        }, 900);
-                    })
-                    .catch((error) => {
-                        // If sign-in fails, show banned message (either wrong credentials or account doesn't exist)
-                        console.warn("Banned user attempted login but sign-in failed:", error);
-                        showToast("You are banned from accessing the site.", "red");
-                    });
-
-                return;
-            }
-
-            // If email is from @darkpurpleof.github.io, skip banned IP check
-            if (!email.endsWith("@darkpurpleof.github.io")) {
-                checkBannedIP();
-            } else {
-                // Allow login for @darkpurpleof.github.io even if the IP is banned
-                attemptLogin(email, password);
-            }
-        }).catch((error) => {
-            showToast("Error checking ban status: " + error.message, "red");
-        });
-    });
-
+    // Toast utility (consistent with /home)
     function showToast(message, color = "purple", duration = 3500) {
-        const toast = document.getElementById("toast");
-        toast.textContent = message;
-        toast.className = `${color} show`;
-        toast.style.display = "block";
-        setTimeout(() => {
-            toast.className = `${color} hide`;
-            setTimeout(() => {
-                toast.style.display = "none";
-                toast.className = color;
-            }, 400);
-        }, duration);
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.className = color;
+      toast.style.display = "block";
+      setTimeout(() => {
+        toast.style.display = "none";
+        toast.className = "";
+      }, duration);
     }
 
-    function checkBannedIP() {
-        fetch("https://ipinfo.io/json")
-            .then(response => response.json())
-            .then(data => {
-                const userIP = data.ip;
-                const ipRef = doc(db, "banned_ips", userIP);
-                getDoc(ipRef).then((ipSnap) => {
-                    if (ipSnap.exists()) {
-                        showToast("Your IP is banned.", "red");
-                        return;
-                    } else {
-                        const email = document.getElementById("email").value;
-                        const password = document.getElementById("password").value;
-                        attemptLogin(email, password);
-                    }
-                }).catch((error) => {
-                    showToast("Error checking IP ban: " + error.message, "red");
-                });
-            }).catch((error) => {
-                showToast("Unable to fetch IP address: " + error.message, "red");
-            });
-    }
+    // IMPORTANT: use compat's auth.onAuthStateChanged
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) return;
+      const email = user.email;
+      if (!email) {
+        // fallback: redirect to root if user exists but no email (rare)
+        window.location.href = "/";
+        return;
+      }
 
-    function attemptLogin(email, password) {
-        signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                showToast("Login successful!", "purple");
-                setTimeout(() => {
-                    window.location.href = "https://darkpurpleof.github.io";
-                }, 900);
-            })
-            .catch((error) => {
-                showToast("Whoops! Login failed because " + error.message, "red");
-            });
-    }
-</script>
-
-<script>
-    function toggleDarkMode() {
-        const themeButton = document.getElementById('themeToggle');
-        const isDarkMode = document.body.classList.contains('light');
-
-        if (isDarkMode) {
-            document.body.classList.remove('light');
-            themeButton.innerHTML = '🌙'; // Moon icon
-            localStorage.setItem('lightMode', 'disabled');
-        } else {
-            document.body.classList.add('light');
-            themeButton.innerHTML = '☀️'; // Sun icon
-            localStorage.setItem('lightMode', 'enabled');
+      try {
+        const bannedSnap = await db.collection("banned_users").doc(email).get();
+        if (bannedSnap.exists) {
+          // Signed-in but banned — send to not-approved (keeps user signed-in)
+          window.location.href = "/not-approved";
+          return;
         }
-    }
+      } catch (e) {
+        console.warn("Failed checking banned_users on auth change:", e);
+        // If DB check fails, let them proceed to root (safer fallback)
+      }
 
-    // Check for saved theme
-    if (localStorage.getItem('lightMode') === 'enabled') {
-        document.body.classList.add('light');
-        document.getElementById('themeToggle').innerHTML = '☀️'; // Sun icon
-    }
-</script>
+      // not banned — go home
+      window.location.href = "/";
+    });
+
+    // Login form handler
+    document.getElementById("loginForm").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const email = (document.getElementById("email").value || "").trim().toLowerCase();
+      const password = document.getElementById("password").value || "";
+
+      if (!email || !password) { showToast("Email and password are required.", "yellow"); return; }
+
+      try {
+        // Check banned_users doc for this email first
+        const bannedSnap = await db.collection("banned_users").doc(email).get();
+        if (bannedSnap.exists) {
+          // If banned but credentials valid we still sign them in and redirect to not-approved
+          try {
+            await auth.signInWithEmailAndPassword(email, password);
+            showToast("Login successful — redirecting...", "purple");
+            setTimeout(() => window.location.href = "/not-approved", 900);
+            return;
+          } catch (signErr) {
+            console.warn("Banned user's sign-in failed:", signErr);
+            showToast("You are banned from accessing the site.", "red");
+            return;
+          }
+        }
+
+        // Not in banned list: attempt normal sign-in
+        await auth.signInWithEmailAndPassword(email, password);
+        showToast("Login successful!", "purple");
+        setTimeout(() => window.location.href = "/", 900);
+      } catch (err) {
+        // Generic error
+        console.warn("login error", err);
+        showToast("Login failed: " + (err && err.message ? err.message : "unknown"), "red");
+      }
+    });
+  </script>
 </body>
 </html>
