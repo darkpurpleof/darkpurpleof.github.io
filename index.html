@@ -1,28 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>DarkPurpleOF's Website</title>
-    <meta name="description" content="Official website of DarkPurpleOF.">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Home | DarkPurpleOF's Website</title>
 
-    <style>
-        .seo-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-    </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
 
-    <meta http-equiv="refresh" content="0; url=/home">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Global box-sizing and overflow guard to prevent any accidental horizontal scroll */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; } /* hard guard: no horizontal scroll anywhere */
+    img { max-width: 100%; display: block; }
+
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --friend-row-height: 110px; /* approx height per friend card on desktop */
+      --friend-row-height-mobile: 84px; /* approx height per friend card on mobile */
+    }
+    body.light {
+      --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06);
+    }
+
+    body {
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background-color: var(--bg);
+      color:var(--text);
+      transition: background .25s, color .25s;
+      min-height:100vh;
+    }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+    .top-bar { display:none !important; }
+
+    main.container {
+      max-width:1200px;
+      width:100%;
+      margin:24px auto;
+      padding:20px;
+      display:grid;
+      grid-template-columns:1fr 340px;
+      gap:20px;
+      box-sizing:border-box;
+      overflow-x: hidden; /* ensure main never overflows horizontally */
+    }
+    @media (max-width:920px){
+      main.container{ grid-template-columns:1fr; padding:16px; }
+      aside.right-column{ order:2; }
+    }
+
+    .card { background:var(--card); border-radius:12px; padding:18px; border:1px solid var(--border); color:var(--text); box-shadow:0 6px 18px rgba(2,6,23,0.45); overflow:visible; }
+    .hero {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border-radius: 12px;
+      min-width: 0; /* prevent children from forcing width */
+    }
+
+    /* ensure right-side hero column won't push page width */
+    .hero > div { min-width: 0; }
+    .hero > div:last-child { min-width: 0; }
+
+    .muted { color:var(--muted); font-size:13px; }
+
+    /* FRIENDS GRID: grid-first approach (no horizontal scroll) */
+    .friends-container {
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0; /* allow children to shrink */
+      /* default: 5 equal columns (will shrink to fit) */
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-auto-rows: var(--friend-row-height);
+      align-items: start;
+      overflow-x: hidden; /* important: never allow horizontal scrolling */
+      box-sizing: border-box;
+      border-radius: 8px;
+    }
+
+    /* Desktop: limit visible height to 4 rows, vertical scroll if more */
+    @media (min-width: 921px) {
+      .friends-container {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-auto-rows: var(--friend-row-height);
+        max-height: calc( (var(--friend-row-height) * 4) + (12px * 3) ); /* 4 rows + gaps */
+        overflow-y: auto;
+      }
+    }
+
+    /* Tablet / small desktop: keep 5 columns but allow rows to expand; still no horizontal scroll */
+    @media (min-width: 601px) and (max-width: 920px) {
+      .friends-container {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-auto-rows: var(--friend-row-height);
+        max-height: calc( (var(--friend-row-height) * 4) + (12px * 3) );
+        overflow-y: auto;
+      }
+    }
+
+    /* MOBILE: 5 columns max, shrink cards, show only 2 rows (vertical scroll if more) */
+    @media (max-width: 600px) {
+      .friends-container {
+        gap: 8px;
+        padding: 10px;
+        /* keep 5 columns max but allow them to shrink to 0 fraction; using minmax(0,1fr) prevents overflow */
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-auto-rows: var(--friend-row-height-mobile);
+        max-height: calc( (var(--friend-row-height-mobile) * 2) + (8px * 1) ); /* 2 rows + gap */
+        overflow-y: auto;
+      }
+    }
+
+    /* friend card styles: flexible and cannot overflow horizontally */
+    .friend-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-width: 0; /* allow shrinking */
+      text-align: center;
+      cursor: pointer;
+      background: var(--card);
+      padding: 10px;
+      box-sizing: border-box;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .friend-pfp {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  margin: 0 auto 8px auto;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid rgba(0,0,0,0.06);
+  flex-shrink: 0;
+  background-repeat: no-repeat; /* <-- add this */
+}
+
+
+    .friend-name {
+      font-size:13px;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+    }
+    .friend-name img { width:12px; height:12px; margin-left:6px; }
+
+    .profile-preview { display:flex; gap:14px; align-items:center; background:var(--card); border-radius:12px; padding:12px; border:1px solid var(--border); }
+    .profile-pfp { width:72px; height:72px; border-radius:12px; background-size:cover; background-position:center; border:1px solid var(--border); }
+    .profile-text { display:flex; flex-direction:column; gap:6px; }
+    .profile-name-verif { font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px; }
+    .profile-name-verif img { width:14px; height:14px; margin-left:6px; }
+
+    .action-button { display:inline-flex; gap:10px; align-items:center; padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:transparent; cursor:pointer; font-weight:600; color:var(--text); }
+    .action-button img{ width:18px; height:18px; }
+
+    #toast { position:fixed; top:18px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999; }
+    #toast.purple { background:var(--accent-strong); color:#fff; } #toast.yellow{ background:#e6b800; color:#222; } #toast.red{ background:#c00; color:#fff; }
+
+    /* smaller visuals for small screens */
+    @media (max-width: 600px) {
+      .friend-card { padding: 6px; }
+      .friend-pfp { width: 40px; height: 40px; margin-bottom:6px; }
+      .friend-name { font-size: 11px; }
+      .profile-preview { flex-direction:row; gap:10px; padding:10px; }
+      main.container { margin: 12px auto; padding: 12px; max-width: 100%; overflow-x: hidden; }
+    }
+
+    /* subtle scrollbar styling so vertical scroll inside friends-list doesn't feel ugly (optional) */
+    .friends-container::-webkit-scrollbar { width: 8px; }
+    .friends-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.04); border-radius: 6px; }
+  </style>
+
+  <!-- dp-topbar -->
+  <script type="module" src="/dp-topbar.js"></script>
+
+  <script>
+    // make isMobile and isWebView global so all later scripts can call them
+    window.isMobile = function() {
+      try {
+        const mm = window.matchMedia && window.matchMedia('(max-width: 600px)').matches;
+        if (typeof mm === 'boolean') return mm;
+        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+      } catch (e) { return false; }
+    };
+
+    window.isWebView = function() {
+      try {
+        const ua = navigator.userAgent || '';
+        const standalone = window.navigator.standalone === true;
+        const isAndroidWebView = /\bwv\b/.test(ua) || (/Version\/[\d.]+.*Chrome/.test(ua) && !/Chrome\/[\d.]+ Mobile/.test(ua));
+        const isNoChrome = !window.chrome && /Safari/.test(ua) && !/Chrome/.test(ua);
+        return standalone || isAndroidWebView || isNoChrome;
+      } catch (e) { return false; }
+    };
+  </script>
 </head>
+
 <body>
-    <h1 class="seo-hidden">DarkPurpleOF's Website</h1>
+  <dp-topbar></dp-topbar>
+
+  <main class="container">
+    <section>
+      <div class="card hero" role="region" aria-label="Welcome">
+        <div>
+          <h1>Welcome back</h1>
+          <div style="height:12px;"></div>
+
+          <h3 class="muted auth-required" style="margin:0 0 8px 0">Your Friends</h3>
+          <div class="friends-container auth-required" id="friends-list" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div style="height:16px;"></div>
+
+      <div class="card" aria-live="polite">
+        <div class="announcement-title" id="announcement-title">Loading...</div>
+        <div class="announcement-message" id="announcement-message">Please wait...</div>
+      </div>
+
+      <div style="height:12px;"></div>
+
+      <div class="card">
+        <h4 style="margin:0 0 10px 0">Random Quote</h4>
+        <div id="quote-card">Loading quote...</div>
+      </div>
+
+      <div style="height:12px;"></div>
+
+      <div id="profile-preview" class="profile-preview" style="display:none;">
+        <div style="position:relative;">
+          <div class="profile-pfp" id="preview-pfp"></div>
+          <div id="preview-pfp-frame" style="position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; border-radius:12px; display:none; background-size:cover; background-position:center;"></div>
+        </div>
+
+        <div class="profile-text">
+          <div class="profile-name-verif">
+            <span id="preview-name">Loading...</span>
+            <img id="preview-verified" src="/assets/verified.png" alt="Verified" style="display:none; width:14px; height:14px;">
+          </div>
+          <div class="profile-bio" id="preview-bio"></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right-column">
+      <div class="card">
+        <h4 style="margin-top:0">Quick Actions</h4>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+          <button class="action-button auth-required" onclick="location.href='/redeem'"><img src="/assets/redeem.png" alt=""> Redeem</button>
+          <button class="action-button auth-required" onclick="location.href='/manageblockedusers'"><img src="/assets/block.png" alt=""> Manage Blocked Users</button>
+          <div style="height:6px"></div>
+          <div style="font-size:12px; color:var(--muted)">Android app</div>
+          <div class="action-button" onclick="location.href='/release/download'"><img src="/assets/download.png" alt=""> Download it now</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ORIGINAL SCRIPTS (adapted so they won't force horizontal scroll) -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    function formatNumber(num) { return Intl.NumberFormat('en',{notation:'compact'}).format(num); }
+
+    function showToast(message, color = "purple", duration = 3500) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.className = `${color}`;
+      toast.style.display = "block";
+      setTimeout(()=>{ toast.style.display='none'; toast.className=''; }, duration);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[s]);
+    }
+
+    // announcements
+    db.collection('announcements').orderBy('timestamp','desc').limit(1).onSnapshot(snapshot=>{
+      snapshot.forEach(doc=>{
+        const data = doc.data();
+        const t = document.getElementById('announcement-title'), m = document.getElementById('announcement-message');
+        if (t) t.textContent = data.title || '';
+        if (m) m.textContent = data.message || '';
+      });
+    });
+
+    // quote
+    fetch("https://api.quotable.io/random").then(r=>r.json()).then(d=>{
+      const q = document.getElementById('quote-card');
+      if (q) q.textContent = `${d.content} — ${d.author}`;
+    }).catch(()=>{ const q=document.getElementById('quote-card'); if(q) q.textContent='Failed to load quote.'; });
+  </script>
+
+  <script>
+    // profile preview
+    auth.onAuthStateChanged(async user => {
+      const card = document.getElementById('profile-preview');
+      if (!card) return;
+      if (!user) { card.style.display='none'; return; }
+
+      try {
+        const docRef = db.collection('user_data').doc(user.email);
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) { card.style.display='none'; return; }
+        const data = docSnap.data();
+
+        card.style.display = 'flex';
+        const pfp = document.getElementById('preview-pfp');
+        if (pfp) pfp.style.backgroundImage = `url(${data.profile_picture || '/org-owner.jpg'})`;
+
+        const previewFrame = document.getElementById('preview-pfp-frame');
+        if (previewFrame) {
+          if (data.profile_picture_frame && data.profile_picture_frame.trim()!=='') {
+            previewFrame.style.backgroundImage = `url(${data.profile_picture_frame})`;
+            previewFrame.style.display = 'block';
+          } else previewFrame.style.display = 'none';
+        }
+
+        const displayName = data['display name'] || user.email;
+        const nameEl = document.getElementById('preview-name');
+        if (nameEl) nameEl.textContent = displayName;
+
+        const verifiedEl = document.getElementById('preview-verified');
+        if (verifiedEl) verifiedEl.style.display = data.is_verified ? 'inline' : 'none';
+
+        const bioEl = document.getElementById('preview-bio');
+        if (bioEl) {
+          const bio = data.bio || '';
+          bioEl.textContent = bio.length > 50 ? bio.substring(0,47)+'...' : bio;
+        }
+      } catch (e) {
+        console.warn('profile preview failed', e);
+        const card = document.getElementById('profile-preview');
+        if (card) card.style.display='none';
+      }
+    });
+  </script>
+
+  <div id="toast"></div>
+
+  <script>
+    (function () {
+      if (window.__friendsInit) return;
+      window.__friendsInit = true;
+
+      const state = { unsub:null, friends:[] };
+
+      function makeCard(f) {
+        const card = document.createElement("div");
+        card.className = "friend-card";
+        card.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(f.email)}`;
+        const pfpUrl = f.profilePic ? f.profilePic.replace(/'/g, "\\'") : '/org-owner.jpg';
+        card.innerHTML = `
+          <div class="friend-pfp" style="background-image:url('${pfpUrl}'); position:relative;"></div>
+          <div class="friend-name"><span title="${escapeHtml(f.displayName)}">${escapeHtml(f.displayName)}</span>${f.verified ? `<img src="/assets/verified.png" alt="Verified">` : ''}</div>
+        `;
+        return card;
+      }
+
+      function renderLayout() {
+        const container = document.getElementById("friends-list");
+        if (!container) return;
+
+        // Ensure container stays grid-based and doesn't get flex/nowrap set
+        container.style.display = ''; // let CSS handle it (grid)
+        container.style.overflowX = 'hidden'; // extra guard
+        container.innerHTML = "";
+        for (const f of state.friends) {
+          container.appendChild(makeCard(f));
+        }
+      }
+
+      window.addEventListener('resize', ()=>{ renderLayout(); });
+
+      auth.onAuthStateChanged(async user => {
+        const container = document.getElementById("friends-list");
+        if (state.unsub) { state.unsub(); state.unsub = null; }
+        if (!user || !container) { if (container) container.innerHTML = ""; state.friends = []; return; }
+        const friendsListRef = db.collection("friends").doc(user.email).collection("friendlist");
+        state.unsub = friendsListRef.onSnapshot(async snapshot => {
+          const emails=[];
+          snapshot.forEach(d => { const id = String(d.id||"").trim().toLowerCase(); if (id && !emails.includes(id)) emails.push(id); });
+          const docs = await Promise.all(emails.map(email => db.collection("user_data").doc(email).get()));
+          state.friends = docs.map((snap,i)=> {
+            const email = emails[i]; const data = snap.exists ? snap.data() : {};
+            return {
+              displayName: data && data["display name"] ? data["display name"] : email,
+              profilePic: (data && data.profile_picture) || "/org-owner.jpg",
+              verified: !!(data && data.is_verified === true),
+              frameUrl: data ? data.profile_picture_frame : undefined,
+              email
+            };
+          });
+          renderLayout();
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
