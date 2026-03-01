@@ -2,13 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Register</title>
 
+  <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
+  <!-- reCAPTCHA -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -22,8 +24,6 @@
       --accent-strong: #5b21b6;
       --text: #eaeaea;
       --border: rgba(255,255,255,0.04);
-      --warning-bg: rgba(107,33,168,0.06);
-      --warning-border: rgba(107,33,168,0.14);
     }
     body.light {
       --bg: #f6f8fb;
@@ -31,112 +31,75 @@
       --muted:#475569;
       --text:#0f172a;
       --border: rgba(0,0,0,0.06);
-      --warning-bg: rgba(107,33,168,0.04);
-      --warning-border: rgba(107,33,168,0.08);
     }
 
-    /* Prevent horizontal scrolling globally */
-    html, body { 
-      height: 100%; 
-      margin: 0; 
-      padding: 0;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; 
-      background-color: var(--bg); 
-      color: var(--text); 
-      transition: background .25s, color .25s;
-      overflow-x: hidden; 
-      width: 100%;
-    }
+    html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background-color: var(--bg); color:var(--text); transition: background .25s, color .25s; }
+    body { display:flex; flex-direction:column; min-height:100vh; }
 
-    body { display: flex; flex-direction: column; min-height: 100vh; }
+    /* dp-topbar */
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
 
-    dp-topbar { display: block; position: sticky; top: 0; z-index: 100; width: 100%; }
-
+    /* main wrapper centers content */
     main.wrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      box-sizing: border-box;
-      width: 100%;
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      box-sizing:border-box;
     }
 
     .card {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 24px;
-      border: 1px solid var(--border);
-      color: var(--text);
-      box-shadow: 0 6px 18px rgba(2,6,23,0.45);
-      max-width: 640px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    /* Specific fix for OAuth card to ensure it matches the main card exactly */
-    .oauth-card {
-      margin-bottom: 16px !important;
-      padding: 20px;
-    }
-
-    #oauthContainer {
-      width: 100%;
-      max-width: 640px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      background:var(--card);
+      border-radius:12px;
+      padding:24px;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:0 6px 18px rgba(2,6,23,0.45);
+      max-width:640px;
+      width:100%;
     }
 
     .grid {
-      display: grid;
-      grid-template-columns: 1fr 280px;
-      gap: 24px;
-      width: 100%;
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:20px;
     }
-
-    @media (max-width: 920px){
+    @media (max-width:920px){
       .grid { grid-template-columns: 1fr; }
-      .card { max-width: 100%; }
     }
 
-    h1 { margin: 0 0 6px 0; font-size: 20px; font-weight: 700; }
-    p.lead { margin: 0 0 16px 0; color: var(--muted); font-size: 14px; }
+    h1 { margin:0 0 6px 0; font-size:20px; font-weight:700; }
+    p.lead { margin:0 0 16px 0; color:var(--muted); font-size:14px; }
 
     .info-chart {
       background: var(--card);
-      border-radius: 10px;
-      padding: 16px;
-      border: 1px solid var(--border);
-      height: fit-content;
+      border-radius:10px;
+      padding:12px;
+      border:1px solid var(--border);
     }
 
-    form { display: flex; flex-direction: column; gap: 12px; }
-    .input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); box-sizing: border-box; }
-    label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+    form { display:flex; flex-direction:column; gap:12px; }
+    .input { width:100%; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing:border-box; }
+    label { font-size:13px; color:var(--muted); display:block; margin-bottom:6px; }
+
+    .row { display:flex; gap:12px; }
+    .row .col { flex:1; }
 
     .register-button {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
+      background:var(--accent);
+      color:#fff;
+      border:none;
+      padding:12px;
+      border-radius:8px;
+      font-weight:700;
+      cursor:pointer;
     }
-    
-    /* Ensure reCAPTCHA doesn't overflow on small screens */
-    .g-recaptcha {
-      transform: scale(0.9);
-      transform-origin: 0 0;
-    }
+    .register-button:hover { opacity:0.95; }
 
+    .small-note { font-size:13px; color:var(--muted); }
+
+    /* toast (matches /home) */
     #toast {
       position: fixed;
       top: 18px;
@@ -149,68 +112,31 @@
       z-index: 99999;
       color: #fff;
       box-sizing: border-box;
-      max-width: 90%;
-      text-align: center;
     }
+    #toast.purple { background: var(--accent-strong); color:#fff; }
+    #toast.yellow { background: #e6b800; color:#222; }
+    #toast.red { background: #c00; color:#fff; }
 
-    #toast.purple { background: var(--accent-strong); }
-    #toast.yellow { background: #e6b800; color: #222; }
-    #toast.red { background: #c00; }
+    /* subtle helper */
+    .muted { color:var(--muted); }
 
-    .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,0.15);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      display: inline-block;
-      vertical-align: middle;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .session-warning {
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: var(--warning-bg);
-      border: 1px solid var(--warning-border);
-      color: var(--muted);
-      font-size: 13px;
-      display: flex;
-      flex-wrap: wrap; /* Helps on very small screens */
-      gap: 8px;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .small-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    @media (max-width: 600px){
-      main.wrapper { padding: 16px; }
-      .card { padding: 20px; }
-      .g-recaptcha { transform: scale(0.8); }
+    @media (max-width:600px){
+      main.wrapper { padding:16px; }
+      .card { padding:16px; }
+      .grid { grid-template-columns: 1fr; }
     }
   </style>
 
+  <!-- dp-topbar -->
   <script type="module" src="/dp-topbar.js"></script>
 </head>
 <body>
   <dp-topbar></dp-topbar>
 
-  <main class="wrapper" role="main">
-    <div id="oauthContainer"></div>
-
+  <main class="wrapper" role="main" aria-label="Register area">
     <div class="card" role="region" aria-label="Register form">
       <div class="grid">
+        <!-- LEFT: form -->
         <div>
           <h1>Create an account</h1>
           <p class="lead">Join the platform. All admin accounts are reserved and cannot be registered here.</p>
@@ -226,30 +152,43 @@
               <input id="password" class="input" type="password" placeholder="Choose a strong password" required>
             </div>
 
+            <!-- reCAPTCHA widget (user must complete) -->
             <div style="margin-top:6px;">
               <div class="muted" style="margin-bottom:6px; font-size:13px;">Please complete the reCAPTCHA</div>
               <div class="g-recaptcha" data-sitekey="6Lddwd8qAAAAAC0OUZ7iOrKFGEeu--_-1XvjU0et"></div>
             </div>
 
             <div>
-              <button id="registerBtn" type="submit" class="register-button">
-                <span id="registerBtnContent">Register</span>
-              </button>
+              <button type="submit" class="register-button">Register</button>
             </div>
 
             <div class="small-note" style="margin-top:8px;">
               By registering you agree to our <a href="/terms.md" style="color:var(--accent); text-decoration:none;">Terms of Service</a>.
             </div>
 
-            <div id="sessionWarningContainer" aria-live="polite"></div>
+            <div class="small-note" style="margin-top:6px;">
+              <strong>@darkpurpleof.github.io</strong> addresses cannot be registered here.
+            </div>
           </form>
         </div>
 
-        <aside class="info-chart">
+        <!-- RIGHT: info / hints -->
+        <aside class="info-chart" aria-hidden="false">
           <h3 style="margin:0 0 8px 0">Why verify?</h3>
-          <p class="muted" style="font-size:13px; margin:0 0 12px 0;">We check IP & email bans, region, and reCAPTCHA to keep the community safe.</p>
+          <p class="muted" style="margin:0 0 12px 0;">We check IP & email bans, region, and reCAPTCHA to keep the community safe.</p>
+
+          <div style="display:flex; gap:8px; flex-direction:column;">
+            <div class="muted">Registration checks:</div>
+            <ul class="muted" style="margin:6px 0 0 18px; padding:0;">
+              <li>reCAPTCHA completion</li>
+              <li>No reserved @darkpurpleof.github.io signups</li>
+              <li>IP & email ban checks</li>
+              <li>Region & VPN detection</li>
+            </ul>
+          </div>
+
           <div style="height:12px;"></div>
-          <div><a href="/login.html" style="color:var(--accent); text-decoration:none; font-size:14px; font-weight:600;">Already have an account? Login</a></div>
+          <div><a href="/login.html" style="color:var(--accent); text-decoration:none;">Already have an account? Login</a></div>
         </aside>
       </div>
     </div>
@@ -258,6 +197,7 @@
   <div id="toast" role="status" aria-live="polite"></div>
 
   <script>
+    // ensure firebase compat is initialized
     const firebaseConfig = {
       apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
       authDomain: "darkpurpleof-s-website.firebaseapp.com",
@@ -267,201 +207,64 @@
       appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
     };
     if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Get ?returnto= param safely
+function getReturnToUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const returnTo = params.get("returnto");
+
+  if (!returnTo) return "/";
+
+  try {
+    const url = new URL(returnTo, window.location.origin);
+
+    // Optional safety: only allow same-origin redirects
+    if (url.origin === window.location.origin) {
+      return url.pathname + url.search + url.hash;
+    }
+
+    return "/";
+  } catch {
+    return "/";
+  }
+}
+
+    // Toast helper (consistent with /home)
     function showToast(message, color = "purple", duration = 3500) {
       const toast = document.getElementById("toast");
       toast.textContent = message;
       toast.className = color + " show";
       toast.style.display = "block";
       setTimeout(() => {
-        toast.style.display = "none";
+        toast.className = color + " hide";
+        setTimeout(() => {
+          toast.style.display = "none";
+          toast.className = "";
+        }, 400);
       }, duration);
     }
 
-    function getQueryParam(name) {
-      return new URLSearchParams(window.location.search).get(name);
-    }
-
-    function removeQueryParam(name) {
-      const url = new URL(window.location.href);
-      url.searchParams.delete(name);
-      window.history.replaceState({}, document.title, url.toString());
-    }
-
-    function isValidRedirectUrl(url) {
-      return url && url.includes("__") && /^[a-z][a-z0-9+\-.]*:\/\//i.test(url);
-    }
-
-    let oauthClient = null;
-    let oauthClientId = null;
-    let oauthClientValidRedirect = false;
-    let triedLoadingOauthClient = false;
-    let sessionExists = false;
-    let registerPressed = false;
-
-    function waitForOauthLoad(maxMs = 3000) {
-      return new Promise((resolve) => {
-        const start = Date.now();
-        (function check() {
-          if (oauthClient || triedLoadingOauthClient || (Date.now() - start > maxMs)) return resolve();
-          setTimeout(check, 100);
-        })();
-      });
-    }
-
-    (async function tryLoadOauthClient() {
-      try {
-        const authParam = getQueryParam("auth");
-        if (!authParam) { triedLoadingOauthClient = true; return; }
-        oauthClientId = String(authParam);
-        const docSnap = await db.collection("oauthclients").doc(oauthClientId).get();
-        if (docSnap.exists) {
-          const data = docSnap.data();
-          oauthClient = data;
-          oauthClient.__id = oauthClientId;
-          oauthClientValidRedirect = isValidRedirectUrl(data.redirectUrl);
-          if (oauthClientValidRedirect) insertOAuthCard(data);
-        }
-        triedLoadingOauthClient = true;
-      } catch (e) {
-        console.error(e);
-        triedLoadingOauthClient = true;
-      }
-    })();
-
-    function insertOAuthCard(data) {
-      const container = document.getElementById("oauthContainer");
-      if (!container) return;
-      const card = document.createElement("div");
-      card.className = "card oauth-card";
-      card.id = "oauthCard";
-      card.style.display = "flex";
-      card.style.gap = "16px";
-      card.style.alignItems = "center";
-
-      const img = document.createElement("img");
-      img.src = data.image || "/assets/default_client.png";
-      img.style.width = "54px";
-      img.style.height = "54px";
-      img.style.borderRadius = "8px";
-      img.style.border = "1px solid var(--border)";
-
-      const meta = document.createElement("div");
-      meta.style.flex = "1";
-      meta.style.minWidth = "0";
-      meta.innerHTML = `
-        <div style="font-size:12px; color:var(--muted)">Authorizing:</div>
-        <div style="font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${data.CN || 'App'}</div>
-        <div style="font-size:12px; color:var(--muted)">by ${data.author || 'Unknown'}</div>
-      `;
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "small-btn";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.onclick = () => {
-        container.innerHTML = "";
-        removeQueryParam("auth");
-        oauthClient = null;
-      };
-
-      card.appendChild(img);
-      card.appendChild(meta);
-      card.appendChild(cancelBtn);
-      container.appendChild(card);
-    }
-
-    // Cancel OAuth (remove ?auth, hide oauth card)
-    function cancelOauth() {
-      oauthClient = null;
-      oauthClientId = null;
-      oauthClientValidRedirect = false;
-      triedLoadingOauthClient = true;
-      removeQueryParam("auth");
-      const c = document.getElementById("oauthCard");
-      if (c && c.parentNode) c.parentNode.removeChild(c);
-      showToast("OAuth canceled", "yellow", 2000);
-      if (sessionExists) showSessionOverwriteWarning();
-    }
-
-    // Show session overwrite warning (with Use current session button)
-    function showSessionOverwriteWarning() {
-      // if oauth client is present & valid, do not show the warning (the card handles consent)
-      if (oauthClient && oauthClientValidRedirect) return;
-
-      const container = document.getElementById("sessionWarningContainer");
-      if (!container) return;
-      if (document.getElementById("sessionWarning")) return;
-
-      const warn = document.createElement("div");
-      warn.id = "sessionWarning";
-      warn.className = "session-warning";
-
-      const left = document.createElement("div");
-      left.innerHTML = '<div style="display:flex;gap:10px;align-items:flex-start;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden><path d="M12 2v12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.2a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-        + '<div><b>Active session detected.</b><div style="margin-top:4px;color:var(--muted)">If you register a new account, the current session will be overwritten.</div></div></div>';
-
-      const right = document.createElement("div");
-      right.style.display = "flex";
-      right.style.gap = "8px";
-      right.style.alignItems = "center";
-      right.style.flexShrink = "0";
-
-      const useBtn = document.createElement("button");
-      useBtn.className = "small-btn";
-      useBtn.type = "button";
-      useBtn.textContent = "Use current session";
-      useBtn.onclick = () => {
-        // skip registering, go to home
-        window.location.href = "/";
-      };
-
-      right.appendChild(useBtn);
-      warn.appendChild(left);
-      warn.appendChild(right);
-
-      container.appendChild(warn);
-    }
-
-    function removeSessionOverwriteWarning() {
-      const warn = document.getElementById("sessionWarning");
-      if (warn && warn.parentNode) warn.parentNode.removeChild(warn);
-    }
-
-    // AUTH STATE CHANGED
-    // Note: we do NOT redirect automatically to "/" here. We only show the session overwrite warning
-    // so the user can choose "Use current session".
+    // onAuthStateChanged: if already signed in redirect (and check bans)
     auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        sessionExists = false;
-        removeSessionOverwriteWarning();
-        return;
-      }
+  if (!user) return;
 
-      sessionExists = true;
-
-      // Check banned status
-      try {
-        const email = user.email || "";
-        if (email) {
-          const bannedSnap = await db.collection("banned_users").doc(email).get();
-          if (bannedSnap.exists) {
-            window.location.href = "/not-approved";
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn("Failed checking banned_users on auth change:", e);
-      }
-
-      // Wait for oauth loader but DO NOT auto-redirect here
-      await waitForOauthLoad(3000);
-
-      // Show session overwrite UI so user explicitly chooses
-      showSessionOverwriteWarning();
+  const email = user.email || "";
+  try {
+    const bannedSnap = await db.collection("banned_users").doc(email).get();
+    if (bannedSnap.exists) {
+      window.location.href = "/not-approved";
       return;
-    });
+    }
+  } catch (e) {
+    console.warn("Failed banned check on auth state:", e);
+  }
+
+  // If already logged in and not banned:
+  // Do nothing. No redirect.
+});
 
     // fetch IP info (ipinfo). If you have a token, append ?token=...
     async function fetchUserIpInfo() {
@@ -490,53 +293,23 @@
 
     const bannedRegions = ["United Kingdom","Australia","Turkiye","Turkey","Argentina","Brazil","China"];
 
-    // Loading helper for register button
-    function setRegisterLoading(isLoading) {
-      const btn = document.getElementById("registerBtn");
-      const content = document.getElementById("registerBtnContent");
-      if (!btn || !content) return;
-      if (isLoading) {
-        btn.setAttribute("disabled", "disabled");
-        btn.setAttribute("aria-busy", "true");
-        content.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Registering...</span>';
-      } else {
-        btn.removeAttribute("disabled");
-        btn.setAttribute("aria-busy", "false");
-        content.textContent = "Register";
-      }
-    }
-
     document.getElementById("registerForm").addEventListener("submit", async (ev) => {
       ev.preventDefault();
-
-      // mark that the user explicitly pressed Register
-      registerPressed = true;
-      setRegisterLoading(true);
-
       const email = (document.getElementById("email").value || "").trim().toLowerCase();
       const password = document.getElementById("password").value || "";
 
-      if (!email || !password) {
-        showToast("Email and password are required.", "yellow");
-        setRegisterLoading(false);
-        registerPressed = false;
-        return;
-      }
+      if (!email || !password) { showToast("Email and password are required.", "yellow"); return; }
       if (email.endsWith("@darkpurpleof.github.io")) {
         showToast("You can't register an admin address here. Ask the owner.", "red");
-        setRegisterLoading(false);
-        registerPressed = false;
         return;
       }
 
       // reCAPTCHA
       try {
         const token = (typeof grecaptcha !== "undefined") ? grecaptcha.getResponse() : "";
-        if (!token) { showToast("Please complete the reCAPTCHA.", "red"); setRegisterLoading(false); registerPressed = false; return; }
+        if (!token) { showToast("Please complete the reCAPTCHA.", "red"); return; }
       } catch (e) {
         showToast("reCAPTCHA unavailable. Try again later.", "red");
-        setRegisterLoading(false);
-        registerPressed = false;
         return;
       }
 
@@ -544,70 +317,34 @@
 
       // IP & region checks
       const ipInfo = await fetchUserIpInfo();
-      if (!ipInfo) {
-        showToast("Could not determine IP address.", "red");
-        setRegisterLoading(false);
-        registerPressed = false;
-        return;
-      }
+      if (!ipInfo) { showToast("Could not determine IP address.", "red"); return; }
 
       if (bannedRegions.includes(ipInfo.region)) {
-        showToast("Registration from your region is not allowed.", "red");
-        setRegisterLoading(false);
-        registerPressed = false;
-        return;
+        showToast("Registration from your region is not allowed.", "red"); return;
       }
 
       if (ipInfo.privacy && ipInfo.privacy.vpn) {
-        showToast("VPN usage detected. Disable VPN to register.", "red");
-        setRegisterLoading(false);
-        registerPressed = false;
-        return;
+        showToast("VPN usage detected. Disable VPN to register.", "red"); return;
       }
 
       // check email/ip bans
       const isBanned = await checkBans(email, ipInfo.ip);
-      if (isBanned) {
-        showToast("Your email or IP is banned.", "red");
-        setRegisterLoading(false);
-        registerPressed = false;
-        return;
-      }
+      if (isBanned) { showToast("Your email or IP is banned.", "red"); return; }
 
+      // attempt create user (compat)
       try {
-        // create user
         await auth.createUserWithEmailAndPassword(email, password);
-        showToast("Registration successful!", "purple", 1600);
+        showToast("Registration successful — redirecting...", "purple", 1800);
 
-        // Wait for oauth loader to finish (so we don't fallback to / before client loads)
-        await waitForOauthLoad(3000);
+const redirectUrl = getReturnToUrl();
 
-        // If oauth client exists and redirect valid, only redirect because user pressed register
-        if (registerPressed && oauthClient && oauthClientValidRedirect) {
-          try {
-            const token = await auth.currentUser.getIdToken(true);
-            const redirectUrl = String(oauthClient.redirectUrl).replace("__", encodeURIComponent(token));
-            if (isValidRedirectUrl(redirectUrl) || redirectUrl.startsWith(oauthClient.redirectUrl.split("__")[0])) {
-              // give slight delay for UX so toast is seen; then try to open custom scheme or normal URL
-              setTimeout(() => { window.location.assign(redirectUrl); }, 700);
-              return; // after assign we don't run fallback
-            } else {
-              console.warn("OAuth redirect invalid after token insertion:", redirectUrl);
-            }
-          } catch (tokErr) {
-            console.error("Failed to get ID token for oauth redirect:", tokErr);
-          }
-        }
-
-        // fallback: go to home
-        setTimeout(() => { window.location.href = "/"; }, 900);
+setTimeout(() => {
+  window.location.href = redirectUrl;
+}, 1400);
       } catch (err) {
         console.warn("registration failed", err);
+        // friendly message to user but log real error
         showToast(("Registration failed: " + (err && err.message ? err.message : "unknown")), "red");
-      } finally {
-        // reset loading & flag in all cases so subsequent actions are safe
-        setRegisterLoading(false);
-        registerPressed = false;
       }
     });
   </script>
