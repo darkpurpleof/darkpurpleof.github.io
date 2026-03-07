@@ -1,228 +1,252 @@
-<html lang="en"><head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>What is DPFHTML?</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&amp;display=swap" rel="stylesheet">
-  
-  <!-- Firebase SDKs -->
+
+  <!-- Use Inter as requested -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Firebase SDKs (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <style>
-    :root {
-      --bg-color: #000;
-      --text-color: purple;
-      --box-bg: rgba(128, 0, 128, 0.05);
-      --border-color: purple;
-    }
+    /* hard guards: no horizontal scroll & box-sizing */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; margin: 0; }
+    img { max-width: 100%; display: block; }
 
+    /* theme variables */
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --glass: rgba(255,255,255,0.02);
+    }
     body.light {
-      --bg-color: #fff;
-      --text-color: purple;
-      --box-bg: rgba(128, 0, 128, 0.1);
-      --border-color: purple;
+      --bg: #f6f8fb;
+      --card: #fff;
+      --muted: #475569;
+      --text: #0f172a;
+      --border: rgba(0,0,0,0.06);
+      --glass: rgba(0,0,0,0.02);
     }
 
     body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      font-family: 'Orbitron', sans-serif;
-      margin: 0;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      transition: background .25s, color .25s;
       min-height: 100vh;
-      text-align: center;
-      box-sizing: border-box;
-      transition: background 0.4s, color 0.4s;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      line-height:1.45;
+    }
+
+    /* topbar (sticky) */
+    dp-topbar { display:block; position:sticky; top:0; z-index:120; }
+    .dp-topbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 16px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.35), transparent);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--border);
+    }
+    body.light .dp-topbar {
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
+    }
+    .brand { display:flex; gap:12px; align-items:center; min-width:0; }
+    .logo {
+      width:40px; height:40px; border-radius:10px;
+      background-image: url('/apple-touch-icon.png');
+      background-size:cover; background-position:center; border:1px solid var(--border);
+      flex-shrink:0;
+    }
+    .title { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:15px; }
+    nav { display:flex; gap:10px; align-items:center; margin-left:6px; }
+    nav a { color:var(--text); text-decoration:none; font-weight:600; font-size:14px; padding:6px 10px; border-radius:8px; }
+
+    .controls { display:flex; gap:12px; align-items:center; margin-left:auto; }
+    .btn-ghost {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:10px; background:transparent; border:1px solid var(--border);
+      color:var(--text); cursor:pointer; font-weight:700;
+    }
+    #dp-profile-pic {
+      width:40px; height:40px; border-radius:10px;
+      background-image: url('https://darkpurpleof.github.io/org-owner.jpg');
+      background-size:cover; background-position:center; border:1px solid var(--border);
+      cursor:pointer;
+    }
+
+    /* layout */
+    main.container {
+      max-width:1100px;
+      width:100%;
+      margin:22px auto;
+      padding:18px;
+      display:block;
+      box-sizing:border-box;
+      overflow-x:hidden;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius:12px;
+      padding:20px;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow: 0 6px 18px rgba(2,6,23,0.35);
     }
 
     h1 {
-      font-size: 2.5em;
-      margin-bottom: 20px;
-      text-shadow: 0 0 6px var(--text-color);
-      animation: glitch 1.5s infinite;
+      font-size:28px;
+      margin:0 0 8px 0;
+      font-weight:700;
     }
+    .glitch { animation: glitch 1.5s infinite; text-shadow: 0 0 8px rgba(107,33,168,.12); }
 
-    h2, h3 {
-      color: var(--text-color);
-    }
+    .subtitle { color:var(--muted); font-size:14px; margin-top:6px; }
 
-    p {
-      max-width: 800px;
-      margin: 10px auto;
-    }
+    .benefit { background: linear-gradient(180deg, var(--glass), transparent); border-radius:10px; padding:12px; border:1px solid var(--border); margin-top:14px; }
 
-    .emphasis {
-      font-weight: bold;
-      color: var(--text-color);
-    }
-
-    .benefit {
-      background-color: var(--box-bg);
-      border: 1.5px solid var(--border-color);
-      padding: 15px;
-      margin: 15px auto;
-      max-width: 800px;
-      border-radius: 8px;
-      text-align: left;
-    }
-
-    .download-section {
-      margin-top: 30px;
-      padding: 20px;
-      border: 1.5px solid var(--border-color);
-      background-color: var(--box-bg);
-      border-radius: 10px;
-      max-width: 800px;
-    }
+    .download-section { margin-top:16px; padding:12px; border-radius:10px; background: linear-gradient(180deg,var(--glass),transparent); border:1px solid var(--border); }
 
     .download-link {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: var(--text-color);
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      margin-top: 10px;
-      transition: background 0.3s;
+      display:inline-block;
+      padding:8px 12px;
+      background: linear-gradient(90deg,var(--accent-strong), var(--accent));
+      color:white;
+      text-decoration:none;
+      border-radius:8px;
+      font-weight:700;
     }
 
-    .download-link:hover {
-      background-color: #800080;
-    }
-
-    @keyframes glitch {
-      0% { transform: none; }
-      20% { transform: skewX(3deg); }
-      40% { transform: skewX(-3deg); }
-      60% { transform: none; }
-      100% { transform: none; }
-    }
-
-    .header-controls {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    #profile-pic {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-image: url('https://darkpurpleof.github.io/org-owner.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  border: 2px solid var(--border-color);
-    }
-
-    #theme-icon {
-      font-size: 1.5rem;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-color);
+    /* small screens */
+    @media (max-width:600px) {
+      .dp-topbar { padding:10px 12px; gap:8px; }
+      .title { font-size:14px; max-width:160px; }
     }
   </style>
 
   <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-    authDomain: "darkpurpleof-s-website.firebaseapp.com",
-    databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
-    projectId: "darkpurpleof-s-website",
-    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-    messagingSenderId: "520651082420",
-    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-    measurementId: "G-S2X2JYC8Z0"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-  function toggleTheme() {
-    document.body.classList.toggle('light');
-    document.getElementById('theme-icon').textContent =
-      document.body.classList.contains('light') ? '☀️' : '🌙';
-  }
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+      const icon = document.getElementById('theme-icon');
+      if (icon) icon.textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
+    }
 
-  window.addEventListener("DOMContentLoaded", () => {
-    const profilePic = document.getElementById("profile-pic");
+    window.addEventListener('DOMContentLoaded', () => {
+      const profilePic = document.getElementById('dp-profile-pic');
 
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const email = user.email;
-
-        try {
-          const profileDocRef = db.collection("user_data").doc(email);
-          const docSnap = await profileDocRef.get();
-
-          if (docSnap.exists) {
-            const data = docSnap.data();
-            const profilePicUrl = data.profile_picture || "https://darkpurpleof.github.io/org-owner.jpg";
-            profilePic.style.backgroundImage = `url('${profilePicUrl}')`;
-          } else {
-            profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          try {
+            const email = user.email;
+            const profileDocRef = db.collection("user_data").doc(email);
+            const docSnap = await profileDocRef.get();
+            const profilePicUrl = (docSnap.exists && docSnap.data().profile_picture) ? docSnap.data().profile_picture : 'https://darkpurpleof.github.io/org-owner.jpg';
+            if (profilePic) profilePic.style.backgroundImage = `url('${profilePicUrl}')`;
+          } catch (e) {
+            if (profilePic) profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
           }
-        } catch (error) {
-          console.error("Error fetching profile picture:", error);
-          profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+        } else {
+          if (profilePic) profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
         }
-      } else {
-        profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
-      }
+      });
     });
-  });
-</script>
+  </script>
 </head>
 <body>
-  <div class="header-controls">
-    <button onclick="toggleTheme()" id="theme-icon">🌙</button>
-<div id="profile-pic" aria-label="Profile Picture"></div>
-  </div>
+  <!-- minimal sticky topbar (fallback markup included) -->
+  <dp-topbar>
+    <header class="dp-topbar" role="banner" aria-label="Top navigation">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">DarkPurpleOF — What is DPFHTML?</div>
+      </div>
 
-  <h1>Understanding DPFHTML</h1>
-  <p>Welcome! This file explains what <span class="emphasis">DPFHTML</span> is and why it's used within the <span class="emphasis">DarkPurpleOF's Website</span> application.</p>
+      <nav aria-label="Top links">
+        <a href="/home">Home</a>
+        <a href="/docs">Docs</a>
+      </nav>
 
-  <h2>What is DPFHTML?</h2>
-  <p>DPFHTML is a custom file extension used by the <span class="emphasis">DarkPurpleOF's Website</span> application. While it is structurally similar to standard HTML, it is treated differently by the application for enhanced security and controlled functionality.</p>
+      <div class="controls" role="toolbar" aria-label="Topbar controls">
+        <button class="btn-ghost" onclick="toggleTheme()" id="theme-icon" aria-label="Toggle theme">🌙</button>
+        <div id="dp-profile-pic" aria-label="Profile" role="img"></div>
+      </div>
+    </header>
+  </dp-topbar>
 
-  <h2>Benefits of DPFHTML within DarkPurpleOF's Website:</h2>
+  <main class="container" role="main">
+    <article class="card" aria-labelledby="doc-title">
+      <h1 id="doc-title" class="glitch">Understanding DPFHTML</h1>
+      <div class="subtitle">What DPFHTML is and why it's used within the DarkPurpleOF's Website application.</div>
 
-  <div class="benefit">
-    <h3>Enhanced Security</h3>
-    <p>Unlike standard HTML loaded directly, <span class="emphasis">DPFHTML</span> files are treated as internal content. This prevents the application from directly loading arbitrary external websites or HTML that could potentially be exploited.</p>
-  </div>
+      <p style="margin-top:14px;">
+        This file explains what <strong>DPFHTML</strong> is and why it's used within the <strong>DarkPurpleOF's Website</strong> application.
+      </p>
 
-  <div class="benefit">
-    <h3>Controlled Content</h3>
-    <p>The <span class="emphasis">DarkPurpleOF's Website</span> application is designed to load <span class="emphasis">DPFHTML</span> files without triggering warnings about external pages, ensuring a smoother user experience for internal content.</p>
-  </div>
+      <h2 style="margin-top:14px;">What is DPFHTML?</h2>
+      <p>DPFHTML is a custom file extension used by the DarkPurpleOF's Website application. While structurally similar to standard HTML, it is treated differently by the application for controlled functionality.</p>
 
-  <div class="benefit">
-    <h3>Guaranteed Integrity (Signed DPFHTML)</h3>
-    <p>For full functionality (including JavaScript and CSS), <span class="emphasis">DPFHTML</span> files must be digitally signed by the application developer. This ensures that the content hasn't been tampered with and originates from a trusted source. Unsigned <span class="emphasis">DPFHTML</span> files will have limited functionality.</p>
-  </div>
+      <h2 style="margin-top:14px;">Benefits of DPFHTML</h2>
 
-  <div class="benefit">
-    <h3>Seamless Internal Content Delivery</h3>
-    <p><span class="emphasis">DPFHTML</span> allows the application to display internal information, user interfaces, or documentation using web-like technologies (HTML, CSS, and JavaScript if signed) in a controlled and secure manner.</p>
-  </div>
+      <div class="benefit">
+        <h3 style="margin:0 0 8px 0;">Enhanced Security</h3>
+        <p>DPFHTML files are treated as internal content to reduce risks from arbitrary external HTML.</p>
+      </div>
 
-  <div class="download-section">
-    <h3>Download a Sample DPFHTML File</h3>
-    <p>To see DPFHTML in action, you can download a sample file:</p>
-    <p><a class="download-link" href="https://darkpurpleof.github.io/downloads/public/welcome-to-dpfhtml.dpfhtml" target="_blank" rel="noopener noreferrer">Download welcome-to-dpfhtml.dpfhtml</a></p>
-    <p><span class="emphasis">Important:</span> You will need the <span class="emphasis">DarkPurpleOF's Website</span> application installed on your device to properly open and view this DPFHTML file with its intended functionality.</p>
-  </div>
+      <div class="benefit">
+        <h3 style="margin:0 0 8px 0;">Controlled Content</h3>
+        <p>The application loads DPFHTML files with a controlled feature set to ensure a consistent experience.</p>
+      </div>
 
-  <p>By using <span class="emphasis">DPFHTML</span> for internal content, the <span class="emphasis">DarkPurpleOF's Website</span> application can provide a more secure and reliable experience.</p>
+      <div class="benefit">
+        <h3 style="margin:0 0 8px 0;">Signed DPFHTML</h3>
+        <p>For full functionality (including JavaScript and CSS), DPFHTML files must be digitally signed by the developer. Unsigned files will have limited capabilities.</p>
+      </div>
 
-</body></html>
+      <div class="benefit">
+        <h3 style="margin:0 0 8px 0;">Seamless Internal Delivery</h3>
+        <p>DPFHTML allows the application to display internal content using web technologies in a controlled way.</p>
+      </div>
+
+      <div class="download-section">
+        <h3 style="margin:0 0 8px 0;">Download a Sample DPFHTML File</h3>
+        <p><a class="download-link" href="https://darkpurpleof.github.io/downloads/public/welcome-to-dpfhtml.dpfhtml" target="_blank" rel="noopener noreferrer">Download welcome-to-dpfhtml.dpfhtml</a></p>
+      </div>
+
+      <p style="margin-top:14px;">By using DPFHTML for internal content, the DarkPurpleOF's Website application can provide a secure and reliable experience.</p>
+    </article>
+  </main>
+
+  <!-- optional custom topbar module; kept as in other files -->
+  <script type="module" src="/dp-topbar.js"></script>
+</body>
+</html>

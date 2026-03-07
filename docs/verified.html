@@ -1,288 +1,245 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verification System Documentation</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&amp;display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Verification System Documentation</title>
 
-    <style>
-        :root {
-            --bg-color: #000;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.05);
-            --border-color: purple;
+  <!-- Inter (requested) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Firebase SDKs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    /* hard guards: no horizontal scroll & box-sizing */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; margin: 0; }
+    img { max-width: 100%; display: block; }
+
+    /* theme variables (dark default) */
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --glass: rgba(255,255,255,0.02);
+    }
+    body.light {
+      --bg: #f6f8fb;
+      --card: #fff;
+      --muted: #475569;
+      --text: #0f172a;
+      --border: rgba(0,0,0,0.06);
+      --glass: rgba(0,0,0,0.02);
+    }
+
+    body {
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      transition: background .25s, color .25s;
+      min-height: 100vh;
+      line-height:1.45;
+    }
+
+    /* topbar (sticky) */
+    dp-topbar { display:block; position:sticky; top:0; z-index:120; }
+    .dp-topbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 16px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.35), transparent);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--border);
+    }
+    body.light .dp-topbar {
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
+    }
+    .brand { display:flex; gap:12px; align-items:center; min-width:0; }
+    .logo {
+      width:40px; height:40px; border-radius:10px;
+      background-image: url('/apple-touch-icon.png');
+      background-size:cover; background-position:center; border:1px solid var(--border);
+      flex-shrink:0;
+    }
+    .title { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:15px; }
+    nav { display:flex; gap:10px; align-items:center; margin-left:6px; }
+    nav a { color:var(--text); text-decoration:none; font-weight:600; font-size:14px; padding:6px 10px; border-radius:8px; }
+
+    .controls { display:flex; gap:12px; align-items:center; margin-left:auto; }
+    .btn-ghost {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:10px; background:transparent; border:1px solid var(--border);
+      color:var(--text); cursor:pointer; font-weight:700;
+    }
+    #dp-profile-pic {
+      width:40px; height:40px; border-radius:10px;
+      background-image: url('https://darkpurpleof.github.io/org-owner.jpg');
+      background-size:cover; background-position:center; border:1px solid var(--border);
+      cursor:pointer;
+    }
+
+    /* main layout */
+    main.container {
+      max-width:1100px;
+      width:100%;
+      margin:22px auto;
+      padding:18px;
+      box-sizing:border-box;
+      overflow-x:hidden;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius:12px;
+      padding:20px;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow: 0 6px 18px rgba(2,6,23,0.35);
+    }
+
+    h1 {
+      font-size:28px;
+      margin:0 0 8px 0;
+      font-weight:700;
+    }
+    .glitch { animation: glitch 1.5s infinite; text-shadow: 0 0 8px rgba(107,33,168,.12); }
+
+    .subtitle { color:var(--muted); font-size:14px; margin-top:6px; }
+
+    .benefit, .warning-box, .timeline, .fun-facts {
+      background: linear-gradient(180deg, var(--glass), transparent);
+      border-radius:10px;
+      padding:12px;
+      border:1px solid var(--border);
+      margin-top:14px;
+    }
+
+    .warning-box { border-color: rgba(200,30,30,0.25); }
+    .warning-box .important { color: #ff6b6b; font-weight:800; }
+
+    .download-link {
+      display:inline-block;
+      padding:8px 12px;
+      background: linear-gradient(90deg,var(--accent-strong), var(--accent));
+      color:white;
+      text-decoration:none;
+      border-radius:8px;
+      font-weight:700;
+    }
+
+    .timeline { padding-left: 10px; }
+    .timeline-event { margin-bottom:10px; display:flex; gap:12px; align-items:flex-start; }
+    .timeline-date { font-weight:700; min-width:120px; color:var(--muted); flex-shrink:0; font-size:13px; }
+
+    /* small screens */
+    @media (max-width:600px) {
+      .dp-topbar { padding:10px 12px; gap:8px; }
+      .title { font-size:14px; max-width:160px; }
+    }
+  </style>
+
+  <script>
+    // firebase config (kept as-is)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+      const icon = document.getElementById('theme-icon');
+      if (icon) icon.textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const profilePic = document.getElementById('dp-profile-pic');
+
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          try {
+            const email = user.email;
+            const profileDocRef = db.collection("user_data").doc(email);
+            const docSnap = await profileDocRef.get();
+            const profilePicUrl = (docSnap.exists && docSnap.data().profile_picture) ? docSnap.data().profile_picture : 'https://darkpurpleof.github.io/org-owner.jpg';
+            if (profilePic) profilePic.style.backgroundImage = `url('${profilePicUrl}')`;
+          } catch (e) {
+            if (profilePic) profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+          }
+        } else {
+          if (profilePic) profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
         }
-
-        body.light {
-            --bg-color: #fff;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.1);
-            --border-color: purple;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            text-align: center;
-            box-sizing: border-box;
-            transition: background 0.4s, color 0.4s;
-        }
-
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            text-shadow: 0 0 6px var(--text-color);
-            animation: glitch 1.5s infinite;
-        }
-
-        h2, h3 {
-            color: var(--text-color);
-        }
-
-        p {
-            max-width: 800px;
-            margin: 10px auto;
-        }
-
-        .emphasis {
-            font-weight: bold;
-            color: var(--text-color);
-        }
-
-        .benefit, .warning-box, .app-feature, .bonus-tip, .timeline, .fun-facts, .future-events {
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            padding: 15px;
-            margin: 15px auto;
-            max-width: 800px;
-            border-radius: 8px;
-            text-align: left;
-        }
-
-        .download-section {
-            margin-top: 30px;
-            padding: 20px;
-            border: 1.5px solid var(--border-color);
-            background-color: var(--box-bg);
-            border-radius: 10px;
-            max-width: 800px;
-        }
-
-        .download-link {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: var(--text-color);
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 10px;
-            transition: background 0.3s;
-        }
-
-        .download-link:hover {
-            background-color: #800080;
-        }
-
-        @keyframes glitch {
-            0% { transform: none; }
-            20% { transform: skewX(3deg); }
-            40% { transform: skewX(-3deg); }
-            60% { transform: none; }
-            100% { transform: none; }
-        }
-
-        .header-controls {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        #profile-pic {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-image: url('https://darkpurpleof.github.io/org-owner.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            border: 2px solid var(--border-color);
-        }
-
-        #theme-icon {
-            font-size: 1.5rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--text-color);
-        }
-
-        .timeline {
-            margin-top: 20px;
-            padding-left: 30px;
-            position: relative;
-        }
-        .timeline::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            width: 2px;
-            background-color: #aaa;
-        }
-        .timeline-event {
-            margin-bottom: 20px;
-            position: relative;
-            padding-left: 20px;
-        }
-        .timeline-event::before {
-            content: '•';
-            position: absolute;
-            left: -10px;
-            color: #555;
-            font-size: 1.5em;
-        }
-        .timeline-date {
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        .fun-facts ul {
-            list-style: none;
-            padding-left: 20px;
-        }
-
-        .fun-facts li {
-            margin-bottom: 10px;
-        }
-
-        /* Red styling for warning-box */
-        .warning-box {
-            background-color: rgba(255, 0, 0, 0.1);
-            border: 1.5px solid red;
-        }
-
-        .important {
-            font-weight: bold;
-            color: red;
-        }
-
-        .currency {
-            font-style: italic;
-        }
-
-        /* Cyan styling for app-feature */
-        .app-feature {
-            background-color: rgba(0, 255, 255, 0.1); /* Cyan background */
-            border: 1.5px solid cyan;
-        }
-
-        .app-feature h3 {
-            color: cyan; /* Cyan title */
-        }
-
-        .warning-box h3 {
-            color: red; /* Red title */
-        }
-
-        .app-feature p {
-            color: cyan; /* Cyan text */
-        }
-    </style>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-            authDomain: "darkpurpleof-s-website.firebaseapp.com",
-            databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
-            projectId: "darkpurpleof-s-website",
-            storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-            messagingSenderId: "520651082420",
-            appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-            measurementId: "G-S2X2JYC8Z0"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        function toggleTheme() {
-            document.body.classList.toggle('light');
-            document.getElementById('theme-icon').textContent =
-                document.body.classList.contains('light') ? '☀️' : '🌙';
-        }
-
-        window.addEventListener("DOMContentLoaded", () => {
-            const profilePic = document.getElementById("profile-pic");
-
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    const email = user.email;
-
-                    try {
-                        const profileDocRef = db.collection("user_data").doc(email);
-                        const docSnap = await profileDocRef.get();
-
-                        if (docSnap.exists) {
-                            const data = docSnap.data();
-                            const profilePicUrl = data.profile_picture || "https://darkpurpleof.github.io/org-owner.jpg";
-                            profilePic.style.backgroundImage = `url('${profilePicUrl}')`;
-                        } else {
-                            profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
-                        }
-                    } catch (error) {
-                        console.error("Error fetching profile picture:", error);
-                        profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
-                    }
-                } else {
-                    profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
-                }
-            });
-        });
-    </script>
+      });
+    });
+  </script>
 </head>
 <body>
-    <div class="header-controls">
-        <button onclick="toggleTheme()" id="theme-icon">🌙</button>
-        <div id="profile-pic" aria-label="Profile Picture"></div>
-    </div>
+  <!-- topbar (fallback markup) -->
+  <dp-topbar>
+    <header class="dp-topbar" role="banner" aria-label="Top navigation">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">DarkPurpleOF — Verification Docs</div>
+      </div>
 
-    <h1>About Verification</h1>
-    <p>Welcome to the documentation for the <span class="emphasis">Verification System</span> used in the <span class="emphasis">DarkPurpleOF's Website</span>.</p>
+      <nav aria-label="Top links">
+        <a href="/home">Home</a>
+        <a href="/docs">Docs</a>
+      </nav>
 
-    <h2>Introduction to getting verified</h2>
-    <p>The verification system is an essential part of the <span class="emphasis">DarkPurpleOF's Website</span>, enabling users to prove their identity and prevent fakers within the platform.</p>
+      <div class="controls" role="toolbar" aria-label="Topbar controls">
+        <button class="btn-ghost" onclick="toggleTheme()" id="theme-icon" aria-label="Toggle theme">🌙</button>
+        <div id="dp-profile-pic" aria-label="Profile" role="img"></div>
+      </div>
+    </header>
+  </dp-topbar>
 
-    <div class="benefit">
-        <h3>Proof of Valid Profile</h3>
-        <p>The Verification system ensures that the user that gets verfied is secure and proven to be the real account of such user.</p>
-    </div>
+  <main class="container" role="main">
+    <article class="card" aria-labelledby="doc-title">
+      <h1 id="doc-title" class="glitch">About Verification</h1>
 
-    <div class="benefit">
-        <h3>Benefits</h3>
-        <p>The verification allows the verified user to get benefits, such as early access, spoilers, enhanced support and security, pre-alpha content and exlcusive and partnership content</p>
-    </div>
+      <p>Welcome to the documentation for the <strong>Verification System</strong> used in the <strong>DarkPurpleOF's Website</strong>.</p>
 
-    <section class="section warning-box">
-        <h3>Important Notice: Faking a verified user</h3>
-        <p class="important">It is crucial to understand that <span class="currency">faking users</span> that <span class="important">ARE</span> verified is a major offense to the platform and the user base.</p>
-        <p class="important">If you're reported or seen by automod<span class="currency">Fakin</span> another verified user's identity or asking for money, promotion or etc <span class="important"> you will face an immediate and permanent ban</span> from our platform. This policy is strictly enforced!</p>
-    </section>
+      <h2 style="margin-top:14px;">Introduction to getting verified</h2>
+      <p>The verification system enables users to prove their identity and prevent fakers within the platform.</p>
+
+      <div class="benefit">
+        <h3 style="margin:0 0 8px 0;">Proof of Valid Profile</h3>
+        <p>The verification system ensures that verified accounts are the real accounts of those users.</p>
+      </div>
+
+      <div class="benefit">
+        <h3 style="margin:0 0 8px 0;">Benefits</h3>
+        <p>Verified users may receive early access, enhanced support, pre-alpha content, and partnership opportunities.</p>
+      </div>
+
+      <section class="warning-box" style="margin-top:14px;">
+        <h3 style="margin:0 0 8px 0;">Important Notice: Faking a verified user</h3>
+        <p class="important">Faking or impersonating a verified user is a major offense. Reports or automated detection of impersonation or solicitation will result in immediate and permanent ban from the platform.</p>
+      </section>
+    </article>
+  </main>
+
+  <script type="module" src="/dp-topbar.js"></script>
 </body>
 </html>

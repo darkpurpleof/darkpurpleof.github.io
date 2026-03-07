@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Plugins</title>
+
+  <!-- Inter (requested) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Firebase SDKs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    /* hard guards: no horizontal scroll & box-sizing */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; margin: 0; }
+    img { max-width: 100%; display: block; }
+
+    /* theme variables (dark default) */
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --glass: rgba(255,255,255,0.02);
+    }
+    body.light {
+      --bg: #f6f8fb;
+      --card: #fff;
+      --muted: #475569;
+      --text: #0f172a;
+      --border: rgba(0,0,0,0.06);
+      --glass: rgba(0,0,0,0.02);
+    }
+
+    body {
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      transition: background .25s, color .25s;
+      min-height: 100vh;
+      line-height:1.45;
+    }
+
+    /* topbar (sticky) */
+    dp-topbar { display:block; position:sticky; top:0; z-index:120; }
+    .dp-topbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 16px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.35), transparent);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--border);
+    }
+    body.light .dp-topbar {
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
+    }
+    .brand { display:flex; gap:12px; align-items:center; min-width:0; }
+    .logo {
+      width:40px; height:40px; border-radius:10px;
+      background-image: url('/apple-touch-icon.png');
+      background-size:cover; background-position:center; border:1px solid var(--border);
+      flex-shrink:0;
+    }
+    .title { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:15px; }
+    nav { display:flex; gap:10px; align-items:center; margin-left:6px; }
+    nav a { color:var(--text); text-decoration:none; font-weight:600; font-size:14px; padding:6px 10px; border-radius:8px; }
+
+    .controls { display:flex; gap:12px; align-items:center; margin-left:auto; }
+    .btn-ghost {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:10px; background:transparent; border:1px solid var(--border);
+      color:var(--text); cursor:pointer; font-weight:700;
+    }
+    #dp-profile-pic {
+      width:40px; height:40px; border-radius:10px;
+      background-image: url('https://darkpurpleof.github.io/org-owner.jpg');
+      background-size:cover; background-position:center; border:1px solid var(--border);
+      cursor:pointer;
+    }
+
+    /* main layout */
+    main.container {
+      max-width:1100px;
+      width:100%;
+      margin:22px auto;
+      padding:18px;
+      box-sizing:border-box;
+      overflow-x:hidden;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius:12px;
+      padding:20px;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow: 0 6px 18px rgba(2,6,23,0.35);
+    }
+
+    h1 { font-size:28px; margin:0 0 8px 0; font-weight:700; }
+    .glitch { animation: glitch 1.5s infinite; text-shadow: 0 0 8px rgba(107,33,168,.12); }
+    .subtitle { color:var(--muted); font-size:14px; margin-top:6px; }
+
+    .section { margin-top:18px; }
+    .lead { color:var(--muted); margin-top:8px; }
+
+    .panel { background: linear-gradient(180deg,var(--glass),transparent); border-radius:10px; padding:12px; border:1px solid var(--border); margin-top:12px; }
+    .download-link {
+      display:inline-block;
+      padding:8px 12px;
+      background: linear-gradient(90deg,var(--accent-strong), var(--accent));
+      color:white;
+      text-decoration:none;
+      border-radius:8px;
+      font-weight:700;
+    }
+
+    pre { background: rgba(0,0,0,0.18); padding:12px; border-radius:8px; overflow:auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:13px; border:1px solid var(--border); color:var(--text); }
+    code { color:inherit; }
+
+    /* small screens */
+    @media (max-width:600px) {
+      .dp-topbar { padding:10px 12px; gap:8px; }
+      .title { font-size:14px; max-width:160px; }
+    }
+  </style>
+
+  <script>
+    // firebase config (kept as-is)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+      const icon = document.getElementById('theme-icon');
+      if (icon) icon.textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const profilePic = document.getElementById('dp-profile-pic');
+
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          try {
+            const email = user.email;
+            const profileDocRef = db.collection("user_data").doc(email);
+            const docSnap = await profileDocRef.get();
+            const profilePicUrl = (docSnap.exists && docSnap.data().profile_picture) ? docSnap.data().profile_picture : 'https://darkpurpleof.github.io/org-owner.jpg';
+            if (profilePic) profilePic.style.backgroundImage = `url('${profilePicUrl}')`;
+          } catch (e) {
+            if (profilePic) profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+          }
+        } else {
+          if (profilePic) profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <!-- topbar (fallback markup) -->
+  <dp-topbar>
+    <header class="dp-topbar" role="banner" aria-label="Top navigation">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">DarkPurpleOF's Website — Plugins</div>
+      </div>
+
+      <nav aria-label="Top links">
+        <a href="/home">Home</a>
+        <a href="/docs">Docs</a>
+        <a href="/plugins">Plugins</a>
+      </nav>
+
+      <div class="controls" role="toolbar" aria-label="Topbar controls">
+        <button class="btn-ghost" onclick="toggleTheme()" id="theme-icon" aria-label="Toggle theme">🌙</button>
+        <div id="dp-profile-pic" aria-label="Profile" role="img"></div>
+      </div>
+    </header>
+  </dp-topbar>
+
+  <main class="container" role="main">
+    <article class="card" aria-labelledby="plugins-title">
+      <h1 id="plugins-title" class="glitch">Plugins — Distribution & Structure</h1>
+      <div class="subtitle">How plugins must be packaged, localized and published to the official store.</div>
+
+      <section class="section">
+        <p class="lead">Plugins must be distributed only through the official DarkPurpleOF's Website Development Items Store. Read the rules below carefully — plugins that don't follow the required structure or distribution steps will be rejected.</p>
+      </section>
+
+      <section class="section panel" aria-labelledby="structure-title">
+        <h2 id="structure-title" style="margin:0 0 8px 0;">Plugin structure</h2>
+        <p>The plugin root must contain the following layout:</p>
+        <pre><code>
+/plugin
+  screens/
+  manifest.ini
+  icon.png
+  extra.toml
+  data/
+        </code></pre>
+
+        <p class="lead">Notes:</p>
+        <ul>
+          <li><strong>/screens/</strong> — place UI screens (HTML) here.</li>
+          <li><strong>manifest.ini</strong> — required manifest with plugin metadata (example below).</li>
+          <li><strong>icon.png</strong> — plugin icon (recommended 128×128 or 256×256 PNG).</li>
+          <li><strong>extra.toml</strong> — optional extra config data (TOML format).</li>
+          <li><strong>/data/</strong> — optional storage for plugin resources (images, JSON, etc.).</li>
+        </ul>
+      </section>
+
+      <section class="section panel" aria-labelledby="localization-title">
+        <h2 id="localization-title" style="margin:0 0 8px 0;">Localization / language files</h2>
+        <p>Plugin manifests, icons and screen files can use language suffixes to provide localized versions. Append one of these suffixes to the end of the filename:</p>
+        <pre><code>-es  (Spanish)
+-ru  (Russian)
+-ja  (Japanese)
+-de  (German)
+        </code></pre>
+        <p>Examples:</p>
+        <ul>
+          <li><code>manifest-de.ini</code> — loads the manifest in German.</li>
+          <li><code>icon-es.png</code> — Spanish icon variant.</li>
+          <li><code>screens/credits-ru.html</code> — Russian credits screen.</li>
+        </ul>
+        <p class="lead">The manager resolves language-specific files by suffix; if a localized file isn't found it falls back to the base filename.</p>
+      </section>
+
+      <section class="section panel" aria-labelledby="manifest-title">
+        <h2 id="manifest-title" style="margin:0 0 8px 0;">Manifest format</h2>
+        <p>The manifest is a simple INI-style file with the following fields. All fields are plain text (no quoting needed):</p>
+
+        <pre><code>
+id=idexample123
+name=Example Plugin
+author=email@email.com
+version=1
+description=Hello DarkPurpleOF's Website
+license=
+requires=dependency1[1.1],dependency2[*]
+tags=tag1,tag2,tag3
+        </code></pre>
+
+        <p class="lead">Field notes:</p>
+        <ul>
+          <li><strong>id</strong> — unique plugin id (used by the manager/store).</li>
+          <li><strong>name</strong> — display name.</li>
+          <li><strong>author</strong> — contact email (used for verification).</li>
+          <li><strong>version</strong> — numeric or semver-like value.</li>
+          <li><strong>description</strong> — short description shown in the store.</li>
+          <li><strong>license</strong> — optional license identifier or text.</li>
+          <li><strong>requires</strong> — comma-separated dependencies with optional version constraints.</li>
+          <li><strong>tags</strong> — comma-separated tags for search/filtering.</li>
+        </ul>
+      </section>
+
+      <section class="section panel" aria-labelledby="screens-title">
+        <h2 id="screens-title" style="margin:0 0 8px 0;">Screens & root pages</h2>
+        <p>Place UI pages under <code>/screens</code> for in-manager display. You may also add special root pages inside the plugin root for extra behavior:</p>
+        <ul>
+          <li><code>/about.html</code> — optional credits/about page.</li>
+          <li><code>/settings.html</code> — optional settings page (opened from plugin manager).</li>
+          <li><strong><code>/index.html</code></strong> — if present, an <em>Open</em> button will appear when the plugin is installed. <strong>Index is only used at installation time</strong>; the manager will not open index.html after install.</li>
+          <li><code>/donations.html</code> — optional donations page if you want to ask for donations.</li>
+        </ul>
+      </section>
+
+      <section class="section panel" aria-labelledby="publishing-title">
+        <h2 id="publishing-title" style="margin:0 0 8px 0;">Publishing & store rules</h2>
+        <p>Before publishing, compress your plugin folder into a ZIP file and then rename its extension to <code>.dpplugin</code>. Upload the resulting <code>.dpplugin</code> file to the official verified plugin site using your DarkPurpleOF account.</p>
+
+        <p class="lead">Important steps:</p>
+        <ol>
+          <li>Create a ZIP of the plugin root (the ZIP's root must contain the files shown in the structure section).</li>
+          <li>Rename <code>your-plugin.zip</code> → <code>your-plugin.dpplugin</code>.</li>
+          <li>Sign in to your DarkPurpleOF's Website account and upload the <code>.dpplugin</code> to the verified plugin store.</li>
+        </ol>
+
+        <p>If you do not have a DarkPurpleOF's Website account, you must create one to upload plugins. If you do not have permission to upload development items, contact support for a check and permission:</p>
+        <p><strong>Support:</strong> <a href="mailto:javiercorzo387@gmail.com">here</a></p>
+      </section>
+
+      <section class="section panel" aria-labelledby="testing-title">
+        <h2 id="testing-title" style="margin:0 0 8px 0;">Testing & example plugin</h2>
+        <p>You can test plugin features (including the Plugin API) by downloading and installing the example plugin linked below.</p>
+        <p><a class="download-link" href="https://darkpurpleof.github.io/assets/exampleplugin.dpplugin" target="_blank" rel="noopener">Download exampleplugin.dpplugin</a></p>
+      </section>
+
+      <section class="section panel" aria-labelledby="final-title">
+        <h2 id="final-title" style="margin:0 0 8px 0;">Final notes</h2>
+        <ul>
+          <li>Only plugins distributed through the official store will be listed and discoverable.</li>
+          <li>Use language suffixes (-es, -ru, -ja, -de) to provide localized manifests, screens and icons.</li>
+          <li>Make sure your manifest <strong>id</strong> is globally unique and your <strong>author</strong> contact is valid.</li>
+        </ul>
+      </section>
+    </article>
+  </main>
+
+  <!-- optional custom topbar module; kept for parity -->
+  <script type="module" src="/dp-topbar.js"></script>
+</body>
+</html>

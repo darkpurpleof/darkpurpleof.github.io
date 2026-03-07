@@ -1,331 +1,428 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DF$ Coin System Documentation</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&amp;display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DF$ Coin System Documentation</title>
 
-    <style>
-        :root {
-            --bg-color: #000;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.05);
-            --border-color: purple;
+  <!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Firebase SDKs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    /* --- Hard guards: no horizontal scroll & box-sizing --- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; margin: 0; }
+    img { max-width: 100%; display: block; }
+
+    /* --- Theme variables (dark by default) --- */
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --glass: rgba(255,255,255,0.02);
+    }
+    body.light {
+      --bg: #f6f8fb;
+      --card: #fff;
+      --muted: #475569;
+      --text: #0f172a;
+      --border: rgba(0,0,0,0.06);
+      --glass: rgba(0,0,0,0.02);
+    }
+
+    body {
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      transition: background .25s, color .25s;
+      min-height: 100vh;
+    }
+
+    /* --- topbar (sticky) --- */
+    dp-topbar { display:block; position:sticky; top:0; z-index:120; }
+    .dp-topbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:12px 18px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.35), transparent);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--border);
+    }
+    body.light .dp-topbar {
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
+    }
+    .dp-topbar .brand {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      min-width:0;
+    }
+    .dp-topbar .brand .logo {
+      width:44px; height:44px; border-radius:10px;
+      background-image: url('/apple-touch-icon.png');
+      background-size: cover; background-position:center;
+      border:1px solid var(--border);
+      flex-shrink:0;
+    }
+    .dp-topbar .brand .title {
+      font-weight:700;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-family: 'Orbitron', Inter, sans-serif;
+      letter-spacing:0.6px;
+    }
+    .dp-topbar nav { display:flex; gap:10px; align-items:center; margin-left:6px; }
+    .dp-topbar nav a {
+      color:var(--text); text-decoration:none; font-weight:600; font-size:14px; padding:6px 10px; border-radius:8px;
+    }
+    .dp-topbar .controls { display:flex; gap:12px; align-items:center; margin-left:auto; }
+
+    /* profile/pfp */
+    #dp-profile-pic {
+      width:40px; height:40px; border-radius:10px;
+      background-image: url('https://darkpurpleof.github.io/org-owner.jpg');
+      background-size:cover; background-position:center; border:1px solid var(--border);
+      cursor:pointer;
+    }
+
+    .btn-ghost {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:10px; background:transparent; border:1px solid var(--border);
+      color:var(--text); cursor:pointer; font-weight:700;
+    }
+
+    /* --- page layout --- */
+    main.container {
+      max-width:1200px;
+      width:100%;
+      margin:22px auto;
+      padding:20px;
+      display:grid;
+      grid-template-columns:1fr 340px;
+      gap:20px;
+      box-sizing:border-box;
+      overflow-x: hidden; /* ensure main never overflows horizontally */
+    }
+    @media (max-width:920px){
+      main.container{ grid-template-columns:1fr; padding:16px; }
+      aside.right-column{ order:2; }
+    }
+
+    .card {
+      background: var(--card);
+      border-radius:12px;
+      padding:18px;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow: 0 6px 18px rgba(2,6,23,0.35);
+      overflow:visible;
+    }
+
+    .hero {
+      display:flex;
+      align-items:flex-start;
+      gap:16px;
+      justify-content:space-between;
+      border-radius:12px;
+      padding:16px;
+    }
+
+    h1 {
+      font-family: 'Orbitron', Inter, sans-serif;
+      font-size:28px;
+      margin:0 0 6px 0;
+      text-shadow: 0 0 8px rgba(107,33,168,.14);
+    }
+    .subtitle { color:var(--muted); font-size:14px; margin-top:4px; }
+
+    .section-title { font-size:18px; margin:0 0 10px 0; font-weight:700; }
+
+    .benefit, .warning-box, .app-feature, .bonus-tip, .timeline, .fun-facts, .future-events {
+      background: linear-gradient(180deg, var(--glass), transparent);
+      border-radius:10px;
+      padding:14px;
+      border:1px solid var(--border);
+      margin-bottom:14px;
+    }
+
+    .warning-box { border-color: rgba(200,30,30,0.25); }
+    .warning-box .important { color: #ff6b6b; font-weight:800; }
+
+    .download-link {
+      display:inline-block;
+      padding:10px 14px;
+      background: linear-gradient(90deg,var(--accent-strong), var(--accent));
+      color:white;
+      text-decoration:none;
+      border-radius:8px;
+      font-weight:700;
+    }
+
+    /* timeline visuals (compact, no overflow) */
+    .timeline { padding-left: 10px; }
+    .timeline-event { margin-bottom:10px; display:flex; gap:12px; align-items:flex-start; }
+    .timeline-date { font-weight:700; min-width:120px; color:var(--muted); flex-shrink:0; font-size:13px; }
+
+    .fun-facts ul { padding-left:18px; margin:0; color:var(--muted); }
+    .fun-facts li { margin-bottom:8px; }
+
+    /* right column (profile + extras) */
+    aside.right-column { display:flex; flex-direction:column; gap:16px; min-width:0; }
+    .profile-preview { display:flex; gap:12px; align-items:center; background:var(--card); border-radius:12px; padding:12px; border:1px solid var(--border); }
+    .profile-pfp { width:72px; height:72px; border-radius:12px; background-size:cover; background-position:center; border:1px solid var(--border); }
+    .profile-text { display:flex; flex-direction:column; gap:6px; }
+    .profile-name { font-weight:800; font-size:16px; }
+    .muted-small { color:var(--muted); font-size:13px; }
+
+    /* friends grid example (keeps no horizontal scroll) */
+    .friends-container { display:grid; gap:12px; padding:12px; width:100%; max-width:100%; min-width:0; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items:start; overflow-x:hidden; border-radius:8px; }
+    @media (max-width:600px) { .friends-container { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+    /* toast */
+    #toast { position:fixed; top:18px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999; }
+    #toast.purple { background:var(--accent-strong); color:#fff; } #toast.yellow{ background:#e6b800; color:#222; } #toast.red{ background:#c00; color:#fff; }
+
+    /* small screens visual tweaks */
+    @media (max-width:600px) {
+      .dp-topbar { padding:10px 12px; gap:8px; }
+      .dp-topbar .title { font-size:14px; max-width:180px; }
+      .profile-pfp { width:56px; height:56px; }
+    }
+
+    /* subtle scrollbar for vertical sections */
+    .friends-container::-webkit-scrollbar { width:8px; }
+    .friends-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.04); border-radius:6px; }
+
+    /* small 'glitch' vibey accent for H1 (kept from original) */
+    @keyframes glitch {
+      0% { transform: none; }
+      20% { transform: skewX(3deg); }
+      40% { transform: skewX(-3deg); }
+      60% { transform: none; }
+      100% { transform: none; }
+    }
+    h1.glitch { animation: glitch 1.5s infinite; }
+  </style>
+
+  <script>
+    // FIREBASE CONFIG - keep your existing values
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+
+    // initialize firebase compat
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // theme toggle: toggles body.light (works with both old and new theme)
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+      const iconEl = document.getElementById('theme-icon');
+      if (!iconEl) return;
+      iconEl.textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
+    }
+
+    // small helper for toast
+    function showToast(text, kind = 'purple', ms = 2200) {
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.className = '';
+      t.classList.add(kind);
+      t.textContent = text;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, ms);
+    }
+
+    // on DOM ready, wire up auth state to profile pic and actions
+    window.addEventListener("DOMContentLoaded", () => {
+      const profilePic = document.getElementById("dp-profile-pic");
+      const profilePfpAside = document.getElementById("profile-pfp");
+      const profileNameEl = document.getElementById("profile-name");
+      const themeIcon = document.getElementById("theme-icon");
+
+      // initial icon state
+      if (themeIcon) themeIcon.textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
+
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          const email = user.email;
+          try {
+            const profileDocRef = db.collection("user_data").doc(email);
+            const docSnap = await profileDocRef.get();
+            let profilePicUrl = "https://darkpurpleof.github.io/org-owner.jpg";
+            let displayName = user.displayName || email;
+            if (docSnap.exists) {
+              const data = docSnap.data();
+              profilePicUrl = data.profile_picture || profilePicUrl;
+              if (data.display_name) displayName = data.display_name;
+            }
+            if (profilePic) profilePic.style.backgroundImage = `url('${profilePicUrl}')`;
+            if (profilePfpAside) profilePfpAside.style.backgroundImage = `url('${profilePicUrl}')`;
+            if (profileNameEl) profileNameEl.textContent = displayName;
+          } catch (error) {
+            console.error("Error fetching profile picture:", error);
+            if (profilePic) profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+            if (profilePfpAside) profilePfpAside.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+          }
+        } else {
+          if (profilePic) profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+          if (profilePfpAside) profilePfpAside.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
+          if (profileNameEl) profileNameEl.textContent = "Not signed in";
         }
+      });
 
-        body.light {
-            --bg-color: #fff;
-            --text-color: purple;
-            --box-bg: rgba(128, 0, 128, 0.1);
-            --border-color: purple;
-        }
+      // quick click handlers
+      if (profilePic) profilePic.addEventListener('click', () => {
+        showToast('Open profile (implement)', 'yellow');
+      });
+    });
+  </script>
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            text-align: center;
-            box-sizing: border-box;
-            transition: background 0.4s, color 0.4s;
-        }
-
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            text-shadow: 0 0 6px var(--text-color);
-            animation: glitch 1.5s infinite;
-        }
-
-        h2, h3 {
-            color: var(--text-color);
-        }
-
-        p {
-            max-width: 800px;
-            margin: 10px auto;
-        }
-
-        .emphasis {
-            font-weight: bold;
-            color: var(--text-color);
-        }
-
-        .benefit, .warning-box, .app-feature, .bonus-tip, .timeline, .fun-facts, .future-events {
-            background-color: var(--box-bg);
-            border: 1.5px solid var(--border-color);
-            padding: 15px;
-            margin: 15px auto;
-            max-width: 800px;
-            border-radius: 8px;
-            text-align: left;
-        }
-
-        .download-section {
-            margin-top: 30px;
-            padding: 20px;
-            border: 1.5px solid var(--border-color);
-            background-color: var(--box-bg);
-            border-radius: 10px;
-            max-width: 800px;
-        }
-
-        .download-link {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: var(--text-color);
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 10px;
-            transition: background 0.3s;
-        }
-
-        .download-link:hover {
-            background-color: #800080;
-        }
-
-        @keyframes glitch {
-            0% { transform: none; }
-            20% { transform: skewX(3deg); }
-            40% { transform: skewX(-3deg); }
-            60% { transform: none; }
-            100% { transform: none; }
-        }
-
-        .header-controls {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        #profile-pic {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-image: url('https://darkpurpleof.github.io/org-owner.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            border: 2px solid var(--border-color);
-        }
-
-        #theme-icon {
-            font-size: 1.5rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--text-color);
-        }
-
-        .timeline {
-            margin-top: 20px;
-            padding-left: 30px;
-            position: relative;
-        }
-        .timeline::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            width: 2px;
-            background-color: #aaa;
-        }
-        .timeline-event {
-            margin-bottom: 20px;
-            position: relative;
-            padding-left: 20px;
-        }
-        .timeline-event::before {
-            content: '•';
-            position: absolute;
-            left: -10px;
-            color: #555;
-            font-size: 1.5em;
-        }
-        .timeline-date {
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        .fun-facts ul {
-            list-style: none;
-            padding-left: 20px;
-        }
-
-        .fun-facts li {
-            margin-bottom: 10px;
-        }
-
-        /* Red styling for warning-box */
-        .warning-box {
-            background-color: rgba(255, 0, 0, 0.1);
-            border: 1.5px solid red;
-        }
-
-        .important {
-            font-weight: bold;
-            color: red;
-        }
-
-        .currency {
-            font-style: italic;
-        }
-
-        /* Cyan styling for app-feature */
-        .app-feature {
-            background-color: rgba(0, 255, 255, 0.1); /* Cyan background */
-            border: 1.5px solid cyan;
-        }
-
-        .app-feature h3 {
-            color: cyan; /* Cyan title */
-        }
-
-        .warning-box h3 {
-            color: red; /* Red title */
-        }
-
-        .app-feature p {
-            color: cyan; /* Cyan text */
-        }
-    </style>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-            authDomain: "darkpurpleof-s-website.firebaseapp.com",
-            databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
-            projectId: "darkpurpleof-s-website",
-            storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-            messagingSenderId: "520651082420",
-            appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
-            measurementId: "G-S2X2JYC8Z0"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        function toggleTheme() {
-            document.body.classList.toggle('light');
-            document.getElementById('theme-icon').textContent =
-                document.body.classList.contains('light') ? '☀️' : '🌙';
-        }
-
-        window.addEventListener("DOMContentLoaded", () => {
-            const profilePic = document.getElementById("profile-pic");
-
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    const email = user.email;
-
-                    try {
-                        const profileDocRef = db.collection("user_data").doc(email);
-                        const docSnap = await profileDocRef.get();
-
-                        if (docSnap.exists) {
-                            const data = docSnap.data();
-                            const profilePicUrl = data.profile_picture || "https://darkpurpleof.github.io/org-owner.jpg";
-                            profilePic.style.backgroundImage = `url('${profilePicUrl}')`;
-                        } else {
-                            profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
-                        }
-                    } catch (error) {
-                        console.error("Error fetching profile picture:", error);
-                        profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
-                    }
-                } else {
-                    profilePic.style.backgroundImage = `url('https://darkpurpleof.github.io/org-owner.jpg')`;
-                }
-            });
-        });
-    </script>
 </head>
 <body>
-    <div class="header-controls">
-        <button onclick="toggleTheme()" id="theme-icon">🌙</button>
-        <div id="profile-pic" aria-label="Profile Picture"></div>
+  <!-- Toast -->
+  <div id="toast" aria-live="polite" role="status"></div>
+
+  <!-- Topbar: custom dp-topbar element used by your /dp-topbar.js if present.
+       A robust fallback is provided below as .dp-topbar markup so topbar shows even without the module. -->
+  <dp-topbar>
+    <div class="dp-topbar card" role="banner" aria-label="Top navigation">
+      <div class="brand" style="min-width:0">
+        <div class="logo" aria-hidden="true"></div>
+        <div style="min-width:0">
+          <div class="title">DarkPurpleOF — DF$ Coin Docs</div>
+          <div class="subtitle muted" style="margin-top:6px;">Documentation • Rules • Timeline</div>
+        </div>
+      </div>
+
+      <nav aria-label="Top links">
+        <a href="/home">Home</a>
+        <a href="/docs">Docs</a>
+        <a href="/shop">Shop</a>
+        <a href="/support">Support</a>
+      </nav>
+
+      <div class="controls" role="toolbar" aria-label="Topbar controls">
+        <button class="btn-ghost" onclick="toggleTheme()" id="theme-icon" aria-label="Toggle theme">🌙</button>
+        <div id="dp-profile-pic" aria-label="Profile picture"></div>
+      </div>
     </div>
+  </dp-topbar>
 
-    <h1>DF$ Coin System Documentation</h1>
-    <p>Welcome to the documentation for the <span class="emphasis">DF$ Coin System</span> used in the <span class="emphasis">DarkPurpleOF's Website</span>.</p>
+  <!-- Main content grid -->
+  <main class="container" role="main">
+    <!-- Left column: docs content -->
+    <section class="card" aria-labelledby="doc-title">
+      <div class="hero" style="flex-direction:column; align-items:flex-start;">
+        <div style="min-width:0;">
+          <h1 id="doc-title">DF$ Coin System Documentation</h1>
+          <div class="muted subtitle">Welcome to the DF$ Coin system reference for DarkPurpleOF's Website.</div>
+        </div>
+      </div>
 
-    <h2>Introduction</h2>
-    <p>The DF$ Coin system is an essential part of the <span class="emphasis">DarkPurpleOF's Website</span>, enabling secure and controlled transactions for users within the platform.</p>
+      <p style="margin-top:12px; line-height:1.45;">
+        The DF$ Coin system is an essential part of the <strong>DarkPurpleOF's Website</strong>, enabling secure and controlled transactions for users within the platform.
+        <span style="display:block; margin-top:6px;" class="muted">This doc covers security, user-facing behavior, timeline events, and important policies.</span>
+      </p>
 
-    <div class="benefit">
-        <h3>Security</h3>
-        <p>The DF$ Coin system ensures that all transactions are secure and only authorized users can interact with their coins.</p>
-    </div>
+      <div class="benefit" role="region" aria-label="Security section">
+        <h3 class="section-title">Security</h3>
+        <p>DF$ ensures transactions are authorized and auditable. Only server-validated operations may modify balances — never trust client-side inputs.</p>
+      </div>
 
-    <div class="benefit">
-        <h3>Efficient Transactions</h3>
-        <p>The system allows users to perform transactions efficiently, ensuring smooth transfers within the platform.</p>
-    </div>
+      <div class="benefit" role="region" aria-label="Efficiency section">
+        <h3 class="section-title">Efficient Transactions</h3>
+        <p>The system processes internal transfers fast and intentionally avoids real-money conversions. Use the documented APIs to interact safely.</p>
+      </div>
 
-    <section class="section timeline">
-        <h2>DF$ Timeline</h2>
+      <section class="timeline" aria-labelledby="timeline-title">
+        <h2 id="timeline-title" class="section-title">DF$ Timeline</h2>
+
         <div class="timeline-event">
-            <span class="timeline-date">March 2nd, 2023</span> XP system deemed difficult to maintain.
+          <div class="timeline-date">Mar 2, 2023</div>
+          <div>XP system deemed difficult to maintain.</div>
         </div>
         <div class="timeline-event">
-            <span class="timeline-date">July 3rd, 2023</span> XP system flagged for deprecation.
+          <div class="timeline-date">Jul 3, 2023</div>
+          <div>XP system flagged for deprecation.</div>
         </div>
         <div class="timeline-event">
-            <span class="timeline-date">November 2nd 2023</span> The XP system is officially deprecated.
+          <div class="timeline-date">Nov 2, 2023</div>
+          <div>XP system officially deprecated.</div>
         </div>
-      <div class="timeline-event">
-            <span class="timeline-date">November 3rd 2023</span> The DF$ system is released in beta.
+        <div class="timeline-event">
+          <div class="timeline-date">Nov 3, 2023</div>
+          <div>DF$ system released in beta.</div>
         </div>
-      <div class="timeline-event">
-            <span class="timeline-date">January 26th 2024</span> Purchases with XP are oficially deleted and deprecated from the app
+        <div class="timeline-event">
+          <div class="timeline-date">Jan 26, 2024</div>
+          <div>XP purchases removed from app.</div>
         </div>
-      <div class="timeline-event">
-            <span class="timeline-date">May 2nd 2024</span> The app's ability to read XP values has been deprecated
+        <div class="timeline-event">
+          <div class="timeline-date">May 2, 2024</div>
+          <div>App's ability to read XP values deprecated.</div>
         </div>
-    </section>
+      </section>
 
-    <section class="section future-events">
-        <h2>Future Events</h2>
+      <section class="future-events" aria-labelledby="future-title">
+        <h2 id="future-title" class="section-title">Future Events</h2>
         <div class="timeline-event">
-            <span class="timeline-date">April 25th, 2025</span> Deletion of all remaining XP.
+          <div class="timeline-date">Apr 25, 2025</div>
+          <div>Deletion of all remaining XP.</div>
         </div>
-    </section>
+      </section>
 
-    <section class="section fun-facts">
-        <h2>Fun Facts About DF$</h2>
+      <section class="fun-facts" aria-labelledby="fun-title">
+        <h2 id="fun-title" class="section-title">Fun Facts About DF$</h2>
         <ul>
-            <li>Did you know that DF$'s initial name was planned to be BC$? Thankfully, that idea was quickly dismissed!</li>
+          <li>DF$ was almost named BC$ — glad that didn't happen.</li>
         </ul>
+      </section>
+
+      <section class="warning-box" aria-labelledby="notice-title">
+        <h3 id="notice-title" class="section-title">Important Notice: No Real Money Purchases</h3>
+        <p class="important">It is crucial to understand that <span style="font-style:italic">DF$</span> coins <strong>CANNOT</strong> be purchased with real money under any circumstances.</p>
+        <p class="important">Attempting to buy or sell DF$ for real money will result in an immediate and permanent ban from our platform.</p>
+      </section>
+
+      <section class="app-feature" aria-labelledby="feature-title">
+        <h3 id="feature-title" class="section-title">Exclusive App Feature</h3>
+        <p>The more DF$ you accumulate, the more the in-app balance button will change color — secret variations exist for high balances. Keep checking the shop for occasional free DF$ drops.</p>
+      </section>
     </section>
 
-    <section class="section warning-box">
-        <h3>Important Notice: No Real Money Purchases</h3>
-        <p class="important">It is crucial to understand that <span class="currency">DF$</span> coins <span class="important">CANNOT</span> be purchased with real money under any circumstances.</p>
-        <p class="important">Attempting to buy or sell <span class="currency">DF$</span> coins for real money will result in an <span class="important">immediate and permanent ban</span> from our platform. This policy is strictly enforced to maintain a fair and balanced ecosystem for all our users.</p>
-    </section>
+      <div class="card">
+        <h3 class="section-title">Quick Notes</h3>
+        <ul style="margin:0; padding-left:18px; color:var(--muted);">
+          <li>DF$ cannot be exchanged for real money.</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
 
-    <section class="section app-feature">
-        <h3>Exclusive App Feature: Dynamic Balance Button Colors & Free Shop Coins</h3>
-        <p>For our app users, the more <span class="currency">DF$</span> you accumulate, the more exciting your experience becomes! Keep an eye on the button that displays your <span class="currency">DF$</span> balance. As your balance grows, the color of this button will dynamically change.</p>
-        <p>Discover the spectrum of colors that await you as you earn more <span class="currency">DF$</span>. There are even some secret color variations to uncover for the truly dedicated!</p>
-        <p><strong>Bonus Tip for App Users:</strong> Make sure to regularly check the in-app shop! Sometimes, we offer free <span class="currency">DF$</span> coins as a special bonus. Don't miss out on these opportunities to boost your balance.</p>
-    </section>
+  <!-- Optional dp-topbar module (keeps your original script usage). If you manage a custom topbar element in /dp-topbar.js, it can replace the fallback. -->
+  <script type="module" src="/dp-topbar.js"></script>
 </body>
 </html>

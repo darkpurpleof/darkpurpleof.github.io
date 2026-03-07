@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sticker Pack Format — DarkPurpleOF</title>
+
+  <!-- Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    /* same theme + no-horizontal-scroll guards */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height:100%; width:100%; overflow-x:hidden; margin:0; }
+    :root{
+      --bg: #171717; --card:#1f1f1f; --muted:#a8a8a8; --accent:#6b21a8; --text:#eaeaea; --border: rgba(255,255,255,0.04); --glass: rgba(255,255,255,0.02);
+    }
+    body.light { --bg:#f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06); --glass: rgba(0,0,0,0.02); }
+
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:40px; }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:120; }
+    .dp-topbar { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; gap:12px; background: linear-gradient(180deg, rgba(0,0,0,0.35), transparent); border-bottom:1px solid var(--border); }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .logo { width:40px; height:40px; border-radius:10px; background-image:url('/apple-touch-icon.png'); background-size:cover; border:1px solid var(--border); }
+    .title { font-weight:700; }
+    .controls { display:flex; gap:12px; align-items:center; margin-left:auto; }
+
+    main.container { max-width:1100px; margin:22px auto; padding:18px; box-sizing:border-box; }
+    .card { background:var(--card); border-radius:12px; padding:20px; border:1px solid var(--border); box-shadow: 0 6px 18px rgba(2,6,23,0.35); }
+    h1 { margin:0 0 6px 0; font-size:28px; }
+    .subtitle { color:var(--muted); margin-top:6px; }
+
+    .panel { background: linear-gradient(180deg,var(--glass),transparent); border-radius:10px; padding:12px; border:1px solid var(--border); margin-top:12px; }
+    pre { background: rgba(0,0,0,0.12); padding:12px; border-radius:8px; overflow:auto; font-family: ui-monospace, "Roboto Mono", monospace; font-size:13px; border:1px solid var(--border); color:var(--text); }
+    ul { color:var(--muted); }
+
+    a.download { display:inline-block; padding:8px 12px; margin-top:10px; background: linear-gradient(90deg,var(--accent), #8f45d6); color:white; border-radius:8px; text-decoration:none; font-weight:700; }
+
+    @media (max-width:600px){ .dp-topbar{padding:10px 12px} }
+  </style>
+</head>
+<body>
+  <dp-topbar>
+    <header class="dp-topbar" role="banner" aria-label="Top navigation">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">DarkPurpleOF — Sticker Pack Format</div>
+      </div>
+
+      <nav aria-label="Top links">
+        <a href="/home">Home</a>
+        <a href="/utils/stickerpacks.html">Sticker Tool</a>
+      </nav>
+
+      <div class="controls">
+        <button onclick="document.body.classList.toggle('light')" class="btn-ghost">🌙</button>
+        <div id="dp-profile-pic" style="width:36px;height:36px;border-radius:8px;background-image:url('https://darkpurpleof.github.io/org-owner.jpg'); background-size:cover; border:1px solid var(--border)"></div>
+      </div>
+    </header>
+  </dp-topbar>
+
+  <main class="container">
+    <article class="card">
+      <h1>Sticker pack JSON — spec</h1>
+      <div class="subtitle">How sticker packs are structured, how to create them and how to use the Sticker Pack Creation tool.</div>
+
+      <section class="panel">
+        <h2>Where the tool lives</h2>
+        <p>The Sticker Pack Creation tool is at: <code>/utils/stickerpacks.html</code>. Use it to author, export and import <code>.dpfstickers</code> files.</p>
+      </section>
+
+      <section class="panel">
+        <h2>File format</h2>
+        <p>Sticker packs exported by the tool are JSON files with the extension <code>.dpfstickers</code>. These can be imported for use in the app, or uploaded directly to the store.</p>
+        <pre><code>{
+  "packId": "my-pack-id",
+  "name": "My Pack Name",
+  "description": "Short description (optional)",
+  "author": "author@example.com",
+  "date": "2024-01-01T12:00:00.000Z",
+  "stickers": [
+    {
+      "id": "sticker1",
+      "name": "Cool Sticker",
+      "resource": "https://example.com/image1.png"
+    },
+    {
+      "id": "sticker2",
+      "name": "Another",
+      "resource": "https://example.com/image2.png"
+    }
+  ]
+}</code></pre>
+        <p><strong>Field notes:</strong></p>
+        <ul>
+          <li><code>packId</code> — unique id for the pack (used when importing or selling).</li>
+          <li><code>name</code> — display name of the pack.</li>
+          <li><code>description</code> — optional description.</li>
+          <li><code>author</code> — contact / author identifier.</li>
+          <li><code>date</code> — ISO timestamp when exported (optional but recommended).</li>
+          <li><code>stickers</code> — array of sticker objects.</li>
+          <li>Each sticker object must contain <code>id</code>, <code>name</code> and <code>resource</code> (URL/local resource).</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>Creating stickers</h2>
+        <p>Use the tool at <a href="/utils/stickerpacks.html">/utils/stickerpacks.html</a> to add images, assign IDs and names, and export the JSON file. Important rules:</p>
+        <ul>
+          <li>IDs must be unique within a pack.</li>
+          <li>Images must be accessible via HTTPS and ideally 200–250px square for best results.</li>
+          <li>Include at least 2 stickers per pack.</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>Distribution & store</h2>
+        <p>Sticker packs can be:</p>
+        <ul>
+          <li>Imported directly into the app via your file manager.</li>
+          <li>Uploaded to the official store for sale or discovery (packs can be monetized).</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>Importing into chats</h2>
+        <p>Packs uploaded to the store or saved locally can be imported for use in chats. When users install the pack, stickers are available in the chat picker (depends on app version and settings).</p>
+      </section>
+
+      <section class="panel">
+        <h2>Tips & best practices</h2>
+        <ul>
+          <li>Prefer PNG with transparency for stickers.</li>
+          <li>Host images on a reliable HTTPS CDN if possible.</li>
+          <li>Keep sticker IDs short and descriptive (no spaces).</li>
+          <li>Test import/export using the tool before publishing.</li>
+        </ul>
+        <a class="download" href="/utils/stickerpacks.html">Open Sticker Pack Creation Tool</a>
+      </section>
+    </article>
+  </main>
+  
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  </script>
+
+  <!-- optional dp-topbar module -->
+  <script type="module" src="/dp-topbar.js"></script>
+</body>
+</html>
