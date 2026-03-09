@@ -134,7 +134,7 @@ height:38px; border-radius:8px; background-size:cover; background-position:cente
         <a href="/search" data-target="/search">Search</a>
         <a href="/ugc/posts" data-target="/ugc/posts">Posts</a>
         <a href="/creator/dashboard" data-target="/creator/dashboard">Create</a>
-        <a href="/chats" data-target="/chats">Chats</a>
+        <a href="/chats" data-target="/chat">Chats</a>
       </nav>
 
       <button class="hamburger" id="hamburger" aria-label="Open menu">
@@ -147,7 +147,7 @@ height:38px; border-radius:8px; background-size:cover; background-position:cente
         <a href="/search" data-target="/search">Search</a>
         <a href="/ugc/posts" data-target="/ugc/posts">Posts</a>
         <a href="/creator/dashboard" data-target="/creator/dashboard">Create</a>
-        <a href="/chats" data-target="/chats">Chats</a>
+        <a href="/chats" data-target="/chat">Chats</a>
       </div>
     </div>
 
