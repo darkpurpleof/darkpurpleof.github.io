@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Item</title>
+
+  <!-- Firebase (compat) moved to top so dp-topbar can use the globals -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Global box-sizing and overflow guard to prevent any accidental horizontal scroll */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; } /* hard guard: no horizontal scroll anywhere */
+    img { max-width: 100%; display: block; }
+
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --friend-row-height: 110px;
+      --friend-row-height-mobile: 84px;
+    }
+    body.light {
+      --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06);
+    }
+
+    body { margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background-color: var(--bg); color:var(--text); transition: background .25s, color .25s; min-height:100vh; }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+
+    main.container { max-width:1200px; width:100%; margin:24px auto; padding:20px; display:grid; grid-template-columns:1fr; gap:20px; box-sizing:border-box; overflow-x: hidden; }
+
+    .card { background:var(--card); border-radius:12px; padding:18px; border:1px solid var(--border); color:var(--text); box-shadow:0 6px 18px rgba(2,6,23,0.45); overflow:visible; }
+    .ugc-wrap { display:flex; gap:20px; align-items:flex-start; width:100%; }
+    .left-image { width: 460px; max-width:46vw; aspect-ratio:1/1; min-width:0; border-radius:12px; overflow:hidden; background:#111; display:flex; align-items:center; justify-content:center; }
+    .left-image img{ width:100%; height:100%; object-fit:cover; }
+
+    .right-details { flex:1; min-width:0; display:flex; flex-direction:column; gap:12px; }
+    .title-row { display:flex; gap:12px; align-items:center; justify-content:space-between; min-width:0; }
+    .title-left { display:flex; gap:12px; align-items:center; min-width:0; flex-direction:column; align-items:flex-start; }
+    .item-name { font-size:20px; font-weight:700; display:flex; align-items:center; gap:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .item-author-line { font-size:13px; color:var(--muted); display:flex; gap:8px; align-items:center; }
+    .verified-badge { width:16px; height:16px; }
+
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+    .info-row { display:flex; gap:8px; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:transparent; }
+    .info-label { color:var(--muted); font-size:13px; }
+    .info-value { font-weight:700; font-size:13px; display:flex; align-items:center; gap:8px; }
+
+    .desc { color:var(--text); font-size:14px; line-height:1.35; margin-top:6px; max-height:220px; overflow:auto; padding-right:6px; }
+
+    /* prominent action button */
+    .action-row { display:flex; gap:12px; align-items:center; margin-top:12px; }
+    .action-button { display:inline-flex; gap:10px; align-items:center; padding:14px 18px; border-radius:12px; border:none; background:var(--accent); color:#fff; cursor:pointer; font-weight:800; font-size:15px; min-width:220px; }
+    .action-button.secondary { background:transparent; border:1px solid var(--border); color:var(--text); font-weight:700; }
+    .action-button:disabled { opacity:0.6; cursor:not-allowed; }
+
+    .small-muted { font-size:13px; color:var(--muted); }
+
+    #toast { position:fixed; top:18px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999; }
+    #toast.purple { background:var(--accent-strong); color:#fff; } #toast.yellow{ background:#e6b800; color:#222; } #toast.red{ background:#c00; color:#fff; }
+
+    /* purchase modal (simple custom dialog) */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99990; align-items:center; justify-content:center; padding:16px; }
+    .modal { background:var(--card); border-radius:12px; width:100%; max-width:420px; padding:18px; box-shadow:0 10px 40px rgba(2,6,23,0.6); color:var(--text); border:1px solid var(--border); }
+    .modal h3 { margin:0 0 8px 0; font-size:18px; }
+    .modal p { margin:6px 0 14px 0; color:var(--muted); }
+    .modal .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+    .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:700; }
+    .btn.ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+    .btn.primary { background:var(--accent); color:#fff; }
+
+    @media (max-width:900px){ .left-image{ max-width:200px; width:40vw; } .info-grid{ grid-template-columns:1fr; } }
+    @media (max-width:600px){ main.container { margin: 12px auto; padding: 12px; max-width: 100%; overflow-x: hidden; } .ugc-wrap { flex-direction:column; } .left-image { width:100%; aspect-ratio:1/1; } }
+  </style>
+
+  <!-- initialize firebase early so dp-topbar and other components can access firebase globals -->
+  <script>
+    (function(){
+      const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+      if (!window.firebase || !firebase.apps || firebase.apps.length === 0) {
+        try { firebase.initializeApp(firebaseConfig); }
+        catch(e){ console.warn('Firebase init failed (maybe already initialized)', e); }
+      }
+      // expose simple globals
+      window._DPF_FIREBASE_READY = true;
+      window.dpFirebase = firebase;
+      window.dpAuth = firebase.auth();
+      window.dpDb = firebase.firestore();
+    })();
+  </script>
+
+  <!-- dp-topbar (user provided) -->
+  <script type="module" src="/dp-topbar.js"></script>
+</head>
+<body>
+  <dp-topbar></dp-topbar>
+
+  <main class="container">
+    <section class="card">
+      <div class="ugc-wrap" id="ugc-root">
+        <div class="left-image" id="left-image">
+          <img src="https://darkpurpleof.github.io/org-owner.jpg" alt="item image" id="item-image">
+        </div>
+        <div class="right-details">
+          <div class="title-row">
+            <div class="title-left">
+              <div style="display:flex;gap:8px;align-items:center;min-width:0;">
+                <div class="item-name" id="item-name">Loading...</div>
+              </div>
+
+              <div class="item-author-line" id="item-author">by —</div>
+            </div>
+            <div style="min-width:0;text-align:right;">
+              <div class="muted" id="own-indicator" style="display:none;color:var(--accent);font-weight:700;">✓ You own this</div>
+            </div>
+          </div>
+
+          <div class="desc" id="item-desc">&nbsp;</div>
+
+          <div class="info-grid" id="info-grid">
+            <div class="info-row"><div class="info-label">Author</div><div class="info-value" id="info-author">—</div></div>
+            <div class="info-row"><div class="info-label">Type</div><div class="info-value" id="info-type">—</div></div>
+            <div class="info-row"><div class="info-label">Downloadable Content</div><div class="info-value" id="info-download">—</div></div>
+            <div class="info-row"><div class="info-label">Updated</div><div class="info-value" id="info-updated">—</div></div>
+          </div>
+
+          <div class="action-row" id="action-row">
+            <!-- single prominent action button; label & handler updated dynamically -->
+            <button class="action-button" id="action-btn" style="display:none">Purchase</button>
+            <button class="action-button secondary" id="migrate-btn" style="display:none">Migrate</button>
+            <div class="small-muted" id="action-disclaimer"></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="purple">OK</div>
+
+  <!-- Purchase Modal (added) -->
+  <div id="purchase-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document" id="purchase-modal">
+      <h3 id="modal-title">Confirm Purchase</h3>
+      <p id="modal-body">Are you sure you want to buy this item?</p>
+      <div class="modal-actions">
+        <button class="btn ghost" id="modal-cancel">Cancel</button>
+        <button class="btn primary" id="modal-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Use compat globals initialized above (dpAuth, dpDb)
+    const auth = window.dpAuth || firebase.auth();
+    const db = window.dpDb || firebase.firestore();
+
+    function showToast(text, type='purple', ms=2500){
+      const t = document.getElementById('toast');
+      t.className = type;
+      t.textContent = text;
+      t.style.display = 'block';
+      setTimeout(()=> t.style.display='none', ms);
+    }
+
+    // parse url params (compat with multiple ? style)
+    const query = location.href.split('?').slice(1).join('&');
+    const params = new URLSearchParams(query);
+    const itemId = params.get('id');
+    const authorParam = params.get('author');
+    const typeParam = params.get('type');
+
+    function ugcCollectionForType(t){ return (t === '0') ? 'store-items' : 'development-items'; }
+    const DEFAULT_IMAGE = 'https://darkpurpleof.github.io/org-owner.jpg';
+
+    let ugcDoc = null;
+    let authorDoc = null;
+    let currentUser = null;
+    let currentUserDoc = null;
+    let isPurchasing = false;
+
+    // modal elements
+    const modalOverlay = document.getElementById('purchase-modal-overlay');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+    const modalCancel = document.getElementById('modal-cancel');
+    const modalConfirm = document.getElementById('modal-confirm');
+
+    function setImage(url){ const img = document.getElementById('item-image'); img.src = url || DEFAULT_IMAGE; }
+    function formatTimestamp(ts){ try{ if(!ts) return '—'; if(ts.toDate) ts = ts.toDate(); const d = new Date(ts); return d.toLocaleString(); }catch(e){return '—';} }
+    function setOwnIndicator(owned){ const el = document.getElementById('own-indicator'); el.style.display = owned ? 'block' : 'none'; }
+
+    async function loadUGC(){
+      if(!itemId || !authorParam){ showToast('Missing id or author in URL', 'red'); return; }
+      const coll = ugcCollectionForType(typeParam);
+      try{
+        const d = await db.collection('ugc').doc(authorParam).collection(coll).doc(itemId).get();
+        if(!d.exists){ showToast('Item not found', 'red'); return; }
+        ugcDoc = Object.assign({ id: d.id }, d.data());
+        renderUGC();
+        await loadAuthor(ugcDoc.source || authorParam);
+      }catch(err){ console.error(err); showToast('Failed to load item', 'red'); }
+    }
+
+    // ---------- FIX: use d.exists (property) not d.exists() (function) ----------
+    async function loadAuthor(email){
+      try{
+        const d = await db.collection('user_data').doc(email).get();
+        if(!d.exists) authorDoc = { email }; else authorDoc = Object.assign({ email }, d.data());
+        renderAuthor();
+      }catch(e){ console.error(e); authorDoc = { email }; renderAuthor(); }
+    }
+
+    async function loadCurrentUserDoc(){
+      if(!currentUser) { currentUserDoc = null; return; }
+      try{ const d = await db.collection('user_data').doc(currentUser.email).get(); currentUserDoc = d.exists ? d.data() : null; }catch(e){ console.error(e); currentUserDoc = null; }
+    }
+
+    // Render UGC: now also shows item-level verified badge and sets document.title (added)
+    function renderUGC(){
+      if(!ugcDoc) return;
+      // item name + verified badge (if item has verified/is_verified)
+      const nameEl = document.getElementById('item-name');
+      nameEl.innerHTML = ''; // clear
+      const tn = document.createElement('span');
+      tn.textContent = ugcDoc.name || '—';
+      nameEl.appendChild(tn);
+
+      const itemVerified = !!(ugcDoc.is_verified || ugcDoc.verified);
+      if(itemVerified){
+        const v = document.createElement('img');
+        v.src = '/assets/verified.png';
+        v.className = 'verified-badge';
+        v.alt = 'verified';
+        nameEl.appendChild(v);
+      }
+
+      setImage(ugcDoc.image || DEFAULT_IMAGE);
+      document.getElementById('item-desc').textContent = ugcDoc.description || '';
+      document.getElementById('info-type').textContent = ugcDoc.type || '—';
+      document.getElementById('info-download').textContent = ugcDoc.downloadable ? 'Yes' : 'No';
+      document.getElementById('info-updated').textContent = formatTimestamp(ugcDoc.updated_at || ugcDoc.updated || null);
+      document.getElementById('info-author').textContent = ugcDoc.source || authorParam;
+
+      // set document title to item name (added)
+      try{ document.title = (ugcDoc.name ? `${ugcDoc.name}` : 'Item'); }catch(e){/*ignore*/}
+
+      updateActionState();
+    }
+
+    // ---------- Improved renderAuthor: builds nodes (not raw textContent) & updates info-author with badge too ----------
+    function renderAuthor(){
+      if(!authorDoc) return;
+      const display = authorDoc['display name'] || authorDoc.displayName || authorDoc.display_name || authorDoc.email;
+      const isVerified = !!(authorDoc.is_verified || authorDoc.verified);
+      const authorLine = document.getElementById('item-author');
+
+      // Clear and build content to avoid appending into a text node by accident
+      authorLine.innerHTML = '';
+      const textSpan = document.createElement('span');
+      textSpan.textContent = 'by ' + (display || authorDoc.email);
+      authorLine.appendChild(textSpan);
+
+      if(isVerified){
+        const img = document.createElement('img');
+        img.src = '/assets/verified.png';
+        img.className = 'verified-badge';
+        img.alt = 'verified';
+        authorLine.appendChild(img);
+      }
+
+      // also update the info-grid author value (keeps UI consistent) — now includes badge if verified (fix #2)
+      const infoAuthorEl = document.getElementById('info-author');
+      if(infoAuthorEl){
+        infoAuthorEl.innerHTML = ''; // clear
+        const aSpan = document.createElement('span');
+        aSpan.textContent = display || authorDoc.email;
+        infoAuthorEl.appendChild(aSpan);
+        if(isVerified){
+          const i = document.createElement('img');
+          i.src = '/assets/verified.png';
+          i.className = 'verified-badge';
+          i.alt = 'verified';
+          infoAuthorEl.appendChild(i);
+        }
+      }
+
+      updateActionState();
+    }
+
+    // Check if a transaction record exists for this user + item
+    async function transactionExistsForUser(email){
+      try{
+        const snap = await db.collection('transactions').doc(email).collection('records').doc(ugcDoc.id).get();
+        return snap.exists;
+      }catch(e){ console.error('tx check failed', e); return false; }
+    }
+
+    function formatPrice(p){ const price = parseInt(p || 0, 10) || 0; return price === 0 ? 'Get (Free)' : `Purchase (DF - $${price})`; }
+
+    function userHasRole(role){ if(!currentUserDoc || !role) return false; const roles = currentUserDoc.roles || []; return roles.includes(role); }
+
+    async function updateActionState(){
+      const actionBtn = document.getElementById('action-btn');
+      const migrateBtn = document.getElementById('migrate-btn');
+      const disclaimer = document.getElementById('action-disclaimer');
+      actionBtn.style.display = 'none'; migrateBtn.style.display = 'none'; disclaimer.textContent = '';
+      if(!ugcDoc) return;
+
+      const authorResolved = !!(authorDoc && (authorDoc['display name'] || authorDoc.displayName || authorDoc.display_name));
+      const onSale = (ugcDoc.on_sale !== undefined) ? Boolean(ugcDoc.on_sale) : true;
+
+      let ownedByTx = false;
+      let purchasedFlag = false;
+      if(currentUser){
+        ownedByTx = await transactionExistsForUser(currentUser.email);
+        purchasedFlag = !!(currentUserDoc && Array.isArray(currentUserDoc.purchasedIds) && currentUserDoc.purchasedIds.includes(ugcDoc.id));
+      }
+
+      // ownership via role
+      const roleOwned = (ugcDoc.type === 'Role' && userHasRole(ugcDoc.rolename));
+      const owned = ownedByTx || roleOwned;
+      setOwnIndicator(owned);
+
+      // disclaimers
+      if(!currentUser) disclaimer.textContent = 'You need to log in to purchase items';
+      if(!authorResolved) disclaimer.textContent = 'This item is currently unavailable';
+      if(!onSale) disclaimer.textContent = 'This item is not currently on sale';
+
+      // primary action logic: single button shown based on state
+      // 1) if user already has transaction (ownedByTx) -> show Download if downloadable, else show disabled "You own this"
+      if(ownedByTx || roleOwned){
+        if(ugcDoc.download_link){
+          actionBtn.style.display = 'inline-flex';
+          actionBtn.disabled = false;
+          actionBtn.textContent = 'Download';
+          actionBtn.onclick = onDownload;
+        } else {
+          actionBtn.style.display = 'inline-flex';
+          actionBtn.disabled = true;
+          actionBtn.textContent = '✓ You own this';
+          actionBtn.onclick = null;
+        }
+        return;
+      }
+
+      // 2) if purchased flag exists but no transaction -> show Migrate button (not purchase)
+      if(purchasedFlag && !ownedByTx){
+        migrateBtn.style.display = 'inline-flex';
+        migrateBtn.disabled = false;
+        migrateBtn.textContent = 'Migrate';
+        migrateBtn.onclick = onMigrate;
+        return;
+      }
+
+      // 3) Not owned: allow purchase only if logged in, on sale, author resolved
+      if(currentUser && onSale && authorResolved){
+        actionBtn.style.display = 'inline-flex';
+        actionBtn.disabled = isPurchasing;
+        actionBtn.textContent = formatPrice(ugcDoc.price);
+        // instead of calling purchase directly, open a confirmation dialog (added)
+        actionBtn.onclick = showPurchaseDialog;
+      } else {
+        // no button, but leave disclaimer
+      }
+    }
+
+    // Shows confirmation modal (added)
+    function showPurchaseDialog(){
+      if(!ugcDoc) return;
+      modalTitle.textContent = `Buy — ${ugcDoc.name || 'Item'}`;
+      const priceText = (parseInt(ugcDoc.price || 0,10) || 0) === 0 ? 'Free' : `Price: DF - $${ugcDoc.price}`;
+      modalBody.textContent = `${priceText}. Confirm purchase?`;
+      modalOverlay.style.display = 'flex';
+      modalOverlay.setAttribute('aria-hidden','false');
+
+      // hook buttons
+      modalCancel.onclick = () => { closePurchaseDialog(); };
+      modalConfirm.onclick = () => { closePurchaseDialog(); doPurchase(); };
+    }
+
+    function closePurchaseDialog(){
+      modalOverlay.style.display = 'none';
+      modalOverlay.setAttribute('aria-hidden','true');
+      modalCancel.onclick = null;
+      modalConfirm.onclick = null;
+    }
+
+    // doPurchase contains the previous onBuy logic (refactored) — after success will reload the page (added)
+    async function doPurchase(){
+      if(isPurchasing) return;
+      if(!currentUser){ showToast('You need to log in to buy', 'yellow'); return; }
+      const price = parseInt(ugcDoc.price || 0, 10) || 0;
+      await loadCurrentUserDoc();
+      const coinsStr = (currentUserDoc && currentUserDoc.coins) ? currentUserDoc.coins : '0';
+      const coins = parseInt(coinsStr, 10) || 0;
+      if(coins < price){ showToast('Not enough coins', 'red'); return; }
+
+      // guard checks
+      const authorResolved = !!(authorDoc && (authorDoc['display name'] || authorDoc.displayName || authorDoc.display_name));
+      if(!authorResolved){ showToast('Item owner not verified — cannot buy', 'red'); return; }
+      const onSale = (ugcDoc.on_sale !== undefined) ? Boolean(ugcDoc.on_sale) : true;
+      if(!onSale){ showToast('Item not on sale', 'yellow'); return; }
+
+      // ensure not already purchased in transactions
+      const alreadyTx = await transactionExistsForUser(currentUser.email);
+      if(alreadyTx){ showToast('You already own this item', 'yellow'); await loadCurrentUserDoc(); updateActionState(); return; }
+
+      try{
+        isPurchasing = true;
+        const actionBtn = document.getElementById('action-btn');
+        actionBtn.disabled = true; const prevText = actionBtn.textContent; actionBtn.textContent = 'Purchasing...';
+        window.addEventListener('beforeunload', preventUnload);
+
+        // write transaction
+        const txRef = db.collection('transactions').doc(currentUser.email).collection('records').doc(ugcDoc.id);
+        await txRef.set({ amount: price, date: firebase.firestore.FieldValue.serverTimestamp(), description: ugcDoc.name || '', image: ugcDoc.image || DEFAULT_IMAGE, source: authorParam, type: 'outgoing' });
+
+        // deduct coins (save as string)
+        const newCoins = String(Math.max(0, coins - price));
+        await db.collection('user_data').doc(currentUser.email).set({ coins: newCoins }, { merge: true });
+
+        // If Role -> merge role into roles array
+        if(ugcDoc.type === 'Role' && ugcDoc.rolename){ await db.collection('user_data').doc(currentUser.email).update({ roles: firebase.firestore.FieldValue.arrayUnion(ugcDoc.rolename) }); }
+
+        // If Bundle -> add purchasedIds
+        if(ugcDoc.type === 'Bundle'){ await db.collection('user_data').doc(currentUser.email).update({ purchasedIds: firebase.firestore.FieldValue.arrayUnion(ugcDoc.id) }); }
+
+        showToast('Purchase complete', 'purple');
+
+        // reload current user doc & UI
+        await loadCurrentUserDoc();
+        await updateActionState();
+
+        // AUTO-RELOAD THE PAGE after purchase (added). small delay so toast shows.
+        setTimeout(()=> { try { location.reload(); } catch(e){ /*ignore*/ } }, 800);
+
+      }catch(err){ console.error(err); showToast('Purchase failed', 'red'); } finally{
+        isPurchasing = false;
+        const actionBtn = document.getElementById('action-btn');
+        if(actionBtn){
+          actionBtn.disabled = false;
+          actionBtn.textContent = formatPrice(ugcDoc.price);
+        }
+        window.removeEventListener('beforeunload', preventUnload);
+      }
+    }
+
+    function preventUnload(e){ e.preventDefault(); e.returnValue = ''; }
+
+    // ---------- Improved download: detect filename from Content-Disposition, blob.type, URL, or map by ugcDoc.type ----------
+    async function onDownload(){
+      if(!ugcDoc || !ugcDoc.download_link){ showToast('No download available', 'yellow'); return; }
+      // only allow download if transaction exists for user
+      if(!currentUser){ showToast('You need to log in to download', 'yellow'); return; }
+      const ownedByTx = await transactionExistsForUser(currentUser.email);
+      if(!ownedByTx){ showToast('You must own this item to download it', 'yellow'); return; }
+      try{
+        showToast('Starting download...', 'purple');
+        const resp = await fetch(ugcDoc.download_link);
+        if(!resp.ok){ showToast('Failed to fetch file', 'red'); return; }
+        const blob = await resp.blob();
+
+        // try content-disposition header for filename
+        let filename = null;
+        const cd = resp.headers.get('content-disposition');
+        if(cd){
+          // filename*=UTF-8''name or filename="name" or filename=name
+          const m1 = cd.match(/filename\*=UTF-8''([^;]+)/i);
+          const m2 = cd.match(/filename="([^"]+)"/i);
+          const m3 = cd.match(/filename=([^;]+)/i);
+          const raw = m1 ? decodeURIComponent(m1[1]) : (m2 ? m2[1] : (m3 ? m3[1] : null));
+          if(raw) filename = raw.replace(/["']/g, '').trim();
+        }
+
+        // If no filename yet, try extension from blob.type (but avoid application/octet-stream)
+        if(!filename){
+          if(blob.type && blob.type !== 'application/octet-stream'){
+            const ext = '.' + blob.type.split('/').pop();
+            const base = (ugcDoc.name || 'download').replace(/[^a-z0-9\-_.]/gi,'_');
+            filename = base + ext;
+          }
+        }
+
+        // If still no filename, try to parse extension from URL
+        if(!filename){
+          try{
+            const u = new URL(ugcDoc.download_link, location.href);
+            const path = u.pathname || '';
+            const match = path.match(/\.([a-z0-9]+)$/i);
+            if(match) {
+              const base = (ugcDoc.name || 'download').replace(/[^a-z0-9\-_.]/gi,'_');
+              filename = base + '.' + match[1];
+            }
+          }catch(e){
+            // ignore
+          }
+        }
+
+        // Last resort: map by ugcDoc.type to the desired extension (plugin/sticker)
+        if(!filename){
+          const base = (ugcDoc.name || 'download').replace(/[^a-z0-9\-_.]/gi,'_');
+          const t = (ugcDoc.type || '').toLowerCase();
+          if(t.includes('plugin')) filename = base + '.dpplugin';
+          else if(t.includes('sticker')) filename = base + '.dpfstickers';
+          else filename = base; // no ext
+        }
+
+        // ensure filename isn't empty
+        if(!filename) filename = 'download';
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+        showToast('Download complete', 'purple');
+      }catch(err){ console.error(err); showToast('Download failed', 'red'); }
+    }
+
+    // Migrate: create transaction record for items that exist only in purchasedIds
+    async function onMigrate(){
+      if(!currentUser) { showToast('Login first', 'yellow'); return; }
+      try{
+        const price = parseInt(ugcDoc.price || 0, 10) || 0;
+        const txRef = db.collection('transactions').doc(currentUser.email).collection('records').doc(ugcDoc.id);
+        await txRef.set({ amount: price, date: firebase.firestore.FieldValue.serverTimestamp(), description: ugcDoc.name || '', image: ugcDoc.image || DEFAULT_IMAGE, source: authorParam, type: 'outgoing' });
+        showToast('Migration complete', 'purple');
+        await loadCurrentUserDoc();
+        await updateActionState();
+      }catch(e){ console.error(e); showToast('Migration failed', 'red'); }
+    }
+
+    // auth listener
+    auth.onAuthStateChanged(async (user)=>{
+      currentUser = user ? { uid: user.uid, email: user.email } : null;
+      await loadCurrentUserDoc();
+      updateActionState();
+    });
+
+    document.getElementById('action-btn').addEventListener('click', ()=>{});
+    document.getElementById('migrate-btn').addEventListener('click', ()=>{});
+
+    // close modal with Escape
+    document.addEventListener('keydown',(e)=>{
+      if(e.key === 'Escape'){
+        if(modalOverlay.style.display === 'flex') closePurchaseDialog();
+      }
+    });
+
+    // Initialize
+    loadUGC();
+  </script>
+</body>
+</html>

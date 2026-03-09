@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chats (Beta)</title>
+
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+
+  <!-- Font + theme provided by user (kept exactly) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+  /* --- Theme variables (kept exactly from your theme) --- */
+  :root{
+    --bg: #171717;
+    --card: #1f1f1f;
+    --muted: #a8a8a8;
+    --accent: #6b21a8;
+    --accent-strong: #5b21b6;
+    --text: #eaeaea;
+    --border: rgba(255,255,255,0.04);
+  }
+  body.light {
+    --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06);
+  }
+
+  /* Hard guard against horizontal scroll (your preference) */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; width: 100%; overflow-x: hidden; }
+  body { margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+  dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+
+  main.wrapper { max-width:1200px; margin:20px auto; padding:18px; width:100%; box-sizing:border-box; }
+
+  /* Corporate / soulless rework for chat list */
+  .content-card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px; box-shadow:none; }
+
+  .page-title { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .page-title h1 { font-size:18px; margin:0; font-weight:600; color:var(--text); }
+  .page-title .muted { color:var(--muted); font-size:13px; }
+
+  /* Chat layout specifics */
+  .chat-shell { display:grid; grid-template-columns: 360px 1fr; gap:20px; align-items:stretch; min-height:calc(100vh - 88px); }
+
+  /* Chat list (left) */
+  #chat-list { display:flex; flex-direction:column; gap:10px; max-height:calc(100vh - 180px); overflow:auto; }
+
+  .chat-item {
+    display:flex; gap:12px; align-items:center;
+    padding:10px; border-radius:6px; border:1px solid var(--border);
+    background:transparent; cursor:pointer; transition:background .12s, transform .08s;
+    min-width:0; /* avoid forcing width */
+  }
+  .chat-item:hover { background: rgba(255,255,255,0.015); transform:translateY(-1px); }
+
+  .chat-pfp { width:48px; height:48px; border-radius:6px; background-size:cover; background-position:center; background-repeat: no-repeat; flex-shrink:0; border:1px solid var(--border); }
+
+  .chat-body { display:flex; flex-direction:column; gap:4px; overflow:hidden; min-width:0; }
+  .row { display:flex; align-items:center; gap:8px; }
+  .display-name { font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .verified-badge { width:10px; height:10px; display:inline-block; vertical-align:middle; margin-left:6px; border:none; }
+
+  /* custom themed scrollbars (WebKit + Firefox). These replace the browser defaults with thin themed scrollbars */
+  * { scrollbar-width: thin; scrollbar-color: var(--accent) transparent; }
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg,var(--accent) 0%, var(--accent-strong) 100%); border-radius:999px; }
+
+  /* Mobile: make the secondary topbar stack and ensure the back button is visible; the disabled hint will sit below */
+  @media (max-width:900px){
+    .secondary-topbar { flex-direction:column; align-items:flex-start; gap:8px; }
+    .secondary-topbar .info{ width:100%; }
+    .secondary-topbar .info .names { display:flex; flex-direction:column; }
+    .secondary-topbar #back-btn { display:inline-block; }
+  }
+  .last-message { font-size:13px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .meta { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:6px; min-width:0; }
+  .time { font-size:12px; color:var(--muted); }
+  .unread-count { font-size:12px; background:var(--accent); color:#fff; padding:4px 8px; border-radius:999px; font-weight:700; }
+
+  /* Chat pane (right) */
+  .chat-panel { display:flex; flex-direction:column; gap:12px; height:calc(100vh - 120px); }
+  .secondary-topbar { display:flex; gap:12px; align-items:center; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--card); }
+  .secondary-topbar .info { display:flex; gap:12px; align-items:center; }
+  .secondary-topbar .info img { width:22px; height:22px; object-fit:cover; }
+  .secondary-topbar .info .names { display:flex; flex-direction:column; }
+  .secondary-topbar .names .name { font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px; }
+  .secondary-topbar .names .sub { color:var(--muted); font-size:13px; }
+
+  .secondary-topbar #back-btn { display:none; width:32px; height:32px; border-radius:6px; cursor:pointer; background:transparent; border:1px solid transparent; }
+
+  /* ensure no horizontal overflow from messages container */
+  .messages-wrap { position:relative; flex:1; overflow:auto; overflow-x:hidden; padding:18px; border-radius:8px; border:1px solid var(--border); background:transparent; }
+
+  /* background element for chat wallpaper (behind messages) */
+  #chat-bg { position:absolute; inset:0; background-position:center; border-radius:8px; z-index:0; display:none; pointer-events:none; }
+  /* NOTE: background-size/repeat are handled dynamically in JS to ensure tiling (we set backgroundRepeat to repeat-y and backgroundSize depending on viewport) */
+
+  .messages { display:flex; flex-direction:column; gap:12px; max-width:100%; width:100%; position:relative; z-index:1; min-width:0; }
+  .date-sep { text-align:center; color:var(--muted); font-size:12px; margin:12px 0; }
+
+  .bubble-row { display:flex; gap:12px; align-items:flex-end; }
+  .bubble { padding:12px 14px; border-radius:12px; max-width:70%; position:relative; color:var(--text); word-wrap:break-word; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; font-size:15px; }
+  .bubble.mine { margin-left:auto; border-bottom-right-radius:6px; background:linear-gradient(180deg,var(--accent) 0%, var(--accent-strong) 100%); color:#fff; }
+  .bubble.their { background:#111111; color:var(--text); border:1px solid var(--border); border-bottom-left-radius:6px; }
+
+  .message-meta { font-size:12px; color:var(--muted); margin-top:6px; display:flex; gap:8px; align-items:center; }
+  .message-meta .read { font-weight:700; color:var(--muted); }
+
+  /* media in messages - make fully responsive and never cause horizontal scroll */
+  .msg-media { margin-bottom:8px; }
+  .msg-image { max-width:100%; width:auto; height:auto; border-radius:8px; display:block; cursor:pointer; }
+  .msg-sticker { max-width:60%; width:auto; height:auto; border-radius:8px; cursor:pointer; display:block; margin-bottom:8px; }
+  .msg-file { display:inline-block; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:rgba(0,0,0,0.06); cursor:pointer; max-width:100%; overflow-wrap:anywhere; word-break:break-word; }
+
+  /* bottom composer */
+  .composer { display:flex; gap:12px; align-items:center; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--card); }
+  .composer textarea { flex:1; min-height:44px; max-height:140px; resize:none; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); background:transparent; color:var(--text); }
+  .composer button { background:var(--accent); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; }
+  .composer.disabled { opacity:0.7; }
+  .composer textarea[disabled] { opacity:0.6; }
+  .composer button[disabled] { opacity:0.5; cursor:not-allowed; }
+
+  /* Empty / error state — more corporate: simple, grey dashed box */
+  .empty-state { width:100%; max-width:720px; margin:18px auto; padding:22px; border-radius:8px; border:1px dashed var(--border); color:var(--muted); background:transparent; text-align:center; }
+
+  /* Toast — use theme colours but keep it restrained */
+  #toast { position:fixed; top:12px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:8px; font-weight:700; display:none; z-index:99999; box-shadow:0 6px 18px rgba(2,6,23,0.45); }
+  #toast.purple { background:var(--accent-strong); color:#fff; }
+  #toast.yellow { background:#e6b800; color:#222; }
+  #toast.red { background:#c00; color:#fff; }
+
+  /* responsive tweaks: shrink wallpaper, smaller fonts/padding and tighter image limits on mobile */
+  @media (max-width:900px){
+    main.wrapper { padding:12px; }
+    .chat-pfp{ width:44px; height:44px; }
+    .display-name{ font-size:13px; }
+    .chat-shell{ grid-template-columns:1fr; }
+    .messages { max-width:100%; }
+    body.mobile-chat-open .content-card{ display:none; }
+    body.mobile-chat-open .chat-panel{ grid-column:1 / -1; }
+    body.mobile-chat-open .secondary-topbar #back-btn{ display:inline-block; }
+
+    /* smaller bubbles on mobile to avoid any overflow; allow them to take almost full width but keep gap for meta items */
+    .bubble { max-width: calc(100% - 72px); padding:10px 12px; font-size:14px; }
+    .bubble.mine, .bubble.their { max-width: calc(100% - 72px); }
+
+    /* stickers & images should never exceed container width */
+    .msg-sticker { max-width:48%; }
+    .msg-image { max-width:100%; }
+
+    /* reduce composer padding and textarea height */
+    .composer { padding:10px; }
+    .composer textarea { min-height:40px; }
+
+    /* make chat-bg scaled to container width (shrinks wallpaper on mobile) */
+    #chat-bg { background-size: 100% auto !important; background-position: top center !important; }
+
+  }
+  @media (max-width:520px){ .meta{ display:none; } }
+  </style>
+</head>
+<body>
+
+<!-- dp-topbar provided externally by your site -->
+<script type="module" src="/dp-topbar.js"></script>
+<dp-topbar></dp-topbar>
+
+<main class="wrapper">
+  <div class="page-title">
+    <h1>Chats</h1>
+    <div class="muted">Direct messages</div>
+  </div>
+
+  <div class="chat-shell">
+    <!-- Left: conversation list (basic, you can fill with your own) -->
+    <div class="content-card">
+      <div id="chat-list" class="content-card"></div>
+    </div>
+
+    <!-- Right: chat panel -->
+    <div class="chat-panel">
+      <div id="secondary-topbar" class="secondary-topbar" style="display:none;"></div>
+      <div id="messages-wrap" class="messages-wrap" style="background-size:cover; background-position:center;">
+        <!-- Chat background element (behind messages) -->
+        <div id="chat-bg"></div>
+        <div id="messages" class="messages"></div>
+      </div>
+
+      <div id="composer" class="composer" style="display:none;">
+        <textarea id="message-input" placeholder="Type a message..."></textarea>
+        <button id="send-btn">Send</button>
+      </div>
+
+      <div id="empty" class="empty-state" style="display:none;">No chat selected.</div>
+    </div>
+  </div>
+</main>
+
+<div id="toast" class="purple"></div>
+
+<!-- Firebase v9 modular (CDN). Replace config below with your firebaseConfig object. -->
+<script>
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+  measurementId: "G-S2X2JYC8Z0"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const $ = s => document.querySelector(s);
+
+  const params = new URLSearchParams(location.search);
+  let currentChatId = params.get("id");
+  const emergencyEmail = params.get("email");
+
+  const messagesEl = $('#messages');
+  const messagesWrap = $('#messages-wrap');
+  const chatBg = document.getElementById('chat-bg');
+  const composer = $('#composer');
+  const input = $('#message-input');
+  const sendBtn = $('#send-btn');
+  const secTopbar = $('#secondary-topbar');
+  const emptyState = $('#empty');
+
+  let currentUser = null;
+  let currentUserData = null;
+  let otherUserEmail = null;
+
+  // unsubscribe handles for Firestore listeners so we don't leak listeners and mix chats
+  let messagesUnsub = null;
+  let chatUnsub = null;
+
+  const emojiMap = {
+    verified: 'https://darkpurpleof.github.io/assets/verified.png',
+    bughunter: 'https://darkpurpleof.github.io/assets/bughunt.png',
+    admin: 'https://darkpurpleof.github.io/assets/ic_admin.png',
+    panel: 'https://darkpurpleof.github.io/assets/ic_owner.png',
+    member: 'https://darkpurpleof.github.io/org-owner.jpg',
+    tester: 'https://darkpurpleof.github.io/assets/test.png',
+    furry: 'https://darkpurpleof.github.io/assets/boykisser.png'
+  };
+
+  // safer escape using DOM (avoids issues with showing entities literally)
+  function escapeHtml(str){
+    if(str === undefined || str === null) return '';
+    const d=document.createElement('div');
+    d.appendChild(document.createTextNode(String(str)));
+    return d.innerHTML;
+  }
+
+  // Parse rich text. Strategy:
+  // 1) Work on escaped input (so raw < > are safe)
+  // 2) Replace markdown markers on the escaped string (asterisks, underscores, backticks)
+  // 3) Support color tags but match their escaped form (&lt;red&gt;...&lt;/red&gt;)
+  function parseRichTextToHtml(input){
+    if(!input) return "";
+    // escape everything first (so user can't inject HTML). We'll then replace safe tokens.
+    let s = escapeHtml(input);
+
+    // bold: *text*
+    s = s.replace(/\*([\s\S]*?)\*/g, '<strong>$1</strong>');
+    // italic: _text_
+    s = s.replace(/_([\s\S]*?)_/g, '<em>$1</em>');
+    // code: `text`
+    s = s.replace(/`([\s\S]*?)`/g, function(m,p1){ return '<code style="background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px">'+p1+'</code>'; });
+
+    // color tags: match escaped form (&lt;red&gt;...&lt;/red&gt;)
+    s = s.replace(/&lt;(red|cyan|green|blue|yellow)&gt;([\s\S]*?)&lt;\/\1&gt;/g,(m,c,t)=>{
+      const map={red:'#ff5b57',cyan:'#22d3ee',green:'#22c55e',blue:'#3b82f6',yellow:'#fbbf24'};
+      return '<span style="color:'+map[c]+'">'+t+'</span>';
+    });
+
+    // emoji shortcodes :smile:
+    s = s.replace(/:([a-zA-Z0-9_]+):/g,(m,name)=>{
+      const url=emojiMap[name];
+      if(!url) return m;
+      return '<img src="'+url+'" style="width:16px;height:16px;vertical-align:middle">';
+    });
+
+    return s;
+  }
+
+  function formatTime(ts){
+    try{ const d = ts.toDate(); return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch(e){ return ""; }
+  }
+
+  function formatDate(ts){
+    try{ const d = ts.toDate(); return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }catch(e){ return ""; }
+  }
+
+  function clearMessages(){ messagesEl.innerHTML=""; }
+
+  function extractTags(text){
+    const images=[]; const files=[]; const stickers=[];
+
+    text = text.replace(/<image>(.*?)<\/image>/gi,(m,u)=>{images.push(u);return ""});
+    text = text.replace(/<file>(.*?)<\/file>/gi,(m,u)=>{files.push(u);return ""});
+    text = text.replace(/<sticker>(.*?)<\/sticker>/gi,(m,u)=>{stickers.push(u);return ""});
+
+    return {text,images,files,stickers};
+  }
+
+  // extractBubbleColor: detects <redmessage>..</redmessage> or <colormessage color="#rrggbb">..</colormessage>
+  function extractMessageBubbleColor(text){
+    if(!text) return {color:null,content:text,found:false};
+    const names = ['red','cyan','green','blue','yellow'];
+    const lower = (text || '').toLowerCase();
+    for(let n of names){
+      const open = '<' + n + 'message>';
+      const close = '</' + n + 'message>';
+      const i = lower.indexOf(open);
+      const j = lower.indexOf(close);
+      if(i !== -1 && j !== -1 && j > i){
+        const content = text.substring(i + open.length, j);
+        const map = { red:'#ff5b57', cyan:'#22d3ee', green:'#22c55e', blue:'#3b82f6', yellow:'#fbbf24' };
+        return { color: map[n] || null, content: content, found: true };
+      }
+    }
+
+    const cmIndex = lower.indexOf('<colormessage');
+    if(cmIndex !== -1){
+      const startTagEnd = text.indexOf('>', cmIndex);
+      if(startTagEnd !== -1){
+        const tag = text.substring(cmIndex, startTagEnd + 1);
+        const colorMatch = tag.match(/color=['"]?(#[0-9a-fA-F]{6})['"]?/);
+        if(colorMatch){
+          const color = colorMatch[1];
+          const close = '</colormessage>';
+          const end = lower.indexOf(close, startTagEnd);
+          if(end !== -1){
+            const content = text.substring(startTagEnd + 1, end);
+            return { color: color, content: content, found: true };
+          }
+        }
+      }
+    }
+
+    return { color: null, content: text, found: false };
+  }
+
+  function renderMessage(data,id){
+
+    const isMine = data.senderId === currentUser.email;
+
+    const parsed = extractTags(data.text || "");
+
+    const container=document.createElement("div");
+    container.className = 'message-row';
+    container.id = 'msg-' + id;
+
+    // create bubble first
+    const bubble=document.createElement("div");
+    bubble.className="bubble "+(isMine?"mine":"their");
+
+    // check for bubble color tags
+    const colorRes = extractMessageBubbleColor(parsed.text);
+    if(colorRes.found && colorRes.color){
+      bubble.style.background = colorRes.color;
+      try{
+        const hex = colorRes.color.replace('#','');
+        const r = parseInt(hex.substr(0,2),16);
+        const g = parseInt(hex.substr(2,2),16);
+        const b = parseInt(hex.substr(4,2),16);
+        const luminance = (0.299*r + 0.587*g + 0.114*b)/255;
+        bubble.style.color = luminance > 0.6 ? '#000' : '#fff';
+      }catch(e){ }
+      parsed.text = colorRes.content;
+    }
+
+    // stickers inside bubble so bubble exists before media
+    parsed.stickers.forEach(url=>{
+      const img=document.createElement("img");
+      img.src=url;
+      img.className="msg-sticker";
+      img.onclick=()=>window.open(url,"_blank");
+      img.onerror = ()=>{ img.style.display = 'none'; };
+      bubble.appendChild(img);
+    });
+
+    parsed.images.forEach(url=>{
+      const img=document.createElement("img");
+      img.src=url;
+      img.className="msg-image";
+      img.onclick=()=>window.open(url,"_blank");
+      img.onerror = ()=>{ img.style.display = 'none'; };
+      bubble.appendChild(img);
+    });
+
+    parsed.files.forEach(url=>{
+      const a=document.createElement("a");
+      a.href=url; a.target="_blank";
+      a.className="msg-file";
+      a.textContent=url.split("/").pop();
+      bubble.appendChild(a);
+    });
+
+    const text=document.createElement("div");
+    // use innerHTML because parseRichTextToHtml returns safe escaped HTML with our tags inserted
+    text.innerHTML=parseRichTextToHtml(parsed.text);
+    bubble.appendChild(text);
+
+    // align bubble properly (wrap in a container to allow margin-left:auto for mine)
+    const wrap=document.createElement('div');
+    wrap.style.display = 'flex';
+    wrap.style.gap = '12px';
+    wrap.style.alignItems = 'flex-end';
+    wrap.appendChild(bubble);
+    if(isMine) bubble.classList.add('mine'); else bubble.classList.add('their');
+
+    container.appendChild(wrap);
+
+    const meta=document.createElement("div");
+    meta.className="message-meta";
+
+    const time=document.createElement("div");
+    time.textContent=formatTime(data.timestamp);
+
+    meta.appendChild(time);
+
+    if(isMine && data.read){
+      const read=document.createElement("div");
+      read.textContent="Read";
+      meta.appendChild(read);
+    }
+
+    container.appendChild(meta);
+
+    return container;
+  }
+
+  // Helper: update composer enabled/disabled depending on current user's and other user's chats_enabled flag
+  async function updateComposerStateForPair(otherEmail){
+    try{
+      let otherDoc = await db.collection('user_data').doc(otherEmail).get();
+      const otherData = otherDoc.exists ? otherDoc.data() : {};
+      const currentEnabled = currentUserData && currentUserData.chats_enabled !== false; // default true
+      const otherEnabled = otherData && otherData.chats_enabled !== false;
+
+      if(!currentEnabled || !otherEnabled){
+        // disable composer (can't send)
+        composer.classList.add('disabled');
+        input.disabled = true;
+        sendBtn.disabled = true;
+        // show hint in topbar
+        const hint = document.getElementById('chats-disabled-hint');
+        if(!hint){
+          const h = document.createElement('div');
+          h.id = 'chats-disabled-hint';
+          h.style.color = 'var(--muted)';
+          h.style.fontSize = '12px';
+          h.style.marginLeft = '8px';
+          h.textContent = 'Messaging disabled for one of the users';
+          secTopbar.appendChild(h);
+        }
+      } else {
+        composer.classList.remove('disabled');
+        input.disabled = false;
+        sendBtn.disabled = false;
+        const hint = document.getElementById('chats-disabled-hint');
+        if(hint) hint.remove();
+      }
+    }catch(e){ console.warn('updateComposerStateForPair error',e); }
+  }
+
+  function applyChatBackground(){
+    if(!chatBg) return;
+    if(currentUserData && currentUserData.chat_background){
+      // Use the chat-bg element but set it to repeat vertically and size to message content height.
+      chatBg.style.display = 'block';
+      chatBg.style.backgroundImage = 'url("' + currentUserData.chat_background + '")';
+      // repeat vertically so the image tiles down the chat
+      chatBg.style.backgroundRepeat = 'repeat-y';
+
+      // dynamic sizing: shrink wallpaper to fit width on small screens to prevent overflow
+      if(window.innerWidth <= 900){
+        chatBg.style.backgroundSize = '100% auto';
+        chatBg.style.backgroundPosition = 'top center';
+      } else {
+        // let it tile naturally on desktop
+        chatBg.style.backgroundSize = 'auto';
+        chatBg.style.backgroundPosition = 'center';
+      }
+
+      if(currentUserData.background_chat_blurry){
+        chatBg.style.filter = 'blur(6px)';
+      } else {
+        chatBg.style.filter = 'none';
+      }
+
+      // ensure the chat-bg height matches the actual messages content so tiling covers all messages
+      try{
+        chatBg.style.height = messagesEl ? (messagesEl.scrollHeight + 'px') : '100%';
+        // ensure width is 100% of container to avoid any horizontal expansion
+        chatBg.style.width = '100%';
+        chatBg.style.left = '0';
+      }catch(e){}
+    } else {
+      chatBg.style.display = 'none';
+      chatBg.style.backgroundImage = 'none';
+      chatBg.style.filter = 'none';
+      chatBg.style.height = '0';
+    }
+  }
+
+  // recalc background on window resize so wallpaper behavior updates when changing orientation/size
+  window.addEventListener('resize', ()=>{ applyChatBackground(); });
+
+  function listenMessages(chatId){
+
+    // unsubscribe previous messages listener so we don't mix messages between chats
+    if(messagesUnsub){
+      try{ messagesUnsub(); }catch(e){}
+      messagesUnsub = null;
+    }
+
+    // clear UI immediately when switching chats
+    clearMessages();
+
+    messagesUnsub = db.collection("chats")
+    .doc(chatId)
+    .collection("messages")
+    .orderBy("timestamp")
+    .onSnapshot(async snap=>{
+
+      // compute if the user was near bottom before updating
+      const wasAtBottom = (messagesWrap.scrollHeight - messagesWrap.scrollTop - messagesWrap.clientHeight) < 120;
+
+      // preserve scroll metrics so we can restore user's position when not at bottom
+      const prevScrollTop = messagesWrap.scrollTop;
+      const prevScrollHeight = messagesWrap.scrollHeight;
+
+      // rebuild entire message list from snapshot (clears duplicates)
+      messagesEl.innerHTML = '';
+
+      let lastDate=null;
+
+      // iterate over docs in order (snap.docs is ordered because we used orderBy)
+      for(const docSnap of snap.docs){
+
+        const data=docSnap.data();
+
+        const date = data.timestamp ? data.timestamp.toDate().toDateString() : '';
+
+        if(lastDate!==date){
+          lastDate=date;
+          const sep=document.createElement("div");
+          sep.className="date-sep";
+          sep.textContent=formatDate(data.timestamp);
+          messagesEl.appendChild(sep);
+        }
+
+        const node=renderMessage(data,docSnap.id);
+        messagesEl.appendChild(node);
+
+        if(data.senderId!==currentUser.email && !data.read){
+          db.collection("chats")
+          .doc(chatId)
+          .collection("messages")
+          .doc(docSnap.id)
+          .update({
+            read:true,
+            readAt:firebase.firestore.FieldValue.serverTimestamp()
+          }).catch(()=>{});
+        }
+
+      }
+
+      // --- ensure chat-bg height matches messages content so repeat covers entire scrollable area ---
+      try{
+        if(chatBg && chatBg.style.display === 'block'){
+          // use messagesEl.scrollHeight to cover whole content
+          chatBg.style.height = messagesEl.scrollHeight + 'px';
+          chatBg.style.width = '100%';
+        }
+      }catch(e){}
+
+      // if user was near bottom, keep them at bottom; otherwise preserve their scroll position
+      if(wasAtBottom){
+        messagesWrap.scrollTop=messagesWrap.scrollHeight;
+      } else {
+        // adjust to keep the content the user was looking at in view
+        messagesWrap.scrollTop = Math.max(0, prevScrollTop + (messagesWrap.scrollHeight - prevScrollHeight));
+      }
+
+    });
+
+  }
+
+  function listenChat(chatId){
+
+    // unsubscribe previous chat listener (and messages) to avoid cross-talk
+    if(chatUnsub){ try{ chatUnsub(); }catch(e){} chatUnsub = null; }
+    if(messagesUnsub){ try{ messagesUnsub(); }catch(e){} messagesUnsub = null; }
+
+    // clear UI while we attach new listeners
+    clearMessages();
+
+    chatUnsub = db.collection("chats")
+    .doc(chatId)
+    .onSnapshot(doc=>{
+
+      const data=doc.data();
+      const users=data.users||[];
+
+      otherUserEmail = users.find(u=>u!==currentUser.email);
+
+      if(!otherUserEmail) return;
+
+      // listen to other user's public data (to show name, pfp, verified, chats_enabled etc.)
+      db.collection("user_data")
+      .doc(otherUserEmail)
+      .onSnapshot(userDoc=>{
+
+        secTopbar.style.display="block";
+        secTopbar.innerHTML = ''; // rebuild safely with DOM nodes
+
+        const info = document.createElement('div');
+        info.className = 'info';
+
+        const backBtn = document.createElement('button');
+        backBtn.id = 'back-btn';
+        backBtn.title = 'Back';
+        backBtn.innerHTML = '&#8592;';
+        backBtn.onclick = ()=>{ document.body.classList.remove('mobile-chat-open'); };
+        secTopbar.appendChild(backBtn);
+
+        const img = document.createElement('img');
+        img.src = (userDoc.exists && userDoc.data().profile_picture) ? userDoc.data().profile_picture : 'https://darkpurpleof.github.io/org-owner.jpg';
+        img.onerror = ()=>{ img.src='https://darkpurpleof.github.io/org-owner.jpg'; };
+        info.appendChild(img);
+
+        const names = document.createElement('div');
+        names.className = 'names';
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'name';
+        const displayName = (userDoc.exists && (userDoc.data()['display name'] || userDoc.data().displayName || userDoc.data().display_name)) || 'No Display Name';
+        nameDiv.textContent = displayName;
+
+        // verified badge
+        if(userDoc.exists && userDoc.data().is_verified){
+          const v = document.createElement('img');
+          v.src = '/assets/verified.png';
+          v.className = 'verified-badge';
+          v.alt = 'verified';
+          nameDiv.appendChild(v);
+        }
+
+        const sub = document.createElement('div');
+        sub.className = 'sub';
+        sub.textContent = otherUserEmail;
+
+        names.appendChild(nameDiv);
+        names.appendChild(sub);
+
+        info.appendChild(names);
+
+        secTopbar.appendChild(info);
+
+        // show composer only if chat exists
+        composer.style.display = 'flex';
+
+        // ensure we update composer enabled/disabled based on both users' chats_enabled
+        // currentUserData may be null briefly; call worker that reads current user's doc as needed
+        updateComposerStateForPair(otherUserEmail);
+
+      });
+
+    });
+
+  }
+
+  async function findOrCreateChat(email){
+
+    const snaps = await db.collection("chats")
+    .where("users","array-contains",currentUser.email)
+    .get();
+
+    for(const d of snaps.docs){
+      const users=d.data().users||[];
+      if(users.includes(email)) return d.id;
+    }
+
+    const other = await db.collection("user_data").doc(email).get();
+
+    if(!other.exists){
+      location.href="/home";
+      return null;
+    }
+
+    const ref = await db.collection("chats").add({
+      users:[currentUser.email,email],
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    return ref.id;
+
+  }
+
+  sendBtn.onclick=async ()=>{
+
+    const text=input.value.replace(/\r/g,'').trim();
+    if(!text) return;
+
+    await db.collection("chats")
+    .doc(currentChatId)
+    .collection("messages")
+    .add({
+      senderId:currentUser.email,
+      text:text,
+      timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+      read:false
+    });
+
+    input.value="";
+
+  };
+
+  input.addEventListener("keydown",e=>{
+    if(e.key==="Enter" && !e.shiftKey){
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+
+  auth.onAuthStateChanged(async user=>{
+
+    if(!user){
+      location.href="/login";
+      return;
+    }
+
+    currentUser={email:user.email,uid:user.uid};
+
+    // listen for changes to current user's public data (so we can react to chats_enabled etc.)
+    db.collection('user_data').doc(currentUser.email).onSnapshot(doc=>{
+      currentUserData = doc.exists ? doc.data() : null;
+      // apply chat background whenever the user's data changes
+      applyChatBackground();
+      // if we already have otherUserEmail, update composer state
+      if(otherUserEmail) updateComposerStateForPair(otherUserEmail);
+    });
+
+    if(emergencyEmail){
+      const id = await findOrCreateChat(emergencyEmail);
+      if(id){
+        currentChatId=id;
+        history.replaceState(null,"",location.pathname+"?id="+id);
+      }
+    }
+
+    if(currentChatId){
+      emptyState.style.display="none";
+      composer.style.display="flex";
+      listenChat(currentChatId);
+      listenMessages(currentChatId);
+    }else{
+      emptyState.style.display="block";
+    }
+
+    db.collection("chats")
+    .where("users","array-contains",currentUser.email)
+    .onSnapshot(async snap=>{
+
+      const list=$('#chat-list');
+      list.innerHTML="";
+
+      snap.forEach(async docSnap=>{
+
+        const data=docSnap.data();
+        const other=(data.users||[]).find(u=>u!==currentUser.email);
+
+        const item=document.createElement("div");
+        item.className="chat-item";
+
+        const pfp=document.createElement("div");
+        pfp.className="chat-pfp";
+
+        const user=await db.collection("user_data").doc(other).get();
+        const pic=user.exists?user.data().profile_picture:"https://darkpurpleof.github.io/org-owner.jpg";
+        pfp.style.backgroundImage=`url(${pic||"https://darkpurpleof.github.io/org-owner.jpg"})`;
+
+        const body=document.createElement("div");
+        body.className="chat-body";
+
+        const name=document.createElement("div");
+          name.className="display-name";
+          // use display name when available
+          const otherData = (user && user.exists) ? user.data() : null;
+          const displayName = otherData ? (otherData['display name'] || otherData.displayName || otherData.display_name) : null;
+          name.textContent = displayName || other;
+          if(otherData && otherData.is_verified){ const v=document.createElement('img'); v.src='/assets/verified.png'; v.className='verified-badge'; v.alt='verified'; name.appendChild(v); }
+
+        body.appendChild(name);
+
+        item.appendChild(pfp);
+        item.appendChild(body);
+
+        item.onclick = async ()=>{
+          // open chat in-place (no full reload)
+          currentChatId = docSnap.id;
+          history.replaceState(null,'',location.pathname + '?id=' + docSnap.id);
+          emptyState.style.display = 'none';
+          composer.style.display = 'flex';
+
+          // when switching chats unsubscribe any previous listeners and clear messages immediately
+          if(chatUnsub){ try{ chatUnsub(); }catch(e){} chatUnsub = null; }
+          if(messagesUnsub){ try{ messagesUnsub(); }catch(e){} messagesUnsub = null; }
+          clearMessages();
+
+          listenChat(currentChatId);
+          listenMessages(currentChatId);
+          if(window.innerWidth <= 900) document.body.classList.add('mobile-chat-open');
+        };
+
+        list.appendChild(item);
+
+      });
+
+    });
+
+  });
+
+</script>
+
+</body>
+</html>
