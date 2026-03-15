@@ -116,7 +116,7 @@
     <section class="card">
       <div class="ugc-wrap" id="ugc-root">
         <div class="left-image" id="left-image">
-          <img src="https://darkpurpleof.github.io/org-owner.jpg" alt="item image" id="item-image">
+          <img src="https://darkpurpleof.github.io/assets/default_plugin.png" alt="item image" id="item-image">
         </div>
         <div class="right-details">
           <div class="title-row">
@@ -137,6 +137,7 @@
           <div class="info-grid" id="info-grid">
             <div class="info-row"><div class="info-label">Author</div><div class="info-value" id="info-author">—</div></div>
             <div class="info-row"><div class="info-label">Type</div><div class="info-value" id="info-type">—</div></div>
+            <div class="info-row"><div class="info-label">Version</div><div class="info-value" id="info-version">—</div></div>
             <div class="info-row"><div class="info-label">Downloadable Content</div><div class="info-value" id="info-download">—</div></div>
             <div class="info-row"><div class="info-label">Updated</div><div class="info-value" id="info-updated">—</div></div>
           </div>
@@ -145,8 +146,11 @@
             <!-- single prominent action button; label & handler updated dynamically -->
             <button class="action-button" id="action-btn" style="display:none">Purchase</button>
             <button class="action-button secondary" id="migrate-btn" style="display:none">Migrate</button>
+            <button class="action-button secondary" id="view-in-app-btn" style="display:none">View in App</button>
             <div class="small-muted" id="action-disclaimer"></div>
           </div>
+
+          <div class="small-muted" id="view-in-app-disclaimer"></div>
 
         </div>
       </div>
@@ -188,7 +192,7 @@
     const typeParam = params.get('type');
 
     function ugcCollectionForType(t){ return (t === '0') ? 'store-items' : 'development-items'; }
-    const DEFAULT_IMAGE = 'https://darkpurpleof.github.io/org-owner.jpg';
+    const DEFAULT_IMAGE = 'https://darkpurpleof.github.io/assets/default_plugin.png';
 
     let ugcDoc = null;
     let authorDoc = null;
@@ -255,6 +259,7 @@
       setImage(ugcDoc.image || DEFAULT_IMAGE);
       document.getElementById('item-desc').textContent = ugcDoc.description || '';
       document.getElementById('info-type').textContent = ugcDoc.type || '—';
+      document.getElementById('info-version').textContent = ugcDoc.version || '—';
       document.getElementById('info-download').textContent = ugcDoc.downloadable ? 'Yes' : 'No';
       document.getElementById('info-updated').textContent = formatTimestamp(ugcDoc.updated_at || ugcDoc.updated || null);
       document.getElementById('info-author').textContent = ugcDoc.source || authorParam;
@@ -317,11 +322,17 @@
 
     function userHasRole(role){ if(!currentUserDoc || !role) return false; const roles = currentUserDoc.roles || []; return roles.includes(role); }
 
+    function isAndroid() {
+      return /Android/i.test(navigator.userAgent);
+    }
+
     async function updateActionState(){
       const actionBtn = document.getElementById('action-btn');
       const migrateBtn = document.getElementById('migrate-btn');
+      const viewInAppBtn = document.getElementById('view-in-app-btn');
       const disclaimer = document.getElementById('action-disclaimer');
-      actionBtn.style.display = 'none'; migrateBtn.style.display = 'none'; disclaimer.textContent = '';
+      const viewInAppDisclaimer = document.getElementById('view-in-app-disclaimer');
+      actionBtn.style.display = 'none'; migrateBtn.style.display = 'none'; viewInAppBtn.style.display = 'none'; disclaimer.textContent = ''; viewInAppDisclaimer.textContent = '';
       if(!ugcDoc) return;
 
       const authorResolved = !!(authorDoc && (authorDoc['display name'] || authorDoc.displayName || authorDoc.display_name));
@@ -344,41 +355,43 @@
       if(!authorResolved) disclaimer.textContent = 'This item is currently unavailable';
       if(!onSale) disclaimer.textContent = 'This item is not currently on sale';
 
-      // primary action logic: single button shown based on state
-      // 1) if user already has transaction (ownedByTx) -> show Download if downloadable, else show disabled "You own this"
-      if(ownedByTx || roleOwned){
-        if(ugcDoc.download_link){
-          actionBtn.style.display = 'inline-flex';
-          actionBtn.disabled = false;
-          actionBtn.textContent = 'Download';
-          actionBtn.onclick = onDownload;
+      const android = isAndroid();
+
+      if (owned) {
+        if (ugcDoc.download_link) {
+          if (android) {
+            viewInAppBtn.style.display = 'inline-flex';
+            viewInAppBtn.onclick = onViewInApp;
+            viewInAppDisclaimer.textContent = "You need the latest version of the DarkPurpleOF's Website app for Android to view the plugin in app";
+          } else {
+            actionBtn.style.display = 'inline-flex';
+            actionBtn.disabled = false;
+            actionBtn.textContent = 'Download';
+            actionBtn.onclick = onDownload;
+          }
         } else {
           actionBtn.style.display = 'inline-flex';
           actionBtn.disabled = true;
           actionBtn.textContent = '✓ You own this';
           actionBtn.onclick = null;
         }
-        return;
-      }
-
-      // 2) if purchased flag exists but no transaction -> show Migrate button (not purchase)
-      if(purchasedFlag && !ownedByTx){
+      } else if (purchasedFlag && !ownedByTx) {
         migrateBtn.style.display = 'inline-flex';
         migrateBtn.disabled = false;
         migrateBtn.textContent = 'Migrate';
         migrateBtn.onclick = onMigrate;
-        return;
-      }
-
-      // 3) Not owned: allow purchase only if logged in, on sale, author resolved
-      if(currentUser && onSale && authorResolved){
-        actionBtn.style.display = 'inline-flex';
-        actionBtn.disabled = isPurchasing;
-        actionBtn.textContent = formatPrice(ugcDoc.price);
-        // instead of calling purchase directly, open a confirmation dialog (added)
-        actionBtn.onclick = showPurchaseDialog;
       } else {
-        // no button, but leave disclaimer
+        if (currentUser && onSale && authorResolved) {
+          actionBtn.style.display = 'inline-flex';
+          actionBtn.disabled = isPurchasing;
+          actionBtn.textContent = formatPrice(ugcDoc.price);
+          actionBtn.onclick = showPurchaseDialog;
+          if (android) {
+            viewInAppBtn.style.display = 'inline-flex';
+            viewInAppBtn.onclick = onViewInApp;
+            viewInAppDisclaimer.textContent = "you need the latest version of the DarkPurpleOF's Website app for Android to view the plugin in app";
+          }
+        }
       }
     }
 
@@ -543,6 +556,11 @@
         await loadCurrentUserDoc();
         await updateActionState();
       }catch(e){ console.error(e); showToast('Migration failed', 'red'); }
+    }
+
+    function onViewInApp() {
+      const url = `darkpurpleof://installer/${itemId}/${authorParam}/${typeParam}`;
+      window.location.href = url;
     }
 
     // auth listener

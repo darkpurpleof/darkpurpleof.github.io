@@ -10,6 +10,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
+  <!-- Rich markdown component -->
+  <script type="module" src="/dp-rich-components.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -54,11 +57,21 @@
       display:flex; gap:12px; align-items:center;
     }
     /* ensure pfp overlay frames position correctly */
-    .author .pfp, .comment .pfp { position:relative; width:52px; height:52px; border-radius:10px; background-size:cover; background-position:center; border:1px solid var(--border); flex-shrink:0; }
-    .comment .pfp { width:38px; height:38px; border-radius:8px; }
+    .author .pfp, .comment .pfp { background-repeat: no-repeat; position:relative; width:52px; height:52px; border-radius:10px; background-size:cover; background-position:center; border:1px solid var(--border); flex-shrink:0; }
+    .comment .pfp { background-repeat: no-repeat; width:38px; height:38px; border-radius:8px; }
     .author .meta { display:flex; flex-direction:column; min-width:0; }
     .author .name { font-weight:700; font-size:15px; display:flex; gap:8px; align-items:center; color:var(--text); }
     .author .sub { font-size:13px; color:var(--muted); word-break:break-word; }
+
+    .post-meta{ display:flex; align-items:center; gap:8px; justify-content:flex-end; }
+    .post-date{ font-size:12px; color:var(--muted); }
+    .menu-btn{ width:28px; height:28px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .menu-btn:hover{ background: rgba(255,255,255,0.04); }
+    .post-menu{ position:absolute; top:60px; right:16px; min-width:170px; background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:0 14px 40px rgba(0,0,0,0.35); display:none; flex-direction:column; padding:6px 0; z-index:50; }
+    .post-menu.open{ display:flex; }
+    .post-menu button{ width:100%; padding:10px 12px; text-align:left; border:none; background:transparent; color:var(--text); cursor:pointer; font-size:14px; }
+    .post-menu button:hover:not([disabled]){ background: rgba(255,255,255,0.08); }
+    .post-menu button[disabled]{ opacity:0.45; cursor:not-allowed; }
 
     .verified { width:16px; height:16px; display:inline-block; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; }
 
@@ -209,6 +222,11 @@
         // post text and images
         const text = postData.text || '';
         const images = Array.isArray(postData.images) ? postData.images : [];
+        const createdAt = postData.timestamp || postData.createdAt || postData.created || postData.created_at;
+        const dateLabel = formatPostDate(createdAt);
+        const isOwner = viewer && editor && viewer === editor.toLowerCase();
+        const canRemoveFromWall = viewer && postData.towall && viewer === String(postData.towall).toLowerCase();
+        const isPinned = Boolean(postData.pinnedByOwner || postData.pinned_by_owner || postData.pinned);
 
         // likes / reposts
         const likedBy = Array.isArray(postData.likedBy) ? postData.likedBy.map(s=>s.toLowerCase()) : [];
@@ -231,9 +249,19 @@
               <div class="name">${escapeHtml(displayName)} ${isVerified ? '<span class="verified" title="Verified"></span>' : ''}</div>
               <div class="sub">${escapeHtml(editor)}</div>
             </div>
+
+            <div class="post-meta">
+              ${dateLabel ? `<div class="post-date">${escapeHtml(dateLabel)}</div>` : ''}
+              <button class="menu-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Post actions">⋮</button>
+              <div class="post-menu" role="menu" aria-label="Post actions">
+                <button type="button" class="menu-item delete-post" ${isOwner ? '' : 'disabled'}>Delete post</button>
+                <button type="button" class="menu-item pin-post" ${isOwner ? '' : 'disabled'}>${isPinned ? 'Unpin' : 'Pin'}</button>
+                <button type="button" class="menu-item remove-wall" ${canRemoveFromWall ? '' : 'disabled'}>Remove from my wall</button>
+              </div>
+            </div>
           </div>
 
-          <div class="post-text" id="postText">${escapeHtml(text)}</div>
+          <div class="post-text" id="postText"><rich-markdown mode="markdown">${escapeHtml(text)}</rich-markdown></div>
 
           ${imagesHtml}
 
@@ -273,6 +301,83 @@
             </div>
           </div>
         `;
+
+        const menuBtn = postCard.querySelector('.menu-btn');
+        const menu = postCard.querySelector('.post-menu');
+        const deleteBtn = postCard.querySelector('.delete-post');
+        const pinBtn = postCard.querySelector('.pin-post');
+        const removeWallBtn = postCard.querySelector('.remove-wall');
+        let isPinnedLocal = isPinned;
+
+        function closeMenu() {
+          if (menu) menu.classList.remove('open');
+          if (menuBtn) menuBtn.setAttribute('aria-expanded','false');
+          document.removeEventListener('click', onDocumentClick);
+        }
+        function onDocumentClick(e){ if (!postCard.contains(e.target)) closeMenu(); }
+
+        if (menuBtn && menu) {
+          menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const open = menu.classList.toggle('open');
+            menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open) document.addEventListener('click', onDocumentClick);
+            else document.removeEventListener('click', onDocumentClick);
+          });
+        }
+
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', async () => {
+            if (!isOwner) return;
+            if (!confirm('Delete this post? This cannot be undone.')) return;
+            try {
+              await db.collection('posts').doc(postId).delete();
+              window.location.href = '/ugc/posts';
+            } catch (err) {
+              console.error('delete post', err);
+              showToast('Failed to delete post.', 'red');
+            }
+          });
+        }
+
+        if (pinBtn) {
+          pinBtn.addEventListener('click', async () => {
+            if (!isOwner) return;
+            const willUnpin = isPinnedLocal;
+            if (!confirm(`${willUnpin ? 'Unpin' : 'Pin'} this post?`)) return;
+            try {
+              if (willUnpin) {
+                await db.collection('posts').doc(postId).update({ pinnedByOwner: firebase.firestore.FieldValue.delete() });
+                pinBtn.textContent = 'Pin';
+                isPinnedLocal = false;
+              } else {
+                await db.collection('posts').doc(postId).update({ pinnedByOwner: true });
+                pinBtn.textContent = 'Unpin';
+                isPinnedLocal = true;
+              }
+              showToast(`Post ${willUnpin ? 'unpinned' : 'pinned'}.`, 'purple');
+            } catch (err) {
+              console.error('pin post', err);
+              showToast('Failed to update pin state.', 'red');
+            }
+          });
+        }
+
+        if (removeWallBtn) {
+          removeWallBtn.addEventListener('click', async () => {
+            if (!canRemoveFromWall) return;
+            if (!confirm('Remove this post from your wall?')) return;
+            try {
+              await db.collection('posts').doc(postId).update({ towall: firebase.firestore.FieldValue.delete() });
+              showToast('Removed from your wall.', 'purple');
+              removeWallBtn.disabled = true;
+            } catch (err) {
+              console.error('remove from wall', err);
+              showToast('Failed to remove from wall.', 'red');
+            }
+          });
+        }
+
         // wire actions - pass author email (lowercase) and currentUserData for 'verified' checks
         wireActions(editor, db.collection('posts').doc(postId), postData, commentsSetting, currentUserData);
       } catch (e) {
@@ -282,6 +387,33 @@
     }
 
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function toMillis(value){
+      if (value == null) return null;
+      if (typeof value === 'number') return value;
+      if (value instanceof Date) return value.getTime();
+      if (value?.toDate) return value.toDate().getTime();
+      if (typeof value === 'object' && typeof value.seconds === 'number') {
+        const seconds = Number(value.seconds || 0);
+        const nanos = Number(value.nanoseconds || 0);
+        return seconds * 1000 + Math.floor(nanos / 1e6);
+      }
+      return null;
+    }
+
+    function formatPostDate(value){
+      const ms = toMillis(value);
+      if (!ms) return '';
+      const d = new Date(ms);
+      const pad = v => String(v).padStart(2,'0');
+      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const hours = pad(d.getHours());
+      const mins = pad(d.getMinutes());
+      const day = pad(d.getDate());
+      const month = monthNames[d.getMonth()] || '';
+      const year = String(d.getFullYear()).slice(-2);
+      return `${hours}:${mins} - ${day} ${month}, ${year}`;
+    }
 
     function wireActions(authorEmail, docRef, postData, commentsSetting, currentUserData){
       const likeBtn = document.getElementById('likeBtn');
@@ -548,7 +680,7 @@ function canViewerComment() {
               </div>
               <div class="body">
                 <div class="who">${escapeHtml(who)} ${verified}</div>
-                <div class="text">${escapeHtml(c.text || '')}</div>
+                <div class="text"><rich-markdown mode="markdown">${escapeHtml(c.text || '')}</rich-markdown></div>
               </div>
             `;
             commentsList.appendChild(commentHtml);

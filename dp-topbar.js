@@ -1,6 +1,6 @@
-// dp-topbar.js
+// dp-topbar.js (updated)
 // Usage: ensure firebase is initialized globally (firebase, firebase.auth(), firebase.firestore())
-// Then include: <script type="module" src="/path/to/dp-topbar.js"></script>
+// Then include in your HTML: <script src="/path/to/dp-topbar.js"></script>
 // Use <dp-topbar></dp-topbar> anywhere in your pages.
 
 const template = document.createElement('template');
@@ -60,7 +60,6 @@ template.innerHTML = `
 
 
 
-
     .mobile-menu {
       display:none;
       position:absolute;
@@ -89,6 +88,8 @@ template.innerHTML = `
       background:var(--chip-bg, rgba(255,255,255,0.03));
       border:1px solid rgba(255,255,255,0.04);
       min-width:96px;
+      position:relative; /* for coin dropdown */
+      cursor:pointer;
     }
 
     .profile { display:flex; align-items:center; gap:10px; cursor:pointer; position:relative; padding:6px; border-radius:8px; }
@@ -106,7 +107,7 @@ height:38px; border-radius:8px; background-size:cover; background-position:cente
 
 
     .dropdown {
-      position:absolute; top:calc(100% + 8px); right:0; min-width:180px;
+      position:absolute; top:calc(100% + 8px); right:0; min-width:220px;
       border-radius:10px; background:var(--dropdown-bg,#262626); color:var(--dropdown-text,#e9e9e9);
       box-shadow:0 10px 30px rgba(0,0,0,0.12); border:1px solid rgba(0,0,0,0.06);
       padding:8px; display:none; flex-direction:column; gap:6px; z-index:40;
@@ -114,6 +115,8 @@ height:38px; border-radius:8px; background-size:cover; background-position:cente
     .dropdown.show { display:flex; }
     .dropdown a, .dropdown button { color:inherit; text-decoration:none; background:transparent; border:none; padding:8px; text-align:left; border-radius:8px; cursor:pointer; }
     .dropdown a:hover, .dropdown button:hover { background:var(--nav-hover, rgba(255,255,255,0.03)); }
+
+    .dropdown a.disabled, .dropdown button.disabled { opacity:0.6; cursor:not-allowed; pointer-events:none; }
 
     /* small screens */
     @media (max-width:800px) {
@@ -152,7 +155,12 @@ height:38px; border-radius:8px; background-size:cover; background-position:cente
     </div>
 
     <div class="right">
-      <div class="balance" id="coin-display">DF$ - 0</div>
+      <div class="balance" id="coin-display" tabindex="0" aria-haspopup="true" aria-expanded="false">DF$ - 0
+        <div class="dropdown" id="coin-dropdown" role="menu" aria-hidden="true" style="right:auto; left:0; min-width:220px;">
+          <a id="redeem-link" href="/redeem">Redeem DarkPurpleOF's Website codes</a>
+          <a id="trans-link" href="/transactions" class="disabled">My transactions (Coming Soon)</a>
+        </div>
+      </div>
 
       <div class="profile" id="profile-area" tabindex="0" aria-haspopup="true" aria-expanded="false">
         <div class="pfp" id="top-pfp" style="background-image: url('/org-owner.jpg')"></div>
@@ -163,6 +171,13 @@ height:38px; border-radius:8px; background-size:cover; background-position:cente
 
         <div class="dropdown" id="profile-dropdown" role="menu" aria-hidden="true">
           <a id="login-link" href="/login" style="display:none;">Login</a>
+
+          <!-- signed-in options -->
+          <a id="settings-link" href="/my/account" class="disabled">Settings (Coming Soon)</a>
+          <a id="support-link" href="/support-feedback" class="disabled">Support (Coming Soon)</a>
+          <a id="manage-blocked" href="/manageblockedusers">Manage Blocked Users</a>
+          <a id="beta-link" href="/creator/beta-features">Beta Program</a>
+
           <a id="edit-profile" href="/profile" style="display:none;">Edit Profile</a>
           <button id="logout-btn" style="display:none;">Logout</button>
         </div>
@@ -195,6 +210,9 @@ class DPTopbar extends HTMLElement {
   _setupElements() {
     const s = this._shadow;
     this.$coin = s.getElementById('coin-display');
+    this.$coinDropdown = s.getElementById('coin-dropdown');
+    this.$redeem = s.getElementById('redeem-link');
+    this.$trans = s.getElementById('trans-link');
     this.$pfp = s.getElementById('top-pfp');
     this.$name = s.getElementById('top-name');
     this.$email = s.getElementById('top-email');
@@ -207,30 +225,56 @@ class DPTopbar extends HTMLElement {
     this.$nav = s.getElementById('nav');
     this.$hamburger = s.getElementById('hamburger');
     this.$mobileMenu = s.getElementById('mobile-menu');
+
+    // profile menu extra links
+    this.$settings = s.getElementById('settings-link');
+    this.$support = s.getElementById('support-link');
+    this.$manageBlocked = s.getElementById('manage-blocked');
+    this.$beta = s.getElementById('beta-link');
   }
 
   _wireUI() {
-    // outside clicks inside shadow: handle profile dropdown and mobile menu
+    // clicks inside shadow root
     this._shadow.addEventListener('click', e => {
+      // coin area click
+      if (this.$coin.contains(e.target)) {
+        // if logged out -> go to login
+        if (!this._currentUser) { window.location.href = '/login'; return; }
+        this._toggleCoinDropdown();
+        this._hideDropdown();
+        return;
+      }
+
+      // profile area click
       if (this.$profileArea.contains(e.target)) {
         this._toggleDropdown();
         this._closeMobileMenu();
+        // hide coin dropdown if open
+        this._hideCoinDropdown();
         return;
       }
+
       if (this.$hamburger.contains(e.target)) {
         this._toggleMobileMenu();
         return;
       }
+
       // nav link clicks handled below
       // if click outside both dropdown and mobile menu -> hide both
       if (!this.$dropdown.contains(e.target)) this._hideDropdown();
       if (!this.$mobileMenu.contains(e.target) && !this.$hamburger.contains(e.target)) this._closeMobileMenu();
+      if (!this.$coinDropdown.contains(e.target)) this._hideCoinDropdown();
     });
 
-    // keyboard accessible profileArea
+    // keyboard interactions
     this.$profileArea.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._toggleDropdown(); }
       if (e.key === 'Escape') this._hideDropdown();
+    });
+
+    this.$coin.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!this._currentUser) { window.location.href = '/login'; return; } this._toggleCoinDropdown(); }
+      if (e.key === 'Escape') this._hideCoinDropdown();
     });
 
     // nav links: internal navigation
@@ -256,8 +300,25 @@ class DPTopbar extends HTMLElement {
       } catch (err) { console.error(err); window.location.reload(); }
     });
 
+    // coin dropdown links
+    if (this.$redeem) this.$redeem.addEventListener('click', e => { /* normal link: allow navigation */ });
+    if (this.$trans) this.$trans.addEventListener('click', e => { e.preventDefault(); /* disabled for now */ });
+
+    // profile dropdown "coming soon" items are visually disabled via CSS class, so prevent clicks
+    if (this.$settings) this.$settings.addEventListener('click', e => { e.preventDefault(); /* coming soon */ });
+    if (this.$support) this.$support.addEventListener('click', e => { e.preventDefault(); /* coming soon */ });
+
+    // actual links
+    if (this.$manageBlocked) this.$manageBlocked.addEventListener('click', e => { e.preventDefault(); window.location.href = '/manageblockedusers'; });
+    if (this.$beta) this.$beta.addEventListener('click', e => { e.preventDefault(); window.location.href = '/creator/beta-features'; });
+
     // close menus when window resized (to keep state sane)
-    window.addEventListener('resize', () => { this._hideDropdown(); this._closeMobileMenu(); });
+    window.addEventListener('resize', () => { this._hideDropdown(); this._closeMobileMenu(); this._hideCoinDropdown(); });
+
+    // close on escape global
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { this._hideDropdown(); this._hideCoinDropdown(); }
+    });
   }
 
   _toggleMobileMenu() {
@@ -281,12 +342,31 @@ class DPTopbar extends HTMLElement {
       this.$dropdown.classList.add('show');
       this.$profileArea.setAttribute('aria-expanded','true');
       this.$dropdown.setAttribute('aria-hidden','false');
+      // hide coin
+      this._hideCoinDropdown();
     } else this._hideDropdown();
   }
   _hideDropdown() {
     this.$dropdown.classList.remove('show');
     this.$profileArea.setAttribute('aria-expanded','false');
     this.$dropdown.setAttribute('aria-hidden','true');
+  }
+
+  _toggleCoinDropdown() {
+    const show = !this.$coinDropdown.classList.contains('show');
+    if (show) {
+      this.$coinDropdown.classList.add('show');
+      this.$coin.setAttribute('aria-expanded','true');
+      this.$coinDropdown.setAttribute('aria-hidden','false');
+      // hide profile dropdown
+      this._hideDropdown();
+    } else this._hideCoinDropdown();
+  }
+  _hideCoinDropdown() {
+    if (!this.$coinDropdown) return;
+    this.$coinDropdown.classList.remove('show');
+    this.$coin.setAttribute('aria-expanded','false');
+    this.$coinDropdown.setAttribute('aria-hidden','true');
   }
 
   _setupTheme() {
@@ -330,81 +410,91 @@ class DPTopbar extends HTMLElement {
   }
 
   _initFirebase() {
-  const auth = firebase.auth(); 
-  const db = firebase.firestore();
-  if (this._authUnsub) this._authUnsub();
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    if (this._authUnsub) this._authUnsub();
 
-  this._authUnsub = auth.onAuthStateChanged(async user => {
-    this._currentUser = user;
-    if (!user) { this._renderSignedOut(); return; }
+    this._authUnsub = auth.onAuthStateChanged(async user => {
+      this._currentUser = user;
+      if (!user) { this._renderSignedOut(); return; }
 
-    let isBanned = false;
+      let isBanned = false;
 
-    // banned check
-    try {
-      const banned = await db.collection('banned_users').doc(user.email).get();
-      if (banned.exists) {
-        isBanned = true;
-        // show ? for banned users
-        this.$coin.textContent = 'DF$ - ?';
+      // banned check
+      try {
+        const banned = await db.collection('banned_users').doc(user.email).get();
+        if (banned.exists) {
+          isBanned = true;
+          // show ? for banned users
+          this.$coin.textContent = 'DF$ - ?';
 
-        // only redirect if not already on /not-approved
-        if (!window.location.pathname.startsWith('/not-approved')) {
-          window.location.href = '/not-approved';
-          return; // stop further execution since redirecting
+          // only redirect if not already on /not-approved
+          if (!window.location.pathname.startsWith('/not-approved')) {
+            window.location.href = '/not-approved';
+            return; // stop further execution since redirecting
+          }
+          // if already on /not-approved, just keep showing profile info
         }
-        // if already on /not-approved, just keep showing profile info
-      }
-    } catch (err) { console.warn('Failed checking banned_users', err); }
+      } catch (err) { console.warn('Failed checking banned_users', err); }
 
-    // load user data regardless of banned status
-    try {
-      const snap = await db.collection('user_data').doc(user.email).get();
-      const data = snap.exists ? snap.data() : {};
-      const coins = Number(data.coins || 0);
+      // load user data regardless of banned status
+      try {
+        const snap = await db.collection('user_data').doc(user.email).get();
+        const data = snap.exists ? snap.data() : {};
+        const coins = Number(data.coins || 0);
 
-      // only set coins if not banned
-      if (!isBanned) this.$coin.textContent = `DF$ - ${this._compact(coins)}`;
+        // only set coins if not banned
+        if (!isBanned) this.$coin.textContent = `DF$ - ${this._compact(coins)}`;
 
-      // profile info (always show)
-      this.$pfp.style.backgroundImage = `url(${data.profile_picture || '/org-owner.jpg'})`;
-      const display = data['display name'] || user.email;
-      this.$name.textContent = display;
-      this.$email.textContent = data.tagline || user.email.replace(/@.*/, '');
+        // profile info (always show)
+        this.$pfp.style.backgroundImage = `url(${data.profile_picture || '/org-owner.jpg'})`;
+        const display = data['display name'] || user.email;
+        this.$name.textContent = display;
+        this.$email.textContent = data.tagline || user.email.replace(/@.*/, '');
 
-      // verified badge
-      if (data.is_verified) {
-        if (!this._verifiedIcon) {
-          const img = document.createElement('img');
-          img.src = '/assets/verified.png';
-          img.alt = 'Verified';
-          img.className = 'verified-icon';
-          this.$name.appendChild(img);
-          this._verifiedIcon = img;
+        // verified badge
+        if (data.is_verified) {
+          if (!this._verifiedIcon) {
+            const img = document.createElement('img');
+            img.src = '/assets/verified.png';
+            img.alt = 'Verified';
+            img.className = 'verified-icon';
+            this.$name.appendChild(img);
+            this._verifiedIcon = img;
+          }
+        } else if (this._verifiedIcon) {
+          this._verifiedIcon.remove();
+          this._verifiedIcon = null;
         }
-      } else if (this._verifiedIcon) {
-        this._verifiedIcon.remove();
-        this._verifiedIcon = null;
-      }
 
-      this._showSignedInDropdownOptions();
-    } catch (err) {
-      console.warn('Failed loading user_data', err);
-      this._renderSignedInBasic(user);
-    }
-  });
-}
+        this._showSignedInDropdownOptions();
+      } catch (err) {
+        console.warn('Failed loading user_data', err);
+        this._renderSignedInBasic(user);
+      }
+    });
+  }
 
 
   _showSignedInDropdownOptions() {
     if (this.$login) this.$login.style.display = 'none';
     if (this.$edit) this.$edit.style.display = '';
     if (this.$logout) this.$logout.style.display = '';
+
+    // ensure redeem link visible and enabled when signed in
+    if (this.$redeem) this.$redeem.style.display = '';
+    if (this.$trans) this.$trans.classList.add('disabled');
+
+    // settings/support should remain visually disabled for now
+    if (this.$settings) this.$settings.classList.add('disabled');
+    if (this.$support) this.$support.classList.add('disabled');
   }
   _showSignedOutDropdownOptions() {
     if (this.$login) this.$login.style.display = '';
     if (this.$edit) this.$edit.style.display = 'none';
     if (this.$logout) this.$logout.style.display = 'none';
+
+    if (this.$redeem) this.$redeem.style.display = 'none';
   }
 
   _renderSignedOut() {
@@ -432,3 +522,4 @@ class DPTopbar extends HTMLElement {
 }
 
 customElements.define('dp-topbar', DPTopbar);
+

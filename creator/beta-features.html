@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Beta Program</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Firebase (non-modular) - LOAD THESE AT THE TOP as requested -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <!-- Initialize Firebase immediately so other scripts (like dp-topbar) can use firebase -->
+  <script>
+    // Replace with your project's Firebase config if different
+    var firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+    // Only initialize once (guard just in case)
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    } catch (e) {
+      console.error('Firebase init error', e);
+    }
+  </script>
+
+  <!-- Your existing topbar script (non-module) - keep external as requested -->
+  <script src="/dp-topbar.js"></script>
+
+  <style>
+    /* --- user-provided theme (kept intact, with tiny additions for the modal & topbar) --- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    img { max-width: 100%; display: block; }
+
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --friend-row-height: 110px;
+      --friend-row-height-mobile: 84px;
+    }
+    body.light { --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06); }
+
+    body {
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background-color: var(--bg);
+      color:var(--text);
+      transition: background .25s, color .25s;
+      min-height:100vh;
+    }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+    .top-bar { display:none !important; }
+
+    main.container {
+      max-width:1200px;
+      width:100%;
+      margin:24px auto;
+      padding:20px;
+      display:grid;
+      grid-template-columns:1fr 340px;
+      gap:20px;
+      box-sizing:border-box;
+      overflow-x: hidden;
+    }
+    @media (max-width:920px){ main.container{ grid-template-columns:1fr; padding:16px; } aside.right-column{ order:2; } }
+
+    .card { background:var(--card); border-radius:12px; padding:18px; border:1px solid var(--border); color:var(--text); box-shadow:0 6px 18px rgba(2,6,23,0.45); overflow:visible; }
+    .hero { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 20px; border-radius: 12px; min-width: 0; }
+    .hero > div { min-width: 0; }
+
+    .muted { color:var(--muted); font-size:13px; }
+
+    .center-card { max-width:900px; margin: 0 auto; }
+    .beta-card { display:flex; gap:18px; align-items:flex-start; }
+    @media (max-width:720px) { .beta-card { flex-direction:column; align-items:center; text-align:center; } }
+
+    .beta-art {
+      width:320px; height:320px; border-radius:12px; background-size:cover; background-position:center; flex-shrink:0; border:1px solid var(--border);
+    }
+    @media (max-width:720px){ .beta-art{ width:100%; height:220px; } }
+
+    .beta-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:12px; }
+    .beta-title { font-size:20px; font-weight:800; }
+    .beta-desc { color:var(--muted); font-size:15px; line-height:1.4; white-space:pre-wrap; }
+
+    .actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .btn { padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:transparent; cursor:pointer; font-weight:700; color:var(--text); }
+    .btn.primary { background: linear-gradient(180deg,var(--accent), var(--accent-strong)); border: none; color: white; }
+    .btn.ghost { background: transparent; }
+
+    #toast { position:fixed; top:18px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999; }
+    #toast.purple { background:var(--accent-strong); color:#fff; } #toast.yellow{ background:#e6b800; color:#222; } #toast.red{ background:#c00; color:#fff; }
+
+    /* modal */
+    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9998; }
+    .modal { background:var(--card); border-radius:12px; padding:18px; width:420px; max-width:95%; border:1px solid var(--border); }
+    .modal h3{ margin:0 0 8px 0; }
+    .modal .modal-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+
+    /* topbar styling (minimal) */
+    dp-topbar .bar{ display:flex; gap:16px; align-items:center; padding:10px 20px; background:linear-gradient(90deg, rgba(0,0,0,0.2), transparent); border-bottom:1px solid var(--border); }
+    dp-topbar .logo{ display:flex; align-items:center; gap:10px; font-weight:800; }
+    dp-topbar .logo .dot{ width:12px; height:12px; border-radius:4px; background:var(--accent); box-shadow:0 2px 8px rgba(107,33,168,0.35); }
+    dp-topbar nav{ margin-left:auto; display:flex; gap:10px; }
+    dp-topbar a{ color:var(--muted); text-decoration:none; font-weight:600; padding:8px 10px; border-radius:8px; }
+    dp-topbar a.active{ color:var(--text); }
+
+    /* small responsive tweaks */
+    @media (max-width:600px){ main.container{ padding:12px; margin:12px auto; } }
+  </style>
+</head>
+<body>
+
+  <!-- Use your existing topbar implementation (external script provided above) -->
+  <dp-topbar></dp-topbar>
+
+  <main class="container">
+    <section class="center-card card">
+      <div class="hero">
+        <div style="flex:1;">
+          <div class="beta-card" id="betaCard">
+            <div class="beta-art" id="betaArt" style="background-image: url('/assets/beta_en_unavailable.png')"></div>
+            <div class="beta-body">
+              <div class="beta-title">DarkPurpleOF's Website Beta Program</div>
+              <div class="beta-desc" id="betaDesc">Checking eligibility...</div>
+              <div class="actions" id="betaActions" style="margin-top:8px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right-column card">
+      <h3>Beta Program Info</h3>
+      <p class="muted">Join the beta to get early access to experimental features. Enrolling costs 1000 DF$ (non-refundable).</p>
+      <p class="muted">If you enroll you'll be able to download the official plugin for the beta experience.</p>
+    </aside>
+  </main>
+
+  <!-- Confirm modal -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3 id="modalTitle">Confirm</h3>
+      <div id="modalBody">Are you sure?</div>
+      <div class="modal-actions">
+        <button class="btn" id="modalCancel">Cancel</button>
+        <button class="btn primary" id="modalConfirm">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="purple"></div>
+
+  <!-- App logic (NON-modular, uses firebase global from the scripts loaded in <head>) -->
+  <script>
+    // Use global firebase (already initialized in <head>)
+    var auth = firebase.auth();
+    var db = firebase.firestore();
+
+    // helpers
+    var toastEl = document.getElementById('toast');
+    function toast(text, kind){ kind = kind || 'purple'; toastEl.textContent = text; toastEl.className = kind; toastEl.style.display = 'block'; setTimeout(function(){ toastEl.style.display = 'none'; }, 3000); }
+
+    var modalBackdrop = document.getElementById('modalBackdrop');
+    var modalTitle = document.getElementById('modalTitle');
+    var modalBody = document.getElementById('modalBody');
+    var modalCancel = document.getElementById('modalCancel');
+    var modalConfirm = document.getElementById('modalConfirm');
+    function askConfirmation(title, body){
+      return new Promise(function(resolve){
+        modalTitle.textContent = title; modalBody.textContent = body;
+        modalBackdrop.style.display = 'flex';
+        function cancel(){ modalBackdrop.style.display='none'; cleanup(); resolve(false); }
+        function confirm(){ modalBackdrop.style.display='none'; cleanup(); resolve(true); }
+        function cleanup(){ modalCancel.removeEventListener('click', cancel); modalConfirm.removeEventListener('click', confirm); }
+        modalCancel.addEventListener('click', cancel);
+        modalConfirm.addEventListener('click', confirm);
+      });
+    }
+
+    function parseCoins(coinsStr) {
+      return BigInt(coinsStr || '0');
+    }
+
+    var betaArt = document.getElementById('betaArt');
+    var betaDesc = document.getElementById('betaDesc');
+    var betaActions = document.getElementById('betaActions');
+
+    var ASSETS = {
+      available: '/org-owner.jpg',
+      unavailable: '/assets/beta_en_unavailable.png',
+      enrolled: '/assets/default_inverted.png'
+    };
+
+    var currentUser = null;
+
+    function accountOlderThanSixMonths(creationTimeISO){
+      if(!creationTimeISO) return false;
+      var created = new Date(creationTimeISO);
+      var sixMonths = new Date(created);
+      sixMonths.setMonth(sixMonths.getMonth() + 6);
+      return (new Date()) >= sixMonths;
+    }
+
+    function renderUnavailable(missingDetails){
+      betaArt.style.backgroundImage = "url('"+ASSETS.unavailable+"')";
+      betaDesc.textContent = `You're not eligible to join the Beta Program. You must meet all the following criteria:
+- Your account needs to be at least 6 months old
+- You need to have at least 1000 DF$
+- Be logged in
+
+Currently, you don't meet: ${missingDetails}`;
+      betaActions.innerHTML = '';
+    }
+
+    function renderNotEnrolled(){
+      betaArt.style.backgroundImage = "url('"+ASSETS.available+"')";
+      betaDesc.textContent = "Enroll in the beta program to get new extra features early!, by joining the Beta Program you agree to our Terms of Service which you can check at https://darkpurpleof.github.io/terms, and to pay a 1000 DF$ (non-refundable) join fee the moment you join, these 1000 DF$ won't be refunded if you drop out of the program";
+      betaActions.innerHTML = '';
+      var enrollBtn = document.createElement('button'); enrollBtn.className = 'btn primary'; enrollBtn.textContent = 'Enroll';
+      enrollBtn.addEventListener('click', onEnrollClicked);
+      betaActions.appendChild(enrollBtn);
+    }
+
+    function renderEnrolled(){
+      betaArt.style.backgroundImage = "url('"+ASSETS.enrolled+"')";
+      betaDesc.textContent = "You're currently enrolled in the beta program, which will offer beta features in the future, in the meanwhile, you can download the beta program official plugin to get started using the official app";
+      betaActions.innerHTML = '';
+      var downloadBtn = document.createElement('a'); downloadBtn.className = 'btn primary';
+      downloadBtn.href = '/ugc/viewugc?id=darkpurpleofswebsitebeta&author=system@darkpurpleof.github.io&type=1';
+      downloadBtn.textContent = 'Download the Plugin';
+      var withdrawBtn = document.createElement('button'); withdrawBtn.className='btn'; withdrawBtn.textContent='Withdraw Enrollment';
+      withdrawBtn.addEventListener('click', onWithdrawClicked);
+      betaActions.appendChild(downloadBtn); betaActions.appendChild(withdrawBtn);
+    }
+
+    // Actions
+    function onEnrollClicked(){
+      if(!currentUser){ toast('You must be logged in to enroll', 'red'); return; }
+      askConfirmation('Join Beta Program', 'Are you sure you want to pay 1000 DF$ and join the Beta Program? This fee is non-refundable. By joining, you agree to our Terms of Service available at https://darkpurpleof.github.io/terms, and you will gain early access to experimental features. You can withdraw later, but the fee will not be refunded.').then(function(confirmed){
+        if(!confirmed) return;
+        var userEmail = currentUser.email;
+        var userRef = db.collection('user_data').doc(userEmail);
+
+        db.runTransaction(function(transaction){
+          return transaction.get(userRef).then(function(uSnap){
+            if(!uSnap.exists){ throw new Error('User data not found'); }
+            var data = uSnap.data() || {};
+            var coinsStr = (data.coins || '0').toString();
+            var coins = parseCoins(coinsStr);
+            if(coins < 1000n){ throw new Error('Insufficient coins'); }
+            var newCoins = coins - 1000n;
+            transaction.update(userRef, { coins: newCoins.toString(), beta_enrolled: true });
+
+            var trRefEnroll = db.collection('transactions').doc(userEmail).collection('records').doc('beta-enroll');
+            transaction.set(trRefEnroll, {
+              amount: 1000,
+              date: firebase.firestore.FieldValue.serverTimestamp(),
+              description: 'Join the beta',
+              image: 'darkpurpleof.github.io/org-owner.jpg',
+              source: 'system@darkpurpleof.github.io',
+              type: 'outgoing'
+            });
+
+            var trRefFixer = db.collection('transactions').doc(userEmail).collection('records').doc('darkpurpleofswebsitefixer');
+            transaction.set(trRefFixer, {
+              amount: 0,
+              date: firebase.firestore.FieldValue.serverTimestamp(),
+              description: "DarkPurpleOF's Website Beta",
+              image: 'darkpurpleof.github.io/assets/default_inverted.png',
+              source: 'system@darkpurpleof.github.io',
+              type: 'outgoing'
+            });
+
+          });
+        }).then(function(){
+          toast('Enrolled successfully!', 'purple'); refreshUI();
+        }).catch(function(err){ console.error(err); toast(err.message || 'Enroll failed', 'red'); });
+
+      });
+    }
+
+    function onWithdrawClicked(){
+      if(!currentUser){ toast('You must be logged in', 'red'); return; }
+      askConfirmation('Withdraw from Beta Program', 'Are you sure you want to withdraw from the Beta Program? This action is irreversible. Your beta_enrolled status will be removed, the associated transaction record will be deleted, and you will lose access to beta features. The 1000 DF$ enrollment fee will not be refunded.').then(function(confirmed){
+        if(!confirmed) return;
+        var userRef = db.collection('user_data').doc(currentUser.email);
+        var trRefFixer = db.collection('transactions').doc(currentUser.email).collection('records').doc('darkpurpleofswebsitefixer');
+
+        userRef.update({ beta_enrolled: firebase.firestore.FieldValue.delete() }).then(function(){
+          trRefFixer.delete().catch(function(e){ console.warn('delete fixer failed', e); });
+          toast('You have withdrawn from the program', 'yellow'); refreshUI();
+        }).catch(function(err){ console.error(err); toast(err.message || 'Withdraw failed', 'red'); });
+      });
+    }
+
+    // refresh UI
+    function refreshUI(){
+      if(!currentUser){ renderUnavailable('"Be logged in"'); return; }
+      var userRef = db.collection('user_data').doc(currentUser.email);
+      userRef.get().then(function(snap){
+        var data = snap.exists ? snap.data() : {};
+        var isEnrolled = !!data.beta_enrolled;
+        var coinsStr = (data.coins || '0').toString();
+        var coins = parseCoins(coinsStr);
+        var creationTime = currentUser.metadata && currentUser.metadata.creationTime;
+        var meetsAge = accountOlderThanSixMonths(creationTime);
+        var meetsCoins = coins >= 1000n;
+        if(isEnrolled){ renderEnrolled(); return; }
+        var missingDetails = [];
+        if(!meetsAge) missingDetails.push('account age (needs to be at least 6 months old)');
+        if(!meetsCoins) {
+          var needed = 1000n - coins;
+          missingDetails.push(`coins (you have ${coins.toString()} DF$, need ${needed.toString()} more)`);
+        }
+        if(!currentUser) missingDetails.push('login');
+        if(missingDetails.length > 0){
+          renderUnavailable(missingDetails.join(', '));
+        } else {
+          renderNotEnrolled();
+        }
+      }).catch(function(err){ console.error(err); toast('Failed to load user data', 'red'); });
+    }
+
+    // auth listener
+    auth.onAuthStateChanged(function(user){ currentUser = user; refreshUI(); });
+
+    document.addEventListener('DOMContentLoaded', function(){ refreshUI(); });
+  </script>
+</body>
+</html>

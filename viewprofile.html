@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Profile</title>
 
+  <script src="/authorUGCList.js"></script>
+
   <!-- Firebase compat (works with other pages that use compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
@@ -90,6 +92,7 @@
 </head>
 <body>
   <script type="module" src="/dp-topbar.js"></script>
+  <script type="module" src="/dp-rich-components.js"></script>
   <dp-topbar></dp-topbar>
 
   <main class="container" role="main" aria-label="View profile">
@@ -157,6 +160,8 @@
           <div style="color:var(--muted)">Loading actions…</div>
         </div>
       </div>
+
+      <div id="ugc-list"></div>
 
     </aside>
   </main>
@@ -292,7 +297,10 @@
       profilePicEl.style.backgroundImage = `url(${fb.profile_picture})`;
       displayNameEl.textContent = fb.displayName;
       emailEl.textContent = fb.email;
-      bioTextEl.textContent = fb.bio;
+      bioTextEl.innerHTML = '';
+      const richEl = document.createElement('rich-text');
+      richEl.textContent = fb.bio;
+      bioTextEl.appendChild(richEl);
       verifiedEl.style.display = fb.is_verified ? 'inline-block' : 'none';
       pfpFrameEl.style.display = 'none';
 
@@ -407,7 +415,10 @@
         profilePicEl.style.backgroundImage = `url(${viewedData.profile_picture})`;
         displayNameEl.textContent = viewedData.displayName || fallback.displayName;
         emailEl.textContent = viewedData.email;
-        bioTextEl.textContent = viewedData.bio;
+        bioTextEl.innerHTML = '';
+        const richEl = document.createElement('rich-text');
+        richEl.textContent = viewedData.bio;
+        bioTextEl.appendChild(richEl);
         verifiedEl.style.display = viewedData.is_verified ? 'inline-block' : 'none';
         if (viewedData.profile_picture_frame) { pfpFrameEl.style.backgroundImage = `url(${viewedData.profile_picture_frame})`; pfpFrameEl.style.display = 'block'; } else { pfpFrameEl.style.display = 'none'; }
 
@@ -427,6 +438,12 @@
           }
           rolesList.appendChild(el);
         });
+
+        createAuthorUGCList("#ugc-list", {
+    authorEmail: emailArg,
+    firestore: firebase.firestore(),
+    auth: firebase.auth()
+});
 
         // details / last updated
         detailsList.innerHTML = '';
@@ -599,6 +616,16 @@
         postBtn.addEventListener('click', () => { window.location.href = `/createpost?wall=${otherEmailEsc}`; });
       }
       interactionButtons.appendChild(postBtn);
+
+      const postBtn1 = document.createElement('button');
+      postBtn1.className = 'btn';
+      postBtn1.textContent = `Chat with ${nameForButtons}`;
+      if (isActionDisabled('post')) {
+        postBtn1.disabled = true; postBtn1.title = 'Unavailable due to limited permissions'; postBtn1.style.opacity = 0.6;
+      } else {
+        postBtn1.addEventListener('click', () => { window.location.href = `/chat?email=${otherEmailEsc}`; });
+      }
+      interactionButtons.appendChild(postBtn1);
 
       // Follow / Unfollow
       const followBtn = document.createElement('button');

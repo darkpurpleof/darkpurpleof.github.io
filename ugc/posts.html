@@ -16,6 +16,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
 
+<!-- Rich markdown component -->
+<script type="module" src="/dp-rich-components.js"></script>
+
 <style>
 :root{
   --bg: #171717;
@@ -135,7 +138,18 @@ dp-topbar {
   border-radius:var(--radius);
   padding:16px;
   transition: transform .14s ease, box-shadow .14s ease;
+  position: relative;
 }
+
+.post-meta{ display:flex; align-items:center; gap:8px; justify-content:flex-end; min-width:0; }
+.post-date{ font-size:12px; color:var(--muted); white-space:nowrap; }
+.menu-btn{ width:28px; height:28px; border-radius:12px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.menu-btn:hover{ background: rgba(255,255,255,0.08); }
+.post-menu{ position:absolute; top:44px; right:16px; min-width:170px; background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:0 14px 40px rgba(0,0,0,0.35); display:none; flex-direction:column; padding:6px 0; z-index:50; }
+.post-menu.open{ display:flex; }
+.post-menu button{ width:100%; padding:10px 12px; text-align:left; border:none; background:transparent; color:var(--text); cursor:pointer; font-size:14px; }
+.post-menu button:hover:not([disabled]){ background: rgba(255,255,255,0.08); }
+.post-menu button[disabled]{ opacity:0.45; cursor:not-allowed; }
 
 .author-row{ display:flex; gap:12px; align-items:center; justify-content:space-between; }
 .author-left{ display:flex; gap:12px; align-items:center; min-width:0; }
@@ -185,6 +199,10 @@ dp-topbar {
     <div class="header">
     </div>
 
+    <div class="post-card" style="text-align: center; margin-bottom: var(--card-gap);">
+      <a href="/createpost" style="color: var(--text); text-decoration: none; font-size: 16px; font-weight: 600;">Create new post</a>
+    </div>
+
     <div id="postsList" class="posts-list" aria-live="polite"></div>
   </div>
 
@@ -227,6 +245,34 @@ async function getUserDoc(email){
 /* Small helper to safely escape text content for insertion into DOM elements (we use textContent so it's usually safe) */
 function safeText(s){ return (s === undefined || s === null) ? '' : String(s); }
 
+// Convert Firestore timestamps + unix ms/seconds into JS ms
+function toMillis(value){
+  if (value == null) return null;
+  if (typeof value === 'number') return value;
+  if (value instanceof Date) return value.getTime();
+  if (value?.toDate) return value.toDate().getTime();
+  if (typeof value === 'object' && typeof value.seconds === 'number') {
+    const seconds = Number(value.seconds || 0);
+    const nanos = Number(value.nanoseconds || 0);
+    return seconds * 1000 + Math.floor(nanos / 1e6);
+  }
+  return null;
+}
+
+function formatPostDate(value){
+  const ms = toMillis(value);
+  if (!ms) return '';
+  const d = new Date(ms);
+  const pad = v => String(v).padStart(2,'0');
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const hours = pad(d.getHours());
+  const mins = pad(d.getMinutes());
+  const day = pad(d.getDate());
+  const month = monthNames[d.getMonth()] || '';
+  const year = String(d.getFullYear()).slice(-2);
+  return `${hours}:${mins} - ${day} ${month}, ${year}`;
+}
+
 /* Icon SVGs */
 const ICONS = {
   heart: function(filled){
@@ -256,7 +302,7 @@ const ICONS = {
 
 
 /* Render a single post card DOM element */
-function createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy }, currentUserEmail){
+function createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy, createdAt, towall, pinnedByOwner }, currentUserEmail){
   const userLiked = currentUserEmail ? likedBy.map(e=>String(e).toLowerCase()).includes(currentUserEmail) : false;
   const likeCount = likedBy.length || 0;
 
@@ -267,6 +313,10 @@ function createPostCard({ postId, editorEmail, displayName, profilePic, verified
   // header
   const avatarUrl = profilePic || '/org-owner.jpg';
   const verifiedHtml = verified ? `<span class="verified-badge" title="Verified"></span>` : '';
+  const dateLabel = formatPostDate(createdAt);
+  const isOwner = currentUserEmail && editorEmail && currentUserEmail === String(editorEmail).toLowerCase();
+  const canRemoveFromWall = currentUserEmail && towall && currentUserEmail === String(towall).toLowerCase();
+  const isPinned = Boolean(pinnedByOwner);
 
   card.innerHTML = `
     <div class="author-row">
@@ -277,9 +327,19 @@ function createPostCard({ postId, editorEmail, displayName, profilePic, verified
           <div class="email-text">${escapeHtml(editorEmail)}</div>
         </div>
       </div>
+
+      <div class="post-meta">
+        ${dateLabel ? `<div class="post-date">${escapeHtml(dateLabel)}</div>` : ''}
+        <button class="menu-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Post actions">⋮</button>
+        <div class="post-menu" role="menu" aria-label="Post actions">
+          <button type="button" class="menu-item delete-post" ${isOwner ? '' : 'disabled'}>Delete post</button>
+          <button type="button" class="menu-item pin-post" ${isOwner ? '' : 'disabled'}>${isPinned ? 'Unpin' : 'Pin'}</button>
+          <button type="button" class="menu-item remove-wall" ${canRemoveFromWall ? '' : 'disabled'}>Remove from my wall</button>
+        </div>
+      </div>
     </div>
 
-    <div class="post-text" role="article">${escapeHtml(text)}</div>
+    <div class="post-text" role="article"><rich-markdown mode="markdown">${escapeHtml(text)}</rich-markdown></div>
     ${ images && images.length ? `<div class="post-images">${images.map(u => `<img src="${encodeURI(u)}" loading="lazy" alt="post image" />`).join('')}</div>` : '' }
 
     <div class="sep" aria-hidden="true"></div>
@@ -298,6 +358,87 @@ function createPostCard({ postId, editorEmail, displayName, profilePic, verified
       </button>
     </div>
   `;
+
+  const menuBtn = card.querySelector('.menu-btn');
+  const menu = card.querySelector('.post-menu');
+  const deleteBtn = card.querySelector('.delete-post');
+  const pinBtn = card.querySelector('.pin-post');
+  const removeWallBtn = card.querySelector('.remove-wall');
+
+  function closeMenu() {
+    if (menu) menu.classList.remove('open');
+    if (menuBtn) menuBtn.setAttribute('aria-expanded','false');
+    document.removeEventListener('click', onDocumentClick);
+  }
+
+  function onDocumentClick(e) {
+    if (!card.contains(e.target)) closeMenu();
+  }
+
+  if (menuBtn && menu) {
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = menu.classList.toggle('open');
+      menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        document.addEventListener('click', onDocumentClick);
+      } else {
+        document.removeEventListener('click', onDocumentClick);
+      }
+    });
+  }
+
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      if (!isOwner) return;
+      if (!confirm('Delete this post? This cannot be undone.')) return;
+      try {
+        await db.collection('posts').doc(postId).delete();
+        window.location.href = '/ugc/posts';
+      } catch (err) {
+        console.error('delete post', err);
+        alert('Failed to delete post.');
+      }
+    });
+  }
+
+  if (pinBtn) {
+    pinBtn.addEventListener('click', async () => {
+      if (!isOwner) return;
+      const willUnpin = isPinned;
+      if (!confirm(`${willUnpin ? 'Unpin' : 'Pin'} this post?`)) return;
+      try {
+        if (willUnpin) {
+          await db.collection('posts').doc(postId).update({ pinnedByOwner: firebase.firestore.FieldValue.delete() });
+          pinBtn.textContent = 'Pin';
+          isPinned = false;
+        } else {
+          await db.collection('posts').doc(postId).update({ pinnedByOwner: true });
+          pinBtn.textContent = 'Unpin';
+          isPinned = true;
+        }
+        alert(`Post ${willUnpin ? 'unpinned' : 'pinned'}.`);
+      } catch (err) {
+        console.error('pin post', err);
+        alert('Failed to update pin state.');
+      }
+    });
+  }
+
+  if (removeWallBtn) {
+    removeWallBtn.addEventListener('click', async () => {
+      if (!canRemoveFromWall) return;
+      if (!confirm('Remove this post from your wall?')) return;
+      try {
+        await db.collection('posts').doc(postId).update({ towall: firebase.firestore.FieldValue.delete() });
+        alert('Removed from your wall.');
+        removeWallBtn.disabled = true;
+      } catch (err) {
+        console.error('remove from wall', err);
+        alert('Failed to remove from wall.');
+      }
+    });
+  }
 
   return card;
 }
@@ -368,9 +509,12 @@ auth.onAuthStateChanged(async user => {
       const text = postData.text || '';
       const images = Array.isArray(postData.images) ? postData.images : [];
       const likedBy = Array.isArray(postData.likedBy) ? postData.likedBy : [];
+      const createdAt = postData.timestamp || postData.createdAt || postData.created || postData.created_at;
+      const towall = postData.towall || '';
+      const pinnedByOwner = postData.pinnedByOwner || postData.pinned_by_owner || postData.pinned || false;
 
       // create card
-      const card = createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy }, currentUserEmail);
+      const card = createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy, createdAt, towall }, currentUserEmail);
       postsListEl.appendChild(card);
 
       // frame overlay if provided

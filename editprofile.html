@@ -91,6 +91,7 @@ border-radius:14px; background-size:cover; background-position:center; border:1p
 <body>
   <!-- topbar -->
   <script type="module" src="/dp-topbar.js"></script>
+  <script type="module" src="/dp-rich-components.js"></script>
   <dp-topbar></dp-topbar>
 
   <main class="container" role="main" aria-label="Edit profile">
@@ -398,7 +399,7 @@ border-radius:14px; background-size:cover; background-position:center; border:1p
       if (!currentUser) return showToast('Not signed in', 'yellow');
       const v = (bioInput.value||'').trim();
       if (v.length > 250) return showToast('Bio too long (max 250 chars)', 'yellow');
-      try { await saveUserField(currentUser.email, 'bio', v); bioTextEl.textContent = v || 'Bio not yet set'; showToast('Saved', 'purple'); } catch (e){ showToast('Failed to save', 'red'); }
+      try { await saveUserField(currentUser.email, 'bio', v); bioTextEl.innerHTML = ''; const richEl = document.createElement('rich-text'); richEl.textContent = v || 'Bio not yet set'; bioTextEl.appendChild(richEl); showToast('Saved', 'purple'); } catch (e){ showToast('Failed to save', 'red'); }
     });
 
     // Public profile toggle
@@ -451,7 +452,10 @@ border-radius:14px; background-size:cover; background-position:center; border:1p
         profilePicEl.style.backgroundImage = `url(${pfp})`;
         displayNameEl.textContent = display;
         displayNameInput.value = display;
-        bioTextEl.textContent = bio;
+        bioTextEl.innerHTML = '';
+        const richEl = document.createElement('rich-text');
+        richEl.textContent = bio;
+        bioTextEl.appendChild(richEl);
         bioInput.value = data.bio || '';
         publicCheckbox.checked = !!data.isProfilePublic;
         emailEl.textContent = email;

@@ -479,6 +479,11 @@
                     <div class="field-error" id="err-dlg-desc"></div>
                   </div>
 
+                  <div class="field">
+                    <md-outlined-text-field id="dlg-version" label="Version" value="${escapeAttr(item.version||'')}"></md-outlined-text-field>
+                    <div class="field-error" id="err-dlg-version"></div>
+                  </div>
+
                   <div class="field" id="download-link-field" style="display:none;">
                     <md-outlined-text-field id="dlg-download-link" label="Download Link (https://...)" type="url" value="${escapeAttr(item.download_link||'')}" helper="HTTPS required. Avoid blacklisted hosts."></md-outlined-text-field>
                     <div class="field-error" id="err-dlg-download-link"></div>
@@ -522,6 +527,7 @@
       const dlFieldWrap = portal.querySelector('#download-link-field');
       const dlFld = portal.querySelector('#dlg-download-link');
       const descFld = portal.querySelector('#dlg-desc');
+      const versionFld = portal.querySelector('#dlg-version');
 
       // control containers
       const typeControlInner = portal.querySelector('#type-control-inner');
@@ -538,6 +544,7 @@
       const errType = portal.querySelector('#err-dlg-type');
       const errDesc = portal.querySelector('#err-dlg-desc');
       const errDlLink = portal.querySelector('#err-dlg-download-link');
+      const errVersion = portal.querySelector('#err-dlg-version');
 
       // populate types list
       const storeTypes = ['Sticker Pack','Profile Frame'];
@@ -691,6 +698,7 @@
       imageFld.value = item.image || '';
       dlFld.value = item.download_link || '';
       descFld.value = item.description || '';
+      versionFld.value = item.version || '';
 
       // if edit mode enforce ID readonly
       if (isEditMode) {
@@ -722,7 +730,7 @@
           if (fld.inputElement) fld.inputElement.style.color = '#FFF';
         } catch(e) {}
       }
-      [nameFld, idFld, priceFld, imageFld, dlFld, descFld].forEach(styleMaterialField);
+      [nameFld, idFld, priceFld, imageFld, dlFld, descFld, versionFld].forEach(styleMaterialField);
       // make md-selects (edit mode) show white text if present
       portal.querySelectorAll('md-select').forEach(s => { try { s.style.color = '#fff'; } catch(e){} });
 
@@ -849,7 +857,7 @@ async function validateAll() {
 
       // map errors to fields and show them; return true if any errors
       async function runValidationAndUpdateUI() {
-        [errName, errId, errPrice, errImage, errDownloadable, errOnstock, errType, errDesc, errDlLink].forEach(e => { if(e) e.textContent = ''; });
+        [errName, errId, errPrice, errImage, errDownloadable, errOnstock, errType, errDesc, errDlLink, errVersion].forEach(e => { if(e) e.textContent = ''; });
         const errs = await validateAll();
         if (errs && errs.length > 0) {
           const byField = {};
@@ -862,6 +870,7 @@ async function validateAll() {
           if (byField.onstock) errOnstock.textContent = byField.onstock;
           if (byField.type) errType.textContent = byField.type;
           if (byField.desc) errDesc.textContent = byField.desc;
+          if (byField.version) errVersion.textContent = byField.version;
           if (byField.download_link) errDlLink.textContent = byField.download_link;
           if (byField.coins) errDlLink.textContent = byField.coins;
           saveBtn.disabled = true;
@@ -881,7 +890,7 @@ async function validateAll() {
 
       // wire validation on inputs
       // note: for md-select rendered later in edit mode we added change listeners on render
-      const watchEls = [nameFld, idFld, priceFld, imageFld, dlFld, descFld];
+      const watchEls = [nameFld, idFld, priceFld, imageFld, dlFld, descFld, versionFld];
       watchEls.forEach(el => {
         el.addEventListener('input', () => runValidationAndUpdateUI());
         el.addEventListener('change', () => runValidationAndUpdateUI());
@@ -906,6 +915,7 @@ async function validateAll() {
         const idVal = String(idFld.value || '').trim();
         const price = (String(priceFld.value||'') === '') ? null : Number(priceFld.value);
         const image = String(imageFld.value || '').trim();
+        const version = String(versionFld.value || '').trim();
         const downloadable = (getCurrentDownloadableValue() === 'true');
         const download_link = String(dlFld.value || '').trim();
         const on_stock = (getCurrentOnStockValue() === 'true');
@@ -913,7 +923,7 @@ async function validateAll() {
         const description = String(descFld.value || '').trim();
 
         const payload = {
-  name, description, price, image, on_sale: on_stock, downloadable: downloadable, download_link: downloadable ? download_link : null,
+  name, description, price, image, version, on_sale: on_stock, downloadable: downloadable, download_link: downloadable ? download_link : null,
   type, creator: currentUser.email, updated_at: new Date()
 };
 
@@ -956,7 +966,7 @@ if (idVal) {
               // update coins on user doc
               await setDoc(userRef, { coins: String(newVal) }, { merge: true });
 
-              // save transaction record under transactions/{email}/records
+              // save transaction record under transactions/{email}/records using item ID as doc id
               try {
                 const txPayload = {
                   amount: 500,
@@ -966,7 +976,11 @@ if (idVal) {
                   source: "system@darkpurpleof.github.io",
                   type: "outgoing"
                 };
-                await addDoc(collection(db, 'transactions', currentUser.email, 'records'), txPayload);
+                const txId = idVal || (createdRef && createdRef.id);
+                if (txId) {
+                  const txRef = doc(db, 'transactions', currentUser.email, 'records', txId);
+                  await setDoc(txRef, txPayload);
+                }
               } catch (txErr) {
                 // log but don't prevent item creation
                 console.error('failed to write transaction record', txErr);
@@ -974,19 +988,63 @@ if (idVal) {
 
             } else {
               // store item create
+              let createdRef = null;
               if (idVal) {
                 const docRef = doc(db, 'ugc', currentUser.email, 'store-items', idVal);
                 await setDoc(docRef, payload);
+                createdRef = docRef;
               } else {
-                await createStoreItem(payload);
+                createdRef = await createStoreItem(payload);
+              }
+
+              // record a zero-amount transaction for sticker pack saves
+              if (type === 'Sticker Pack') {
+                try {
+                  const txPayload = {
+                    amount: 0,
+                    date: serverTimestamp(),
+                    description: `Save Sticker Pack ${name}`,
+                    image: image || null,
+                    source: "system@darkpurpleof.github.io",
+                    type: "outgoing"
+                  };
+                  const txId = idVal || (createdRef && createdRef.id);
+                  if (txId) {
+                    const txRef = doc(db, 'transactions', currentUser.email, 'records', txId);
+                    await setDoc(txRef, txPayload);
+                  }
+                } catch (txErr) {
+                  console.error('failed to write sticker pack transaction record', txErr);
+                }
               }
             }
           } else {
             // EDIT (no charge)
             const docId = idVal || item.id;
             if (!docId) throw new Error('Missing doc id to update');
-            if (isDev) await updateDevItem(docId, payload);
-            else await updateStoreItem(docId, payload);
+            if (isDev) {
+              await updateDevItem(docId, payload);
+            } else {
+              await updateStoreItem(docId, payload);
+
+              // If sticker pack, record a zero-amount transaction (same doc id)
+              if (type === 'Sticker Pack') {
+                try {
+                  const txPayload = {
+                    amount: 0,
+                    date: serverTimestamp(),
+                    description: `Save Sticker Pack ${name}`,
+                    image: image || null,
+                    source: "system@darkpurpleof.github.io",
+                    type: "outgoing"
+                  };
+                  const txRef = doc(db, 'transactions', currentUser.email, 'records', docId);
+                  await setDoc(txRef, txPayload);
+                } catch (txErr) {
+                  console.error('failed to write sticker pack transaction record', txErr);
+                }
+              }
+            }
           }
 
           closeDialog();
