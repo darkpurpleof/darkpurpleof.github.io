@@ -242,7 +242,7 @@ Currently, you don't meet: ${missingDetails}`;
       betaDesc.textContent = "You're currently enrolled in the beta program, which will offer beta features in the future, in the meanwhile, you can download the beta program official plugin to get started using the official app";
       betaActions.innerHTML = '';
       var downloadBtn = document.createElement('a'); downloadBtn.className = 'btn primary';
-      downloadBtn.href = '/ugc/viewugc?id=darkpurpleofswebsitebeta&author=system@darkpurpleof.github.io&type=1';
+      downloadBtn.href = '/ugc/viewugc?id=beta-enroll&author=system@darkpurpleof.github.io&type=1';
       downloadBtn.textContent = 'Download the Plugin';
       var withdrawBtn = document.createElement('button'); withdrawBtn.className='btn'; withdrawBtn.textContent='Withdraw Enrollment';
       withdrawBtn.addEventListener('click', onWithdrawClicked);
