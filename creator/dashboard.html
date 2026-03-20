@@ -785,6 +785,7 @@ async function validateAll() {
   const downloadable = (getCurrentDownloadableValue() === 'true');
   const download_link = String(dlFld.value || '').trim();
   const type = String(getCurrentTypeValue() || '').trim();
+  const version = String(versionFld.value || '').trim();
 
   if (!name) results.push({ field:'name', msg:'Name is required' });
   if (!isEditMode && (!idVal)) results.push({ field:'id', msg:'ID is required when creating' });
@@ -822,6 +823,15 @@ async function validateAll() {
   if (downloadable) {
     if (!download_link) { results.push({ field:'download_link', msg:'Download link required' }); return results; }
     if (!download_link.startsWith('https://')) results.push({ field:'download_link', msg:'Download link must start with https://' });
+    
+    // require version when downloadable is true
+    if (!version) results.push({ field:'version', msg:'Version is required for downloadable items' });
+    
+    // if editing and download link changed, require version update
+    if (isEditMode && item.download_link && item.download_link !== download_link && item.version === version) {
+      results.push({ field:'version', msg:'Version must be updated when download link changes' });
+    }
+    
     const hostname = extractHostname(download_link);
     if (!hostname) results.push({ field:'download_link', msg:'Invalid download link URL' });
     else if (hostIsBlacklisted(hostname) && !hostIsCloudAllowed(hostname)) results.push({ field:'download_link', msg:'Download host not allowed' });
