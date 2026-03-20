@@ -301,9 +301,11 @@ Currently, you don't meet: ${missingDetails}`;
         if(!confirmed) return;
         var userRef = db.collection('user_data').doc(currentUser.email);
         var trRefFixer = db.collection('transactions').doc(currentUser.email).collection('records').doc('darkpurpleofswebsitefixer');
+        var trRefEnroll = db.collection('transactions').doc(currentUser.email).collection('records').doc('beta-enroll');
 
         userRef.update({ beta_enrolled: firebase.firestore.FieldValue.delete() }).then(function(){
           trRefFixer.delete().catch(function(e){ console.warn('delete fixer failed', e); });
+          trRefEnroll.delete().catch(function(e){ console.warn('delete enroll failed', e); });
           toast('You have withdrawn from the program', 'yellow'); refreshUI();
         }).catch(function(err){ console.error(err); toast(err.message || 'Withdraw failed', 'red'); });
       });
