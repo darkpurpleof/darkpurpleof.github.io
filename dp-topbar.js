@@ -553,45 +553,53 @@ class DPTopbar extends HTMLElement {
   }
 
   async _evaluateGlobalGates(db) {
-    try {
-      const [ipInfo, generalSnap] = await Promise.all([
-        this._fetchIpInfo(),
-        db.doc('server_global_data/general').get()
-      ]);
+  try {
+    const [ipInfo, generalSnap] = await Promise.all([
+      this._fetchIpInfo(),
+      db.doc('server_global_data/general').get()
+    ]);
 
-      const generalData = generalSnap.exists ? generalSnap.data() || {} : {};
+    const generalData = generalSnap.exists ? generalSnap.data() || {} : {};
 
-      if (this._isTrue(generalData.maintenance)) {
-        return { locked: true, path: '/extras/503.html' };
-      }
-
-      const bannedCountries = Array.isArray(generalData.banned_countries)
-        ? generalData.banned_countries.map(v => String(v || '').trim().toUpperCase()).filter(Boolean)
-        : [];
-
-      const country = String(ipInfo?.country || '').trim().toUpperCase();
-      if (country && bannedCountries.includes(country)) {
-        return { locked: true, path: '/extras/451.html' };
-      }
-
-      const ip = String(ipInfo?.ip || '').trim();
-      if (ip) {
-        const ipDoc = await db.collection('banned_ips').doc(ip).get();
-        if (ipDoc.exists) {
-          return { locked: true, path: '/extras/403.html' };
-        }
-
-        const altQuery = await db.collection('banned_ips').where('ip', '==', ip).limit(1).get();
-        if (!altQuery.empty) {
-          return { locked: true, path: '/extras/403.html' };
-        }
-      }
-    } catch (err) {
-      console.warn('Global gate evaluation failed, allowing page to continue:', err);
+    if (this._isTrue(generalData.maintenance)) {
+      return { locked: true, path: '/extras/503.html' };
     }
 
-    return { locked: false, path: null };
+    // Support both field names:
+    // - banned_countries
+    // - bannedCountries
+    const rawBannedCountries =
+      Array.isArray(generalData.banned_countries) ? generalData.banned_countries :
+      Array.isArray(generalData.bannedCountries) ? generalData.bannedCountries :
+      [];
+
+    const bannedCountries = rawBannedCountries
+      .map(v => String(v || '').trim().toUpperCase())
+      .filter(Boolean);
+
+    const country = String(ipInfo?.country || '').trim().toUpperCase();
+    if (country && bannedCountries.includes(country)) {
+      return { locked: true, path: '/extras/451.html' };
+    }
+
+    const ip = String(ipInfo?.ip || '').trim();
+    if (ip) {
+      const ipDoc = await db.collection('banned_ips').doc(ip).get();
+      if (ipDoc.exists) {
+        return { locked: true, path: '/extras/403.html' };
+      }
+
+      const altQuery = await db.collection('banned_ips').where('ip', '==', ip).limit(1).get();
+      if (!altQuery.empty) {
+        return { locked: true, path: '/extras/403.html' };
+      }
+    }
+  } catch (err) {
+    console.warn('Global gate evaluation failed, allowing page to continue:', err);
   }
+
+  return { locked: false, path: null };
+}
 
   async _fetchIpInfo() {
     try {
