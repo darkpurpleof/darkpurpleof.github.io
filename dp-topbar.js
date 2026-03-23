@@ -35,30 +35,23 @@ template.innerHTML = `
     nav.nav a:hover { background:var(--nav-hover, rgba(255,255,255,0.03)); }
 
     .hamburger {
-  display: none;          /* desktop: hidden */
-  color: white;
-
-  width: 20px;
-  height: 20px;
-
-  background: transparent;
-  border: none;
-  border-radius: 0;
-
-  padding: 0;
-  margin: 0;
-
-  box-shadow: none;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-
+      display: none;
+      color: white;
+      width: 20px;
+      height: 20px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      margin: 0;
+      box-shadow: none;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
 
     .mobile-menu {
       display:none;
@@ -88,23 +81,21 @@ template.innerHTML = `
       background:var(--chip-bg, rgba(255,255,255,0.03));
       border:1px solid rgba(255,255,255,0.04);
       min-width:96px;
-      position:relative; /* for coin dropdown */
+      position:relative;
       cursor:pointer;
     }
 
     .profile { display:flex; align-items:center; gap:10px; cursor:pointer; position:relative; padding:6px; border-radius:8px; }
-    .pfp { width:38px; background-repeat: no-repeat; /* <-- add this */
-height:38px; border-radius:8px; background-size:cover; background-position:center; border:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
+    .pfp { width:38px; background-repeat: no-repeat; height:38px; border-radius:8px; background-size:cover; background-position:center; border:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
     .pinfo { display:flex; flex-direction:column; line-height:1; min-width:120px; }
     .pinfo .name { font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; }
     .pinfo .small { font-size:12px; opacity:0.65; margin-top:2px; }
     .verified-icon {
-  width: 14px;
-  height: 14px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
+      width: 14px;
+      height: 14px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
 
     .dropdown {
       position:absolute; top:calc(100% + 8px); right:0; min-width:220px;
@@ -120,10 +111,10 @@ height:38px; border-radius:8px; background-size:cover; background-position:cente
 
     /* small screens */
     @media (max-width:800px) {
-      nav.nav { display:none; } /* hide full nav on mobile */
+      nav.nav { display:none; }
       .hamburger { display:flex; }
-      .pinfo { display:none; } /* keep profile compact */
-      .balance { display:none; } /* hide balance on topbar, you can show in mobile menu if needed */
+      .pinfo { display:none; }
+      .balance { display:none; }
     }
   </style>
 
@@ -172,7 +163,6 @@ height:38px; border-radius:8px; background-size:cover; background-position:cente
         <div class="dropdown" id="profile-dropdown" role="menu" aria-hidden="true">
           <a id="login-link" href="/login" style="display:none;">Login</a>
 
-          <!-- signed-in options -->
           <a id="settings-link" href="/my/account" class="disabled">Settings (Coming Soon)</a>
           <a id="support-link" href="/support-feedback" class="disabled">Support (Coming Soon)</a>
           <a id="manage-blocked" href="/manageblockedusers">Manage Blocked Users</a>
@@ -191,9 +181,15 @@ class DPTopbar extends HTMLElement {
     super();
     this._shadow = this.attachShadow({ mode: 'open' });
     this._shadow.appendChild(template.content.cloneNode(true));
+
     this._authUnsub = null;
     this._currentUser = null;
     this._mobileMenuOpen = false;
+    this._verifiedIcon = null;
+    this._pageLocked = false;
+    this._globalGatePromise = null;
+    this._globalGatesChecked = false;
+    this._bodyOriginalOverflow = '';
   }
 
   connectedCallback() {
@@ -226,7 +222,6 @@ class DPTopbar extends HTMLElement {
     this.$hamburger = s.getElementById('hamburger');
     this.$mobileMenu = s.getElementById('mobile-menu');
 
-    // profile menu extra links
     this.$settings = s.getElementById('settings-link');
     this.$support = s.getElementById('support-link');
     this.$manageBlocked = s.getElementById('manage-blocked');
@@ -234,22 +229,19 @@ class DPTopbar extends HTMLElement {
   }
 
   _wireUI() {
-    // clicks inside shadow root
     this._shadow.addEventListener('click', e => {
-      // coin area click
+      if (this._pageLocked) return;
+
       if (this.$coin.contains(e.target)) {
-        // if logged out -> go to login
         if (!this._currentUser) { window.location.href = '/login'; return; }
         this._toggleCoinDropdown();
         this._hideDropdown();
         return;
       }
 
-      // profile area click
       if (this.$profileArea.contains(e.target)) {
         this._toggleDropdown();
         this._closeMobileMenu();
-        // hide coin dropdown if open
         this._hideCoinDropdown();
         return;
       }
@@ -259,128 +251,163 @@ class DPTopbar extends HTMLElement {
         return;
       }
 
-      // nav link clicks handled below
-      // if click outside both dropdown and mobile menu -> hide both
       if (!this.$dropdown.contains(e.target)) this._hideDropdown();
       if (!this.$mobileMenu.contains(e.target) && !this.$hamburger.contains(e.target)) this._closeMobileMenu();
       if (!this.$coinDropdown.contains(e.target)) this._hideCoinDropdown();
     });
 
-    // keyboard interactions
     this.$profileArea.addEventListener('keydown', e => {
+      if (this._pageLocked) return;
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._toggleDropdown(); }
       if (e.key === 'Escape') this._hideDropdown();
     });
 
     this.$coin.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!this._currentUser) { window.location.href = '/login'; return; } this._toggleCoinDropdown(); }
+      if (this._pageLocked) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!this._currentUser) { window.location.href = '/login'; return; }
+        this._toggleCoinDropdown();
+      }
       if (e.key === 'Escape') this._hideCoinDropdown();
     });
 
-    // nav links: internal navigation
     this._shadow.querySelectorAll('.nav a, .mobile-menu a').forEach(a => {
       a.addEventListener('click', e => {
+        if (this._pageLocked) return;
         e.preventDefault();
         const target = a.getAttribute('data-target') || a.getAttribute('href');
         if (target) window.location.href = target;
       });
     });
 
-    // brand click
-    this.$brand.addEventListener('click', e => { e.preventDefault(); window.location.href = '/home'; });
+    this.$brand.addEventListener('click', e => {
+      if (this._pageLocked) return;
+      e.preventDefault();
+      window.location.href = '/home';
+    });
 
-    // login/edit/logout wiring
-    this.$login.addEventListener('click', e => { e.preventDefault(); window.location.href = '/login'; });
-    this.$edit.addEventListener('click', e => { e.preventDefault(); window.location.href = '/profile'; });
+    this.$login.addEventListener('click', e => {
+      if (this._pageLocked) return;
+      e.preventDefault();
+      window.location.href = '/login';
+    });
+
+    this.$edit.addEventListener('click', e => {
+      if (this._pageLocked) return;
+      e.preventDefault();
+      window.location.href = '/profile';
+    });
+
     this.$logout.addEventListener('click', async () => {
+      if (this._pageLocked) return;
       try {
         if (!window.firebase || !firebase.auth) { console.warn('Firebase not available'); return; }
         await firebase.auth().signOut();
         window.location.reload();
-      } catch (err) { console.error(err); window.location.reload(); }
+      } catch (err) {
+        console.error(err);
+        window.location.reload();
+      }
     });
 
-    // coin dropdown links
-    if (this.$redeem) this.$redeem.addEventListener('click', e => { /* normal link: allow navigation */ });
-    if (this.$trans) this.$trans.addEventListener('click', e => { e.preventDefault(); /* disabled for now */ });
+    if (this.$redeem) this.$redeem.addEventListener('click', e => { if (this._pageLocked) e.preventDefault(); });
+    if (this.$trans) this.$trans.addEventListener('click', e => { e.preventDefault(); });
 
-    // profile dropdown "coming soon" items are visually disabled via CSS class, so prevent clicks
-    if (this.$settings) this.$settings.addEventListener('click', e => { e.preventDefault(); /* coming soon */ });
-    if (this.$support) this.$support.addEventListener('click', e => { e.preventDefault(); /* coming soon */ });
+    if (this.$settings) this.$settings.addEventListener('click', e => { e.preventDefault(); });
+    if (this.$support) this.$support.addEventListener('click', e => { e.preventDefault(); });
 
-    // actual links
-    if (this.$manageBlocked) this.$manageBlocked.addEventListener('click', e => { e.preventDefault(); window.location.href = '/manageblockedusers'; });
-    if (this.$beta) this.$beta.addEventListener('click', e => { e.preventDefault(); window.location.href = '/creator/beta-features'; });
+    if (this.$manageBlocked) this.$manageBlocked.addEventListener('click', e => {
+      if (this._pageLocked) return;
+      e.preventDefault();
+      window.location.href = '/manageblockedusers';
+    });
 
-    // close menus when window resized (to keep state sane)
-    window.addEventListener('resize', () => { this._hideDropdown(); this._closeMobileMenu(); this._hideCoinDropdown(); });
+    if (this.$beta) this.$beta.addEventListener('click', e => {
+      if (this._pageLocked) return;
+      e.preventDefault();
+      window.location.href = '/creator/beta-features';
+    });
 
-    // close on escape global
+    window.addEventListener('resize', () => {
+      this._hideDropdown();
+      this._closeMobileMenu();
+      this._hideCoinDropdown();
+    });
+
     window.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { this._hideDropdown(); this._hideCoinDropdown(); }
+      if (e.key === 'Escape') {
+        this._hideDropdown();
+        this._hideCoinDropdown();
+      }
     });
   }
 
   _toggleMobileMenu() {
+    if (this._pageLocked) return;
     this._mobileMenuOpen = !this._mobileMenuOpen;
     if (this._mobileMenuOpen) {
       this.$mobileMenu.classList.add('show');
-      this.$mobileMenu.setAttribute('aria-hidden','false');
+      this.$mobileMenu.setAttribute('aria-hidden', 'false');
     } else {
       this._closeMobileMenu();
     }
   }
+
   _closeMobileMenu() {
     this._mobileMenuOpen = false;
     this.$mobileMenu.classList.remove('show');
-    this.$mobileMenu.setAttribute('aria-hidden','true');
+    this.$mobileMenu.setAttribute('aria-hidden', 'true');
   }
 
   _toggleDropdown() {
+    if (this._pageLocked) return;
     const show = !this.$dropdown.classList.contains('show');
     if (show) {
       this.$dropdown.classList.add('show');
-      this.$profileArea.setAttribute('aria-expanded','true');
-      this.$dropdown.setAttribute('aria-hidden','false');
-      // hide coin
+      this.$profileArea.setAttribute('aria-expanded', 'true');
+      this.$dropdown.setAttribute('aria-hidden', 'false');
       this._hideCoinDropdown();
-    } else this._hideDropdown();
+    } else {
+      this._hideDropdown();
+    }
   }
+
   _hideDropdown() {
     this.$dropdown.classList.remove('show');
-    this.$profileArea.setAttribute('aria-expanded','false');
-    this.$dropdown.setAttribute('aria-hidden','true');
+    this.$profileArea.setAttribute('aria-expanded', 'false');
+    this.$dropdown.setAttribute('aria-hidden', 'true');
   }
 
   _toggleCoinDropdown() {
+    if (this._pageLocked) return;
     const show = !this.$coinDropdown.classList.contains('show');
     if (show) {
       this.$coinDropdown.classList.add('show');
-      this.$coin.setAttribute('aria-expanded','true');
-      this.$coinDropdown.setAttribute('aria-hidden','false');
-      // hide profile dropdown
+      this.$coin.setAttribute('aria-expanded', 'true');
+      this.$coinDropdown.setAttribute('aria-hidden', 'false');
       this._hideDropdown();
-    } else this._hideCoinDropdown();
+    } else {
+      this._hideCoinDropdown();
+    }
   }
+
   _hideCoinDropdown() {
     if (!this.$coinDropdown) return;
     this.$coinDropdown.classList.remove('show');
-    this.$coin.setAttribute('aria-expanded','false');
-    this.$coinDropdown.setAttribute('aria-hidden','true');
+    this.$coin.setAttribute('aria-expanded', 'false');
+    this.$coinDropdown.setAttribute('aria-hidden', 'true');
   }
 
   _setupTheme() {
     const saved = localStorage.getItem('dp-theme') || (document.body.classList.contains('light') ? 'light' : 'dark');
     this._applyTheme(saved);
   }
-  _cycleTheme() {
-    const now = localStorage.getItem('dp-theme') === 'light' ? 'dark' : 'light';
-    localStorage.setItem('dp-theme', now);
-    this._applyTheme(now);
-  }
+
   _applyTheme(name) {
     if (name === 'light') {
-      document.body.classList.remove('dark'); document.body.classList.add('light');
+      document.body.classList.remove('dark');
+      document.body.classList.add('light');
       document.documentElement.style.setProperty('--topbar-bg', '#fff');
       document.documentElement.style.setProperty('--topbar-text', '#111');
       document.documentElement.style.setProperty('--chip-bg', 'rgba(0,0,0,0.04)');
@@ -388,7 +415,8 @@ class DPTopbar extends HTMLElement {
       document.documentElement.style.setProperty('--dropdown-text', '#111');
       document.documentElement.style.setProperty('--nav-hover', 'rgba(0,0,0,0.04)');
     } else {
-      document.body.classList.remove('light'); document.body.classList.add('dark');
+      document.body.classList.remove('light');
+      document.body.classList.add('dark');
       document.documentElement.style.setProperty('--topbar-bg', '#1f1f1f');
       document.documentElement.style.setProperty('--topbar-text', '#e9e9e9');
       document.documentElement.style.setProperty('--chip-bg', 'rgba(255,255,255,0.03)');
@@ -399,96 +427,410 @@ class DPTopbar extends HTMLElement {
   }
 
   _waitForFirebaseAndInit() {
-    const triesMax = 30; let tries = 0;
+    const triesMax = 30;
+    let tries = 0;
+
     const step = async () => {
+      if (this._pageLocked) return;
       tries++;
-      if (window.firebase && firebase.auth && firebase.firestore) this._initFirebase();
-      else if (tries < triesMax) setTimeout(step, 150);
-      else { console.warn('Firebase not detected. Topbar will show limited functionality.'); this._renderSignedOut(); }
+
+      if (window.firebase && firebase.auth && firebase.firestore) {
+        try {
+          await this._initFirebase();
+        } catch (err) {
+          console.error('Firebase init failed:', err);
+          this._renderSignedOut();
+        }
+      } else if (tries < triesMax) {
+        setTimeout(step, 150);
+      } else {
+        console.warn('Firebase not detected. Topbar will show limited functionality.');
+        this._renderSignedOut();
+      }
     };
+
     step();
   }
 
-  _initFirebase() {
+  async _initFirebase() {
     const auth = firebase.auth();
     const db = firebase.firestore();
+
     if (this._authUnsub) this._authUnsub();
 
+    const blocked = await this._runGlobalAccessChecks(db);
+    if (blocked) return;
+
     this._authUnsub = auth.onAuthStateChanged(async user => {
+      if (this._pageLocked) return;
+
       this._currentUser = user;
-      if (!user) { this._renderSignedOut(); return; }
 
-      let isBanned = false;
+      if (!user) {
+        this._renderSignedOut();
+        return;
+      }
 
-      // banned check
       try {
-        const banned = await db.collection('banned_users').doc(user.email).get();
-        if (banned.exists) {
-          isBanned = true;
-          // show ? for banned users
-          this.$coin.textContent = 'DF$ - ?';
+        const termsAccepted = await this._ensureTermsAccepted(user, db);
+        if (!termsAccepted) return;
 
-          // only redirect if not already on /not-approved
-          if (!window.location.pathname.startsWith('/not-approved')) {
-            window.location.href = '/not-approved';
-            return; // stop further execution since redirecting
+        let isBanned = false;
+
+        try {
+          const banned = await db.collection('banned_users').doc(user.email).get();
+          if (banned.exists) {
+            isBanned = true;
+            this.$coin.textContent = 'DF$ - ?';
+
+            if (!window.location.pathname.startsWith('/not-approved')) {
+              await this._takeoverWithHTML('/not-approved');
+              return;
+            }
           }
-          // if already on /not-approved, just keep showing profile info
-        }
-      } catch (err) { console.warn('Failed checking banned_users', err); }
-
-      // load user data regardless of banned status
-      try {
-        const snap = await db.collection('user_data').doc(user.email).get();
-        const data = snap.exists ? snap.data() : {};
-        const coins = Number(data.coins || 0);
-
-        // only set coins if not banned
-        if (!isBanned) this.$coin.textContent = `DF$ - ${this._compact(coins)}`;
-
-        // profile info (always show)
-        this.$pfp.style.backgroundImage = `url(${data.profile_picture || '/org-owner.jpg'})`;
-        const display = data['display name'] || user.email;
-        this.$name.textContent = display;
-        this.$email.textContent = data.tagline || user.email.replace(/@.*/, '');
-
-        // verified badge
-        if (data.is_verified) {
-          if (!this._verifiedIcon) {
-            const img = document.createElement('img');
-            img.src = '/assets/verified.png';
-            img.alt = 'Verified';
-            img.className = 'verified-icon';
-            this.$name.appendChild(img);
-            this._verifiedIcon = img;
-          }
-        } else if (this._verifiedIcon) {
-          this._verifiedIcon.remove();
-          this._verifiedIcon = null;
+        } catch (err) {
+          console.warn('Failed checking banned_users', err);
         }
 
-        this._showSignedInDropdownOptions();
+        try {
+          const snap = await db.collection('user_data').doc(user.email).get();
+          const data = snap.exists ? snap.data() : {};
+          const coins = Number(data.coins || 0);
+
+          if (!isBanned) this.$coin.textContent = `DF$ - ${this._compact(coins)}`;
+
+          this.$pfp.style.backgroundImage = `url(${data.profile_picture || '/org-owner.jpg'})`;
+          const display = data['display name'] || user.email;
+          this.$name.textContent = display;
+          this.$email.textContent = data.tagline || user.email.replace(/@.*/, '');
+
+          if (data.is_verified) {
+            if (!this._verifiedIcon) {
+              const img = document.createElement('img');
+              img.src = '/assets/verified.png';
+              img.alt = 'Verified';
+              img.className = 'verified-icon';
+              this.$name.appendChild(img);
+              this._verifiedIcon = img;
+            }
+          } else if (this._verifiedIcon) {
+            this._verifiedIcon.remove();
+            this._verifiedIcon = null;
+          }
+
+          this._showSignedInDropdownOptions();
+        } catch (err) {
+          console.warn('Failed loading user_data', err);
+          this._renderSignedInBasic(user);
+        }
       } catch (err) {
-        console.warn('Failed loading user_data', err);
-        this._renderSignedInBasic(user);
+        console.warn('Auth handling failed:', err);
+        this._renderSignedOut();
       }
     });
   }
 
+  async _runGlobalAccessChecks(db) {
+    if (this._globalGatesChecked && this._globalGatePromise) {
+      const result = await this._globalGatePromise;
+      if (result.locked) {
+        await this._takeoverWithHTML(result.path);
+        return true;
+      }
+      return false;
+    }
+
+    this._globalGatesChecked = true;
+    this._globalGatePromise = this._evaluateGlobalGates(db);
+    const result = await this._globalGatePromise;
+
+    if (result.locked) {
+      await this._takeoverWithHTML(result.path);
+      return true;
+    }
+
+    return false;
+  }
+
+  async _evaluateGlobalGates(db) {
+    try {
+      const [ipInfo, generalSnap] = await Promise.all([
+        this._fetchIpInfo(),
+        db.doc('server_global_data/general').get()
+      ]);
+
+      const generalData = generalSnap.exists ? generalSnap.data() || {} : {};
+
+      if (this._isTrue(generalData.maintenance)) {
+        return { locked: true, path: '/extras/503.html' };
+      }
+
+      const bannedCountries = Array.isArray(generalData.banned_countries)
+        ? generalData.banned_countries.map(v => String(v || '').trim().toUpperCase()).filter(Boolean)
+        : [];
+
+      const country = String(ipInfo?.country || '').trim().toUpperCase();
+      if (country && bannedCountries.includes(country)) {
+        return { locked: true, path: '/extras/451.html' };
+      }
+
+      const ip = String(ipInfo?.ip || '').trim();
+      if (ip) {
+        const ipDoc = await db.collection('banned_ips').doc(ip).get();
+        if (ipDoc.exists) {
+          return { locked: true, path: '/extras/403.html' };
+        }
+
+        const altQuery = await db.collection('banned_ips').where('ip', '==', ip).limit(1).get();
+        if (!altQuery.empty) {
+          return { locked: true, path: '/extras/403.html' };
+        }
+      }
+    } catch (err) {
+      console.warn('Global gate evaluation failed, allowing page to continue:', err);
+    }
+
+    return { locked: false, path: null };
+  }
+
+  async _fetchIpInfo() {
+    try {
+      const res = await fetch('https://ipinfo.io/json', {
+        method: 'GET',
+        cache: 'no-store',
+        credentials: 'omit',
+        mode: 'cors'
+      });
+
+      if (!res.ok) throw new Error(`ipinfo status ${res.status}`);
+
+      const data = await res.json();
+      return {
+        ip: data?.ip || '',
+        country: data?.country || ''
+      };
+    } catch (err) {
+      console.warn('IP info fetch failed:', err);
+      return { ip: '', country: '' };
+    }
+  }
+
+  async _ensureTermsAccepted(user, db) {
+    if (!user || !user.email) return true;
+
+    try {
+      const generalSnap = await db.doc('server_global_data/general').get();
+      const generalData = generalSnap.exists ? generalSnap.data() || {} : {};
+      const serverTerms = generalData.TermsUpdated;
+
+      if (!this._isFirestoreTimestamp(serverTerms)) {
+        return true;
+      }
+
+      const userSnap = await db.collection('user_data').doc(user.email).get();
+      const userData = userSnap.exists ? userSnap.data() || {} : {};
+      const lastAgreed = userData.terms_service_lastagreed;
+
+      const needsDialog =
+        !this._isFirestoreTimestamp(lastAgreed) ||
+        this._timestampToMillis(serverTerms) > this._timestampToMillis(lastAgreed);
+
+      if (!needsDialog) return true;
+
+      const accepted = await this._showTermsDialog();
+      if (!accepted) {
+        await this._takeoverWithHTML('/extras/403.html');
+        return false;
+      }
+
+      await db.collection('user_data').doc(user.email).set({
+        terms_service_lastagreed: firebase.firestore.Timestamp.now()
+      }, { merge: true });
+
+      return true;
+    } catch (err) {
+      console.warn('Terms check failed:', err);
+      return true;
+    }
+  }
+
+  _showTermsDialog() {
+    return new Promise(resolve => {
+      if (this._pageLocked) {
+        resolve(false);
+        return;
+      }
+
+      const existing = document.getElementById('dp-terms-overlay');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'dp-terms-overlay';
+      overlay.innerHTML = `
+        <style>
+          #dp-terms-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.72);
+            backdrop-filter: blur(8px);
+            padding: 20px;
+            box-sizing: border-box;
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+          }
+          #dp-terms-overlay .card {
+            width: min(720px, 100%);
+            max-height: min(80vh, 720px);
+            overflow: auto;
+            background: var(--terms-bg, #141414);
+            color: var(--terms-text, #f2f2f2);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.45);
+            padding: 24px;
+            box-sizing: border-box;
+          }
+          #dp-terms-overlay h2 {
+            margin: 0 0 12px 0;
+            font-size: 22px;
+            line-height: 1.2;
+          }
+          #dp-terms-overlay p {
+            margin: 0 0 12px 0;
+            line-height: 1.6;
+            opacity: 0.95;
+          }
+          #dp-terms-overlay .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            flex-wrap: wrap;
+          }
+          #dp-terms-overlay button {
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+          }
+          #dp-terms-overlay .accept {
+            background: #4f7cff;
+            color: white;
+          }
+          #dp-terms-overlay .decline {
+            background: rgba(255,255,255,0.08);
+            color: inherit;
+          }
+        </style>
+        <div class="card" role="dialog" aria-modal="true" aria-labelledby="dp-terms-title">
+          <h2 id="dp-terms-title">Updated Terms of Service</h2>
+          <p>The Terms of Service have changed. You need to accept the latest version to keep using the site.</p>
+          <p>By accepting, you confirm that you agree to the current terms and can continue.</p>
+          <div class="actions">
+            <button class="decline" id="dp-terms-decline">Decline</button>
+            <button class="accept" id="dp-terms-accept">Accept</button>
+          </div>
+        </div>
+      `;
+
+      const cleanup = () => {
+        const node = document.getElementById('dp-terms-overlay');
+        if (node) node.remove();
+      };
+
+      const declineBtn = overlay.querySelector('#dp-terms-decline');
+      const acceptBtn = overlay.querySelector('#dp-terms-accept');
+
+      declineBtn.addEventListener('click', async () => {
+        cleanup();
+        resolve(false);
+      });
+
+      acceptBtn.addEventListener('click', async () => {
+        cleanup();
+        resolve(true);
+      });
+
+      overlay.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          cleanup();
+          resolve(false);
+        }
+      });
+
+      document.body.appendChild(overlay);
+      acceptBtn.focus();
+    });
+  }
+
+  async _takeoverWithHTML(path) {
+    if (this._pageLocked) return;
+    this._pageLocked = true;
+
+    try {
+      if (this._authUnsub) {
+        try { this._authUnsub(); } catch (_) {}
+        this._authUnsub = null;
+      }
+
+      const res = await fetch(path, {
+        cache: 'no-store',
+        credentials: 'same-origin'
+      });
+
+      const html = await res.text();
+      const parsed = new DOMParser().parseFromString(html, 'text/html');
+
+      if (parsed && parsed.documentElement && parsed.documentElement.innerHTML) {
+        document.documentElement.innerHTML = parsed.documentElement.innerHTML;
+        if (parsed.title) document.title = parsed.title;
+      } else {
+        document.body.innerHTML = html;
+      }
+    } catch (err) {
+      console.error('Failed loading takeover page:', err);
+      document.documentElement.innerHTML = `
+        <head>
+          <title>Access blocked</title>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#111;color:#eee}
+            .wrap{min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;text-align:center}
+            .card{max-width:560px;padding:28px;border:1px solid rgba(255,255,255,.08);border-radius:20px;background:rgba(255,255,255,.04)}
+            h1{margin:0 0 10px;font-size:32px}
+            p{margin:0;opacity:.85;line-height:1.6}
+          </style>
+        </head>
+        <body>
+          <div class="wrap">
+            <div class="card">
+              <h1>Access blocked</h1>
+              <p>The requested page could not be loaded.</p>
+            </div>
+          </div>
+        </body>
+      `;
+    }
+  }
 
   _showSignedInDropdownOptions() {
     if (this.$login) this.$login.style.display = 'none';
     if (this.$edit) this.$edit.style.display = '';
     if (this.$logout) this.$logout.style.display = '';
 
-    // ensure redeem link visible and enabled when signed in
     if (this.$redeem) this.$redeem.style.display = '';
     if (this.$trans) this.$trans.classList.add('disabled');
 
-    // settings/support should remain visually disabled for now
     if (this.$settings) this.$settings.classList.add('disabled');
     if (this.$support) this.$support.classList.add('disabled');
   }
+
   _showSignedOutDropdownOptions() {
     if (this.$login) this.$login.style.display = '';
     if (this.$edit) this.$edit.style.display = 'none';
@@ -498,6 +840,7 @@ class DPTopbar extends HTMLElement {
   }
 
   _renderSignedOut() {
+    if (this._pageLocked) return;
     this.$coin.textContent = `DF$ - 0`;
     this.$pfp.style.backgroundImage = `url('/org-owner.jpg')`;
     this.$name.textContent = 'Not signed in';
@@ -506,6 +849,7 @@ class DPTopbar extends HTMLElement {
   }
 
   _renderSignedInBasic(user) {
+    if (this._pageLocked) return;
     this.$coin.textContent = `DF$ - 0`;
     this.$pfp.style.backgroundImage = `url('/org-owner.jpg')`;
     this.$name.textContent = user.email;
@@ -516,10 +860,27 @@ class DPTopbar extends HTMLElement {
   }
 
   _compact(n) {
-    try { return Intl.NumberFormat('en', { notation: 'compact' }).format(n); }
-    catch (e) { return String(n); }
+    try {
+      return Intl.NumberFormat('en', { notation: 'compact' }).format(n);
+    } catch (e) {
+      return String(n);
+    }
+  }
+
+  _isFirestoreTimestamp(value) {
+    return !!value && typeof value.toMillis === 'function';
+  }
+
+  _timestampToMillis(value) {
+    if (!value) return 0;
+    if (typeof value.toMillis === 'function') return value.toMillis();
+    if (typeof value.seconds === 'number') return value.seconds * 1000;
+    return 0;
+  }
+
+  _isTrue(value) {
+    return value === true;
   }
 }
 
 customElements.define('dp-topbar', DPTopbar);
-
