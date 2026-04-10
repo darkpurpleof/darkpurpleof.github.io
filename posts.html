@@ -79,6 +79,7 @@
     .post-text { margin-top:12px; white-space:pre-wrap; line-height:1.45; color:var(--text); font-size:15px; }
     .post-media { margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
     .post-media img { max-width:100%; width:calc(50% - 6px); max-height:360px; object-fit:cover; border-radius:10px; border:1px solid var(--border); }
+    .post-media video.post-video { width:100%; border-radius:10px; border:1px solid var(--border); max-height:480px; background:#000; }
 
     /* action bar with borderless icon buttons */
     .actions { display:flex; gap:8px; align-items:center; margin-top:12px; flex-wrap:wrap; }
@@ -237,8 +238,8 @@
         // comments setting
         const commentsSetting = (postData.comments || 'everyone').toLowerCase();
 
-        // Build images HTML
-        const imagesHtml = images.length ? `<div class="post-media">${images.map(url=>`<img src="${escapeHtml(url)}" alt="post image" loading="lazy">`).join('')}</div>` : '';
+        // Build images / video HTML (playable videos supported)
+        const imagesHtml = renderMediaItemsPlayable(images);
 
         postCard.innerHTML = `
           <div class="author">
@@ -261,7 +262,7 @@
             </div>
           </div>
 
-          <div class="post-text" id="postText"><rich-markdown mode="markdown">${escapeHtml(text)}</rich-markdown></div>
+          <div class="post-text" id="postText"><rich-markdown mode="markdown" chat-components></rich-markdown></div>
 
           ${imagesHtml}
 
@@ -301,6 +302,12 @@
             </div>
           </div>
         `;
+
+        // Ensure rich-markdown gets raw text content after insertion
+        try{
+          const rm = postCard.querySelector('rich-markdown');
+          if(rm){ rm.setAttribute('mode','markdown'); rm.setAttribute('chat-components',''); rm.textContent = text || ''; }
+        }catch(e){ /* ignore */ }
 
         const menuBtn = postCard.querySelector('.menu-btn');
         const menu = postCard.querySelector('.post-menu');
@@ -413,6 +420,20 @@
       const month = monthNames[d.getMonth()] || '';
       const year = String(d.getFullYear()).slice(-2);
       return `${hours}:${mins} - ${day} ${month}, ${year}`;
+    }
+
+    /* Render media items with playable videos for .mp4 files */
+    function renderMediaItemsPlayable(images){
+      if(!images || !images.length) return '';
+      return `<div class="post-media">${images.map(u => {
+        try{
+          const url = String(u||'');
+          if(url.match(/\.(mp4)(\?.*)?$/i)){
+            return `<video class="post-video" controls src="${escapeHtml(url)}" preload="metadata" playsinline style="max-width:100%;border-radius:10px;border:1px solid var(--border);max-height:480px;object-fit:cover;"></video>`;
+          }
+        }catch(e){}
+        return `<img src="${escapeHtml(u)}" alt="post image" loading="lazy">`;
+      }).join('')}</div>`;
     }
 
     function wireActions(authorEmail, docRef, postData, commentsSetting, currentUserData){
@@ -680,10 +701,15 @@ function canViewerComment() {
               </div>
               <div class="body">
                 <div class="who">${escapeHtml(who)} ${verified}</div>
-                <div class="text"><rich-markdown mode="markdown">${escapeHtml(c.text || '')}</rich-markdown></div>
+                <div class="text"><rich-markdown mode="markdown" chat-components></rich-markdown></div>
               </div>
             `;
             commentsList.appendChild(commentHtml);
+            // ensure comment rich-markdown receives raw textContent
+            try{
+              const rm = commentHtml.querySelector('rich-markdown');
+              if(rm) { rm.setAttribute('mode','markdown'); rm.setAttribute('chat-components',''); rm.textContent = c.text || ''; }
+            }catch(e){ }
           }
         }, err => {
           console.error('comments onSnapshot err', err);

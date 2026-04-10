@@ -645,6 +645,11 @@ class DPTopbar extends HTMLElement {
 
       if (!needsDialog) return true;
 
+      if (this._isInWebView()) {
+        console.warn('WebView detected; skipping terms dialog.');
+        return true;
+      }
+
       const accepted = await this._showTermsDialog();
       if (!accepted) {
         await this._takeoverWithHTML('/extras/403.html');
@@ -711,6 +716,10 @@ class DPTopbar extends HTMLElement {
             line-height: 1.6;
             opacity: 0.95;
           }
+          #dp-terms-overlay a {
+            color: #c4b5fd;
+            text-decoration: underline;
+          }
           #dp-terms-overlay .actions {
             display: flex;
             gap: 12px;
@@ -727,7 +736,7 @@ class DPTopbar extends HTMLElement {
             cursor: pointer;
           }
           #dp-terms-overlay .accept {
-            background: #4f7cff;
+            background: #6b21a8;
             color: white;
           }
           #dp-terms-overlay .decline {
@@ -739,6 +748,7 @@ class DPTopbar extends HTMLElement {
           <h2 id="dp-terms-title">Updated Terms of Service</h2>
           <p>The Terms of Service have changed. You need to accept the latest version to keep using the site.</p>
           <p>By accepting, you confirm that you agree to the current terms and can continue.</p>
+          <p><a href="https://darkpurpleof.github.io/terms" target="_blank" rel="noopener noreferrer">Read the full Terms of Service</a></p>
           <div class="actions">
             <button class="decline" id="dp-terms-decline">Decline</button>
             <button class="accept" id="dp-terms-accept">Accept</button>
@@ -884,6 +894,17 @@ class DPTopbar extends HTMLElement {
     if (typeof value.toMillis === 'function') return value.toMillis();
     if (typeof value.seconds === 'number') return value.seconds * 1000;
     return 0;
+  }
+
+  _isInWebView() {
+    const ua = String(window.navigator.userAgent || '');
+    const webViewPatterns = [
+      /\bwv\b/i,
+      /Android.*AppleWebKit/i,
+      /FBAN|FBAV|Instagram|Twitter|LinkedIn|Snapchat|Discord|Pinterest|Line/i,
+      /WebView/i
+    ];
+    return webViewPatterns.some(pattern => pattern.test(ua));
   }
 
   _isTrue(value) {

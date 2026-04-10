@@ -322,11 +322,11 @@
       const dlist = [
         `<div><strong>Profile email:</strong> ${escapeHtml(fb.email)}</div>`,
         `<div><strong>Verified:</strong> ${fb.is_verified ? 'Yes' : 'No'}</div>`,
-        `<div style=\"color:var(--muted);margin-top:6px;\">Limited access.</div>`
-      ];
+          `<div style=\"color:var(--muted);margin-top:6px;\">User not found</div>`
+        ];
       detailsList.innerHTML = dlist.join('');
 
-      showToast('Limited access', 'yellow', 4500);
+      showToast('User Not Found', 'yellow', 4500);
     }
 
     function handleFirestoreError(err, emailArg, key){
@@ -378,7 +378,7 @@
       // reasons: 'follow', 'friend', 'post', 'block' (block always allowed UI-wise), 'report'
       if (reason === 'follow') return !!(permissionDeniedFor.followers || permissionDeniedFor.following || permissionDeniedFor.followDoc);
       if (reason === 'friend') return !!(permissionDeniedFor.friends || permissionDeniedFor.friendDocs || permissionDeniedFor.requests);
-      if (reason === 'post') return !!permissionDeniedFor.posts;
+      if (reason === 'post') return !!(permissionDeniedFor.posts || permissionDeniedFor.viewedUser);
       return false;
     }
 
@@ -517,10 +517,10 @@
 
       // relationship doc listeners (many small doc listeners):
       if (currentUser) {
-        const currentId = docIdFromEmail(currentUser.email);
-        const otherId = docIdFromEmail(emailArg);
+        const currentEmail = currentUser.email;
+        const otherEmail = emailArg;
 
-        const followDocRef = db.collection('following').doc(currentId).collection('usersIFollow').doc(otherId);
+        const followDocRef = db.collection('following').doc(currentEmail).collection('usersIFollow').doc(otherEmail);
         const unsubFollowDoc = followDocRef.onSnapshot(snap => {
           relationshipState.isFollowing = snap.exists;
           if (permissionDeniedFor.followDoc) delete permissionDeniedFor.followDoc;
@@ -528,7 +528,7 @@
         }, err => { handleFirestoreError(err, emailArg, 'followDoc'); });
         unsubscribes.push(unsubFollowDoc);
 
-        const followedByDocRef = db.collection('followers').doc(currentId).collection('usersWhoFollowMe').doc(otherId);
+        const followedByDocRef = db.collection('followers').doc(currentEmail).collection('usersWhoFollowMe').doc(otherEmail);
         const unsubFollowedByDoc = followedByDocRef.onSnapshot(snap => {
           relationshipState.isFollowedBy = snap.exists;
           if (permissionDeniedFor.followedByDoc) delete permissionDeniedFor.followedByDoc;
@@ -536,17 +536,17 @@
         }, err => { handleFirestoreError(err, emailArg, 'followedByDoc'); });
         unsubscribes.push(unsubFollowedByDoc);
 
-        const friendARef = db.collection('friends').doc(currentId).collection('friendlist').doc(otherId);
+        const friendARef = db.collection('friends').doc(currentEmail).collection('friendlist').doc(otherEmail);
         const unsubFriendA = friendARef.onSnapshot(snap => {
           renderInteractionButtons();
         }, err => { handleFirestoreError(err, emailArg, 'friendA'); });
         unsubscribes.push(unsubFriendA);
 
-        const friendBRef = db.collection('friends').doc(otherId).collection('friendlist').doc(currentId);
+        const friendBRef = db.collection('friends').doc(otherEmail).collection('friendlist').doc(currentEmail);
         const unsubFriendB = friendBRef.onSnapshot(async snap => {
           try {
-            const aSnap = await db.collection('friends').doc(currentId).collection('friendlist').doc(otherId).get();
-            const bSnap = await db.collection('friends').doc(otherId).collection('friendlist').doc(currentId).get();
+            const aSnap = await db.collection('friends').doc(currentEmail).collection('friendlist').doc(otherEmail).get();
+            const bSnap = await db.collection('friends').doc(otherEmail).collection('friendlist').doc(currentEmail).get();
             relationshipState.friendExists = aSnap.exists && bSnap.exists;
             if (permissionDeniedFor.friendDocs) delete permissionDeniedFor.friendDocs;
           } catch(e) {
@@ -565,7 +565,7 @@
         unsubscribes.push(unsubFriendB);
 
         // requests
-        const requestSentRef = db.collection('friends').doc(currentId).collection('requests').doc(otherId);
+        const requestSentRef = db.collection('friends').doc(otherEmail).collection('requests').doc(currentEmail);
         const unsubRequestSent = requestSentRef.onSnapshot(snap => {
           relationshipState.requestSent = snap.exists;
           if (permissionDeniedFor.requests) delete permissionDeniedFor.requests;
@@ -573,7 +573,7 @@
         }, err => { handleFirestoreError(err, emailArg, 'requests'); });
         unsubscribes.push(unsubRequestSent);
 
-        const requestReceivedRef = db.collection('friends').doc(otherId).collection('requests').doc(currentId);
+        const requestReceivedRef = db.collection('friends').doc(currentEmail).collection('requests').doc(otherEmail);
         const unsubRequestReceived = requestReceivedRef.onSnapshot(snap => {
           relationshipState.requestReceived = snap.exists;
           if (permissionDeniedFor.requestReceived) delete permissionDeniedFor.requestReceived;
@@ -611,7 +611,7 @@
       postBtn.className = 'btn';
       postBtn.textContent = `Post to Wall`;
       if (isActionDisabled('post')) {
-        postBtn.disabled = true; postBtn.title = 'Unavailable due to limited permissions'; postBtn.style.opacity = 0.6;
+        postBtn.disabled = true; postBtn.title = 'User does not exist'; postBtn.style.opacity = 0.6;
       } else {
         postBtn.addEventListener('click', () => { window.location.href = `/createpost?wall=${otherEmailEsc}`; });
       }
@@ -621,7 +621,7 @@
       postBtn1.className = 'btn';
       postBtn1.textContent = `Chat with ${nameForButtons}`;
       if (isActionDisabled('post')) {
-        postBtn1.disabled = true; postBtn1.title = 'Unavailable due to limited permissions'; postBtn1.style.opacity = 0.6;
+        postBtn1.disabled = true; postBtn1.title = 'User does not exist'; postBtn1.style.opacity = 0.6;
       } else {
         postBtn1.addEventListener('click', () => { window.location.href = `/chat?email=${otherEmailEsc}`; });
       }
@@ -639,7 +639,7 @@
         followBtn.style.opacity = 0.6;
       } else if (isFallbackProfile) {
         followBtn.disabled = true;
-  followBtn.title = 'Unavailable in limited profile view';
+  followBtn.title = 'Unavailable because user was not found';
   followBtn.style.opacity = 0.6;
       } else {
         followBtn.addEventListener('click', async () => {
@@ -675,7 +675,7 @@
       if (relationshipState.friendExists) {
         friendBtn.textContent = `Remove Friend`;
         if (isActionDisabled('friend')) {
-          friendBtn.disabled = true; friendBtn.title = 'Unavailable due to limited permissions'; friendBtn.style.opacity = 0.6;
+          friendBtn.disabled = true; friendBtn.title = 'User does not exist'; friendBtn.style.opacity = 0.6;
         } else {
           friendBtn.addEventListener('click', async () => {
             if (!confirm(`Remove ${nameForButtons} from friends?`)) return;
@@ -687,13 +687,14 @@
           });
         }
       } else if (relationshipState.requestReceived) {
+        friendBtn.className = 'btn primary';
         friendBtn.textContent = `Accept Friend Request`;
         if (isActionDisabled('friend')) {
-          friendBtn.disabled = true; friendBtn.title = 'Unavailable due to limited permissions'; friendBtn.style.opacity = 0.6;
+          friendBtn.disabled = true; friendBtn.title = 'User does not exist'; friendBtn.style.opacity = 0.6;
         } else {
           friendBtn.addEventListener('click', async () => {
             try {
-              await db.collection('friends').doc(viewedEmail).collection('requests').doc(currentUser.email).delete().catch(()=>{});
+              await db.collection('friends').doc(currentUser.email).collection('requests').doc(viewedEmail).delete().catch(()=>{});
               await db.collection('friends').doc(currentUser.email).collection('friendlist').doc(viewedEmail).set({ email: viewedEmail, created: firebase.firestore.FieldValue.serverTimestamp() });
               await db.collection('friends').doc(viewedEmail).collection('friendlist').doc(currentUser.email).set({ email: currentUser.email, created: firebase.firestore.FieldValue.serverTimestamp() });
               showToast('Friend request accepted', 'purple');
@@ -711,17 +712,17 @@
           friendBtn.title = "You have blocked this user — unblock to send request";
           friendBtn.style.opacity = 0.6;
         } else if (isActionDisabled('friend')) {
-          friendBtn.disabled = true; friendBtn.title = 'Unavailable due to limited permissions'; friendBtn.style.opacity = 0.6;
+          friendBtn.disabled = true; friendBtn.title = 'User does not exist'; friendBtn.style.opacity = 0.6;
         } else {
           friendBtn.addEventListener('click', async () => {
             try {
               const friendExistsDoc = await db.collection('friends').doc(viewedEmail).collection('friendlist').doc(currentUser.email).get();
               if (friendExistsDoc.exists) { showToast('You are already friends', 'yellow'); return; }
 
-              const alreadySent = await db.collection('friends').doc(currentUser.email).collection('requests').doc(viewedEmail).get();
+              const alreadySent = await db.collection('friends').doc(viewedEmail).collection('requests').doc(currentUser.email).get();
               if (alreadySent.exists) { showToast('Request already pending', 'yellow'); return; }
 
-              await db.collection('friends').doc(currentUser.email).collection('requests').doc(viewedEmail).set({ from: currentUser.email, to: viewedEmail, created: firebase.firestore.FieldValue.serverTimestamp() });
+              await db.collection('friends').doc(viewedEmail).collection('requests').doc(currentUser.email).set({ from: currentUser.email, to: viewedEmail, created: firebase.firestore.FieldValue.serverTimestamp() });
               showToast('Friend request sent', 'purple');
             } catch (err) { console.error('send request', err); if (isFirestorePermissionError(err)) handleFirestoreError(err, viewedEmail, 'friendAction'); else showToast('Failed', 'red'); }
           });
@@ -746,7 +747,8 @@
               db.collection('following').doc(currentUser.email).collection('usersIFollow').doc(viewedEmail).delete().catch(()=>{}),
               db.collection('friends').doc(currentUser.email).collection('friendlist').doc(viewedEmail).delete().catch(()=>{}),
               db.collection('friends').doc(viewedEmail).collection('friendlist').doc(currentUser.email).delete().catch(()=>{}),
-              db.collection('friends').doc(currentUser.email).collection('requests').doc(viewedEmail).delete().catch(()=>{})
+              db.collection('friends').doc(currentUser.email).collection('requests').doc(viewedEmail).delete().catch(()=>{}),
+              db.collection('friends').doc(viewedEmail).collection('requests').doc(currentUser.email).delete().catch(()=>{})
             ];
             await Promise.all(ops);
             showToast('User blocked', 'purple');

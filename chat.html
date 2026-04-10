@@ -115,6 +115,7 @@
   .msg-image { max-width:100%; width:auto; height:auto; border-radius:8px; display:block; cursor:pointer; }
   .msg-sticker { max-width:40%; width:auto; height:auto; border-radius:8px; cursor:pointer; display:block; }
   .msg-file { display:inline-block; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:rgba(0,0,0,0.06); cursor:pointer; max-width:100%; overflow-wrap:anywhere; word-break:break-word; }
+  .msg-video { max-width:100%; width:auto; height:auto; border-radius:8px; display:block; }
 
   /* bottom composer */
   .composer { display:flex; gap:12px; align-items:center; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--card); }
@@ -238,6 +239,9 @@
   // unsubscribe handles for Firestore listeners so we don't leak listeners and mix chats
   let messagesUnsub = null;
   let chatUnsub = null;
+
+  // local messages for sending states
+  let localMessages = [];
 
   const emojiMap = {
     verified: 'https://darkpurpleof.github.io/assets/verified.png',
@@ -614,7 +618,16 @@
   }
 
   function formatTime(ts){
-    try{ const d = ts.toDate(); return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch(e){ return ""; }
+    try{
+      // Firestore Timestamp has toDate(), local Date objects are instanceof Date
+      let d;
+      if(!ts) return "";
+      if(typeof ts.toDate === 'function') d = ts.toDate();
+      else if(ts instanceof Date) d = ts;
+      else if(typeof ts === 'number') d = new Date(ts);
+      else return "";
+      return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    }catch(e){ return ""; }
   }
 
   function formatDate(ts){
@@ -624,13 +637,14 @@
   function clearMessages(){ messagesEl.innerHTML=""; }
 
   function extractTags(text){
-    const images=[]; const files=[]; const stickers=[];
+    const images=[]; const files=[]; const stickers=[]; const videos=[];
 
     text = text.replace(/<image>(.*?)<\/image>/gi,(m,u)=>{images.push(u);return ""});
     text = text.replace(/<file>(.*?)<\/file>/gi,(m,u)=>{files.push(u);return ""});
     text = text.replace(/<sticker>(.*?)<\/sticker>/gi,(m,u)=>{stickers.push(u);return ""});
+    text = text.replace(/<video>(.*?)<\/video>/gi,(m,u)=>{videos.push(u);return ""});
 
-    return {text,images,files,stickers};
+    return {text,images,files,stickers,videos};
   }
 
   // extractBubbleColor: detects <redmessage>..</redmessage> or <colormessage color="#rrggbb">..</colormessage>
@@ -719,7 +733,7 @@
     }
 
     // Check if there's content for bubble
-    const hasContent = parsed.text.trim() || parsed.images.length > 0 || parsed.files.length > 0 || detected.length > 0;
+    const hasContent = parsed.text.trim() || parsed.images.length > 0 || parsed.files.length > 0 || detected.length > 0 || parsed.videos.length > 0;
 
     if (hasContent) {
       // create bubble
@@ -775,9 +789,27 @@
         bubble.appendChild(a);
       });
 
+      parsed.videos.forEach(url=>{
+        const video=document.createElement("video");
+        video.src=url;
+        video.className="msg-video";
+        video.controls=true;
+        video.preload="metadata";
+        bubble.appendChild(video);
+      });
+
       const text=document.createElement("div");
       // use innerHTML because parseRichTextToHtml returns safe escaped HTML with our tags inserted
       text.innerHTML=parseRichTextToHtml(parsed.text);
+      if(data.status === 'failed'){
+        text.style.fontStyle = 'italic';
+        // make failed bubble neutral/gray so users know it didn't send
+        try{
+          bubble.style.background = '#2f2f2f';
+          bubble.style.color = 'var(--muted)';
+          bubble.style.border = '1px solid rgba(255,255,255,0.03)';
+        }catch(e){}
+      }
       bubble.appendChild(text);
 
       // align bubble properly (wrap in a container to allow margin-left:auto for mine)
@@ -799,10 +831,18 @@
 
     meta.appendChild(time);
 
-    if(isMine && data.read){
-      const read=document.createElement("div");
-      read.textContent="Read";
-      meta.appendChild(read);
+    let statusText = '';
+    if(isMine){
+      if(data.status === 'sending') statusText = 'Sending...';
+      else if(data.status === 'failed') statusText = 'Not Sent';
+      else if(data.read) statusText = 'Read';
+      else statusText = 'Delivered';
+    }
+
+    if(statusText){
+      const statusDiv=document.createElement("div");
+      statusDiv.textContent=statusText;
+      meta.appendChild(statusDiv);
     }
 
     container.appendChild(meta);
@@ -827,6 +867,10 @@
         input.disabled = true;
         sendBtn.disabled = true;
         // show hint in topbar
+        // ensure chat and secondary topbar remain visible
+        try{ secTopbar.style.display = 'block'; }catch(e){}
+        try{ messagesWrap.style.display = 'block'; }catch(e){}
+        try{ document.getElementById('chat-list').style.display = 'flex'; }catch(e){}
         const hint = document.getElementById('chats-disabled-hint');
         if(!hint){
           const h = document.createElement('div');
@@ -900,6 +944,18 @@
     // messages-wrap already z-index:1 in CSS
   }
 
+  // simple toast helper: type can be 'purple', 'yellow', 'red'
+  function showToast(msg, type='purple'){
+    const t = $('#toast');
+    if(!t) return;
+    t.textContent = msg;
+    t.className = type;
+    t.style.display = 'block';
+    // auto-hide after a short period
+    clearTimeout(t._hideTimer);
+    t._hideTimer = setTimeout(()=>{ t.style.display='none'; }, 6000);
+  }
+
   // recalc background on window resize so wallpaper behavior updates when changing orientation/size
   window.addEventListener('resize', ()=>{ applyChatBackground(); });
 
@@ -913,6 +969,7 @@
 
     // clear UI immediately when switching chats
     clearMessages();
+    localMessages = []; // clear local messages when switching chats
 
     messagesUnsub = db.collection("chats")
     .doc(chatId)
@@ -963,6 +1020,14 @@
 
       }
 
+      // render local messages
+      for(const localMsg of localMessages){
+        // avoid duplicating local messages if we've already rendered them into the DOM
+        if(document.getElementById('msg-' + localMsg.id)) continue;
+        const node = await renderMessage(localMsg, localMsg.id);
+        messagesEl.appendChild(node);
+      }
+
       // --- ensure chat-bg height matches messages content so repeat covers entire scrollable area ---
       try{
         applyChatBackground();
@@ -988,6 +1053,7 @@
 
     // clear UI while we attach new listeners
     clearMessages();
+    localMessages = [];
 
     chatUnsub = db.collection("chats")
     .doc(chatId)
@@ -999,6 +1065,26 @@
       otherUserEmail = users.find(u=>u!==currentUser.email);
 
       if(!otherUserEmail) return;
+
+      // show a minimal topbar immediately so it doesn't disappear if user_data can't be fetched
+      try{
+        secTopbar.style.display = 'block';
+        secTopbar.innerHTML = '';
+        const placeholderInfo = document.createElement('div');
+        placeholderInfo.className = 'info';
+        const backBtn = document.createElement('button');
+        backBtn.id = 'back-btn'; backBtn.title = 'Back'; backBtn.innerHTML = '&#8592;';
+        backBtn.onclick = ()=>{ document.body.classList.remove('mobile-chat-open'); };
+        placeholderInfo.appendChild(backBtn);
+        const img = document.createElement('img'); img.src = 'https://darkpurpleof.github.io/org-owner.jpg'; img.onerror = ()=>{ img.src='https://darkpurpleof.github.io/org-owner.jpg'; };
+        placeholderInfo.appendChild(img);
+        const names = document.createElement('div'); names.className = 'names';
+        const nameDiv = document.createElement('div'); nameDiv.className = 'name'; nameDiv.textContent = otherUserEmail || 'Chat';
+        const sub = document.createElement('div'); sub.className = 'sub'; sub.textContent = otherUserEmail || '';
+        names.appendChild(nameDiv); names.appendChild(sub);
+        placeholderInfo.appendChild(names);
+        secTopbar.appendChild(placeholderInfo);
+      }catch(e){}
 
       // listen to other user's public data (to show name, pfp, verified, chats_enabled etc.)
       db.collection("user_data")
@@ -1098,17 +1184,79 @@
     const text=input.value.replace(/\r/g,'').trim();
     if(!text) return;
 
-    await db.collection("chats")
-    .doc(currentChatId)
-    .collection("messages")
-    .add({
-      senderId:currentUser.email,
-      text:text,
-      timestamp:firebase.firestore.FieldValue.serverTimestamp(),
-      read:false
-    });
+    const localMsg = {
+      id: 'local_' + Date.now(),
+      senderId: currentUser.email,
+      text: text,
+      timestamp: new Date(),
+      read: false,
+      status: 'sending'
+    };
+
+    localMessages.push(localMsg);
+
+    // append this local message into the DOM without re-attaching the Firestore listener
+    (async ()=>{
+      const node = await renderMessage(localMsg, localMsg.id);
+      messagesEl.appendChild(node);
+      // if user is near bottom, scroll to bottom so they see their message
+      const isNearBottom = (messagesWrap.scrollHeight - messagesWrap.scrollTop - messagesWrap.clientHeight) < 160;
+      if(isNearBottom) messagesWrap.scrollTop = messagesWrap.scrollHeight;
+    })();
 
     input.value="";
+
+    try {
+      await db.collection("chats")
+      .doc(currentChatId)
+      .collection("messages")
+      .add({
+        senderId:currentUser.email,
+        text:text,
+        timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+        read:false
+      });
+
+      // mark local message delivered and update its DOM node if present
+      localMsg.status = 'delivered';
+      const el = document.getElementById('msg-' + localMsg.id);
+      if(el){
+        const meta = el.querySelector('.message-meta');
+        if(meta){
+          const statusDiv = document.createElement('div');
+          statusDiv.textContent = 'Delivered';
+          meta.appendChild(statusDiv);
+        }
+      }
+      // remove local copy so it doesn't persist as a stray message
+      localMessages = localMessages.filter(m => m.id !== localMsg.id);
+      const localEl = document.getElementById('msg-' + localMsg.id);
+      if(localEl) localEl.remove();
+
+    } catch (e) {
+      // mark failed and keep original text; display status and keep send timestamp
+      localMsg.status = 'failed';
+
+      const el = document.getElementById('msg-' + localMsg.id);
+      if(el){
+        const meta = el.querySelector('.message-meta');
+        if(meta){
+          const statusDiv = document.createElement('div');
+          statusDiv.textContent = 'Not Sent';
+          meta.appendChild(statusDiv);
+        }
+      }
+
+      // disable composer input and button and visually indicate disabled
+      composer.classList.add('disabled');
+      input.disabled = true;
+      sendBtn.disabled = true;
+
+      // show toast asking user to refresh
+      showToast('Message failed to send', 'red');
+      // keep the user view at the bottom so they don't jump to the top
+      try{ messagesWrap.scrollTop = messagesWrap.scrollHeight; }catch(e){}
+    }
 
   };
 
@@ -1172,11 +1320,22 @@
         const pfp=document.createElement("div");
         pfp.className="chat-pfp";
 
-        const user=await db.collection("user_data").doc(other).get();
-        const otherData = user.exists ? user.data() : null;
-        const isBlockedByOther = otherData && otherData.blockedUsers && otherData.blockedUsers.includes(currentUser.email);
-        const pic = isBlockedByOther ? "https://darkpurpleof.github.io/org-owner.jpg" : (user.exists ? user.data().profile_picture : "https://darkpurpleof.github.io/org-owner.jpg");
-        pfp.style.backgroundImage=`url(${pic||"https://darkpurpleof.github.io/org-owner.jpg"})`;
+        let otherData = null;
+        let isBlockedByOther = false;
+        let pic = "https://darkpurpleof.github.io/org-owner.jpg";
+        try{
+          const user = await db.collection("user_data").doc(other).get();
+          otherData = user.exists ? user.data() : null;
+          isBlockedByOther = otherData && otherData.blockedUsers && otherData.blockedUsers.includes(currentUser.email);
+          pic = isBlockedByOther ? "https://darkpurpleof.github.io/org-owner.jpg" : (user.exists ? user.data().profile_picture : "https://darkpurpleof.github.io/org-owner.jpg");
+        }catch(e){
+          console.warn('Failed to fetch user_data for chat list entry', other, e);
+          // fallback to defaults so the chat item still appears
+          otherData = null;
+          isBlockedByOther = false;
+          pic = "https://darkpurpleof.github.io/org-owner.jpg";
+        }
+        pfp.style.backgroundImage = `url(${pic||"https://darkpurpleof.github.io/org-owner.jpg"})`;
 
         const body=document.createElement("div");
         body.className="chat-body";

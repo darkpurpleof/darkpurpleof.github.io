@@ -167,6 +167,13 @@ dp-topbar {
 .post-images{ margin-top:12px; display:flex; background-repeat: no-repeat; gap:10px; flex-wrap:wrap; }
 .post-images img{ max-width:100%; max-height:320px; object-fit:cover; border-radius:10px; border:1px solid var(--border); }
 
+/* Video preview styles: show a non-playable preview with a centered play-overlay */
+.video-preview{ position:relative; display:inline-block; border-radius:10px; overflow:hidden; max-width:100%; }
+.video-preview .preview-video{ display:block; width:100%; max-height:320px; object-fit:cover; pointer-events:none; user-select:none; }
+.video-preview .play-overlay{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:auto; }
+.video-preview .play-overlay svg{ width:48px; height:48px; }
+.video-preview:focus{ outline:2px solid rgba(255,255,255,0.06); }
+
 /* actions row */
 .actions-row{ display:flex; gap:8px; margin-top:12px; align-items:center; flex-wrap:wrap; }
 .icon-btn{
@@ -300,6 +307,29 @@ const ICONS = {
   </svg>`
 };
 
+/* Play button SVG */
+const PLAY_SVG = `<svg width="48" height="48" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.45)" />
+  <path d="M10 8l6 4-6 4z" fill="white" />
+</svg>`;
+
+/* Render media items (images + video previews). Videos (.mp4) render a non-playable preview with a play-overlay. */
+function renderMediaItems(images){
+  if(!images || !images.length) return '';
+  return `<div class="post-images">${images.map(u => {
+    try{
+      const url = String(u||'');
+      if(url.match(/\.(mp4)(\?.*)?$/i)){
+        return `<div class="video-preview" data-src="${escapeHtml(url)}" tabindex="0" role="button" aria-label="Video preview, not playable">
+            <video class="preview-video" src="${escapeHtml(url)}" preload="metadata" muted playsinline></video>
+            <div class="play-overlay">${PLAY_SVG}</div>
+          </div>`;
+      }
+    }catch(e){ }
+    return `<img src="${encodeURI(u)}" loading="lazy" alt="post image" />`;
+  }).join('')}</div>`;
+}
+
 
 /* Render a single post card DOM element */
 function createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy, createdAt, towall, pinnedByOwner }, currentUserEmail){
@@ -339,8 +369,8 @@ function createPostCard({ postId, editorEmail, displayName, profilePic, verified
       </div>
     </div>
 
-    <div class="post-text" role="article"><rich-markdown mode="markdown">${escapeHtml(text)}</rich-markdown></div>
-    ${ images && images.length ? `<div class="post-images">${images.map(u => `<img src="${encodeURI(u)}" loading="lazy" alt="post image" />`).join('')}</div>` : '' }
+    <div class="post-text" role="article"><rich-markdown mode="markdown" chat-components>${escapeHtml(text)}</rich-markdown></div>
+    ${ images && images.length ? renderMediaItems(images) : '' }
 
     <div class="sep" aria-hidden="true"></div>
 
@@ -516,6 +546,28 @@ auth.onAuthStateChanged(async user => {
       // create card
       const card = createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy, createdAt, towall }, currentUserEmail);
       postsListEl.appendChild(card);
+
+      // Ensure rich-markdown child receives raw textContent (avoids innerHTML/upgrade timing issues)
+      try{
+        const rm = card.querySelector('rich-markdown');
+        if(rm){ rm.setAttribute('mode','markdown'); rm.setAttribute('chat-components',''); rm.textContent = text || ''; }
+      }catch(e){/* ignore */}
+
+      // wire video preview behavior: ensure videos cannot be played here and overlay handles clicks
+      const videoPreviews = card.querySelectorAll('.video-preview');
+      videoPreviews.forEach(vp => {
+        const video = vp.querySelector('video');
+        const overlay = vp.querySelector('.play-overlay');
+        if(video){
+          // Stop any programmatic or user-initiated play
+          video.addEventListener('play', ()=>{ try{ video.pause(); }catch(e){} });
+          // Prevent clicks directly on the underlying video element
+          video.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); try{ video.pause(); }catch(e){} });
+        }
+        // Capture all activation attempts on the preview container
+        vp.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); if(video){ try{ video.pause(); }catch(e){} } });
+        vp.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); ev.stopPropagation(); if(video){ try{ video.pause(); }catch(e){} } } });
+      });
 
       // frame overlay if provided
       if(frameUrl){
