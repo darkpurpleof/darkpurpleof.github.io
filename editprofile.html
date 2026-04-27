@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Edit Profile</title>
 
-  <!-- Firebase compat (works with other pages that use compat) -->
+  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -21,75 +21,151 @@
       --accent-strong:#5b21b6;
       --text:#eaeaea;
       --border:rgba(255,255,255,0.06);
+      --field:rgba(255,255,255,0.03);
+      --shadow:0 8px 24px rgba(2,6,23,0.35);
+      --focus:rgba(107,33,168,0.35);
     }
     body.light{
-      --bg:#f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border:rgba(0,0,0,0.06);
+      --bg:#f6f8fb;
+      --card:#fff;
+      --muted:#475569;
+      --text:#0f172a;
+      --border:rgba(0,0,0,0.06);
+      --field:rgba(15,23,42,0.02);
+      --shadow:0 10px 24px rgba(15,23,42,0.08);
+      --focus:rgba(107,33,168,0.18);
     }
 
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow-x:hidden;}
-    body{display:flex;flex-direction:column;min-height:100vh;}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+    body{ display:flex; flex-direction:column; min-height:100vh; }
 
-    /* topbar (reuses dp-topbar webcomponent) */
-    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+    dp-topbar{ display:block; position:sticky; top:0; z-index:100; }
 
-    main.container{max-width:1100px;margin:22px auto;padding:20px;display:grid;grid-template-columns:1fr 320px;gap:20px;box-sizing:border-box;}
-    @media (max-width:920px){ main.container{grid-template-columns:1fr;padding:16px 12px;} }
+    main.container{
+      width:min(1120px, calc(100% - 28px));
+      margin:22px auto;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 320px;
+      gap:18px;
+    }
+    @media (max-width: 940px){
+      main.container{ grid-template-columns:1fr; width:min(100% - 20px, 1120px); margin:14px auto 22px; }
+    }
 
-    .card{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--border);box-shadow:0 6px 18px rgba(2,6,23,0.45);color:var(--text);}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      color:var(--text);
+      padding:18px;
+    }
 
-    /* header */
-    .heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
-    .title { font-size:18px; font-weight:700; margin:0; }
-    .subtitle { color:var(--muted); font-size:13px; margin-top:6px; }
+    .heading{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .title{ font-size:18px; font-weight:700; margin:0; }
+    .subtitle{ color:var(--muted); font-size:13px; margin-top:6px; line-height:1.45; }
+    .muted{ color:var(--muted); }
 
-    /* profile area */
-    .banner { width:100%; height:160px; border-radius:10px; background:#2a2a2a center/cover no-repeat; cursor:pointer; display:block; border:1px solid var(--border); }
-    .profile-row { display:flex; gap:18px; align-items:flex-start; margin-top:14px; flex-wrap:wrap; }
-    .pfp-wrap { position:relative; width:120px; flex:0 0 120px; }
-    .pfp { width:120px; height:120px;   background-repeat: no-repeat; /* <-- add this */
-border-radius:14px; background-size:cover; background-position:center; border:1px solid var(--border); }
-    .pfp-frame { position:absolute; inset:0; border-radius:14px; pointer-events:none; display:none; }
+    .banner{
+      width:100%; height:164px; border-radius:14px;
+      background:#2a2a2a center/cover no-repeat;
+      cursor:pointer; border:1px solid var(--border);
+      transition:transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+    }
+    .banner:hover, .pfp:hover, .frame:hover{ transform:translateY(-1px); border-color:rgba(107,33,168,0.25); box-shadow:0 0 0 3px var(--focus); }
 
-    .meta { flex:1; min-width:220px; }
-    .display-name { font-size:20px; font-weight:700; display:flex; gap:8px; align-items:center; }
-    .verified { width:18px; height:18px; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; display:inline-block; }
-    .email { color:var(--muted); font-size:13px; margin-top:6px; }
-    .bio { margin-top:12px; color:var(--text); line-height:1.4; }
-    .small-muted { color:var(--muted); font-size:13px; margin-top:8px; }
+    .profile-row{ display:flex; gap:18px; align-items:flex-start; margin-top:14px; flex-wrap:wrap; }
+    .pfp-wrap{ position:relative; width:124px; flex:0 0 124px; }
+    .pfp{ width:124px; height:124px; border-radius:16px; background-repeat:no-repeat; background-size:cover; background-position:center; border:1px solid var(--border); cursor:pointer; transition:transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
+    .frame{ position:absolute; inset:0; border-radius:16px; pointer-events:auto; background-size:cover; background-position:center; background-repeat:no-repeat; display:none; cursor:pointer; }
 
-    /* controls */
-    .controls { margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
-    .btn { padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font-weight:600; }
-    .btn.primary { background:var(--accent); color:#fff; border:none; }
-    .btn.ghost { background:transparent; }
-    .field-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+    .meta{ flex:1; min-width:260px; }
+    .display-name{ font-size:20px; font-weight:700; display:flex; align-items:center; gap:8px; line-height:1.1; }
+    .verified{ width:18px; height:18px; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; display:inline-block; flex:0 0 auto; }
+    .email{ color:var(--muted); font-size:13px; margin-top:6px; word-break:break-all; }
+    .bio-block{ margin-top:14px; }
+    .bio-block strong{ display:block; font-size:13px; margin-bottom:8px; }
+    .bio-text{ line-height:1.5; white-space:pre-wrap; word-break:break-word; }
 
-    input[type="text"], textarea { width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); box-sizing:border-box; font-size:14px; }
-    textarea { min-height:84px; resize:vertical; }
+    .section-label{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:14px; margin-bottom:8px; }
 
-    .right-column .card + .card { margin-top:12px; }
+    .controls{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+    .btn{
+      appearance:none; border:1px solid var(--border); background:transparent; color:var(--text);
+      border-radius:10px; padding:9px 12px; cursor:pointer; font-weight:600; font-size:14px;
+      transition:transform .12s ease, border-color .12s ease, background .12s ease, opacity .12s ease;
+    }
+    .btn:hover{ transform:translateY(-1px); border-color:rgba(107,33,168,0.25); }
+    .btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+    .btn.primary{ background:var(--accent); color:#fff; border:none; }
+    .btn.primary:hover{ background:var(--accent-strong); }
+    .btn.ghost{ background:transparent; }
 
-    .list { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+    .field-card{ margin-top:12px; border:1px solid var(--border); border-radius:14px; background:var(--field); padding:12px; }
+    .field-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .field-title{ font-weight:700; font-size:14px; }
+    .field-help{ font-size:12px; color:var(--muted); margin-top:4px; line-height:1.4; }
+    .field-row{ display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap; }
+    input[type="text"], textarea{
+      width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text);
+      font:inherit; outline:none; transition:border-color .12s ease, box-shadow .12s ease;
+    }
+    input[type="text"]:focus, textarea:focus{ border-color:rgba(107,33,168,0.45); box-shadow:0 0 0 3px var(--focus); }
+    textarea{ min-height:90px; resize:vertical; }
+    .inline-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+    .inline-actions .btn{ padding:8px 11px; font-size:13px; }
 
-    .muted { color:var(--muted); }
+    .switch-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0 2px; }
+    .switch-label{ display:flex; flex-direction:column; gap:3px; }
+    .switch-label strong{ font-size:14px; }
+    .switch-label span{ font-size:12px; color:var(--muted); line-height:1.4; }
+    .switch{ position:relative; width:44px; height:26px; flex:0 0 auto; }
+    .switch input{ opacity:0; width:0; height:0; }
+    .slider{
+      position:absolute; cursor:pointer; inset:0; background:rgba(148,163,184,.35); border-radius:999px; transition:.18s ease; border:1px solid var(--border);
+    }
+    .slider::before{ content:""; position:absolute; width:20px; height:20px; left:3px; top:2px; background:#fff; border-radius:50%; transition:.18s ease; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+    .switch input:checked + .slider{ background:var(--accent); }
+    .switch input:checked + .slider::before{ transform:translateX(18px); }
 
-    /* file area */
-    .file-group { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
-    .file-input { display:none; }
-    .upload-box { padding:10px 12px; border-radius:8px; border:1px dashed var(--border); background:rgba(255,255,255,0.01); cursor:pointer; color:var(--muted); font-size:13px; min-width:180px; text-align:center; }
+    .right-column .card + .card{ margin-top:12px; }
+    .list{ display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+    .role-pill{ display:inline-flex; align-items:center; width:fit-content; padding:6px 10px; border-radius:999px; background:var(--field); border:1px solid var(--border); font-size:13px; color:var(--text); }
+    .small-muted{ color:var(--muted); font-size:13px; margin-top:8px; line-height:1.5; }
 
-    #toast { position:fixed; top:18px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999; color:#fff; }
-    #toast.purple{ background:var(--accent-strong); } #toast.red{ background:#c00; } #toast.yellow{ background:#e6b800; color:#222; }
+    .toast{
+      position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:99999;
+      padding:10px 14px; border-radius:11px; font-weight:700; display:none; color:#fff; box-shadow:0 10px 24px rgba(0,0,0,.25);
+    }
+    .toast.purple{ background:var(--accent-strong); }
+    .toast.red{ background:#c00; }
+    .toast.yellow{ background:#e6b800; color:#222; }
 
-    /* small responsive tweaks */
+    .dialog-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.52); display:none; align-items:center; justify-content:center;
+      z-index:100000; padding:18px;
+    }
+    .dialog-backdrop.open{ display:flex; }
+    .dialog{
+      width:min(520px, 100%); background:var(--card); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow); overflow:hidden;
+    }
+    .dialog-head{ padding:18px 18px 10px; }
+    .dialog-title{ font-size:17px; font-weight:700; margin:0; }
+    .dialog-desc{ margin:7px 0 0; color:var(--muted); font-size:13px; line-height:1.5; }
+    .dialog-body{ padding:0 18px 16px; }
+    .dialog-foot{ padding:14px 18px 18px; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border); background:var(--field); }
+
     @media (max-width:560px){
-      .pfp{ width:96px; height:96px; border-radius:12px; }
-      .pfp-wrap{ flex:0 0 96px; }
+      .banner{ height:140px; }
+      .pfp-wrap{ width:98px; flex-basis:98px; }
+      .pfp{ width:98px; height:98px; border-radius:14px; }
+      .frame{ border-radius:14px; }
     }
   </style>
 </head>
 <body>
-  <!-- topbar -->
+  <script src="/dp-diag.js"></script>
   <script type="module" src="/dp-topbar.js"></script>
   <script type="module" src="/dp-rich-components.js"></script>
   <dp-topbar></dp-topbar>
@@ -99,17 +175,17 @@ border-radius:14px; background-size:cover; background-position:center; border:1p
       <div class="heading">
         <div>
           <div class="title">Edit profile</div>
-          <div class="subtitle">Update display name, bio, pictures and public settings</div>
+          <div class="subtitle">Edit your public face, keep your profile tidy.</div>
         </div>
         <div class="muted" id="last-updated">Updated: —</div>
       </div>
 
-      <div id="banner" class="banner" title="Click to upload banner"></div>
+      <div id="banner" class="banner" title="Click to change banner"></div>
 
       <div class="profile-row">
         <div class="pfp-wrap">
-          <div id="profile-pic" class="pfp" title="Click to upload profile picture"></div>
-          <div id="pfp-frame" class="pfp-frame"></div>
+          <div id="profile-pic" class="pfp" title="Click to change profile picture"></div>
+          <div id="pfp-frame" class="frame" title="Click to change frame"></div>
         </div>
 
         <div class="meta">
@@ -119,89 +195,104 @@ border-radius:14px; background-size:cover; background-position:center; border:1p
           </div>
           <div id="email" class="email"></div>
 
-          <div class="bio">
+          <div class="bio-block">
             <strong>Bio</strong>
-            <div id="bio-text" style="margin-top:8px;">Loading…</div>
+            <div id="bio-text" class="bio-text">Loading…</div>
           </div>
 
-          <div class="field-row">
-            <input id="displayNameInput" type="text" placeholder="Display name" aria-label="Display name">
-            <button id="saveNameBtn" class="btn primary">Save</button>
+          <div class="field-card">
+            <div class="field-top">
+              <div>
+                <div class="field-title">Display name</div>
+                <div class="field-help">What other people see on your profile.</div>
+              </div>
+              <div class="inline-actions">
+                <button id="saveNameBtn" class="btn primary">Save</button>
+              </div>
+            </div>
+            <div class="field-row">
+              <input id="displayNameInput" type="text" placeholder="Display name" aria-label="Display name">
+            </div>
           </div>
 
-          <div class="field-row">
-            <textarea id="bioInput" placeholder="Short bio (max 250 chars)"></textarea>
-            <button id="saveBioBtn" class="btn primary">Save Bio</button>
+          <div class="field-card">
+            <div class="field-top">
+              <div>
+                <div class="field-title">Bio</div>
+                <div class="field-help">Keep it short, human, and under 500 characters.</div>
+              </div>
+              <div class="inline-actions">
+                <button id="saveBioBtn" class="btn primary">Save bio</button>
+                <button id="clearBioBtn" class="btn ghost">Clear</button>
+              </div>
+            </div>
+            <textarea id="bioInput" placeholder="Short bio (max 500 chars)"></textarea>
           </div>
 
-          <div class="small-muted">Public profile: <input id="publicCheckbox" type="checkbox" style="margin-left:8px"></div>
+          <div class="field-card">
+            <div class="switch-row">
+              <div class="switch-label">
+                <strong>Public profile</strong>
+                <span>Let other users view this profile.</span>
+              </div>
+              <label class="switch" title="Toggle public profile">
+                <input id="publicCheckbox" type="checkbox">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
 
           <div class="controls">
             <button id="openPublicBtn" class="btn">View public profile</button>
-            <button id="blockedUsersBtn" class="btn">Manage Blocked Users</button>
+            <button id="copyProfileLinkBtn" class="btn">Copy profile link</button>
+            <button id="blockedUsersBtn" class="btn">Manage blocked users</button>
           </div>
 
-          <div class="small-muted" style="margin-top:10px">Roles & info:</div>
+          <div class="section-label">Roles & info</div>
           <div id="rolesList" class="list"></div>
         </div>
       </div>
-
     </section>
 
     <aside class="right-column">
       <div class="card">
-        <div style="font-weight:700">Uploads</div>
-        <div class="small-muted">PNG only. Files are uploaded to <code>catbox.moe</code> and the returned URL is saved to your profile.</div>
-
-        <div style="margin-top:10px;">
-          <label class="upload-box" id="uploadProfileBtn">Upload profile picture (PNG)</label>
-          <input id="fileProfile" class="file-input" type="file" accept="image/png">
-        </div>
-
-        <div style="margin-top:8px;">
-          <label class="upload-box" id="uploadBannerBtn">Upload banner (PNG)</label>
-          <input id="fileBanner" class="file-input" type="file" accept="image/png">
-        </div>
-
-        <div style="margin-top:8px;">
-          <label class="upload-box" id="uploadFrameBtn">Upload profile frame (PNG)</label>
-          <input id="fileFrame" class="file-input" type="file" accept="image/png">
-        </div>
-
-        <div id="fallbackRow" style="margin-top:10px; display:none;">
-          <div class="small-muted">Fallback URL</div>
-          <input id="fallbackUrlInput" type="text" placeholder="https://example.com/pic.png">
-          <div style="display:flex; gap:8px; margin-top:8px;">
-            <button id="saveFallbackProfile" class="btn">Save Profile URL</button>
-            <button id="saveFallbackBanner" class="btn">Save Banner URL</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div style="font-weight:700">Account Actions</div>
-        <div style="margin-top:8px; display:flex; gap:8px; flex-direction:column;">
-          <button id="downloadProfileJson" class="btn">Export profile JSON</button>
+        <div style="font-weight:700">Quick actions</div>
+        <div class="small-muted">Extras</div>
+        <div style="margin-top:12px; display:flex; gap:8px; flex-direction:column;">
+          <button id="refreshProfileBtn" class="btn">Refresh profile</button>
           <button id="deleteFrameBtn" class="btn">Remove frame</button>
+          <button id="resetLocalViewBtn" class="btn">Reset preview values</button>
         </div>
       </div>
 
       <div class="card">
         <div style="font-weight:700">Help</div>
         <div class="small-muted" style="margin-top:8px">
-          • Uploads are PNG only. <br>
-          • Catbox URLs are saved to Firestore (user_data collection).<br>
-          • If fallback URL input is visible, you can paste a URL instead of uploading.
-          • CORS might disallow uploads from some browsers.<br>
+          Click your banner, profile picture, or frame to change them. If you want to remove your frame, use the "Remove frame" button in the quick actions. The "Reset preview values" button will reload your profile data from the server in case you want to discard unsaved changes
         </div>
       </div>
     </aside>
   </main>
 
-  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="urlDialog" class="dialog-backdrop" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <div class="dialog-head">
+        <h2 id="dialogTitle" class="dialog-title">Change image</h2>
+        <p id="dialogDesc" class="dialog-desc">Paste a direct image URL.</p>
+      </div>
+      <div class="dialog-body">
+        <input id="dialogInput" type="text" placeholder="https://example.com/image.png" autocomplete="off" />
+      </div>
+      <div class="dialog-foot">
+        <button id="dialogCancel" class="btn">Cancel</button>
+        <button id="dialogSave" class="btn primary">Save</button>
+      </div>
+    </div>
+  </div>
 
   <script>
-    // Firebase init (compat)
     const firebaseConfig = {
       apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
       authDomain: "darkpurpleof-s-website.firebaseapp.com",
@@ -210,285 +301,299 @@ border-radius:14px; background-size:cover; background-position:center; border:1p
       messagingSenderId: "520651082420",
       appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
     };
+
     if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    const serverTimestamp = () => firebase.firestore.FieldValue.serverTimestamp();
 
-    // DOM
-    const bannerEl = document.getElementById('banner');
-    const profilePicEl = document.getElementById('profile-pic');
-    const pfpFrameEl = document.getElementById('pfp-frame');
-    const displayNameEl = document.getElementById('display-name');
-    const emailEl = document.getElementById('email');
-    const verifiedEl = document.getElementById('verified');
-    const bioTextEl = document.getElementById('bio-text');
-    const rolesList = document.getElementById('rolesList');
-    const openPublicBtn = document.getElementById('openPublicBtn');
-    const blockedUsersBtn = document.getElementById('blockedUsersBtn');
+    const els = {
+      banner: document.getElementById('banner'),
+      profilePic: document.getElementById('profile-pic'),
+      pfpFrame: document.getElementById('pfp-frame'),
+      displayName: document.getElementById('display-name'),
+      email: document.getElementById('email'),
+      verified: document.getElementById('verified'),
+      bioText: document.getElementById('bio-text'),
+      rolesList: document.getElementById('rolesList'),
+      displayNameInput: document.getElementById('displayNameInput'),
+      saveNameBtn: document.getElementById('saveNameBtn'),
+      bioInput: document.getElementById('bioInput'),
+      saveBioBtn: document.getElementById('saveBioBtn'),
+      clearBioBtn: document.getElementById('clearBioBtn'),
+      publicCheckbox: document.getElementById('publicCheckbox'),
+      openPublicBtn: document.getElementById('openPublicBtn'),
+      copyProfileLinkBtn: document.getElementById('copyProfileLinkBtn'),
+      blockedUsersBtn: document.getElementById('blockedUsersBtn'),
+      refreshProfileBtn: document.getElementById('refreshProfileBtn'),
+      deleteFrameBtn: document.getElementById('deleteFrameBtn'),
+      resetLocalViewBtn: document.getElementById('resetLocalViewBtn'),
+      lastUpdated: document.getElementById('last-updated'),
+      toast: document.getElementById('toast'),
+      dialog: document.getElementById('urlDialog'),
+      dialogTitle: document.getElementById('dialogTitle'),
+      dialogDesc: document.getElementById('dialogDesc'),
+      dialogInput: document.getElementById('dialogInput'),
+      dialogCancel: document.getElementById('dialogCancel'),
+      dialogSave: document.getElementById('dialogSave')
+    };
 
-    const displayNameInput = document.getElementById('displayNameInput');
-    const saveNameBtn = document.getElementById('saveNameBtn');
-    const bioInput = document.getElementById('bioInput');
-    const saveBioBtn = document.getElementById('saveBioBtn');
-    const publicCheckbox = document.getElementById('publicCheckbox');
-
-    const uploadProfileBtn = document.getElementById('uploadProfileBtn');
-    const fileProfile = document.getElementById('fileProfile');
-    const uploadBannerBtn = document.getElementById('uploadBannerBtn');
-    const fileBanner = document.getElementById('fileBanner');
-    const uploadFrameBtn = document.getElementById('uploadFrameBtn');
-    const fileFrame = document.getElementById('fileFrame');
-
-    const fallbackRow = document.getElementById('fallbackRow');
-    const fallbackUrlInput = document.getElementById('fallbackUrlInput');
-    const saveFallbackProfile = document.getElementById('saveFallbackProfile');
-    const saveFallbackBanner = document.getElementById('saveFallbackBanner');
-
-    const downloadProfileJson = document.getElementById('downloadProfileJson');
-    const deleteFrameBtn = document.getElementById('deleteFrameBtn');
-
-    const toastEl = document.getElementById('toast');
-    function showToast(msg, color='purple', duration=3000){ toastEl.textContent = msg; toastEl.className = color; toastEl.style.display='block'; setTimeout(()=>{ toastEl.style.display='none'; toastEl.className=''; }, duration); }
-
-    // Catbox upload helper (PNG only)
-    async function uploadToCatbox(file) {
-      if (!file) throw new Error('No file provided');
-      if (file.type !== 'image/png') throw new Error('Only PNG files are allowed');
-      const fd = new FormData();
-      fd.append('reqtype','fileupload');
-      fd.append('userhash',''); // optional; leave empty
-      fd.append('fileToUpload', file);
-      // Catbox API endpoint:
-      const res = await fetch('https://catbox.moe/user/api.php', { method:'POST', body: fd });
-      if (!res.ok) throw new Error('Upload failed with status ' + res.status);
-      const text = await res.text();
-      // response is the raw URL (or error)
-      if (!text || !text.startsWith('http')) throw new Error('Upload failed: ' + text);
-      return text.trim();
-    }
-
-    // save to Firestore helper
-    async function saveUserField(email, field, value) {
-      const ref = db.collection('user_data').doc(email);
-      const obj = {}; obj[field] = value;
-      await ref.set(obj, { merge: true });
-    }
-
-    // Bind click labels to file inputs
-    uploadProfileBtn.addEventListener('click', () => fileProfile.click());
-    uploadBannerBtn.addEventListener('click', () => fileBanner.click());
-    uploadFrameBtn.addEventListener('click', () => fileFrame.click());
-
-    // File change handlers
-    fileProfile.addEventListener('change', async (e) => {
-      const f = e.target.files[0]; if (!f) return;
-      await handleUploadFile('profile_picture', f);
-      e.target.value = '';
-    });
-    fileBanner.addEventListener('change', async (e) => {
-      const f = e.target.files[0]; if (!f) return;
-      await handleUploadFile('banner', f);
-      e.target.value = '';
-    });
-    fileFrame.addEventListener('change', async (e) => {
-      const f = e.target.files[0]; if (!f) return;
-      await handleUploadFile('profile_picture_frame', f);
-      e.target.value = '';
-    });
-
-    // Generic file upload flow
- async function handleUploadFile(fieldName, file) {
-  if (!currentUser) return showToast('Not signed in', 'yellow');
-
-  let corsTimeoutTriggered = false;
-
-  // start a 3-second timer for fast CORS detection
-  const corsTimeout = setTimeout(() => {
-    corsTimeoutTriggered = true;
-    showToast('CORS blocked upload — use a URL instead', 'yellow', 5000);
-    fallbackRow.style.display = 'block'; // show fallback input automatically
-  }, 3000);
-
-  try {
-    showToast('Uploading to catbox.moe — this may take a moment...', 'purple', 10000);
-
-    const url = await uploadToCatbox(file); // attempt normal upload
-    clearTimeout(corsTimeout);
-
-    // if CORS toast already shown, just update UI anyway
-    if (!corsTimeoutTriggered) {
-      // update UI normally
-      if (fieldName === 'profile_picture') profilePicEl.style.backgroundImage = `url(${url})`;
-      else if (fieldName === 'banner') bannerEl.style.backgroundImage = `url(${url})`;
-      else if (fieldName === 'profile_picture_frame') {
-        pfpFrameEl.style.backgroundImage = `url(${url})`;
-        pfpFrameEl.style.display = 'block';
-      }
-      await saveUserField(currentUser.email, fieldName, url);
-      showToast('Uploaded and saved!', 'purple', 2500);
-    } else {
-      // still save the file in Firestore even if CORS toast showed
-      await saveUserField(currentUser.email, fieldName, url);
-      if (fieldName === 'profile_picture') profilePicEl.style.backgroundImage = `url(${url})`;
-      else if (fieldName === 'banner') bannerEl.style.backgroundImage = `url(${url})`;
-      else if (fieldName === 'profile_picture_frame') {
-        pfpFrameEl.style.backgroundImage = `url(${url})`;
-        pfpFrameEl.style.display = 'block';
-      }
-      showToast('Upload finished!', 'purple', 2500);
-    }
-  } catch (err) {
-    clearTimeout(corsTimeout);
-    console.error('upload error', err);
-
-    // normal CORS/network detection
-    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-      showToast('CORS blocked upload — use a URL instead', 'yellow', 5000);
-      fallbackRow.style.display = 'block';
-    } else {
-      showToast('Upload failed: ' + (err?.message || err), 'red', 5000);
-    }
-  }
-}
-
-
-    // Fallback URL save (when localStorage flag enabled)
-    saveFallbackProfile.addEventListener('click', async () => {
-      if (!currentUser) return showToast('Not signed in', 'yellow');
-      const url = (fallbackUrlInput.value || '').trim();
-      if (!url) return showToast('Enter a URL', 'yellow');
-      try {
-        await saveUserField(currentUser.email, 'profile_picture', url);
-        profilePicEl.style.backgroundImage = `url(${url})`;
-        showToast('Profile picture URL saved', 'purple');
-      } catch (e) { showToast('Failed to save URL', 'red'); }
-    });
-    saveFallbackBanner.addEventListener('click', async () => {
-      if (!currentUser) return showToast('Not signed in', 'yellow');
-      const url = (fallbackUrlInput.value || '').trim();
-      if (!url) return showToast('Enter a URL', 'yellow');
-      try {
-        await saveUserField(currentUser.email, 'banner', url);
-        bannerEl.style.backgroundImage = `url(${url})`;
-        showToast('Banner URL saved', 'purple');
-      } catch (e) { showToast('Failed to save URL', 'red'); }
-    });
-
-    // Delete frame
-    deleteFrameBtn.addEventListener('click', async () => {
-      if (!currentUser) return showToast('Not signed in', 'yellow');
-      if (!confirm('Remove your profile frame?')) return;
-      try {
-        await saveUserField(currentUser.email, 'profile_picture_frame', '');
-        pfpFrameEl.style.display = 'none';
-        pfpFrameEl.style.backgroundImage = '';
-        showToast('Frame removed', 'purple');
-      } catch (e) { showToast('Failed to remove frame', 'red'); }
-    });
-
-    // Save display name
-    saveNameBtn.addEventListener('click', async () => {
-      if (!currentUser) return showToast('Not signed in', 'yellow');
-      const v = (displayNameInput.value||'').trim();
-      if (!v) return showToast('Enter a display name', 'yellow');
-      try { await saveUserField(currentUser.email, 'display name', v); displayNameEl.textContent = v; showToast('Saved', 'purple'); } catch (e){ showToast('Failed to save', 'red'); }
-    });
-
-    // Save bio
-    saveBioBtn.addEventListener('click', async () => {
-      if (!currentUser) return showToast('Not signed in', 'yellow');
-      const v = (bioInput.value||'').trim();
-      if (v.length > 250) return showToast('Bio too long (max 250 chars)', 'yellow');
-      try { await saveUserField(currentUser.email, 'bio', v); bioTextEl.innerHTML = ''; const richEl = document.createElement('rich-text'); richEl.textContent = v || 'Bio not yet set'; bioTextEl.appendChild(richEl); showToast('Saved', 'purple'); } catch (e){ showToast('Failed to save', 'red'); }
-    });
-
-    // Public profile toggle
-    publicCheckbox.addEventListener('change', async () => {
-      if (!currentUser) return showToast('Not signed in', 'yellow');
-      try { await saveUserField(currentUser.email, 'isProfilePublic', publicCheckbox.checked); showToast('Saved', 'purple'); } catch (e){ showToast('Failed', 'red'); publicCheckbox.checked = !publicCheckbox.checked; }
-    });
-
-    // Download JSON
-    downloadProfileJson.addEventListener('click', async () => {
-      if (!currentUser) return showToast('Not signed in', 'yellow');
-      try {
-        const snap = await db.collection('user_data').doc(currentUser.email).get();
-        const data = snap.exists ? snap.data() : {};
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = 'profile.json'; a.click(); URL.revokeObjectURL(url);
-        showToast('Downloaded', 'purple');
-      } catch (e) { showToast('Failed to export', 'red'); }
-    });
-
-    // navigation
-    openPublicBtn.addEventListener('click', () => { if (currentUser) window.location.href = `/viewprofile?profile=${encodeURIComponent(currentUser.email)}`; });
-    blockedUsersBtn.addEventListener('click', () => window.location.href = '/manageblockedusers');
-
-    // show fallback input if localStorage boolean set
-    if (localStorage.getItem('useFallbackUrl') === 'true') fallbackRow.style.display = 'block';
-
-    // Load user info
     let currentUser = null;
-    auth.onAuthStateChanged(async (u) => {
-      if (!u) { window.location.href = '/login'; return; }
-      currentUser = u;
-      emailEl.textContent = u.email;
-      await loadProfileFor(u.email);
-    });
+    let currentEmail = null;
+    let currentProfile = {};
+    let dialogResolver = null;
+    let dialogMode = null;
 
-    async function loadProfileFor(email) {
-      try {
+    function showToast(msg, color='purple', duration=2600){
+      els.toast.textContent = msg;
+      els.toast.className = `toast ${color}`;
+      els.toast.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => { els.toast.style.display='none'; els.toast.className='toast'; }, duration);
+    }
+
+    function safeUrl(url, fallback=''){
+      const v = (url || '').trim();
+      return v || fallback;
+    }
+
+    function renderRichText(target, text){
+      target.innerHTML = '';
+      const richEl = document.createElement('rich-text');
+      richEl.textContent = text || 'Bio not yet set';
+      target.appendChild(richEl);
+    }
+
+    async function saveUserFields(email, fields){
+      const ref = db.collection('user_data').doc(email);
+      await ref.set({ ...fields, last_updated: serverTimestamp() }, { merge: true });
+    }
+
+    async function loadProfileFor(email){
+      try{
         const snap = await db.collection('user_data').doc(email).get();
-        const data = snap.exists ? snap.data() : {};
-        const banner = data.banner || '/assets/default_banner.png';
-        const pfp = data.profile_picture || 'https://darkpurpleof.github.io/org-owner.jpg';
-        const display = data['display name'] || email;
-        const bio = data.bio || 'Bio not yet set';
-        const isVerified = !!data.is_verified;
-        const frame = data.profile_picture_frame || '';
+        currentProfile = snap.exists ? (snap.data() || {}) : {};
 
-        bannerEl.style.backgroundImage = `url(${banner})`;
-        profilePicEl.style.backgroundImage = `url(${pfp})`;
-        displayNameEl.textContent = display;
-        displayNameInput.value = display;
-        bioTextEl.innerHTML = '';
-        const richEl = document.createElement('rich-text');
-        richEl.textContent = bio;
-        bioTextEl.appendChild(richEl);
-        bioInput.value = data.bio || '';
-        publicCheckbox.checked = !!data.isProfilePublic;
-        emailEl.textContent = email;
-        verifiedEl.style.display = isVerified ? 'inline-block' : 'none';
-        if (frame) { pfpFrameEl.style.backgroundImage = `url(${frame})`; pfpFrameEl.style.display = 'block'; } else { pfpFrameEl.style.display = 'none'; }
+        const banner = safeUrl(currentProfile.banner, '/assets/default_banner.png');
+        const pfp = safeUrl(currentProfile.profile_picture, 'https://darkpurpleof.github.io/org-owner.jpg');
+        const display = currentProfile['display name'] || currentProfile.displayName || email;
+        const bio = typeof currentProfile.bio === 'string' ? currentProfile.bio : '';
+        const isVerified = !!currentProfile.is_verified;
+        const frame = safeUrl(currentProfile.profile_picture_frame, '');
 
-        // roles
-        rolesList.innerHTML = '';
-        const roles = Array.isArray(data.roles) ? data.roles : (data.role ? [data.role] : ['Member']);
-        roles.forEach(r => {
-          const el = document.createElement('div');
-          el.className = 'muted';
-          el.textContent = r;
-          rolesList.appendChild(el);
+        els.banner.style.backgroundImage = `url(${banner})`;
+        els.profilePic.style.backgroundImage = `url(${pfp})`;
+        els.displayName.textContent = display;
+        els.displayNameInput.value = display;
+        els.email.textContent = email;
+        els.verified.style.display = isVerified ? 'inline-block' : 'none';
+        els.publicCheckbox.checked = !!currentProfile.isProfilePublic;
+        els.bioInput.value = bio;
+        renderRichText(els.bioText, bio);
+
+        if (frame){
+          els.pfpFrame.style.backgroundImage = `url(${frame})`;
+          els.pfpFrame.style.display = 'block';
+        } else {
+          els.pfpFrame.style.display = 'none';
+          els.pfpFrame.style.backgroundImage = '';
+        }
+
+        els.rolesList.innerHTML = '';
+        const roles = Array.isArray(currentProfile.roles) ? currentProfile.roles : (currentProfile.role ? [currentProfile.role] : ['Member']);
+        roles.forEach(role => {
+          const pill = document.createElement('div');
+          pill.className = 'role-pill';
+          pill.textContent = role;
+          els.rolesList.appendChild(pill);
         });
 
-        // last updated: attempt to use a timestamp field if present
-        if (data.last_updated) {
-          const d = new Date(data.last_updated.seconds ? data.last_updated.seconds * 1000 : data.last_updated);
-          document.getElementById('last-updated').textContent = 'Updated: ' + d.toLocaleString();
-        } else document.getElementById('last-updated').textContent = '';
-
-      } catch (err) {
+        if (currentProfile.last_updated){
+          const raw = currentProfile.last_updated.seconds ? currentProfile.last_updated.seconds * 1000 : currentProfile.last_updated;
+          const date = new Date(raw);
+          els.lastUpdated.textContent = `Updated: ${date.toLocaleString()}`;
+        } else {
+          els.lastUpdated.textContent = 'Updated: —';
+        }
+      } catch (err){
         console.error('load profile', err);
         showToast('Failed to load profile', 'red');
       }
     }
 
-    // small accessibility: allow clicking on banner/pfp frame to trigger file input
-    bannerEl.addEventListener('click', () => fileBanner.click());
-    profilePicEl.addEventListener('click', () => fileProfile.click());
+    async function openImageDialog(kind, currentValue=''){
+      return new Promise((resolve) => {
+        dialogMode = kind;
+        els.dialogTitle.textContent = kind === 'banner' ? 'Change banner' : kind === 'pfp' ? 'Change profile picture' : 'Change profile frame';
+        els.dialogDesc.textContent = kind === 'banner'
+          ? 'Paste a direct image URL for your banner.'
+          : kind === 'pfp'
+            ? 'Paste a direct image URL for your profile picture.'
+            : 'Paste a direct image URL for your frame.';
+        els.dialogInput.value = currentValue || '';
+        els.dialog.style.display = 'flex';
+        els.dialog.classList.add('open');
+        els.dialog.setAttribute('aria-hidden', 'false');
+        dialogResolver = resolve;
+        setTimeout(() => els.dialogInput.focus(), 0);
+      });
+    }
 
-    // ensure px overflow prevented
+    function closeImageDialog(result = null){
+      els.dialog.classList.remove('open');
+      els.dialog.style.display = 'none';
+      els.dialog.setAttribute('aria-hidden', 'true');
+      const resolver = dialogResolver;
+      dialogResolver = null;
+      if (resolver) resolver(result);
+    }
+
+    async function saveProfileField(field, value, successMsg){
+      if (!currentUser || !currentEmail) return showToast('Not signed in', 'yellow');
+      try{
+        await saveUserFields(currentEmail, { [field]: value });
+        currentProfile[field] = value;
+        await loadProfileFor(currentEmail);
+        showToast(successMsg, 'purple');
+      } catch (e){
+        console.error(e);
+        showToast('Failed to save', 'red');
+      }
+    }
+
+    async function saveDisplayName(){
+      const v = (els.displayNameInput.value || '').trim();
+      if (!v) return showToast('Enter a display name', 'yellow');
+      if (v.length > 48) return showToast('Display name is too long', 'yellow');
+      await saveProfileField('display name', v, 'Display name saved');
+    }
+
+    async function saveBio(){
+      const v = (els.bioInput.value || '').trim();
+      if (v.length > 500) return showToast('Bio too long (max 500 chars)', 'yellow');
+      await saveProfileField('bio', v, 'Bio saved');
+    }
+
+    async function saveImageField(field, url, successMsg){
+      const value = (url || '').trim();
+      if (!value) return showToast('Paste a URL first', 'yellow');
+      try{
+        const payload = { [field]: value };
+        await saveUserFields(currentEmail, payload);
+        await loadProfileFor(currentEmail);
+        showToast(successMsg, 'purple');
+      } catch (e){
+        console.error(e);
+        showToast('Failed to save image', 'red');
+      }
+    }
+
+    els.dialogCancel.addEventListener('click', () => closeImageDialog(null));
+    els.dialogSave.addEventListener('click', () => closeImageDialog(els.dialogInput.value.trim()));
+    els.dialogInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') closeImageDialog(els.dialogInput.value.trim());
+      if (e.key === 'Escape') closeImageDialog(null);
+    });
+    els.dialog.addEventListener('click', (e) => {
+      if (e.target === els.dialog) closeImageDialog(null);
+    });
+
+    els.saveNameBtn.addEventListener('click', saveDisplayName);
+    els.saveBioBtn.addEventListener('click', saveBio);
+    els.clearBioBtn.addEventListener('click', async () => {
+      els.bioInput.value = '';
+      await saveProfileField('bio', '', 'Bio cleared');
+    });
+
+    els.publicCheckbox.addEventListener('change', async () => {
+      if (!currentUser) return showToast('Not signed in', 'yellow');
+      const checked = els.publicCheckbox.checked;
+      try{
+        await saveUserFields(currentEmail, { isProfilePublic: checked });
+        currentProfile.isProfilePublic = checked;
+        showToast('Public setting saved', 'purple');
+      } catch (e){
+        console.error(e);
+        els.publicCheckbox.checked = !checked;
+        showToast('Failed to save', 'red');
+      }
+    });
+
+    els.openPublicBtn.addEventListener('click', () => {
+      if (!currentUser) return showToast('Not signed in', 'yellow');
+      window.location.href = `/viewprofile?profile=${encodeURIComponent(currentEmail)}`;
+    });
+
+    els.copyProfileLinkBtn.addEventListener('click', async () => {
+      if (!currentUser) return showToast('Not signed in', 'yellow');
+      const url = `${window.location.origin}/viewprofile?profile=${encodeURIComponent(currentEmail)}`;
+      try{
+        await navigator.clipboard.writeText(url);
+        showToast('Profile link copied', 'purple');
+      } catch (e){
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        showToast('Profile link copied', 'purple');
+      }
+    });
+
+    els.blockedUsersBtn.addEventListener('click', () => window.location.href = '/manageblockedusers');
+    els.refreshProfileBtn.addEventListener('click', () => { if (currentEmail) loadProfileFor(currentEmail); });
+
+    els.deleteFrameBtn.addEventListener('click', async () => {
+      if (!currentUser) return showToast('Not signed in', 'yellow');
+      if (!confirm('Remove your profile frame?')) return;
+      try{
+        await saveUserFields(currentEmail, { profile_picture_frame: '' });
+        currentProfile.profile_picture_frame = '';
+        els.pfpFrame.style.display = 'none';
+        els.pfpFrame.style.backgroundImage = '';
+        showToast('Frame removed', 'purple');
+      } catch (e){
+        console.error(e);
+        showToast('Failed to remove frame', 'red');
+      }
+    });
+
+    els.resetLocalViewBtn.addEventListener('click', async () => {
+      if (!currentEmail) return;
+      await loadProfileFor(currentEmail);
+      showToast('Preview reset', 'purple');
+    });
+
+    els.banner.addEventListener('click', async () => {
+      if (!currentUser) return showToast('Not signed in', 'yellow');
+      const value = await openImageDialog('banner', currentProfile.banner || '');
+      if (value !== null) await saveImageField('banner', value, 'Banner saved');
+    });
+
+    els.profilePic.addEventListener('click', async () => {
+      if (!currentUser) return showToast('Not signed in', 'yellow');
+      const value = await openImageDialog('pfp', currentProfile.profile_picture || '');
+      if (value !== null) await saveImageField('profile_picture', value, 'Profile picture saved');
+    });
+
+    els.pfpFrame.addEventListener('click', async () => {
+      if (!currentUser) return showToast('Not signed in', 'yellow');
+      const value = await openImageDialog('frame', currentProfile.profile_picture_frame || '');
+      if (value !== null) await saveImageField('profile_picture_frame', value, 'Profile frame saved');
+    });
+
+    auth.onAuthStateChanged(async (u) => {
+      if (!u){
+        window.location.href = '/login';
+        return;
+      }
+      currentUser = u;
+      currentEmail = u.email || u.uid;
+      els.email.textContent = currentEmail;
+      await loadProfileFor(currentEmail);
+    });
+
     window.addEventListener('resize', () => { document.documentElement.style.overflowX = 'hidden'; });
   </script>
 </body>

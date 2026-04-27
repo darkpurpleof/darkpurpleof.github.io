@@ -1,0 +1,1141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Settings</title>
+
+  <!-- Firebase classic (compat) only, no modular imports -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+    <script src="/dp-topbar.js"></script>
+
+  <style>
+    /* Global box-sizing and overflow guard to prevent any accidental horizontal scroll */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    img { max-width: 100%; display: block; }
+
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --friend-row-height: 110px;
+      --friend-row-height-mobile: 84px;
+      --danger: #b91c1c;
+      --success: #7214be;
+      --soft: rgba(255,255,255,0.03);
+    }
+    body.light {
+      --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06); --soft: rgba(0,0,0,0.03);
+    }
+
+    body {
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background-color: var(--bg);
+      color:var(--text);
+      transition: background .25s, color .25s;
+      min-height:100vh;
+    }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+    .top-bar { display:none !important; }
+
+    main.container {
+      max-width:1200px;
+      width:100%;
+      margin:24px auto;
+      padding:20px;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:20px;
+      box-sizing:border-box;
+      overflow-x: hidden;
+    }
+    @media (max-width:920px){
+      main.container{ grid-template-columns:1fr; padding:16px; }
+      aside.right-column{ order:2; }
+    }
+
+    .card {
+      background:var(--card);
+      border-radius:12px;
+      padding:18px;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:0 6px 18px rgba(2,6,23,0.45);
+      overflow:visible;
+    }
+
+    .hero {
+      display:flex;
+      gap:16px;
+      align-items:center;
+      justify-content:space-between;
+      padding:20px;
+      border-radius:12px;
+      min-width:0;
+    }
+    .hero > div { min-width:0; }
+    .muted { color:var(--muted); font-size:13px; }
+    .title-line { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+    .tiny-chip {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:var(--soft);
+      border:1px solid var(--border);
+      color:var(--muted);
+      font-size:12px;
+      user-select:none;
+    }
+
+    .grid-two {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:720px){ .grid-two { grid-template-columns:1fr; } }
+
+    .profile-preview {
+      display:flex;
+      gap:14px;
+      align-items:center;
+      background:var(--card);
+      border-radius:12px;
+      padding:12px;
+      border:1px solid var(--border);
+    }
+    .profile-pfp {
+      width:72px; height:72px; border-radius:12px;
+      background-size:cover; background-position:center;
+      border:1px solid var(--border);
+      flex-shrink:0;
+      background-color: var(--soft);
+    }
+    .profile-text { display:flex; flex-direction:column; gap:6px; min-width:0; }
+    .profile-name-verif { font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px; min-width:0; }
+    .profile-name-verif span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .profile-name-verif img { width:14px; height:14px; margin-left:4px; }
+
+    .action-button {
+      display:inline-flex; gap:10px; align-items:center;
+      padding:10px 14px; border-radius:10px;
+      border:1px solid var(--border);
+      background:transparent; cursor:pointer;
+      font-weight:600; color:var(--text);
+      text-decoration:none;
+    }
+    .action-button:hover { background:var(--soft); }
+    .action-button:disabled, .action-button.disabled {
+      opacity:.5; cursor:not-allowed; pointer-events:none;
+    }
+    .action-button img{ width:18px; height:18px; }
+    .action-row { display:flex; gap:10px; flex-wrap:wrap; }
+
+    #toast {
+      position:fixed; top:18px; left:50%; transform:translateX(-50%);
+      padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999;
+      box-shadow:0 12px 30px rgba(0,0,0,.25);
+      max-width:min(92vw, 520px);
+      text-align:center;
+    }
+    #toast.purple { background:var(--accent-strong); color:#fff; }
+    #toast.yellow{ background:#e6b800; color:#222; }
+    #toast.red{ background:#c00; color:#fff; }
+    #toast.green{ background:var(--success); color:#fff; }
+
+    .settings-card { background:var(--card); border-radius:12px; border:1px solid var(--border); box-shadow:0 6px 18px rgba(2,6,23,0.3); overflow:hidden; }
+    .settings-card-head {
+      display:flex; align-items:center; gap:10px;
+      padding:16px 16px 10px 16px; border-bottom:1px solid var(--border);
+    }
+    .settings-card-head h2 { margin:0; font-size:18px; }
+    .settings-card-body { padding:0 16px 8px 16px; }
+
+    .setting-item {
+      display:flex; align-items:center; gap:12px;
+      padding:14px 0; border-bottom:1px solid var(--border);
+      min-width:0;
+    }
+    .setting-item:last-child { border-bottom:none; }
+    .setting-main { flex:1; min-width:0; }
+    .setting-title {
+      margin:0 0 4px 0; font-size:15px; font-weight:700;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .setting-desc { margin:0; font-size:13px; color:var(--muted); line-height:1.4; }
+    .setting-item .click-target { display:flex; width:100%; align-items:center; gap:12px; cursor:pointer; }
+    .setting-item .click-target.disabled { cursor:not-allowed; opacity:.45; }
+
+    .switch {
+      position:relative; width:46px; height:26px; flex-shrink:0;
+    }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider {
+      position:absolute; inset:0; cursor:pointer; background:#555; transition:.2s; border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .slider:before {
+      position:absolute; content:""; height:20px; width:20px; left:3px; top:2px; background:white; transition:.2s; border-radius:50%;
+    }
+    .switch input:checked + .slider { background:var(--accent-strong); }
+    .switch input:checked + .slider:before { transform:translateX(20px); }
+
+    .friends-container {
+      display:grid;
+      gap:12px;
+      padding:12px;
+      width:100%; max-width:100%; min-width:0;
+      grid-template-columns:repeat(5, minmax(0, 1fr));
+      grid-auto-rows:var(--friend-row-height);
+      align-items:start;
+      overflow-x:hidden;
+      box-sizing:border-box;
+      border-radius:8px;
+      background:rgba(255,255,255,.01);
+      border:1px solid var(--border);
+    }
+    @media (min-width: 921px) {
+      .friends-container {
+        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
+        overflow-y:auto;
+      }
+    }
+    @media (min-width: 601px) and (max-width: 920px) {
+      .friends-container {
+        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
+        overflow-y:auto;
+      }
+    }
+    @media (max-width: 600px) {
+      .friends-container {
+        gap:8px; padding:10px;
+        grid-auto-rows:var(--friend-row-height-mobile);
+        max-height: calc((var(--friend-row-height-mobile) * 2) + (8px * 1));
+        overflow-y:auto;
+      }
+    }
+    .friend-card {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      width:100%; min-width:0; text-align:center; cursor:pointer;
+      background:var(--soft); border:1px solid var(--border); border-radius:12px;
+      padding:10px; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .friend-card:hover { background:rgba(107,33,168,.12); }
+    .friend-pfp {
+      width:64px; height:64px; border-radius:12px; margin:0 auto 8px auto;
+      background-size:cover; background-position:center; border:2px solid rgba(0,0,0,0.06);
+      flex-shrink:0; background-repeat:no-repeat;
+      background-color:var(--soft);
+    }
+    .friend-name {
+      font-size:13px; color:var(--text); display:flex; align-items:center; justify-content:center; gap:6px;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;
+    }
+    .friend-name img { width:12px; height:12px; margin-left:6px; }
+    .friends-empty { color:var(--muted); font-size:13px; padding:8px 2px 2px; }
+
+    .overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.55);
+      display:none; align-items:center; justify-content:center; padding:16px; z-index:2000;
+    }
+    .overlay.show { display:flex; }
+    .modal {
+      width:min(640px, 100%);
+      max-height:min(90vh, 900px);
+      overflow:auto;
+      background:var(--card); color:var(--text);
+      border:1px solid var(--border);
+      border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.45);
+    }
+    .modal-head {
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:18px 18px 12px; border-bottom:1px solid var(--border);
+      position:sticky; top:0; background:linear-gradient(to bottom, var(--card), color-mix(in srgb, var(--card) 88%, transparent));
+      backdrop-filter: blur(8px);
+    }
+    .modal-head h3 { margin:0; font-size:18px; }
+    .modal-body { padding:18px; }
+    .modal-actions {
+      display:flex; gap:10px; justify-content:flex-end; padding:0 18px 18px;
+      flex-wrap:wrap;
+    }
+    .input, .select, .textarea {
+      width:100%; background:var(--soft); color:var(--text);
+      border:1px solid var(--border); border-radius:12px; padding:12px 14px;
+      outline:none; font:inherit;
+    }
+    .input:focus, .select:focus, .textarea:focus { border-color: rgba(107,33,168,.6); box-shadow:0 0 0 3px rgba(107,33,168,.15); }
+    .textarea { min-height:110px; resize:vertical; }
+    .helper { color:var(--muted); font-size:13px; line-height:1.5; }
+    .separator { height:1px; background:var(--border); margin:14px 0; }
+    .pill-list { display:flex; gap:8px; flex-wrap:wrap; }
+    .pill {
+      display:inline-flex; align-items:center; gap:6px; padding:8px 10px;
+      border-radius:999px; background:var(--soft); border:1px solid var(--border); font-size:12px;
+    }
+    .linkish { color:#c4b5fd; cursor:pointer; text-decoration:underline; }
+    .hidden { display:none !important; }
+
+    .right-column { display:flex; flex-direction:column; gap:20px; }
+    .footer-note { font-size:12px; color:var(--muted); line-height:1.5; }
+
+    /* smaller visuals for small screens */
+    @media (max-width: 600px) {
+      .friend-card { padding: 6px; }
+      .friend-pfp { width: 40px; height: 40px; margin-bottom:6px; }
+      .friend-name { font-size: 11px; }
+      .profile-preview { flex-direction:row; gap:10px; padding:10px; }
+      main.container { margin: 12px auto; padding: 12px; max-width: 100%; overflow-x: hidden; }
+      .hero { padding:16px; }
+    }
+
+    .friends-container::-webkit-scrollbar { width: 8px; }
+    .friends-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.04); border-radius: 6px; }
+    .modal::-webkit-scrollbar { width: 10px; }
+    .modal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 6px; }
+  </style>
+
+  <script>
+    // Firebase configuration goes here. Initialize at the top, before the page logic.
+    // Replace these placeholders with your real config.
+    const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+  measurementId: "G-S2X2JYC8Z0"
+};
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  </script>
+</head>
+<body>
+  <dp-topbar></dp-topbar>
+
+  <div id="toast"></div>
+
+  <main class="container">
+    <section class="left-column" style="display:flex; flex-direction:column; gap:20px; min-width:0;">
+      <div class="card hero">
+        <div style="min-width:0; flex:1;">
+          <div class="title-line">
+            <h1 id="pageTitle" style="margin:0; font-size:28px; line-height:1.1;">Settings</h1>
+            <span class="tiny-chip" id="sessionChip">Guest</span>
+          </div>
+          <p class="muted" style="margin:10px 0 0;">Configure application options and account settings from a single, secure interface.</p>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-head">
+          <span>👤</span>
+          <h2>User Info</h2>
+        </div>
+        <div class="settings-card-body" id="userInfoCard">
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Login</p>
+              <p class="setting-desc">Sign in or sign out of the account tied to this browser.</p>
+            </div>
+            <button class="action-button" id="btnLoginLogout" type="button">Login</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Enroll in beta program</p>
+              <p class="setting-desc">Join the early access program to evaluate new functionality.</p>
+            </div>
+            <button class="action-button" id="btnBetaProgram" type="button">Open</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-head">
+          <span>🌐</span>
+          <h2>Public Profile</h2>
+        </div>
+        <div class="settings-card-body">
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Change region</p>
+              <p class="setting-desc" id="regionDesc">Loading region data...</p>
+            </div>
+            <button class="action-button" id="btnRegion" type="button">Edit</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Set birthday</p>
+              <p class="setting-desc" id="birthdayDesc">Loading birthday...</p>
+            </div>
+            <button class="action-button" id="btnBirthday" type="button">Edit</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Manage blocked users</p>
+              <p class="setting-desc">Review the list of users you have blocked.</p>
+            </div>
+            <button class="action-button" id="btnBlocked" type="button">Open</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Verify your identity</p>
+              <p class="setting-desc">This option is not available yet.</p>
+            </div>
+            <button class="action-button disabled" type="button">Soon</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Public profile</p>
+              <p class="setting-desc">Toggle whether your profile is visible to other users.</p>
+            </div>
+            <label class="switch" title="Public profile">
+              <input id="togglePublicProfile" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Allow posts in wall</p>
+              <p class="setting-desc">Enable or disable posts on your wall.</p>
+            </div>
+            <label class="switch" title="Allow posts in wall">
+              <input id="toggleAllowPosts" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-head">
+          <span>✨</span>
+          <h2>Extras</h2>
+        </div>
+        <div class="settings-card-body">
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Reset settings</p>
+              <p class="setting-desc">Sign out and clear local session data from this browser.</p>
+            </div>
+            <button class="action-button" id="btnReset" type="button">Reset</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Region modal -->
+  <div class="overlay" id="regionModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Change region</h3>
+        <button class="action-button" type="button" data-close="regionModal">Close</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper">Select a 2-letter country code.</p>
+        <div class="grid-two" style="margin-top:12px;">
+          <div>
+            <label class="helper">Search</label>
+            <input class="input" id="regionSearch" placeholder="Search country..." />
+          </div>
+          <div>
+            <label class="helper">Selected code</label>
+            <input class="input" id="regionCodeInput" maxlength="2" placeholder="MX" />
+          </div>
+        </div>
+        <div style="margin-top:12px; max-height:280px; overflow:auto; border:1px solid var(--border); border-radius:12px;">
+          <div id="regionList" style="display:grid; gap:6px; padding:10px;"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="regionModal">Cancel</button>
+        <button class="action-button" id="btnSaveRegion" type="button">Save region</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Birthday modal -->
+  <div class="overlay" id="birthdayModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Set birthday</h3>
+        <button class="action-button" type="button" data-close="birthdayModal">Close</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper">Use <strong>dd/mm/yyyy</strong>. After saving, changing this date may require support.</p>
+        <div style="margin-top:12px;">
+          <label class="helper">Birthday</label>
+          <input class="input" id="birthdayInput" placeholder="dd/mm/yyyy" />
+        </div>
+        <p class="helper" id="birthdayError" style="color:#fca5a5; display:none; margin-top:10px;"></p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="birthdayModal">Cancel</button>
+        <button class="action-button" id="btnSaveBirthday" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout confirm -->
+  <div class="overlay" id="logoutModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Log out</h3>
+        <button class="action-button" type="button" data-close="logoutModal">Close</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper" id="logoutText">Are you sure you want to sign out?</p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="logoutModal">Cancel</button>
+        <button class="action-button" id="btnConfirmLogout" type="button">Log out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset confirm -->
+  <div class="overlay" id="resetModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Reset settings</h3>
+        <button class="action-button" type="button" data-close="resetModal">Close</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper">This will sign out the current account and clear browser storage used by this page.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="resetModal">Cancel</button>
+        <button class="action-button" id="btnConfirmReset" type="button">Reset now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credits modal -->
+  <div class="overlay" id="creditsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Website System Settings</h3>
+        <button class="action-button" type="button" data-close="creditsModal">Close</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper"><strong id="creditsTapTarget" style="cursor:pointer; user-select:none;">System Settings</strong> <span class="muted">repeat the action to reveal debug tools</span></p>
+        <p class="helper">Copyright © Dark Purple OF 2023-2025. All rights reserved.</p>
+        <p class="helper">Unauthorized use is prohibited.</p>
+        <div class="separator"></div>
+        <p class="helper"><span class="linkish" id="btnMoreInfo">More info at website</span></p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="creditsModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Translation modal -->
+  <div class="overlay" id="translationsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Translations</h3>
+        <button class="action-button" type="button" data-close="translationsModal">Close</button>
+      </div>
+      <div class="modal-body" id="translationsBody">
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="translationsModal">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debug modal -->
+  <div class="overlay" id="debugModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Debug</h3>
+        <button class="action-button" type="button" data-close="debugModal">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-item" style="padding-top:0;">
+          <div class="setting-main">
+            <p class="setting-title">Open debug settings</p>
+            <p class="setting-desc">Access experimental settings.</p>
+          </div>
+          <button class="action-button" id="btnOpenDebug" type="button">Open</button>
+        </div>
+        <div class="setting-item">
+          <div class="setting-main">
+            <p class="setting-title">Disable debug</p>
+            <p class="setting-desc">Disable debug mode and hide advanced controls.</p>
+          </div>
+          <button class="action-button" id="btnDisableDebug" type="button">Disable</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="debugModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+    const toast = {
+      el: $('#toast'),
+      show(message, kind = 'purple', ms = 2400) {
+        this.el.className = '';
+        this.el.classList.add(kind);
+        this.el.textContent = message;
+        this.el.style.display = 'block';
+        clearTimeout(this._t);
+        this._t = setTimeout(() => { this.el.style.display = 'none'; }, ms);
+      }
+    };
+
+    const REGION_LIST = [
+      ['MX','Mexico'], ['US','United States'], ['ES','Spain'], ['AR','Argentina'], ['CO','Colombia'], ['CL','Chile'], ['PE','Peru'],
+      ['VE','Venezuela'], ['EC','Ecuador'], ['GT','Guatemala'], ['CR','Costa Rica'], ['PA','Panama'], ['DO','Dominican Republic'],
+      ['UY','Uruguay'], ['PY','Paraguay'], ['BO','Bolivia'], ['BR','Brazil'], ['CA','Canada'], ['GB','United Kingdom'],
+      ['FR','France'], ['DE','Germany'], ['IT','Italy'], ['PT','Portugal'], ['NL','Netherlands'], ['BE','Belgium'], ['SE','Sweden'],
+      ['NO','Norway'], ['FI','Finland'], ['PL','Poland'], ['CZ','Czechia'], ['AT','Austria'], ['CH','Switzerland'], ['IE','Ireland'],
+      ['JP','Japan'], ['KR','South Korea'], ['CN','China'], ['TW','Taiwan'], ['HK','Hong Kong'], ['IN','India'], ['PH','Philippines'],
+      ['ID','Indonesia'], ['MY','Malaysia'], ['SG','Singapore'], ['AU','Australia'], ['NZ','New Zealand'], ['ZA','South Africa']
+    ];
+
+    const state = {
+      user: null,
+      userDoc: null,
+      profilePublic: true,
+      postsAllowed: true,
+      region: null,
+      birthDate: null,
+      debugEnabled: false,
+      tapCount: 0,
+      lastTapTime: 0,
+      friendsUnsub: null,
+      userUnsub: null
+    };
+
+    function getUserKey(user) {
+      return user?.email || user?.uid || null;
+    }
+
+    function userRef(user) {
+      const key = getUserKey(user);
+      return key ? db.collection('user_data').doc(key) : null;
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[m]));
+    }
+
+    function openModal(id) { $('#' + id).classList.add('show'); }
+    function closeModal(id) { $('#' + id).classList.remove('show'); }
+
+    function closeAllModals() {
+      $$('.overlay').forEach(o => o.classList.remove('show'));
+    }
+
+    function formatRegion(code) {
+      if (!code) return 'Set your account region. You can change this once per year.';
+      const item = REGION_LIST.find(([c]) => c.toUpperCase() === code.toUpperCase());
+      return item ? `${item[1]} (${item[0]})` : code.toUpperCase();
+    }
+
+    function regionEmoji(code) {
+      if (!code || code.length !== 2) return '❔';
+      return code.toUpperCase().split('').map(ch => String.fromCodePoint(0x1F1E6 + (ch.charCodeAt(0) - 65))).join('');
+    }
+
+    function calculateAge(birthdayString) {
+      if (!birthdayString) return null;
+      const parts = birthdayString.split('/');
+      if (parts.length !== 3) return null;
+      const d = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const y = parseInt(parts[2], 10);
+      if (!d || !m && m !== 0 || !y) return null;
+      const dob = new Date(y, m, d);
+      if (isNaN(dob.getTime())) return null;
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const md = today.getMonth() - dob.getMonth();
+      if (md < 0 || (md === 0 && today.getDate() < dob.getDate())) age--;
+      return age;
+    }
+
+    function validateBirthdayInput(input) {
+      const parts = String(input).trim().split('/');
+      if (parts.length !== 3) return 'Invalid format. Use dd/mm/yyyy.';
+      const [dd, mm, yyyy] = parts.map(v => parseInt(v, 10));
+      if (![dd, mm, yyyy].every(Number.isFinite)) return 'Invalid date format.';
+      if (mm < 1 || mm > 12) return 'Month must be between 1 and 12.';
+      const dt = new Date(yyyy, mm - 1, dd);
+      if (dt.getFullYear() !== yyyy || dt.getMonth() !== mm - 1 || dt.getDate() !== dd) return 'That date does not exist.';
+      const now = new Date();
+      if (dt > now) return "You can't be born in the future.";
+      const age = calculateAge(`${dd}/${mm}/${yyyy}`);
+      if (age === null || age < 1) return 'You must be at least 1 year old.';
+      return null;
+    }
+
+    function mailToFeedback() {
+      const email = (navigator.language || '').toLowerCase().startsWith('ja')
+        ? 'boykisser2189@gmail.com'
+        : 'javiercorzo387@gmail.com';
+      const subject = 'Feedback';
+      return `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+    }
+
+    function setProfileHeader(user) {
+      const name = user?.displayName || user?.email?.split('@')[0] || 'Guest';
+      const profileNameEl = $('#profileName');
+      if (profileNameEl) profileNameEl.textContent = name;
+      const profileEmailEl = $('#profileEmail');
+      if (profileEmailEl) profileEmailEl.textContent = user?.email || 'Not logged in';
+      const profileUidEl = $('#profileUid');
+      if (profileUidEl) profileUidEl.textContent = `uid: ${user?.uid || '-'}`;
+      $('#sessionChip').textContent = user?.email ? 'Logged in' : 'Guest';
+      $('#btnLoginLogout').textContent = user ? 'Log out' : 'Login';
+      const logoutTopBtn = $('#btnLogoutTop');
+      if (logoutTopBtn) logoutTopBtn.textContent = user ? '⎋ Logout' : 'Login';
+    }
+
+    function setBadgeIfNeeded(user) {
+      const badge = $('#profileBadge');
+      if (!badge) return;
+      const isVerified = !!(user?.email && user.email.endsWith('@darkpurpleof.github.io'));
+      if (isVerified) {
+        badge.style.display = 'inline-block';
+        badge.alt = 'verified';
+        badge.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l2.4 2.2 3.2-.1 1.2 3 2.9 1.4-.6 3.1 1.7 2.8-2.1 2.4-.1 3.2-3 1.2-1.4 2.9-3.1-.6L12 22l-2.2-2.4-3.1.6-1.4-2.9-3-1.2-.1-3.2-2.1-2.4 1.7-2.8-.6-3.1 2.9-1.4 1.2-3 3.2.1L12 2z" fill="#22c55e"/>
+            <path d="M9.5 12.6l1.9 1.9 3.9-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `);
+      } else {
+        badge.style.display = 'none';
+        badge.removeAttribute('src');
+      }
+    }
+
+    function setVisibilityByLogin(user) {
+      const loggedIn = !!user;
+      const setState = (id, value) => { const el = $('#' + id); if (el) el.disabled = value; };
+      setState('btnVerifyUser', !loggedIn);
+      setState('btnBetaProgram', !loggedIn);
+      setState('btnPlugins', !loggedIn);
+      setState('btnRegion', !loggedIn);
+      setState('btnBirthday', !loggedIn);
+      setState('btnBlocked', !loggedIn);
+      setState('btnDemo', !loggedIn);
+      setState('btnReset', !loggedIn);
+      setState('btnOverlay', false);
+      setState('togglePublicProfile', !loggedIn);
+      setState('toggleAllowPosts', !loggedIn);
+    }
+
+    function updateDerivedTexts(doc) {
+      const region = doc?.region || null;
+      const nextChange = doc?.regionchange_next?.toDate ? doc.regionchange_next.toDate() : null;
+      const birthDate = doc?.birth_date || null;
+      const loggedIn = !!state.user;
+
+      const now = new Date();
+      const canChange = !nextChange || nextChange <= now;
+      const regionName = region ? formatRegion(region) : null;
+      const regionFlag = region ? regionEmoji(region) : '❔';
+
+      if (!loggedIn) {
+        $('#regionDesc').textContent = 'You need to be logged in to set your region.';
+        $('#birthdayDesc').textContent = 'Log in to set your birthday.';
+      } else {
+        $('#regionDesc').textContent = region
+          ? (canChange ? `Your region is set to ${regionName} ${regionFlag}. You can change it now.` : `Your region is set to ${regionName} ${regionFlag}. You can change it on ${nextChange.toLocaleDateString()}.`)
+          : 'Set your account region. You can change this once per year.';
+        if (!birthDate) {
+          $('#birthdayDesc').textContent = 'Click to set your birthday. You can not change this later without support.';
+        } else {
+          const age = calculateAge(birthDate);
+          $('#birthdayDesc').textContent = age ? `${birthDate} • ${age} years old` : birthDate;
+        }
+      }
+
+      $('#togglePublicProfile').checked = !!doc?.isProfilePublic;
+      $('#toggleAllowPosts').checked = !!doc?.postsAllowed;
+
+      // Hide/show edit buttons based on data state
+      $('#btnBirthday').style.display = birthDate ? 'none' : '';
+      $('#btnRegion').style.display = canChange ? '' : 'none';
+    }
+
+    function renderFriends(list = []) {
+      const box = $('#friendsContainer');
+      const empty = $('#friendsEmpty');
+      if (!box) return;
+      box.innerHTML = '';
+      if (!list.length) {
+        if (empty) empty.style.display = 'block';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      list.slice(0, 15).forEach(friend => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'friend-card';
+        card.innerHTML = `
+          <div class="friend-pfp" style="background-image:url('${friend.photoURL || ''}')"></div>
+          <div class="friend-name">${escapeHtml(friend.name || friend.email || 'Friend')} ${friend.verified ? '<img alt="verified" src="data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 2.2 3.2-.1 1.2 3 2.9 1.4-.6 3.1 1.7 2.8-2.1 2.4-.1 3.2-3 1.2-1.4 2.9-3.1-.6L12 22l-2.2-2.4-3.1.6-1.4-2.9-3-1.2-.1-3.2-2.1-2.4 1.7-2.8-.6-3.1 2.9-1.4 1.2-3 3.2.1L12 2z" fill="#22c55e"/></svg>`) + '" />' : ''}</div>
+        `;
+        card.addEventListener('click', () => {
+          if (friend.email) {
+            window.location.href = `./viewprofile.html?email=${encodeURIComponent(friend.email)}`;
+          }
+        });
+        box.appendChild(card);
+      });
+    }
+
+    async function loadUserDoc() {
+      if (!state.user) {
+        state.userDoc = null;
+        updateDerivedTexts(null);
+        renderFriends([]);
+        return;
+      }
+
+      const ref = userRef(state.user);
+      if (!ref) return;
+
+      if (state.userUnsub) state.userUnsub();
+      state.userUnsub = ref.onSnapshot((snap) => {
+        const doc = snap.exists ? snap.data() : {};
+        state.userDoc = doc;
+        updateDerivedTexts(doc);
+        $('#togglePublicProfile').checked = !!doc?.isProfilePublic;
+        $('#toggleAllowPosts').checked = !!doc?.postsAllowed;
+        $('#birthdayDesc').dataset.birth = doc?.birth_date || '';
+        $('#regionDesc').dataset.region = doc?.region || '';
+      }, () => {
+        toast.show('Could not load user data.', 'red');
+      });
+
+      // Friends preview: try common fields, but stay graceful if not present.
+      if (state.friendsUnsub) state.friendsUnsub();
+      state.friendsUnsub = ref.collection('friends').onSnapshot((snap) => {
+        const list = [];
+        snap.forEach(doc => {
+          const d = doc.data() || {};
+          list.push({
+            name: d.name || d.displayName || d.email,
+            email: d.email,
+            photoURL: d.photoURL,
+            verified: !!d.verified
+          });
+        });
+        renderFriends(list);
+      }, () => renderFriends([]));
+    }
+
+    async function updateUserField(field, value) {
+      if (!state.user) throw new Error('Not logged in');
+      const ref = userRef(state.user);
+      if (!ref) throw new Error('Missing user reference');
+      await ref.set({ [field]: value }, { merge: true });
+    }
+
+    function buildTranslationBody() {
+      const body = $('#translationsBody');
+      body.innerHTML = `
+        <div class="helper">Language credits shown in the original settings dialog.</div>
+        <div class="separator"></div>
+        <div style="display:grid; gap:12px;">
+          <div>
+            <div class="muted">Spanish translation</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+          <div>
+            <div class="muted">Russian translation</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+          <div>
+            <div class="muted">English translation</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+          <div>
+            <div class="muted">Japanese translation</div>
+            <div class="linkish" data-profile="boykisser2189@darkpurpleof.github.io">Amethyst</div>
+          </div>
+          <div>
+            <div class="muted">German translation</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+        </div>
+      `;
+      $$('[data-profile]', body).forEach(el => {
+        el.addEventListener('click', () => {
+          const email = el.getAttribute('data-profile');
+          window.location.href = `./viewprofile.html?email=${encodeURIComponent(email)}`;
+        });
+      });
+    }
+
+    function buildRegionList(filterText = '') {
+      const q = filterText.trim().toLowerCase();
+      const list = $('#regionList');
+      const filtered = REGION_LIST.filter(([code, name]) => {
+        return !q || code.toLowerCase().includes(q) || name.toLowerCase().includes(q);
+      });
+      list.innerHTML = filtered.map(([code, name]) => `
+        <button type="button" class="action-button" data-code="${code}" style="justify-content:space-between; width:100%;">
+          <span>${code}</span><span style="opacity:.8">${name}</span>
+        </button>
+      `).join('') || '<div class="helper">No matches.</div>';
+      $$('[data-code]', list).forEach(btn => {
+        btn.addEventListener('click', () => {
+          $('#regionCodeInput').value = btn.getAttribute('data-code');
+          toast.show(`Selected region ${btn.getAttribute('data-code')}`, 'green');
+        });
+      });
+    }
+
+    async function saveRegion() {
+      const code = $('#regionCodeInput').value.trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(code)) {
+        toast.show('Use a valid 2-letter region code.', 'red');
+        return;
+      }
+      await updateUserField('region', code);
+      const nextChange = new Date();
+      nextChange.setFullYear(nextChange.getFullYear() + 1);
+      await updateUserField('regionchange_next', firebase.firestore.Timestamp.fromDate(nextChange));
+      toast.show('Region saved.', 'green');
+      closeModal('regionModal');
+    }
+
+    async function saveBirthday() {
+      const input = $('#birthdayInput').value.trim();
+      const error = validateBirthdayInput(input);
+      if (error) {
+        $('#birthdayError').textContent = error;
+        $('#birthdayError').style.display = 'block';
+        return;
+      }
+      $('#birthdayError').style.display = 'none';
+      await updateUserField('birth_date', input);
+      toast.show('Birthday saved.', 'green');
+      closeModal('birthdayModal');
+    }
+
+    async function toggleField(field, value) {
+      if (!state.user) {
+        toast.show('You need to log in first.', 'red');
+        return;
+      }
+      await updateUserField(field, value);
+      toast.show('Saved.', 'green');
+    }
+
+    async function logoutAndRedirect() {
+      try {
+        await auth.signOut();
+        toast.show('Logged out.', 'green');
+        setTimeout(() => { window.location.href = '/login'; }, 500);
+      } catch (e) {
+        toast.show('Logout failed.', 'red');
+      }
+    }
+
+    async function resetSettings() {
+      try {
+        await auth.signOut();
+        localStorage.clear();
+        sessionStorage.clear();
+        toast.show('Browser storage cleared.', 'green');
+        setTimeout(() => { window.location.href = '/login'; }, 500);
+      } catch (e) {
+        toast.show('Reset failed.', 'red');
+      }
+    }
+
+    function revealDebugMaybe() {
+      const now = Date.now();
+      if (now - state.lastTapTime > 1000) state.tapCount = 0;
+      state.tapCount += 1;
+      state.lastTapTime = now;
+      if (state.tapCount >= 7) {
+        state.tapCount = 0;
+        state.debugEnabled = true;
+        toast.show('Debug unlocked.', 'purple');
+        openModal('debugModal');
+        localStorage.setItem('debug_enabled', 'true');
+      }
+    }
+
+    function initThemeToggle() {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.body.classList.toggle('light', saved === 'light');
+      const themeBtn = $('#btnToggleTheme');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+          const light = document.body.classList.toggle('light');
+          localStorage.setItem('theme', light ? 'light' : 'dark');
+        });
+      }
+    }
+
+    function initQuickLinks() {
+      const openLoginBtn = $('#btnOpenLogin');
+      if (openLoginBtn) openLoginBtn.addEventListener('click', () => window.location.href = '/login');
+      const systemInfoBtn = $('#btnSystemInfo');
+      if (systemInfoBtn) systemInfoBtn.addEventListener('click', () => window.location.href = 'https://darkpurpleof.github.io/systeminfo');
+      const blockedBtn = $('#btnBlocked');
+      if (blockedBtn) blockedBtn.addEventListener('click', () => window.location.href = 'https://darkpurpleof.github.io/manageblockedusers');
+      const betaProgramBtn = $('#btnBetaProgram');
+      if (betaProgramBtn) betaProgramBtn.addEventListener('click', () => window.location.href = '/beta-features');
+      const moreInfoBtn = $('#btnMoreInfo');
+      if (moreInfoBtn) moreInfoBtn.addEventListener('click', () => window.open('https://darkpurpleof.github.io/systeminfo', '_blank'));
+      const mailFeedbackBtn = $('#btnMailFeedback');
+      if (mailFeedbackBtn) mailFeedbackBtn.setAttribute('href', mailToFeedback());
+    }
+
+    function initModalButtons() {
+      $$('[data-close]').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
+      });
+      $$('.overlay').forEach(ov => {
+        ov.addEventListener('click', (e) => {
+          if (e.target === ov) ov.classList.remove('show');
+        });
+      });
+    }
+
+    function initStaticButtons() {
+      $('#btnLoginLogout').addEventListener('click', () => {
+        if (state.user) openModal('logoutModal');
+        else window.location.href = '/login';
+      });
+      const logoutTopBtn = $('#btnLogoutTop');
+      if (logoutTopBtn) {
+        logoutTopBtn.addEventListener('click', () => {
+          if (state.user) openModal('logoutModal');
+          else window.location.href = '/login';
+        });
+      }
+      $('#btnConfirmLogout').addEventListener('click', logoutAndRedirect);
+      $('#btnConfirmReset').addEventListener('click', resetSettings);
+      $('#btnReset').addEventListener('click', () => openModal('resetModal'));
+      const creditsBtn = $('#btnCredits');
+      if (creditsBtn) creditsBtn.addEventListener('click', () => openModal('creditsModal'));
+      const translationsBtn = $('#btnTranslations');
+      if (translationsBtn) translationsBtn.addEventListener('click', () => openModal('translationsModal'));
+      $('#btnRegion').addEventListener('click', () => {
+        if (!state.user) return toast.show('You need to log in first.', 'red');
+        $('#regionCodeInput').value = (state.userDoc?.region || '').toUpperCase();
+        $('#regionSearch').value = '';
+        buildRegionList('');
+        openModal('regionModal');
+      });
+      $('#btnBirthday').addEventListener('click', () => {
+        if (!state.user) return toast.show('You need to log in first.', 'red');
+        $('#birthdayInput').value = state.userDoc?.birth_date || '';
+        $('#birthdayError').style.display = 'none';
+        openModal('birthdayModal');
+      });
+      $('#btnSaveRegion').addEventListener('click', saveRegion);
+      $('#btnSaveBirthday').addEventListener('click', saveBirthday);
+      $('#togglePublicProfile').addEventListener('change', async (e) => {
+        if (!state.user) return;
+        const on = e.target.checked;
+        if (on) {
+          await toggleField('isProfilePublic', true);
+        } else {
+          // Keep the same safety flow as the app: ask before making private.
+          e.target.checked = true;
+          openModal('logoutModal');
+          $('#logoutText').textContent = 'This modal is reused for confirmation. Use your app-specific flow to change profile visibility with the intended confirmation step.';
+          $('#btnConfirmLogout').textContent = 'Close';
+          $('#btnConfirmLogout').onclick = () => {
+            $('#btnConfirmLogout').textContent = 'Log out';
+            $('#logoutText').textContent = 'Are you sure you want to sign out?';
+            $('#btnConfirmLogout').onclick = logoutAndRedirect;
+            closeModal('logoutModal');
+          };
+          return;
+        }
+      });
+      $('#toggleAllowPosts').addEventListener('change', async (e) => {
+        if (!state.user) return;
+        await toggleField('postsAllowed', e.target.checked);
+      });
+      $('#creditsTapTarget').addEventListener('click', revealDebugMaybe);
+      const openDebugBtn = $('#btnOpenDebug');
+      if (openDebugBtn) openDebugBtn.addEventListener('click', () => window.location.href = './debug.html');
+      $('#btnDisableDebug').addEventListener('click', () => {
+        state.debugEnabled = false;
+        localStorage.removeItem('debug_enabled');
+        closeModal('debugModal');
+        toast.show('Debug hidden.', 'green');
+      });
+      $('#regionSearch').addEventListener('input', (e) => buildRegionList(e.target.value));
+      $('#regionCodeInput').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().slice(0, 2); });
+      const systemInfoBtn = $('#btnSystemInfo');
+      if (systemInfoBtn) systemInfoBtn.addEventListener('click', () => window.open('https://darkpurpleof.github.io/systeminfo', '_blank'));
+    }
+
+    function initAuth() {
+      auth.onAuthStateChanged(async (user) => {
+        state.user = user || null;
+        setProfileHeader(user);
+        setBadgeIfNeeded(user);
+        setVisibilityByLogin(user);
+        await loadUserDoc();
+      });
+    }
+
+    function initPage() {
+      initThemeToggle();
+      initQuickLinks();
+      initModalButtons();
+      initStaticButtons();
+      initAuth();
+      buildTranslationBody();
+      buildRegionList('');
+      setProfileHeader(null);
+      setVisibilityByLogin(null);
+      setBadgeIfNeeded(null);
+
+      $('#pageTitle').addEventListener('click', revealDebugMaybe);
+      const profileNameEl = $('#profileName');
+      if (profileNameEl) profileNameEl.addEventListener('click', revealDebugMaybe);
+      $('#regionDesc').addEventListener('click', () => {
+        if (state.user) openModal('regionModal');
+      });
+      $('#birthdayDesc').addEventListener('click', () => {
+        if (state.user) openModal('birthdayModal');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', initPage);
+  </script>
+</body>
+</html>

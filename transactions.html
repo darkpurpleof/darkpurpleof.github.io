@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transaction History</title>
+
+<!-- Firebase clásico (NO modular) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<!-- Inicializar Firebase -->
+<script>
+firebase.initializeApp({
+   apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+});
+</script>
+
+<!-- Topbar -->
+<script src="./dp-topbar.js"></script>
+
+<!-- TU TEMA -->
+<style>
+/* (PEGUÉ EXACTAMENTE TU CSS AQUÍ, sin tocar nada) */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; width: 100%; overflow-x: hidden; }
+img { max-width: 100%; display: block; }
+
+:root{
+  --bg: #171717;
+  --card: #1f1f1f;
+  --muted: #a8a8a8;
+  --accent: #6b21a8;
+  --accent-strong: #5b21b6;
+  --text: #eaeaea;
+  --border: rgba(255,255,255,0.04);
+}
+body {
+  margin:0;
+  font-family: Inter, system-ui;
+  background-color: var(--bg);
+  color:var(--text);
+}
+
+h2 {
+  padding-left: 12px;
+}
+
+p.muted {
+  padding-left: 12px;
+}
+
+.table-header, .row {
+  display:flex;
+  padding:12px;
+  align-items:center;
+}
+
+.table-header {
+  color:var(--muted);
+  font-size:12px;
+}
+
+.row:nth-child(even){
+  background: rgba(255,255,255,0.05);
+}
+
+.col { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.col.source { flex:2; display:flex; align-items:center; gap:6px; cursor:pointer; }
+.col.desc { flex:2; display:flex; align-items:center; gap:6px; }
+
+.pfp {
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background-size:cover;
+  background-position:center;
+}
+
+.item-img {
+  width:32px;
+  height:32px;
+  border-radius:6px;
+  background-size:cover;
+  background-position:center;
+}
+
+.verified {
+  width:12px;
+  height:12px;
+}
+
+/* Diseño para móviles */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+
+  .table-header {
+    display: none;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: var(--card);
+  }
+
+  .col {
+    width: 100%;
+    flex: none;
+    padding: 0;
+    white-space: normal;
+    font-size: 14px;
+  }
+
+  .col.source, .col.desc {
+    flex: none;
+  }
+
+  h2 {
+    font-size: 28px;
+    padding-left: 16px;
+  }
+
+  p.muted {
+    padding-left: 16px;
+    font-size: 16px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<dp-topbar></dp-topbar>
+
+<main class="container">
+  <h2>Transaction History</h2>
+  <p class="muted">Review transactions made with your account</p>
+
+  <div class="table-header">
+    <div class="col">Date</div>
+    <div class="col source">Source</div>
+    <div class="col desc">Description</div>
+    <div class="col">Amount</div>
+  </div>
+
+  <div id="transactions"></div>
+</main>
+
+<script>
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+function formatDate(ts){
+  const d = ts.toDate();
+  return d.toLocaleString();
+}
+
+async function loadTransactions(){
+  const user = auth.currentUser;
+  if(!user) return;
+
+  const container = document.getElementById("transactions");
+  container.innerHTML = "";
+
+  const snap = await db
+    .collection("transactions")
+    .doc(user.email)
+    .collection("records")
+    .get();
+
+  let index = 0;
+
+  for(const doc of snap.docs){
+    const tx = doc.data();
+
+    // obtener user data
+    const userSnap = await db.collection("user_data").doc(tx.source).get();
+    const userData = userSnap.data() || {};
+
+    const row = document.createElement("div");
+    row.className = "row";
+
+    // DATE
+    const date = document.createElement("div");
+    date.className = "col";
+    date.textContent = formatDate(tx.date);
+
+    // SOURCE
+    const source = document.createElement("div");
+    source.className = "col source";
+
+    const pfp = document.createElement("div");
+    pfp.className = "pfp";
+    pfp.style.backgroundImage = `url(${userData.profile_picture || '/org-owner.jpg'})`;
+
+    const name = document.createElement("span");
+    name.textContent = userData["display name"] || tx.source;
+
+    source.appendChild(pfp);
+    source.appendChild(name);
+
+    if(userData.is_verified){
+      const badge = document.createElement("img");
+      badge.src = "assets/verified.png";
+      badge.className = "verified";
+      source.appendChild(badge);
+    }
+
+    source.onclick = () => {
+      window.location.href = `viewprofile?profile=${tx.source}`;
+    };
+
+    // DESCRIPTION
+    const desc = document.createElement("div");
+    desc.className = "col desc";
+
+    if(tx.image){
+      const img = document.createElement("div");
+      img.className = "item-img";
+      img.style.backgroundImage = `url(${tx.image})`;
+      desc.appendChild(img);
+    }
+
+    const descText = document.createElement("span");
+    descText.textContent = tx.description;
+
+    desc.appendChild(descText);
+
+    // AMOUNT
+    const amount = document.createElement("div");
+    amount.className = "col";
+    amount.textContent =
+      tx.type === "outgoing"
+        ? `-DF$ ${tx.amount}`
+        : `DF$ ${tx.amount}`;
+
+    row.appendChild(date);
+    row.appendChild(source);
+    row.appendChild(desc);
+    row.appendChild(amount);
+
+    container.appendChild(row);
+    index++;
+  }
+}
+
+auth.onAuthStateChanged(user => {
+  if(user){
+    loadTransactions();
+  } else {
+    window.location.href = "login.html";
+  }
+});
+</script>
+
+</body>
+</html>

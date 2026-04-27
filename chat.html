@@ -216,6 +216,17 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
 
+  // Enable Firestore persistence for offline support
+  db.enablePersistence().catch((err) => {
+    if (err.code == 'failed-precondition') {
+      // Multiple tabs open, persistence can only be enabled in one tab at a time.
+      console.log('Persistence failed: Multiple tabs open');
+    } else if (err.code == 'unimplemented') {
+      // The current browser does not support all of the features required to enable persistence
+      console.log('Persistence not supported');
+    }
+  });
+
   const $ = s => document.querySelector(s);
 
   const params = new URLSearchParams(location.search);
@@ -235,6 +246,8 @@
   let currentUser = null;
   let currentUserData = null;
   let otherUserEmail = null;
+  let otherDisplayName = '';
+  let otherPfp = '';
 
   // unsubscribe handles for Firestore listeners so we don't leak listeners and mix chats
   let messagesUnsub = null;
@@ -1016,6 +1029,33 @@
             read:true,
             readAt:firebase.firestore.FieldValue.serverTimestamp()
           }).catch(()=>{});
+
+          // Send notification for new message
+          if (Notification.permission === 'granted') {
+            const title = `New message from ${otherDisplayName || otherUserEmail}`;
+            let body = data.text || '';
+            const parsed = extractTags(body);
+            let icon = otherPfp || '/org-owner.jpg';
+            let image = null;
+            if (parsed.images.length > 0) {
+              body = parsed.text || 'Image';
+              image = parsed.images[0];
+            } else if (parsed.stickers.length > 0) {
+              body = parsed.text || 'Sticker';
+            } else if (parsed.files.length > 0) {
+              body = parsed.text || 'File';
+            } else if (parsed.videos.length > 0) {
+              body = parsed.text || 'Video';
+            } else {
+              body = parsed.text;
+            }
+            const options = {
+              body: body,
+              icon: icon,
+              image: image
+            };
+            new Notification(title, options);
+          }
         }
 
       }
@@ -1108,6 +1148,7 @@
         const otherData = userDoc.exists ? userDoc.data() : {};
         const isBlockedByOther = otherData.blockedUsers && otherData.blockedUsers.includes(currentUser.email);
         img.src = isBlockedByOther ? 'https://darkpurpleof.github.io/org-owner.jpg' : ((userDoc.exists && userDoc.data().profile_picture) ? userDoc.data().profile_picture : 'https://darkpurpleof.github.io/org-owner.jpg');
+        otherPfp = img.src;
         img.onerror = ()=>{ img.src='https://darkpurpleof.github.io/org-owner.jpg'; };
         info.appendChild(img);
 
@@ -1118,6 +1159,7 @@
         nameDiv.className = 'name';
         const displayName = isBlockedByOther ? 'No display name' : ((userDoc.exists && (userDoc.data()['display name'] || userDoc.data().displayName || userDoc.data().display_name)) || 'No Display Name');
         nameDiv.textContent = displayName;
+        otherDisplayName = displayName;
 
         // verified badge only if not blocked
         if(userDoc.exists && userDoc.data().is_verified && !isBlockedByOther){
@@ -1275,6 +1317,17 @@
     }
 
     currentUser={email:user.email,uid:user.uid};
+
+    // Request notification permission
+    if ('Notification' in window) {
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+          console.log('Notification permission granted');
+        } else {
+          console.log('Notification permission denied');
+        }
+      });
+    }
 
     // listen for changes to current user's public data (so we can react to chats_enabled etc.)
     db.collection('user_data').doc(currentUser.email).onSnapshot(doc=>{

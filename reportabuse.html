@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Report User</title>
+
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <script type="module" src="/dp-topbar.js"></script>
+  <script src="/dp-diag.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#171717;
+      --card:#1f1f1f;
+      --card-2:#232323;
+      --muted:#9ca3af;
+      --accent:#6b21a8;
+      --accent-strong:#5b21b6;
+      --text:#eaeaea;
+      --border:rgba(255,255,255,0.06);
+      --border-strong:rgba(255,255,255,0.10);
+      --danger:#c01b1b;
+      --danger-dark:#6a0f0f;
+      --white-btn-bg:rgba(255,255,255,0.03);
+      --btn-border-muted:rgba(255,255,255,0.05);
+      --soft-shadow:0 10px 28px rgba(2,6,23,0.34);
+    }
+    body.light{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --card-2:#ffffff;
+      --muted:#475569;
+      --text:#0f172a;
+      --border:rgba(0,0,0,0.06);
+      --border-strong:rgba(0,0,0,0.10);
+      --white-btn-bg:rgba(0,0,0,0.04);
+      --btn-border-muted:rgba(0,0,0,0.06);
+      --soft-shadow:0 10px 24px rgba(15,23,42,0.08);
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+    body{display:flex;flex-direction:column;min-height:100vh;}
+    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+
+    .wrap{
+      width:min(980px, calc(100% - 24px));
+      margin:22px auto 28px;
+      display:grid;
+      grid-template-columns:1.1fr 0.9fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    @media (max-width: 900px){
+      .wrap{grid-template-columns:1fr;width:min(100%, calc(100% - 18px));}
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0));
+      background-color:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--soft-shadow);
+      overflow:hidden;
+    }
+
+    .hero{
+      padding:22px;
+      position:relative;
+    }
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:radial-gradient(circle at top right, rgba(107,33,168,0.15), transparent 38%),
+                 radial-gradient(circle at bottom left, rgba(91,33,182,0.12), transparent 32%);
+      pointer-events:none;
+    }
+    .hero > *{position:relative;z-index:1;}
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:var(--white-btn-bg);
+      border:1px solid var(--border);
+      font-size:12px;
+      font-weight:700;
+      color:var(--muted);
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+    .eyebrow::before{
+      content:"";
+      width:7px;height:7px;border-radius:999px;background:var(--accent);
+      box-shadow:0 0 0 4px rgba(107,33,168,0.16);
+    }
+
+    h1{margin:14px 0 8px;font-size:30px;line-height:1.05;letter-spacing:-0.03em;}
+    .lead{margin:0;color:var(--muted);line-height:1.6;font-size:14px;max-width:56ch;}
+
+    .target-box{
+      margin-top:18px;
+      padding:14px 15px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:var(--card-2);
+    }
+    .target-label{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+    .target-value{font-size:15px;font-weight:700;word-break:break-all;}
+    .target-sub{margin-top:6px;font-size:13px;color:var(--muted);line-height:1.5;}
+
+    .info-grid{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:10px;
+    }
+    @media (max-width: 640px){
+      .info-grid{grid-template-columns:1fr;}
+    }
+    .info-pill{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.015);
+      border-radius:14px;
+      padding:12px;
+    }
+    .info-pill .k{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+    .info-pill .v{margin-top:5px;font-size:14px;font-weight:700;}
+
+    .form-card{padding:22px;}
+    .form-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+    .form-title h2{margin:0;font-size:18px;letter-spacing:-0.02em;}
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(192,27,27,0.2);
+      background:rgba(192,27,27,0.08);
+      color:var(--danger-dark);
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    .field{margin-top:14px;}
+    .label{display:block;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+    .select,.textarea{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:var(--white-btn-bg);
+      color:var(--text);
+      outline:none;
+      padding:13px 14px;
+      font:inherit;
+      transition:border-color .15s ease, transform .15s ease, background .15s ease;
+    }
+    .select:focus,.textarea:focus{border-color:rgba(107,33,168,0.5);background:rgba(255,255,255,0.04);}
+    .textarea{min-height:140px;resize:vertical;line-height:1.6;}
+    .hint{margin-top:8px;color:var(--muted);font-size:13px;line-height:1.5;}
+
+    .actions{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;}
+    .btn{
+      min-height:42px;
+      border-radius:12px;
+      border:1px solid var(--btn-border-muted);
+      background:var(--white-btn-bg);
+      color:var(--text);
+      padding:10px 14px;
+      font-weight:800;
+      cursor:pointer;
+      transition:transform .14s ease, background .14s ease, border-color .14s ease, opacity .14s ease;
+    }
+    .btn:hover{transform:translateY(-1px);border-color:var(--border-strong);}
+    .btn.primary{background:var(--accent);border:none;color:#fff;}
+    .btn.primary:hover{background:var(--accent-strong);}
+    .btn.danger{background:rgba(192,27,27,0.08);color:var(--danger-dark);border:1px solid rgba(192,27,27,0.18);}
+    .btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+
+    .side{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+    .side-card{padding:18px;}
+    .side-card h3{margin:0 0 10px;font-size:15px;letter-spacing:-0.01em;}
+    .checklist{display:flex;flex-direction:column;gap:10px;margin-top:12px;}
+    .check{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.015);
+    }
+    .dot{
+      width:10px;height:10px;border-radius:999px;background:var(--accent);margin-top:4px;flex:0 0 auto;
+      box-shadow:0 0 0 4px rgba(107,33,168,0.14);
+    }
+    .check strong{display:block;font-size:14px;margin-bottom:4px;}
+    .check span{display:block;color:var(--muted);font-size:13px;line-height:1.5;}
+
+    .mini-note{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.015);
+      border-radius:14px;
+      padding:14px;
+      color:var(--muted);
+      line-height:1.6;
+      font-size:13px;
+    }
+
+    #toast{
+      position:fixed;
+      top:18px;
+      left:50%;
+      transform:translateX(-50%);
+      padding:10px 14px;
+      border-radius:12px;
+      font-weight:800;
+      display:none;
+      z-index:99999;
+      color:#fff;
+      box-shadow:var(--soft-shadow);
+    }
+    #toast.purple{background:var(--accent-strong);}
+    #toast.red{background:#c00;}
+    #toast.yellow{background:#e6b800;color:#222;}
+    #toast.purple{background:#4d0070;}
+
+    .helper-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--white-btn-bg);
+      color:var(--text);
+      font-size:12px;
+      font-weight:700;
+    }
+  </style>
+</head>
+<body>
+  <dp-topbar></dp-topbar>
+
+  <main class="wrap" role="main" aria-label="Report abuse page">
+    <section class="card hero">
+      <div class="eyebrow">Report abuse</div>
+      <h1>Send a moderation report</h1>
+      <p class="lead">
+        Use this form to report a user account that breaks the rules. Keep it factual, specific, and concise.
+      </p>
+
+      <div class="target-box">
+        <div class="target-label">Reporting</div>
+        <div class="target-value" id="targetEmail">Loading…</div>
+        <div class="target-sub" id="targetSub">The report will be attached to this account.</div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-pill">
+          <div class="k">What to include</div>
+          <div class="v">Reason and evidence</div>
+        </div>
+        <div class="info-pill">
+          <div class="k">Review</div>
+          <div class="v">Submitted to moderation</div>
+        </div>
+        <div class="info-pill">
+          <div class="k">Privacy</div>
+          <div class="v">Reporter email saved</div>
+        </div>
+        <div class="info-pill">
+          <div class="k">Result</div>
+          <div class="v">Manual review queue</div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="card side-card">
+        <h3>Before you submit</h3>
+        <div class="checklist">
+          <div class="check">
+            <div class="dot"></div>
+            <div>
+              <strong>Choose one reason</strong>
+              <span>Select the closest match for the violation.</span>
+            </div>
+          </div>
+          <div class="check">
+            <div class="dot"></div>
+            <div>
+              <strong>Add context</strong>
+              <span>Explain what happened and where it occurred.</span>
+            </div>
+          </div>
+          <div class="check">
+            <div class="dot"></div>
+            <div>
+              <strong>Stay accurate</strong>
+              <span>False reports can hurt your account status.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card side-card">
+        <h3>Report categories</h3>
+        <div class="helper-row">
+          <span class="chip">Hate speech</span>
+          <span class="chip">Spam or scam</span>
+          <span class="chip">Harassment</span>
+          <span class="chip">Impersonation</span>
+          <span class="chip">Explicit content</span>
+        </div>
+        <div class="mini-note" style="margin-top:14px;">
+          Choose the category that best matches the issue. The moderation team will read the description and review the account activity.
+        </div>
+      </section>
+    </aside>
+
+    <section class="card form-card" style="grid-column:1 / -1;">
+      <div class="form-title">
+        <h2>Report details</h2>
+        <span class="badge">Moderation queue</span>
+      </div>
+
+      <div class="field">
+        <label class="label" for="reason">Reason</label>
+        <select id="reason" class="select">
+          <option value="">Select a reason</option>
+        </select>
+        <div class="hint">Pick the best match. You can explain the details below.</div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="description">Additional description</label>
+        <textarea id="description" class="textarea" placeholder="Tell us what happened, where it happened, and anything that helps moderation review the case."></textarea>
+        <div class="hint">Optional, but useful. Keep it short and specific.</div>
+      </div>
+
+      <div class="actions">
+        <button id="submitBtn" class="btn primary" disabled>Submit report</button>
+        <button id="clearBtn" class="btn danger" type="button">Clear</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const reasons = [
+      'Inappropriate banner',
+      'Inappropriate profile picture',
+      'Hate speech',
+      'Inappropriate bio or display name',
+      'Offensive language',
+      'Impersonation',
+      'Spam or scam',
+      'Sexually explicit content',
+      'Harassment or bullying'
+    ];
+
+    const targetEmailEl = document.getElementById('targetEmail');
+    const targetSubEl = document.getElementById('targetSub');
+    const reasonEl = document.getElementById('reason');
+    const descriptionEl = document.getElementById('description');
+    const submitBtn = document.getElementById('submitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const toastEl = document.getElementById('toast');
+
+    function showToast(msg, color='purple', duration=3000){
+      toastEl.textContent = msg;
+      toastEl.className = color;
+      toastEl.style.display = 'block';
+      setTimeout(() => {
+        toastEl.style.display = 'none';
+        toastEl.className = '';
+      }, duration);
+    }
+
+    function getEmailParam(){
+      const params = new URLSearchParams(window.location.search);
+      return params.get('email') ? decodeURIComponent(params.get('email')) : '';
+    }
+
+    function isValidEmail(email){
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ''));
+    }
+
+    const targetEmail = getEmailParam();
+    targetEmailEl.textContent = targetEmail || 'No email provided';
+    targetSubEl.textContent = targetEmail ? 'The report will be attached to this account.' : 'Open this page with ?email=someone@email.com';
+
+    reasons.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r;
+      opt.textContent = r;
+      reasonEl.appendChild(opt);
+    });
+
+    function updateButtonState(){
+      submitBtn.disabled = !targetEmail || !isValidEmail(targetEmail) || !reasonEl.value;
+    }
+
+    reasonEl.addEventListener('change', updateButtonState);
+    updateButtonState();
+
+    clearBtn.addEventListener('click', () => {
+      reasonEl.value = '';
+      descriptionEl.value = '';
+      updateButtonState();
+      showToast('Cleared', 'yellow');
+    });
+
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = '/login';
+        return;
+      }
+    });
+
+    submitBtn.addEventListener('click', async () => {
+      const currentUser = auth.currentUser;
+      const reporterEmail = currentUser?.email || '';
+      const reason = reasonEl.value.trim();
+      const description = descriptionEl.value.trim();
+
+      if (!targetEmail || !isValidEmail(targetEmail)) {
+        showToast('Invalid target email', 'red');
+        return;
+      }
+      if (!reason) {
+        showToast('Choose a reason', 'yellow');
+        return;
+      }
+      if (!reporterEmail) {
+        showToast('You need to be signed in', 'red');
+        return;
+      }
+      if (reporterEmail === targetEmail) {
+        showToast('You cannot report your own account', 'red');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting…';
+
+      try {
+        const reportData = {
+          reason,
+          description,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          reporter: reporterEmail
+        };
+
+        const userReportsRef = db.collection('user_reports').doc(targetEmail);
+        const doc = await userReportsRef.get();
+        const existingKeys = doc.data() ? Object.keys(doc.data()) : [];
+
+        let reportKey = 'report';
+        let index = 1;
+        while (existingKeys.includes(reportKey)) {
+          reportKey = `report${index++}`;
+        }
+
+        const payload = { [reportKey]: reportData };
+
+        try {
+          await userReportsRef.update(payload);
+        } catch (updateErr) {
+          await userReportsRef.set(payload, { merge: true });
+        }
+
+        showToast('Report submitted', 'purple', 4000);
+        reasonEl.value = '';
+        descriptionEl.value = '';
+        updateButtonState();
+      } catch (err) {
+        console.error('Report submission failed', err);
+        showToast('Failed to submit report', 'red', 4500);
+      } finally {
+        submitBtn.textContent = 'Submit report';
+        updateButtonState();
+      }
+    });
+  </script>
+</body>
+</html>
