@@ -1,0 +1,1436 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>チャット (ベータ)</title>
+
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+
+  <!-- Font + theme provided by user (kept exactly) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+  /* --- Theme variables (kept exactly from your theme) --- */
+  :root{
+    --bg: #171717;
+    --card: #1f1f1f;
+    --muted: #a8a8a8;
+    --accent: #6b21a8;
+    --accent-strong: #5b21b6;
+    --text: #eaeaea;
+    --border: rgba(255,255,255,0.04);
+  }
+  body.light {
+    --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06);
+  }
+
+  /* Hard guard against horizontal scroll (your preference) */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; width: 100%; overflow-x: hidden; }
+  body { margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+  dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+
+  main.wrapper { max-width:1200px; margin:20px auto; padding:18px; width:100%; box-sizing:border-box; }
+
+  /* Corporate / soulless rework for chat list */
+  .content-card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px; box-shadow:none; }
+
+  .page-title { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .page-title h1 { font-size:18px; margin:0; font-weight:600; color:var(--text); }
+  .page-title .muted { color:var(--muted); font-size:13px; }
+
+  /* Chat layout specifics */
+  .chat-shell { display:grid; grid-template-columns: 360px 1fr; gap:20px; align-items:stretch; min-height:calc(100vh - 88px); }
+
+  /* Chat list (left) */
+  #chat-list { display:flex; flex-direction:column; gap:10px; max-height:calc(100vh - 180px); overflow:auto; }
+
+  .chat-item {
+    display:flex; gap:12px; align-items:center;
+    padding:10px; border-radius:6px; border:1px solid var(--border);
+    background:transparent; cursor:pointer; transition:background .12s, transform .08s;
+    min-width:0; /* avoid forcing width */
+  }
+  .chat-item:hover { background: rgba(255,255,255,0.015); transform:translateY(-1px); }
+
+  .chat-pfp { width:48px; height:48px; border-radius:6px; background-size:cover; background-position:center; background-repeat: no-repeat; flex-shrink:0; border:1px solid var(--border); }
+
+  .chat-body { display:flex; flex-direction:column; gap:4px; overflow:hidden; min-width:0; }
+  .row { display:flex; align-items:center; gap:8px; }
+  .display-name { font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .verified-badge { width:10px; height:10px; display:inline-block; vertical-align:middle; margin-left:6px; border:none; }
+
+  /* custom themed scrollbars (WebKit + Firefox). These replace the browser defaults with thin themed scrollbars */
+  * { scrollbar-width: thin; scrollbar-color: var(--accent) transparent; }
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg,var(--accent) 0%, var(--accent-strong) 100%); border-radius:999px; }
+
+  /* Mobile: make the secondary topbar stack and ensure the back button is visible; the disabled hint will sit below */
+  @media (max-width:900px){
+    .secondary-topbar { flex-direction:column; align-items:flex-start; gap:8px; }
+    .secondary-topbar .info{ width:100%; }
+    .secondary-topbar .info .names { display:flex; flex-direction:column; }
+    .secondary-topbar #back-btn { display:inline-block; color: white; }
+  }
+  .last-message { font-size:13px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .meta { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:6px; min-width:0; }
+  .time { font-size:12px; color:var(--muted); }
+  .unread-count { font-size:12px; background:var(--accent); color:#fff; padding:4px 8px; border-radius:999px; font-weight:700; }
+
+  /* Chat pane (right) */
+  .chat-panel { position:relative; display:flex; flex-direction:column; gap:12px; height:calc(100vh - 120px); overflow:hidden; }
+  .chat-bg { position:absolute; inset:0; z-index:0; pointer-events:none; background-position:center; background-repeat:no-repeat; background-size:cover; filter:none; transition:filter .18s, opacity .18s; }
+  .chat-bg.hidden { display:none; opacity:0; }
+  .secondary-topbar { position:relative; z-index:2; display:flex; gap:12px; align-items:center; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--card); }
+  .secondary-topbar .info { display:flex; gap:12px; align-items:center; }
+  .secondary-topbar .info img { width:22px; height:22px; object-fit:cover; }
+  .secondary-topbar .info .names { display:flex; flex-direction:column; }
+  .secondary-topbar .names .name { font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px; }
+  .secondary-topbar .names .sub { color:var(--muted); font-size:13px; }
+
+  .secondary-topbar #back-btn { display:none; width:32px; height:32px; border-radius:6px; cursor:pointer; background:transparent; border:1px solid transparent; }
+
+  /* ensure no horizontal overflow from messages container */
+  .messages-wrap { position:relative; flex:1; overflow:auto; overflow-x:hidden; padding:18px; border-radius:8px; border:1px solid var(--border); background:transparent; }
+  /* NOTE: background-size/repeat are handled dynamically in JS to ensure tiling (we set backgroundRepeat to repeat-y and backgroundSize depending on viewport) */
+
+  .messages { display:flex; flex-direction:column; gap:12px; max-width:100%; width:100%; position:relative; z-index:1; min-width:0; }
+  .date-sep { text-align:center; color:var(--muted); font-size:12px; margin:12px 0; }
+
+  .bubble-row { display:flex; gap:12px; align-items:flex-end; }
+  .bubble { padding:12px 14px; border-radius:12px; max-width:70%; position:relative; color:var(--text); word-wrap:break-word; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; font-size:15px; }
+  .bubble.mine { margin-left:auto; border-bottom-right-radius:6px; background:linear-gradient(180deg,var(--accent) 0%, var(--accent-strong) 100%); color:#fff; }
+  .bubble.their { background:#111111; color:var(--text); border:1px solid var(--border); border-bottom-left-radius:6px; }
+
+  .message-meta { font-size:12px; color:var(--muted); margin-top:6px; display:flex; gap:8px; align-items:center; }
+  .message-meta .read { font-weight:700; color:var(--muted); }
+
+  /* media in messages - make fully responsive and never cause horizontal scroll */
+  .msg-media { margin-bottom:8px; }
+  .msg-image { max-width:100%; width:auto; height:auto; border-radius:8px; display:block; cursor:pointer; }
+  .msg-sticker { max-width:40%; width:auto; height:auto; border-radius:8px; cursor:pointer; display:block; }
+  .msg-file { display:inline-block; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:rgba(0,0,0,0.06); cursor:pointer; max-width:100%; overflow-wrap:anywhere; word-break:break-word; }
+  .msg-video { max-width:100%; width:auto; height:auto; border-radius:8px; display:block; }
+
+  /* bottom composer */
+  .composer { display:flex; gap:12px; align-items:center; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--card); }
+  .composer textarea { flex:1; min-height:44px; max-height:140px; resize:none; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); background:transparent; color:var(--text); }
+  .composer button { background:var(--accent); color:#fff; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; }
+  .composer.disabled { opacity:0.7; }
+  .composer textarea[disabled] { opacity:0.6; }
+  .composer button[disabled] { opacity:0.5; cursor:not-allowed; }
+
+  /* Empty / error state — more corporate: simple, grey dashed box */
+  .empty-state { width:100%; max-width:720px; margin:18px auto; padding:22px; border-radius:8px; border:1px dashed var(--border); color:var(--muted); background:transparent; text-align:center; }
+
+  /* Toast — use theme colours but keep it restrained */
+  #toast { position:fixed; top:12px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:8px; font-weight:700; display:none; z-index:99999; box-shadow:0 6px 18px rgba(2,6,23,0.45); }
+  #toast.purple { background:var(--accent-strong); color:#fff; }
+  #toast.yellow { background:#e6b800; color:#222; }
+  #toast.red { background:#c00; color:#fff; }
+
+  /* responsive tweaks: shrink wallpaper, smaller fonts/padding and tighter image limits on mobile */
+  @media (max-width:900px){
+    main.wrapper { padding:12px; }
+    .chat-pfp{ width:44px; height:44px; }
+    .display-name{ font-size:13px; }
+    .chat-shell{ grid-template-columns:1fr; }
+    .messages { max-width:100%; }
+    body.mobile-chat-open .content-card{ display:none; }
+    body.mobile-chat-open .chat-panel{ grid-column:1 / -1; }
+    body.mobile-chat-open .secondary-topbar #back-btn{ display:inline-block; }
+
+    /* smaller bubbles on mobile to avoid any overflow; allow them to take almost full width but keep gap for meta items */
+    .bubble { max-width: calc(100% - 72px); padding:10px 12px; font-size:14px; }
+    .bubble.mine, .bubble.their { max-width: calc(100% - 72px); }
+
+    /* stickers & images should never exceed container width */
+    .msg-sticker { max-width:32%; }
+
+    /* reduce composer padding and textarea height */
+    .composer { padding:10px; }
+    .composer textarea { min-height:40px; }
+
+  }
+  @media (max-width:520px){ .meta{ display:none; } }
+  </style>
+</head>
+<body>
+
+<!-- dp-topbar provided externally by your site -->
+<script type="module" src="/dp-topbar.js"></script>
+<dp-topbar></dp-topbar>
+
+<main class="wrapper">
+  <div class="page-title">
+    <h1>会話</h1>
+    <div class="muted">ダイレクトメッセージ</div>
+  </div>
+
+  <div class="chat-shell">
+    <!-- Left: conversation list (basic, you can fill with your own) -->
+    <div class="content-card">
+      <div id="chat-list" class="content-card"></div>
+    </div>
+
+    <!-- Right: chat panel -->
+    <div class="chat-panel">
+      <div id="chat-bg" class="chat-bg hidden" aria-hidden="true"></div>
+      <div id="secondary-topbar" class="secondary-topbar" style="display:none;"></div>
+      <div id="messages-wrap" class="messages-wrap">
+        <div id="messages" class="messages"></div>
+      </div>
+
+      <div id="composer" class="composer" style="display:none;">
+        <textarea id="message-input" placeholder="メッセージを入力..." title="画像を追加: &lt;image&gt;url&lt;/image&gt;&#10;ステッカーを追加: &lt;sticker&gt;png url&lt;/sticker&gt;&#10;ビデオを追加: &lt;video&gt;mp4 url&lt;/video&gt;"></textarea>
+        <button id="send-btn">送信</button>
+      </div>
+
+      <div id="empty" class="empty-state" style="display:none;">会話が選択されていません。</div>
+    </div>
+  </div>
+</main>
+
+<div id="toast" class="purple"></div>
+
+<!-- Firebase v9 modular (CDN). Replace config below with your firebaseConfig object. -->
+<script>
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+  measurementId: "G-S2X2JYC8Z0"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Enable Firestore persistence for offline support
+  db.enablePersistence().catch((err) => {
+    if (err.code == 'failed-precondition') {
+      // Multiple tabs open, persistence can only be enabled in one tab at a time.
+      console.log('永続性の失敗: 複数のタブが開いています');
+    } else if (err.code == 'unimplemented') {
+      // The current browser does not support all of the features required to enable persistence
+      console.log('永続性はサポートされていません');
+    }
+  });
+
+  const $ = s => document.querySelector(s);
+
+  const params = new URLSearchParams(location.search);
+  let currentChatId = params.get("id");
+  const emergencyEmail = params.get("email");
+
+  const messagesEl = $('#messages');
+  const messagesWrap = $('#messages-wrap');
+  const chatPanel = $('.chat-panel');        // single element
+  const chatBgEl = $('#chat-bg');           // background layer
+  const composer = $('#composer');
+  const input = $('#message-input');
+  const sendBtn = $('#send-btn');
+  const secTopbar = $('#secondary-topbar');
+  const emptyState = $('#empty');
+
+  let currentUser = null;
+  let currentUserData = null;
+  let otherUserEmail = null;
+  let otherDisplayName = '';
+  let otherPfp = '';
+
+  // unsubscribe handles for Firestore listeners so we don't leak listeners and mix chats
+  let messagesUnsub = null;
+  let chatUnsub = null;
+
+  // local messages for sending states
+  let localMessages = [];
+
+  const emojiMap = {
+    verified: 'https://darkpurpleof.github.io/assets/verified.png',
+    bughunter: 'https://darkpurpleof.github.io/assets/bughunt.png',
+    admin: 'https://darkpurpleof.github.io/assets/ic_admin.webp',
+    panel: 'https://darkpurpleof.github.io/assets/ic_owner.webp',
+    member: 'https://darkpurpleof.github.io/org-owner.jpg',
+    tester: 'https://darkpurpleof.github.io/assets/test.png',
+    furry: 'https://darkpurpleof.github.io/assets/boykisser.png'
+  };
+
+  // --- util: detect special darkpurpleof.github.io urls inside a string ---
+  function detectSpecialDarkPurpleUrls(text) {
+    const results = [];
+    const urlRegex = /https?:\/\/(?:www\.)?darkpurpleof\.github\.io\/([^?\s]+)(?:\?([^&\s]+(?:&[^&\s]+)*))?/gi;
+    let match;
+    while ((match = urlRegex.exec(text)) !== null) {
+      const path = match[1];
+      const query = match[2] || '';
+      const fullUrl = match[0];
+      let special = null;
+      if (path === 'profile') {
+        const params = new URLSearchParams(query);
+        const email = params.get('email');
+        if (email) special = { type: 'profile', email };
+      } else if (path === 'chat') {
+        const params = new URLSearchParams(query);
+        const id = params.get('id') || params.get('email');
+        if (id) special = { type: 'chat', id };
+      } else if (path === 'ugc/viewugc') {
+        const params = new URLSearchParams(query);
+        const id = params.get('id');
+        const author = params.get('author');
+        const type = params.get('type');
+        if (id && author && type) special = { type: 'ugc', id, author, collType: type };
+      } else if (path === 'posts' || path.startsWith('posts/')) {
+        const params = new URLSearchParams(query);
+        const id = params.get('id');
+        if (id) special = { type: 'post', id };
+      }
+      if (special) results.push({ url: fullUrl, special });
+    }
+    return results;
+  }
+
+  // Cache for card data
+  const cardCache = new Map();
+
+  // Helper to remove first occurrence of URL from text
+  function removeFirstOccurrenceOfUrl(text, url) {
+    const index = text.indexOf(url);
+    if (index === -1) return text;
+    return text.substring(0, index) + text.substring(index + url.length);
+  }
+
+  // Render profile card
+  async function renderProfileCard(url, email) {
+    const cacheKey = 'profile_' + email;
+    if (cardCache.has(cacheKey)) {
+      return createProfileCardElement(url, cardCache.get(cacheKey));
+    }
+    try {
+      const doc = await db.collection('user_data').doc(email).get();
+      const data = doc.exists ? doc.data() : null;
+      cardCache.set(cacheKey, data);
+      return createProfileCardElement(url, data);
+    } catch (e) {
+      console.warn('プロフィールデータの取得に失敗しました', e);
+      return null;
+    }
+  }
+
+  function createProfileCardElement(url, data) {
+    const card = document.createElement('div');
+    card.className = 'special-card profile-card';
+    card.style.cssText = `
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--card);
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    `;
+    card.onclick = () => window.open(url, '_blank');
+
+    const img = document.createElement('img');
+    img.src = data && data.profile_picture ? data.profile_picture : 'https://darkpurpleof.github.io/org-owner.jpg';
+    img.style.cssText = 'width: 40px; height: 40px; border-radius: 6px; object-fit: cover;';
+    img.onerror = () => img.src = 'https://darkpurpleof.github.io/org-owner.jpg';
+
+    const info = document.createElement('div');
+    info.style.cssText = 'flex: 1; display: flex; flex-direction: column;';
+
+    const name = document.createElement('div');
+    name.style.cssText = 'font-weight: 600; display: flex; align-items: center; gap: 6px;';
+    const displayName = data ? (data['display name'] || data.displayName || data.display_name || 'ユーザー名なし') : 'ユーザー名なし';
+    name.textContent = displayName;
+    if (data && data.is_verified) {
+      const v = document.createElement('img');
+      v.src = '/assets/verified.png';
+      v.style.cssText = 'width: 10px; height: 10px;';
+      v.alt = 'verified';
+      name.appendChild(v);
+    }
+
+    const sub = document.createElement('div');
+    sub.style.cssText = 'color: var(--muted); font-size: 12px;';
+    sub.textContent = data ? data.email || '' : '';
+
+    info.appendChild(name);
+    info.appendChild(sub);
+
+    card.appendChild(img);
+    card.appendChild(info);
+
+    return card;
+  }
+
+  // Render chat card
+  async function renderChatCard(url, id) {
+    const cacheKey = 'chat_' + id;
+    if (cardCache.has(cacheKey)) {
+      return createChatCardElement(url, cardCache.get(cacheKey));
+    }
+    try {
+      const doc = await db.collection('chats').doc(id).get();
+      const data = doc.exists ? doc.data() : null;
+      if (data && data.users) {
+        const otherEmail = data.users.find(u => u !== currentUser.email);
+        if (otherEmail) {
+          const userDoc = await db.collection('user_data').doc(otherEmail).get();
+          const userData = userDoc.exists ? userDoc.data() : null;
+          cardCache.set(cacheKey, { chat: data, user: userData });
+          return createChatCardElement(url, { chat: data, user: userData });
+        }
+      }
+      return null;
+    } catch (e) {
+      console.warn('チャットデータの取得に失敗しました', e);
+      return null;
+    }
+  }
+
+  function createChatCardElement(url, data) {
+    const card = document.createElement('div');
+    card.className = 'special-card chat-card';
+    card.style.cssText = `
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--card);
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    `;
+    card.onclick = () => window.open(url, '_blank');
+
+    const img = document.createElement('img');
+    img.src = data && data.user && data.user.profile_picture ? data.user.profile_picture : 'https://darkpurpleof.github.io/org-owner.jpg';
+    img.style.cssText = 'width: 40px; height: 40px; border-radius: 6px; object-fit: cover;';
+    img.onerror = () => img.src = 'https://darkpurpleof.github.io/org-owner.jpg';
+
+    const info = document.createElement('div');
+    info.style.cssText = 'flex: 1; display: flex; flex-direction: column;';
+
+    const name = document.createElement('div');
+    name.style.cssText = 'font-weight: 600; display: flex; align-items: center; gap: 6px;';
+    const displayName = data && data.user ? (data.user['display name'] || data.user.displayName || data.user.display_name || 'ユーザー名なし') : 'ユーザー名なし';
+    name.textContent = displayName;
+    if (data && data.user && data.user.is_verified) {
+      const v = document.createElement('img');
+      v.src = '/assets/verified.png';
+      v.style.cssText = 'width: 10px; height: 10px;';
+      v.alt = 'verified';
+      name.appendChild(v);
+    }
+
+    const sub = document.createElement('div');
+    sub.style.cssText = 'color: var(--muted); font-size: 12px;';
+    sub.textContent = '会話';
+
+    info.appendChild(name);
+    info.appendChild(sub);
+
+    card.appendChild(img);
+    card.appendChild(info);
+
+    return card;
+  }
+
+  // Render UGC card
+  async function renderUGCCard(url, id, author, collType) {
+    const cacheKey = 'ugc_' + author + '_' + collType + '_' + id;
+    if (cardCache.has(cacheKey)) {
+      return createUGCCardElement(url, cardCache.get(cacheKey));
+    }
+    try {
+      const coll = collType === '0' ? 'store-items' : 'development-items';
+      const doc = await db.collection('ugc').doc(author).collection(coll).doc(id).get();
+      const data = doc.exists ? doc.data() : null;
+      let authorData = null;
+      if (data && (data.author || data.source)) {
+        const authorDoc = await db.collection('user_data').doc(data.author || data.source).get();
+        authorData = authorDoc.exists ? authorDoc.data() : null;
+      }
+      const fullData = { ...data, authorData };
+      cardCache.set(cacheKey, fullData);
+      return createUGCCardElement(url, fullData);
+    } catch (e) {
+      console.warn('UGCデータの取得に失敗しました', e);
+      return null;
+    }
+  }
+
+  function createUGCCardElement(url, data) {
+    const card = document.createElement('div');
+    card.className = 'special-card ugc-card';
+    card.style.cssText = `
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--card);
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    `;
+    card.onclick = () => window.open(url, '_blank');
+
+    if (data && (data.icon || data.image)) {
+      const img = document.createElement('img');
+      img.src = data.icon || data.image;
+      img.style.cssText = 'width: 100%; height: auto; border-radius: 6px; max-height: 200px; object-fit: cover;';
+      img.onerror = () => img.style.display = 'none';
+      card.appendChild(img);
+    }
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight: 600; display: flex; align-items: center;';
+    title.textContent = data ? (data.name || 'UGC') : 'UGC';
+    if (data && data.is_verified) {
+      const badge = document.createElement('img');
+      badge.src = emojiMap.verified;
+      badge.className = 'verified-badge';
+      badge.style.cssText = 'width: 10px; height: 10px; margin-left: 6px;';
+      title.appendChild(badge);
+    }
+
+    const desc = document.createElement('div');
+    desc.style.cssText = 'color: var(--muted); font-size: 12px;';
+    desc.textContent = data ? (data.description || '') : '';
+
+    card.appendChild(title);
+    card.appendChild(desc);
+
+    if (data && data.authorData) {
+      const author = document.createElement('div');
+      author.style.cssText = 'color: var(--muted); font-size: 11px; margin-top: 4px;';
+      const displayName = data.authorData['display name'] || data.authorData.displayName || data.authorData.display_name || data.author;
+      author.textContent = '作成者: ' + displayName;
+      card.appendChild(author);
+    }
+
+    return card;
+  }
+
+  // Render post card
+  async function renderPostCard(url, id) {
+    const cacheKey = 'post_' + id;
+    if (cardCache.has(cacheKey)) {
+      return createPostCardElement(url, cardCache.get(cacheKey));
+    }
+    try {
+      const doc = await db.collection('posts').doc(id).get();
+      const data = doc.exists ? doc.data() : null;
+      let authorData = null;
+      if (data && data.author) {
+        const authorDoc = await db.collection('user_data').doc(data.author).get();
+        authorData = authorDoc.exists ? authorDoc.data() : null;
+      }
+      const fullData = { ...data, authorData };
+      cardCache.set(cacheKey, fullData);
+      return createPostCardElement(url, fullData);
+    } catch (e) {
+      console.warn('投稿データの取得に失敗しました', e);
+      return null;
+    }
+  }
+
+  function createPostCardElement(url, data) {
+    const card = document.createElement('div');
+    card.className = 'special-card post-card';
+    card.style.cssText = `
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--card);
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    `;
+    card.onclick = () => window.open(url, '_blank');
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight: 600;';
+    title.textContent = data ? (data.title || '投稿') : '投稿';
+
+    const content = document.createElement('div');
+    content.style.cssText = 'color: var(--text); font-size: 14px;';
+    content.innerHTML = data ? parseRichTextToHtml(data.content || '') : '';
+
+    card.appendChild(title);
+    card.appendChild(content);
+
+    if (data && data.authorData) {
+      const author = document.createElement('div');
+      author.style.cssText = 'color: var(--muted); font-size: 11px; margin-top: 4px;';
+      const displayName = data.authorData['display name'] || data.authorData.displayName || data.authorData.display_name || data.author;
+      author.textContent = '作成者: ' + displayName;
+      card.appendChild(author);
+    }
+
+    return card;
+  }
+
+  // function applyChatBackground() already declared above, so remove duplicate __lastBgUrl declaration here.
+
+  // safer escape using DOM (avoids issues with showing entities literally)
+  function escapeHtml(str){
+    if(str === undefined || str === null) return '';
+    const d=document.createElement('div');
+    d.appendChild(document.createTextNode(String(str)));
+    return d.innerHTML;
+  }
+
+  // Parse rich text. Strategy:
+  // 1) Work on escaped input (so raw < > are safe)
+  // 2) Replace markdown markers on the escaped string (asterisks, underscores, backticks)
+  // 3) Support color tags but match their escaped form (&lt;red&gt;...&lt;/red&gt;)
+  function parseRichTextToHtml(input){
+    if(!input) return "";
+    // escape everything first (so user can't inject HTML). We'll then replace safe tokens.
+    let s = escapeHtml(input);
+
+    // bold: *text*
+    s = s.replace(/\*([\s\S]*?)\*/g, '<strong>$1</strong>');
+    // italic: _text_
+    s = s.replace(/_([\s\S]*?)_/g, '<em>$1</em>');
+    // code: `text`
+    s = s.replace(/`([\s\S]*?)`/g, function(m,p1){ return '<code style="background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px">'+p1+'</code>'; });
+
+    // color tags: match escaped form (&lt;red&gt;...&lt;/red&gt;)
+    s = s.replace(/&lt;(red|cyan|green|blue|yellow)&gt;([\s\S]*?)&lt;\/\1&gt;/g,(m,c,t)=>{
+      const map={red:'#ff5b57',cyan:'#22d3ee',green:'#22c55e',blue:'#3b82f6',yellow:'#fbbf24'};
+      return '<span style="color:'+map[c]+'">'+t+'</span>';
+    });
+
+    // emoji shortcodes :smile:
+    s = s.replace(/:([a-zA-Z0-9_]+):/g,(m,name)=>{
+      const url=emojiMap[name];
+      if(!url) return m;
+      return '<img src="'+url+'" style="width:16px;height:16px;vertical-align:middle">';
+    });
+
+    return s;
+  }
+
+  function formatTime(ts){
+    try{
+      // Firestore Timestamp has toDate(), local Date objects are instanceof Date
+      let d;
+      if(!ts) return "";
+      if(typeof ts.toDate === 'function') d = ts.toDate();
+      else if(ts instanceof Date) d = ts;
+      else if(typeof ts === 'number') d = new Date(ts);
+      else return "";
+      return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    }catch(e){ return ""; }
+  }
+
+  function formatDate(ts){
+    try{ const d = ts.toDate(); return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }catch(e){ return ""; }
+  }
+
+  function clearMessages(){ messagesEl.innerHTML=""; }
+
+  function extractTags(text){
+    const images=[]; const files=[]; const stickers=[]; const videos=[];
+
+    text = text.replace(/<image>(.*?)<\/image>/gi,(m,u)=>{images.push(u);return ""});
+    text = text.replace(/<file>(.*?)<\/file>/gi,(m,u)=>{files.push(u);return ""});
+    text = text.replace(/<sticker>(.*?)<\/sticker>/gi,(m,u)=>{stickers.push(u);return ""});
+    text = text.replace(/<video>(.*?)<\/video>/gi,(m,u)=>{videos.push(u);return ""});
+
+    return {text,images,files,stickers,videos};
+  }
+
+  // extractBubbleColor: detects <redmessage>..</redmessage> or <colormessage color="#rrggbb">..</colormessage>
+  function extractMessageBubbleColor(text){
+    if(!text) return {color:null,content:text,found:false};
+    const names = ['red','cyan','green','blue','yellow'];
+    const lower = (text || '').toLowerCase();
+    for(let n of names){
+      const open = '<' + n + 'message>';
+      const close = '</' + n + 'message>';
+      const i = lower.indexOf(open);
+      const j = lower.indexOf(close);
+      if(i !== -1 && j !== -1 && j > i){
+        const content = text.substring(i + open.length, j);
+        const map = { red:'#ff5b57', cyan:'#22d3ee', green:'#22c55e', blue:'#3b82f6', yellow:'#fbbf24' };
+        return { color: map[n] || null, content: content, found: true };
+      }
+    }
+
+    const cmIndex = lower.indexOf('<colormessage');
+    if(cmIndex !== -1){
+      const startTagEnd = text.indexOf('>', cmIndex);
+      if(startTagEnd !== -1){
+        const tag = text.substring(cmIndex, startTagEnd + 1);
+        const colorMatch = tag.match(/color=['"]?(#[0-9a-fA-F]{6})['"]?/);
+        if(colorMatch){
+          const color = colorMatch[1];
+          const close = '</colormessage>';
+          const end = lower.indexOf(close, startTagEnd);
+          if(end !== -1){
+            const content = text.substring(startTagEnd + 1, end);
+            return { color: color, content: content, found: true };
+          }
+        }
+      }
+    }
+
+    return { color: null, content: text, found: false };
+  }
+
+  async function renderMessage(data,id){
+
+    const isMine = data.senderId === currentUser.email;
+
+    const parsed = extractTags(data.text || "");
+
+    // Detect special URLs and add cards
+    const detected = detectSpecialDarkPurpleUrls(parsed.text);
+    for (const {url, special} of detected) {
+      parsed.text = removeFirstOccurrenceOfUrl(parsed.text, url);
+      let cardElement = null;
+      if (special.type === 'profile') {
+        cardElement = await renderProfileCard(url, special.email);
+      } else if (special.type === 'chat') {
+        cardElement = await renderChatCard(url, special.id);
+      } else if (special.type === 'ugc') {
+        cardElement = await renderUGCCard(url, special.id, special.author, special.collType);
+      } else if (special.type === 'post') {
+        cardElement = await renderPostCard(url, special.id);
+      }
+      if (cardElement) {
+        // Add cards before text
+      }
+    }
+
+    const container=document.createElement("div");
+    container.className = 'message-row';
+    container.id = 'msg-' + id;
+
+    // Handle stickers outside bubble
+    if (parsed.stickers.length > 0) {
+      const stickersContainer = document.createElement('div');
+      stickersContainer.style.display = 'flex';
+      stickersContainer.style.flexDirection = 'column';
+      stickersContainer.style.gap = '8px';
+      stickersContainer.style.alignItems = isMine ? 'flex-end' : 'flex-start';
+      parsed.stickers.forEach(url => {
+        const img = document.createElement("img");
+        img.src = url;
+        img.className = "msg-sticker";
+        img.onclick = () => window.open(url, "_blank");
+        img.onerror = () => { img.style.display = 'none'; };
+        stickersContainer.appendChild(img);
+      });
+      container.appendChild(stickersContainer);
+    }
+
+    // Check if there's content for bubble
+    const hasContent = parsed.text.trim() || parsed.images.length > 0 || parsed.files.length > 0 || detected.length > 0 || parsed.videos.length > 0;
+
+    if (hasContent) {
+      // create bubble
+      const bubble=document.createElement("div");
+      bubble.className="bubble "+(isMine?"mine":"their");
+
+      // check for bubble color tags
+      const colorRes = extractMessageBubbleColor(parsed.text);
+      if(colorRes.found && colorRes.color){
+        bubble.style.background = colorRes.color;
+        try{
+          const hex = colorRes.color.replace('#','');
+          const r = parseInt(hex.substr(0,2),16);
+          const g = parseInt(hex.substr(2,2),16);
+          const b = parseInt(hex.substr(4,2),16);
+          const luminance = (0.299*r + 0.587*g + 0.114*b)/255;
+          bubble.style.color = luminance > 0.6 ? '#000' : '#fff';
+        }catch(e){ }
+        parsed.text = colorRes.content;
+      }
+
+      // Add cards to bubble
+      for (const {url, special} of detected) {
+        let cardElement = null;
+        if (special.type === 'profile') {
+          cardElement = await renderProfileCard(url, special.email);
+        } else if (special.type === 'chat') {
+          cardElement = await renderChatCard(url, special.id);
+        } else if (special.type === 'ugc') {
+          cardElement = await renderUGCCard(url, special.id, special.author, special.collType);
+        } else if (special.type === 'post') {
+          cardElement = await renderPostCard(url, special.id);
+        }
+        if (cardElement) {
+          bubble.appendChild(cardElement);
+        }
+      }
+
+      parsed.images.forEach(url=>{
+        const img=document.createElement("img");
+        img.src=url;
+        img.className="msg-image";
+        img.onclick=()=>window.open(url,"_blank");
+        img.onerror = ()=>{ img.style.display = 'none'; };
+        bubble.appendChild(img);
+      });
+
+      parsed.files.forEach(url=>{
+        const a=document.createElement("a");
+        a.href=url; a.target="_blank";
+        a.className="msg-file";
+        a.textContent=url.split("/").pop();
+        bubble.appendChild(a);
+      });
+
+      parsed.videos.forEach(url=>{
+        const video=document.createElement("video");
+        video.src=url;
+        video.className="msg-video";
+        video.controls=true;
+        video.preload="metadata";
+        bubble.appendChild(video);
+      });
+
+      const text=document.createElement("div");
+      // use innerHTML because parseRichTextToHtml returns safe escaped HTML with our tags inserted
+      text.innerHTML=parseRichTextToHtml(parsed.text);
+      if(data.status === 'failed'){
+        text.style.fontStyle = 'italic';
+        // make failed bubble neutral/gray so users know it didn't send
+        try{
+          bubble.style.background = '#2f2f2f';
+          bubble.style.color = 'var(--muted)';
+          bubble.style.border = '1px solid rgba(255,255,255,0.03)';
+        }catch(e){}
+      }
+      bubble.appendChild(text);
+
+      // align bubble properly (wrap in a container to allow margin-left:auto for mine)
+      const wrap=document.createElement('div');
+      wrap.style.display = 'flex';
+      wrap.style.gap = '12px';
+      wrap.style.alignItems = 'flex-end';
+      wrap.appendChild(bubble);
+      if(isMine) bubble.classList.add('mine'); else bubble.classList.add('their');
+
+      container.appendChild(wrap);
+    }
+
+    const meta=document.createElement("div");
+    meta.className="message-meta";
+
+    const time=document.createElement("div");
+    time.textContent=formatTime(data.timestamp);
+
+    meta.appendChild(time);
+
+    let statusText = '';
+    if(isMine){
+      if(data.status === 'sending') statusText = '送信中...';
+      else if(data.status === 'failed') statusText = '未送信';
+      else if(data.read) statusText = '既読';
+      else statusText = '配信済み';
+    }
+
+    if(statusText){
+      const statusDiv=document.createElement("div");
+      statusDiv.textContent=statusText;
+      meta.appendChild(statusDiv);
+    }
+
+    container.appendChild(meta);
+
+    return container;
+  }
+
+  // Helper: update composer enabled/disabled depending on current user's and other user's chats_enabled flag and blocked status
+  async function updateComposerStateForPair(otherEmail){
+    try{
+      let otherDoc = await db.collection('user_data').doc(otherEmail).get();
+      const otherData = otherDoc.exists ? otherDoc.data() : {};
+      const currentEnabled = currentUserData && currentUserData.chats_enabled !== false; // default true
+      const otherEnabled = otherData && otherData.chats_enabled !== false;
+
+      const currentBlockedOther = currentUserData && currentUserData.blockedUsers && currentUserData.blockedUsers.includes(otherEmail);
+      const otherBlockedCurrent = otherData && otherData.blockedUsers && otherData.blockedUsers.includes(currentUser.email);
+
+      if(!currentEnabled || !otherEnabled || currentBlockedOther || otherBlockedCurrent){
+        // disable composer (can't send)
+        composer.classList.add('disabled');
+        input.disabled = true;
+        sendBtn.disabled = true;
+        // show hint in topbar
+        // ensure chat and secondary topbar remain visible
+        try{ secTopbar.style.display = 'block'; }catch(e){}
+        try{ messagesWrap.style.display = 'block'; }catch(e){}
+        try{ document.getElementById('chat-list').style.display = 'flex'; }catch(e){}
+        const hint = document.getElementById('chats-disabled-hint');
+        if(!hint){
+          const h = document.createElement('div');
+          h.id = 'chats-disabled-hint';
+          h.style.color = 'var(--muted)';
+          h.style.fontSize = '12px';
+          h.style.marginLeft = '8px';
+          h.textContent = 'ユーザーの一人がメッセージを無効にしています';
+          secTopbar.appendChild(h);
+        }
+      } else {
+        composer.classList.remove('disabled');
+        input.disabled = false;
+        sendBtn.disabled = false;
+        const hint = document.getElementById('chats-disabled-hint');
+        if(hint) hint.remove();
+      }
+    }catch(e){ console.warn('updateComposerStateForPairエラー',e); }
+  }
+
+  // Cache the last background URL to avoid reloading the image repeatedly.
+  let __lastBgUrl = null;
+
+  function applyChatBackground(){
+    // guard: ensure both elements exist
+    if(!chatPanel || !chatBgEl) return;
+
+    const bgUrl = currentUserData && currentUserData.chat_background;
+    if(!bgUrl){
+      chatBgEl.style.backgroundImage = 'none';
+      chatBgEl.style.filter = 'none';
+      chatBgEl.classList.add('hidden');
+      __lastBgUrl = null;
+      return;
+    }
+
+    // avoid unnecessary updates
+    if(__lastBgUrl === bgUrl) {
+      // still may need to update blur/tiling settings
+    } else {
+      __lastBgUrl = bgUrl;
+      chatBgEl.classList.remove('hidden');
+      chatBgEl.style.backgroundImage = 'url("' + bgUrl + '")';
+    }
+
+    // Apply blur only to the background layer (don't blur the whole UI)
+    const blurEnabled = Boolean(currentUserData && currentUserData.background_chat_blurry);
+    chatBgEl.style.filter = blurEnabled ? 'blur(6px) saturate(0.98)' : 'none';
+    chatBgEl.style.opacity = blurEnabled ? '0.98' : '1';
+
+    // Decide tiling / sizing like your Android logic:
+    const isMobile = window.innerWidth < 900;
+    if (isMobile) {
+      // On mobile we don't want the image to be cropped — stretch width and tile vertically.
+      chatBgEl.style.backgroundRepeat = 'repeat-y';
+      chatBgEl.style.backgroundSize = '100% auto';
+      chatBgEl.style.backgroundPosition = 'top center';
+    } else {
+      // Desktop: cover, center, no repeat
+      chatBgEl.style.backgroundRepeat = 'no-repeat';
+      chatBgEl.style.backgroundSize = 'cover';
+      chatBgEl.style.backgroundPosition = 'center center';
+    }
+
+    // Ensure messages-wrap is above the bg
+    // (z-index set in CSS, but keep this explicit in case)
+    chatBgEl.style.zIndex = 0;
+    // keep topbar + composer above
+    if (secTopbar) secTopbar.style.zIndex = 2;
+    if (composer) composer.style.zIndex = 2;
+    // messages-wrap already z-index:1 in CSS
+  }
+
+  // simple toast helper: type can be 'purple', 'yellow', 'red'
+  function showToast(msg, type='purple'){
+    const t = $('#toast');
+    if(!t) return;
+    t.textContent = msg;
+    t.className = type;
+    t.style.display = 'block';
+    // auto-hide after a short period
+    clearTimeout(t._hideTimer);
+    t._hideTimer = setTimeout(()=>{ t.style.display='none'; }, 6000);
+  }
+
+  // recalc background on window resize so wallpaper behavior updates when changing orientation/size
+  window.addEventListener('resize', ()=>{ applyChatBackground(); });
+
+  function listenMessages(chatId){
+
+    // unsubscribe previous messages listener so we don't mix messages between chats
+    if(messagesUnsub){
+      try{ messagesUnsub(); }catch(e){}
+      messagesUnsub = null;
+    }
+
+    // clear UI immediately when switching chats
+    clearMessages();
+    localMessages = []; // clear local messages when switching chats
+
+    messagesUnsub = db.collection("chats")
+    .doc(chatId)
+    .collection("messages")
+    .orderBy("timestamp")
+    .onSnapshot(async snap=>{
+
+      // compute if the user was near bottom before updating
+      const wasAtBottom = (messagesWrap.scrollHeight - messagesWrap.scrollTop - messagesWrap.clientHeight) < 120;
+
+      // preserve scroll metrics so we can restore user's position when not at bottom
+      const prevScrollTop = messagesWrap.scrollTop;
+      const prevScrollHeight = messagesWrap.scrollHeight;
+
+      // rebuild entire message list from snapshot (clears duplicates)
+      messagesEl.innerHTML = '';
+
+      let lastDate=null;
+
+      // iterate over docs in order (snap.docs is ordered because we used orderBy)
+      for(const docSnap of snap.docs){
+
+        const data=docSnap.data();
+
+        const date = data.timestamp ? data.timestamp.toDate().toDateString() : '';
+
+        if(lastDate!==date){
+          lastDate=date;
+          const sep=document.createElement("div");
+          sep.className="date-sep";
+          sep.textContent=formatDate(data.timestamp);
+          messagesEl.appendChild(sep);
+        }
+
+        const node = await renderMessage(data, docSnap.id);
+        messagesEl.appendChild(node);
+
+        if(data.senderId!==currentUser.email && !data.read){
+          db.collection("chats")
+          .doc(chatId)
+          .collection("messages")
+          .doc(docSnap.id)
+          .update({
+            read:true,
+            readAt:firebase.firestore.FieldValue.serverTimestamp()
+          }).catch(()=>{});
+
+          // Send notification for new message
+          if (Notification.permission === 'granted') {
+            const title = `${otherDisplayName || otherUserEmail}からの新しいメッセージ`;
+            let body = data.text || '';
+            const parsed = extractTags(body);
+            let icon = otherPfp || '/org-owner.jpg';
+            let image = null;
+            if (parsed.images.length > 0) {
+              body = parsed.text || '画像';
+              image = parsed.images[0];
+            } else if (parsed.stickers.length > 0) {
+              body = parsed.text || 'ステッカー';
+            } else if (parsed.files.length > 0) {
+              body = parsed.text || 'ファイル';
+            } else if (parsed.videos.length > 0) {
+              body = parsed.text || 'ビデオ';
+            } else {
+              body = parsed.text;
+            }
+            const options = {
+              body: body,
+              icon: icon,
+              image: image
+            };
+            new Notification(title, options);
+          }
+        }
+
+      }
+
+      // render local messages
+      for(const localMsg of localMessages){
+        // avoid duplicating local messages if we've already rendered them into the DOM
+        if(document.getElementById('msg-' + localMsg.id)) continue;
+        const node = await renderMessage(localMsg, localMsg.id);
+        messagesEl.appendChild(node);
+      }
+
+      // --- ensure chat-bg height matches messages content so repeat covers entire scrollable area ---
+      try{
+        applyChatBackground();
+      }catch(e){}
+
+      // if user was near bottom, keep them at bottom; otherwise preserve their scroll position
+      if(wasAtBottom){
+        messagesWrap.scrollTop=messagesWrap.scrollHeight;
+      } else {
+        // adjust to keep the content the user was looking at in view
+        messagesWrap.scrollTop = Math.max(0, prevScrollTop + (messagesWrap.scrollHeight - prevScrollHeight));
+      }
+
+    });
+
+  }
+
+  function listenChat(chatId){
+
+    // unsubscribe previous chat listener (and messages) to avoid cross-talk
+    if(chatUnsub){ try{ chatUnsub(); }catch(e){} chatUnsub = null; }
+    if(messagesUnsub){ try{ messagesUnsub(); }catch(e){} messagesUnsub = null; }
+
+    // clear UI while we attach new listeners
+    clearMessages();
+    localMessages = [];
+
+    chatUnsub = db.collection("chats")
+    .doc(chatId)
+    .onSnapshot(doc=>{
+
+      const data=doc.data();
+      const users=data.users||[];
+
+      otherUserEmail = users.find(u=>u!==currentUser.email);
+
+      if(!otherUserEmail) return;
+
+      // show a minimal topbar immediately so it doesn't disappear if user_data can't be fetched
+      try{
+        secTopbar.style.display = 'block';
+        secTopbar.innerHTML = '';
+        const placeholderInfo = document.createElement('div');
+        placeholderInfo.className = 'info';
+        const backBtn = document.createElement('button');
+        backBtn.id = 'back-btn'; backBtn.title = '戻る'; backBtn.innerHTML = '&#8592;';
+        backBtn.onclick = ()=>{ document.body.classList.remove('mobile-chat-open'); };
+        placeholderInfo.appendChild(backBtn);
+        const img = document.createElement('img'); img.src = 'https://darkpurpleof.github.io/org-owner.jpg'; img.onerror = ()=>{ img.src='https://darkpurpleof.github.io/org-owner.jpg'; };
+        placeholderInfo.appendChild(img);
+        const names = document.createElement('div'); names.className = 'names';
+        const nameDiv = document.createElement('div'); nameDiv.className = 'name'; nameDiv.textContent = otherUserEmail || 'チャット';
+        const sub = document.createElement('div'); sub.className = 'sub'; sub.textContent = otherUserEmail || '';
+        names.appendChild(nameDiv); names.appendChild(sub);
+        placeholderInfo.appendChild(names);
+        secTopbar.appendChild(placeholderInfo);
+      }catch(e){}
+
+      // listen to other user's public data (to show name, pfp, verified, chats_enabled etc.)
+      db.collection("user_data")
+      .doc(otherUserEmail)
+      .onSnapshot(userDoc=>{
+
+        secTopbar.style.display="block";
+        secTopbar.innerHTML = ''; // rebuild safely with DOM nodes
+
+        const info = document.createElement('div');
+        info.className = 'info';
+
+        const backBtn = document.createElement('button');
+        backBtn.id = 'back-btn';
+        backBtn.title = '戻る';
+        backBtn.innerHTML = '&#8592;';
+        backBtn.onclick = ()=>{ document.body.classList.remove('mobile-chat-open'); };
+        secTopbar.appendChild(backBtn);
+
+        const img = document.createElement('img');
+        const otherData = userDoc.exists ? userDoc.data() : {};
+        const isBlockedByOther = otherData.blockedUsers && otherData.blockedUsers.includes(currentUser.email);
+        img.src = isBlockedByOther ? 'https://darkpurpleof.github.io/org-owner.jpg' : ((userDoc.exists && userDoc.data().profile_picture) ? userDoc.data().profile_picture : 'https://darkpurpleof.github.io/org-owner.jpg');
+        otherPfp = img.src;
+        img.onerror = ()=>{ img.src='https://darkpurpleof.github.io/org-owner.jpg'; };
+        info.appendChild(img);
+
+        const names = document.createElement('div');
+        names.className = 'names';
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'name';
+        const displayName = isBlockedByOther ? 'ユーザー名なし' : ((userDoc.exists && (userDoc.data()['display name'] || userDoc.data().displayName || userDoc.data().display_name)) || 'ユーザー名なし');
+        nameDiv.textContent = displayName;
+        otherDisplayName = displayName;
+
+        // verified badge only if not blocked
+        if(userDoc.exists && userDoc.data().is_verified && !isBlockedByOther){
+          const v = document.createElement('img');
+          v.src = '/assets/verified.png';
+          v.className = 'verified-badge';
+          v.alt = 'verified';
+          nameDiv.appendChild(v);
+        }
+
+        const sub = document.createElement('div');
+        sub.className = 'sub';
+        sub.textContent = otherUserEmail;
+
+        names.appendChild(nameDiv);
+        names.appendChild(sub);
+
+        info.appendChild(names);
+
+        secTopbar.appendChild(info);
+
+        // show composer only if chat exists
+        composer.style.display = 'flex';
+
+        // ensure we update composer enabled/disabled based on both users' chats_enabled
+        // currentUserData may be null briefly; call worker that reads current user's doc as needed
+        updateComposerStateForPair(otherUserEmail);
+
+      });
+
+    });
+
+  }
+
+  async function findOrCreateChat(email){
+
+    const snaps = await db.collection("chats")
+    .where("users","array-contains",currentUser.email)
+    .get();
+
+    for(const d of snaps.docs){
+      const users=d.data().users||[];
+      if(users.includes(email)) return d.id;
+    }
+
+    const other = await db.collection("user_data").doc(email).get();
+
+    if(!other.exists){
+      location.href="/ja/home";
+      return null;
+    }
+
+    const ref = await db.collection("chats").add({
+      users:[currentUser.email,email],
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    return ref.id;
+
+  }
+
+  sendBtn.onclick=async ()=>{
+
+    const text=input.value.replace(/\r/g,'').trim();
+    if(!text) return;
+
+    const localMsg = {
+      id: 'local_' + Date.now(),
+      senderId: currentUser.email,
+      text: text,
+      timestamp: new Date(),
+      read: false,
+      status: 'sending'
+    };
+
+    localMessages.push(localMsg);
+
+    // append this local message into the DOM without re-attaching the Firestore listener
+    (async ()=>{
+      const node = await renderMessage(localMsg, localMsg.id);
+      messagesEl.appendChild(node);
+      // if user is near bottom, scroll to bottom so they see their message
+      const isNearBottom = (messagesWrap.scrollHeight - messagesWrap.scrollTop - messagesWrap.clientHeight) < 160;
+      if(isNearBottom) messagesWrap.scrollTop = messagesWrap.scrollHeight;
+    })();
+
+    input.value="";
+
+    try {
+      await db.collection("chats")
+      .doc(currentChatId)
+      .collection("messages")
+      .add({
+        senderId:currentUser.email,
+        text:text,
+        timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+        read:false
+      });
+
+      // mark local message delivered and update its DOM node if present
+      localMsg.status = 'delivered';
+      const el = document.getElementById('msg-' + localMsg.id);
+      if(el){
+        const meta = el.querySelector('.message-meta');
+        if(meta){
+          const statusDiv = document.createElement('div');
+          statusDiv.textContent = '配信済み';
+          meta.appendChild(statusDiv);
+        }
+      }
+      // remove local copy so it doesn't persist as a stray message
+      localMessages = localMessages.filter(m => m.id !== localMsg.id);
+      const localEl = document.getElementById('msg-' + localMsg.id);
+      if(localEl) localEl.remove();
+
+    } catch (e) {
+      // mark failed and keep original text; display status and keep send timestamp
+      localMsg.status = 'failed';
+
+      const el = document.getElementById('msg-' + localMsg.id);
+      if(el){
+        const meta = el.querySelector('.message-meta');
+        if(meta){
+          const statusDiv = document.createElement('div');
+          statusDiv.textContent = '未送信';
+          meta.appendChild(statusDiv);
+        }
+      }
+
+      // disable composer input and button and visually indicate disabled
+      composer.classList.add('disabled');
+      input.disabled = true;
+      sendBtn.disabled = true;
+
+      // show toast asking user to refresh
+      showToast('メッセージの送信に失敗しました', 'red');
+      // keep the user view at the bottom so they don't jump to the top
+      try{ messagesWrap.scrollTop = messagesWrap.scrollHeight; }catch(e){}
+    }
+
+  };
+
+  input.addEventListener("keydown",e=>{
+    if(e.key==="Enter" && !e.shiftKey){
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+
+  auth.onAuthStateChanged(async user=>{
+
+    if(!user){
+      location.href="/ja/login";
+      return;
+    }
+
+    currentUser={email:user.email,uid:user.uid};
+
+    // Request notification permission
+    if ('Notification' in window) {
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+          console.log('通知許可が付与されました');
+        } else {
+          console.log('通知許可が拒否されました');
+        }
+      });
+    }
+
+    // listen for changes to current user's public data (so we can react to chats_enabled etc.)
+    db.collection('user_data').doc(currentUser.email).onSnapshot(doc=>{
+      currentUserData = doc.exists ? doc.data() : null;
+      // apply chat background whenever the user's data changes
+      applyChatBackground();
+      // if we already have otherUserEmail, update composer state
+      if(otherUserEmail) updateComposerStateForPair(otherUserEmail);
+    });
+
+    if(emergencyEmail){
+      const id = await findOrCreateChat(emergencyEmail);
+      if(id){
+        currentChatId=id;
+        history.replaceState(null,"",location.pathname+"?id="+id);
+      }
+    }
+
+    if(currentChatId){
+      emptyState.style.display="none";
+      composer.style.display="flex";
+      listenChat(currentChatId);
+      listenMessages(currentChatId);
+    }else{
+      emptyState.style.display="block";
+    }
+
+    db.collection("chats")
+    .where("users","array-contains",currentUser.email)
+    .onSnapshot(async snap=>{
+
+      const list=$('#chat-list');
+      list.innerHTML="";
+
+      snap.forEach(async docSnap=>{
+
+        const data=docSnap.data();
+        const other=(data.users||[]).find(u=>u!==currentUser.email);
+
+        const item=document.createElement("div");
+        item.className="chat-item";
+
+        const pfp=document.createElement("div");
+        pfp.className="chat-pfp";
+
+        let otherData = null;
+        let isBlockedByOther = false;
+        let pic = "https://darkpurpleof.github.io/org-owner.jpg";
+        try{
+          const user = await db.collection("user_data").doc(other).get();
+          otherData = user.exists ? user.data() : null;
+          isBlockedByOther = otherData && otherData.blockedUsers && otherData.blockedUsers.includes(currentUser.email);
+          pic = isBlockedByOther ? "https://darkpurpleof.github.io/org-owner.jpg" : (user.exists ? user.data().profile_picture : "https://darkpurpleof.github.io/org-owner.jpg");
+        }catch(e){
+          console.log('チャットリストエントリの取得に失敗しました', other, e);
+          // fallback to defaults so the chat item still appears
+          otherData = null;
+          isBlockedByOther = false;
+          pic = "https://darkpurpleof.github.io/org-owner.jpg";
+        }
+        pfp.style.backgroundImage = `url(${pic||"https://darkpurpleof.github.io/org-owner.jpg"})`;
+
+        const body=document.createElement("div");
+        body.className="chat-body";
+
+        const name=document.createElement("div");
+          name.className="display-name";
+          // use display name when available
+          const displayName = isBlockedByOther ? 'ユーザー名なし' : (otherData ? (otherData['display name'] || otherData.displayName || otherData.display_name) : null);
+          name.textContent = displayName || other;
+          if(otherData && otherData.is_verified && !isBlockedByOther){ const v=document.createElement('img'); v.src='/assets/verified.png'; v.className='verified-badge'; v.alt='verified'; name.appendChild(v); }
+
+        body.appendChild(name);
+
+        item.appendChild(pfp);
+        item.appendChild(body);
+
+        item.onclick = async ()=>{
+          // open chat in-place (no full reload)
+          currentChatId = docSnap.id;
+          history.replaceState(null,'',location.pathname + '?id=' + docSnap.id);
+          emptyState.style.display = 'none';
+          composer.style.display = 'flex';
+
+          // when switching chats unsubscribe any previous listeners and clear messages immediately
+          if(chatUnsub){ try{ chatUnsub(); }catch(e){} chatUnsub = null; }
+          if(messagesUnsub){ try{ messagesUnsub(); }catch(e){} messagesUnsub = null; }
+          clearMessages();
+
+          listenChat(currentChatId);
+          listenMessages(currentChatId);
+          if(window.innerWidth <= 900) document.body.classList.add('mobile-chat-open');
+        };
+
+        list.appendChild(item);
+
+      });
+
+    });
+
+  });
+
+</script>
+
+</body>
+</html>

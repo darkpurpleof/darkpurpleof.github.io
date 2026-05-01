@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>パスワードを忘れました</title>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#171717;
+  --card:#1f1f1f;
+  --muted:#a8a8a8;
+  --accent:#6b21a8;
+  --accent-strong:#5b21b6;
+  --text:#eaeaea;
+  --border: rgba(255,255,255,0.04);
+}
+body.light {
+  --bg:#f6f8fb;
+  --card:#fff;
+  --muted:#475569;
+  --text:#0f172a;
+  --border: rgba(0,0,0,0.06);
+}
+
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);transition:background .25s,color .25s;}
+body{display:flex;flex-direction:column;min-height:100vh;}
+dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+main.wrapper{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;}
+.card{background:var(--card);border-radius:12px;padding:24px;border:1px solid var(--border);box-shadow:0 6px 18px rgba(2,6,23,0.45);max-width:480px;width:100%;color:var(--text);}
+h1{margin:0 0 6px 0;font-size:20px;font-weight:700;}
+p.lead{margin:0 0 16px 0;color:var(--muted);font-size:14px;}
+.input{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);box-sizing:border-box;margin-bottom:12px;}
+.register-button, button{background:var(--accent);color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;cursor:pointer;}
+.register-button:hover, button:hover{opacity:0.95;}
+.small-note{font-size:13px;color:var(--muted);}
+#toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:10px 14px;border-radius:10px;font-weight:700;display:none;z-index:99999;color:#fff;box-sizing:border-box;}
+#toast.purple{background:var(--accent-strong);}
+#toast.red{background:#c00;}
+#toast.yellow{background:#e6b800;color:#222;}
+</style>
+
+<script type="module" src="/dp-topbar.js"></script>
+</head>
+
+<body>
+<dp-topbar></dp-topbar>
+
+<main class="wrapper" role="main">
+  <div class="card" role="region" aria-label="パスワード回復フォーム">
+    <h1>パスワードを忘れました</h1>
+    <p class="lead">メールアドレスを入力すると、パスワードを再設定するためのリンクを受け取れます。</p>
+
+    <form id="forgotPasswordForm" autocomplete="on" novalidate>
+      <input type="email" id="email" class="input" placeholder="you@example.com" required>
+      <button type="submit">パスワードを再設定</button>
+    </form>
+
+    <div class="small-note" style="margin-top:12px;">
+      管理者アカウント（<b>@darkpurpleof.github.io</b>）は、<a href="./adminhelp/resetpassword" style="color:var(--accent);text-decoration:none;" target="_blank">こちらのリンク</a>から再設定してください。
+    </div>
+  </div>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+function showToast(message, color="purple", duration=3500){
+  const t=document.getElementById("toast");
+  t.textContent=message;
+  t.className=color+" show";
+  t.style.display="block";
+  setTimeout(()=>{t.className=color+" hide";setTimeout(()=>{t.style.display="none";t.className="";},400);},duration);
+}
+
+// ダーク/ライトモードを切り替え
+function toggleDarkMode(){
+  const btn=document.getElementById("themeToggle");
+  if(document.body.classList.contains("light")){
+    document.body.classList.remove("light");btn.innerHTML="🌙";localStorage.setItem("lightMode","disabled");
+  }else{
+    document.body.classList.add("light");btn.innerHTML="☀️";localStorage.setItem("lightMode","enabled");
+  }
+}
+if(localStorage.getItem("lightMode")==="enabled"){document.body.classList.add("light");if(document.getElementById("themeToggle"))document.getElementById("themeToggle").innerHTML="☀️";}
+</script>
+
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain:"darkpurpleof-s-website.firebaseapp.com",
+  projectId:"darkpurpleof-s-website",
+  storageBucket:"darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId:"520651082420",
+  appId:"1:520651082420:web:bb05c0c3fd64517952e5e1"
+};
+if(!window.firebase||!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+// セッション状態を確認 -> バンされている場合はリダイレクト
+auth.onAuthStateChanged(async (user)=>{
+  if(!user)return;
+  try{
+    const bannedSnap=await db.collection("banned_users").doc(user.email).get();
+    if(bannedSnap.exists)window.location.href="./not-approved";
+  }catch(e){console.warn("バン確認に失敗しました",e);}
+});
+
+document.getElementById("forgotPasswordForm").addEventListener("submit", async (ev)=>{
+  ev.preventDefault();
+  const email=(document.getElementById("email").value||"").trim().toLowerCase();
+  if(!email){showToast("メールアドレスは必須です。","yellow");return;}
+  if(email.endsWith("@darkpurpleof.github.io")){showToast("管理者アカウントは管理者ヘルプから再設定してください。","red");return;}
+
+  try{
+    await auth.sendPasswordResetEmail(email);
+    showToast("パスワードを再設定するためのリンクをメールで送信しました！","purple");
+  }catch(err){
+    console.warn("再設定に失敗しました",err);
+    showToast("再設定メールを送信できませんでした: "+(err.message||"不明"),"red");
+  }
+});
+</script>
+</body>
+</html>

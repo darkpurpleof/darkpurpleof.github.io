@@ -1,0 +1,1214 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>設定</title>
+
+  <!-- Firebase classic (compat) only, no modular imports -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+  <script src="/dp-topbar.js"></script>
+
+  <style>
+    /* Global box-sizing and overflow guard to prevent any accidental horizontal scroll */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    img { max-width: 100%; display: block; }
+
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --friend-row-height: 110px;
+      --friend-row-height-mobile: 84px;
+      --danger: #b91c1c;
+      --success: #7214be;
+      --soft: rgba(255,255,255,0.03);
+    }
+    body.light {
+      --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06); --soft: rgba(0,0,0,0.03);
+    }
+
+    body {
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background-color: var(--bg);
+      color:var(--text);
+      transition: background .25s, color .25s;
+      min-height:100vh;
+    }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+    .top-bar { display:none !important; }
+
+    main.container {
+      max-width:1200px;
+      width:100%;
+      margin:24px auto;
+      padding:20px;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:20px;
+      box-sizing:border-box;
+      overflow-x: hidden;
+    }
+    @media (max-width:920px){
+      main.container{ grid-template-columns:1fr; padding:16px; }
+      aside.right-column{ order:2; }
+    }
+
+    .card {
+      background:var(--card);
+      border-radius:12px;
+      padding:18px;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:0 6px 18px rgba(2,6,23,0.45);
+      overflow:visible;
+    }
+
+    .hero {
+      display:flex;
+      gap:16px;
+      align-items:center;
+      justify-content:space-between;
+      padding:20px;
+      border-radius:12px;
+      min-width:0;
+    }
+    .hero > div { min-width:0; }
+    .muted { color:var(--muted); font-size:13px; }
+    .title-line { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+    .tiny-chip {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:var(--soft);
+      border:1px solid var(--border);
+      color:var(--muted);
+      font-size:12px;
+      user-select:none;
+    }
+
+    .grid-two {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:720px){ .grid-two { grid-template-columns:1fr; } }
+
+    .profile-preview {
+      display:flex;
+      gap:14px;
+      align-items:center;
+      background:var(--card);
+      border-radius:12px;
+      padding:12px;
+      border:1px solid var(--border);
+    }
+    .profile-pfp {
+      width:72px; height:72px; border-radius:12px;
+      background-size:cover; background-position:center;
+      border:1px solid var(--border);
+      flex-shrink:0;
+      background-color: var(--soft);
+    }
+    .profile-text { display:flex; flex-direction:column; gap:6px; min-width:0; }
+    .profile-name-verif { font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px; min-width:0; }
+    .profile-name-verif span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .profile-name-verif img { width:14px; height:14px; margin-left:4px; }
+
+    .action-button {
+      display:inline-flex; gap:10px; align-items:center;
+      padding:10px 14px; border-radius:10px;
+      border:1px solid var(--border);
+      background:transparent; cursor:pointer;
+      font-weight:600; color:var(--text);
+      text-decoration:none;
+    }
+    .action-button:hover { background:var(--soft); }
+    .action-button:disabled, .action-button.disabled {
+      opacity:.5; cursor:not-allowed; pointer-events:none;
+    }
+    .action-button img{ width:18px; height:18px; }
+    .action-row { display:flex; gap:10px; flex-wrap:wrap; }
+
+    #toast {
+      position:fixed; top:18px; left:50%; transform:translateX(-50%);
+      padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999;
+      box-shadow:0 12px 30px rgba(0,0,0,.25);
+      max-width:min(92vw, 520px);
+      text-align:center;
+    }
+    #toast.purple { background:var(--accent-strong); color:#fff; }
+    #toast.yellow{ background:#e6b800; color:#222; }
+    #toast.red{ background:#c00; color:#fff; }
+    #toast.green{ background:var(--success); color:#fff; }
+
+    .settings-card { background:var(--card); border-radius:12px; border:1px solid var(--border); box-shadow:0 6px 18px rgba(2,6,23,0.3); overflow:hidden; }
+    .settings-card-head {
+      display:flex; align-items:center; gap:10px;
+      padding:16px 16px 10px 16px; border-bottom:1px solid var(--border);
+    }
+    .settings-card-head h2 { margin:0; font-size:18px; }
+    .settings-card-body { padding:0 16px 8px 16px; }
+
+    .setting-item {
+      display:flex; align-items:center; gap:12px;
+      padding:14px 0; border-bottom:1px solid var(--border);
+      min-width:0;
+    }
+    .setting-item:last-child { border-bottom:none; }
+    .setting-main { flex:1; min-width:0; }
+    .setting-title {
+      margin:0 0 4px 0; font-size:15px; font-weight:700;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .setting-desc { margin:0; font-size:13px; color:var(--muted); line-height:1.4; }
+    .setting-item .click-target { display:flex; width:100%; align-items:center; gap:12px; cursor:pointer; }
+    .setting-item .click-target.disabled { cursor:not-allowed; opacity:.45; }
+
+    .switch {
+      position:relative; width:46px; height:26px; flex-shrink:0;
+    }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider {
+      position:absolute; inset:0; cursor:pointer; background:#555; transition:.2s; border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .slider:before {
+      position:absolute; content:""; height:20px; width:20px; left:3px; top:2px; background:white; transition:.2s; border-radius:50%;
+    }
+    .switch input:checked + .slider { background:var(--accent-strong); }
+    .switch input:checked + .slider:before { transform:translateX(20px); }
+
+    .friends-container {
+      display:grid;
+      gap:12px;
+      padding:12px;
+      width:100%; max-width:100%; min-width:0;
+      grid-template-columns:repeat(5, minmax(0, 1fr));
+      grid-auto-rows:var(--friend-row-height);
+      align-items:start;
+      overflow-x:hidden;
+      box-sizing:border-box;
+      border-radius:8px;
+      background:rgba(255,255,255,.01);
+      border:1px solid var(--border);
+    }
+    @media (min-width: 921px) {
+      .friends-container {
+        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
+        overflow-y:auto;
+      }
+    }
+    @media (min-width: 601px) and (max-width: 920px) {
+      .friends-container {
+        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
+        overflow-y:auto;
+      }
+    }
+    @media (max-width: 600px) {
+      .friends-container {
+        gap:8px; padding:10px;
+        grid-auto-rows:var(--friend-row-height-mobile);
+        max-height: calc((var(--friend-row-height-mobile) * 2) + (8px * 1));
+        overflow-y:auto;
+      }
+    }
+    .friend-card {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      width:100%; min-width:0; text-align:center; cursor:pointer;
+      background:var(--soft); border:1px solid var(--border); border-radius:12px;
+      padding:10px; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .friend-card:hover { background:rgba(107,33,168,.12); }
+    .friend-pfp {
+      width:64px; height:64px; border-radius:12px; margin:0 auto 8px auto;
+      background-size:cover; background-position:center; border:2px solid rgba(0,0,0,0.06);
+      flex-shrink:0; background-repeat:no-repeat;
+      background-color:var(--soft);
+    }
+    .friend-name {
+      font-size:13px; color:var(--text); display:flex; align-items:center; justify-content:center; gap:6px;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;
+    }
+    .friend-name img { width:12px; height:12px; margin-left:6px; }
+    .friends-empty { color:var(--muted); font-size:13px; padding:8px 2px 2px; }
+
+    .overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.55);
+      display:none; align-items:center; justify-content:center; padding:16px; z-index:2000;
+    }
+    .overlay.show { display:flex; }
+    .modal {
+      width:min(640px, 100%);
+      max-height:min(90vh, 900px);
+      overflow:auto;
+      background:var(--card); color:var(--text);
+      border:1px solid var(--border);
+      border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.45);
+    }
+    .modal-head {
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:18px 18px 12px; border-bottom:1px solid var(--border);
+      position:sticky; top:0; background:linear-gradient(to bottom, var(--card), color-mix(in srgb, var(--card) 88%, transparent));
+      backdrop-filter: blur(8px);
+    }
+    .modal-head h3 { margin:0; font-size:18px; }
+    .modal-body { padding:18px; }
+    .modal-actions {
+      display:flex; gap:10px; justify-content:flex-end; padding:0 18px 18px;
+      flex-wrap:wrap;
+    }
+    .input, .select, .textarea {
+      width:100%; background:var(--soft); color:var(--text);
+      border:1px solid var(--border); border-radius:12px; padding:12px 14px;
+      outline:none; font:inherit;
+    }
+    .input:focus, .select:focus, .textarea:focus { border-color: rgba(107,33,168,.6); box-shadow:0 0 0 3px rgba(107,33,168,.15); }
+    .textarea { min-height:110px; resize:vertical; }
+    .helper { color:var(--muted); font-size:13px; line-height:1.5; }
+    .separator { height:1px; background:var(--border); margin:14px 0; }
+    .pill-list { display:flex; gap:8px; flex-wrap:wrap; }
+    .pill {
+      display:inline-flex; align-items:center; gap:6px; padding:8px 10px;
+      border-radius:999px; background:var(--soft); border:1px solid var(--border); font-size:12px;
+    }
+    .linkish { color:#c4b5fd; cursor:pointer; text-decoration:underline; }
+    .hidden { display:none !important; }
+
+    .right-column { display:flex; flex-direction:column; gap:20px; }
+    .footer-note { font-size:12px; color:var(--muted); line-height:1.5; }
+
+    /* smaller visuals for small screens */
+    @media (max-width: 600px) {
+      .friend-card { padding: 6px; }
+      .friend-pfp { width: 40px; height: 40px; margin-bottom:6px; }
+      .friend-name { font-size: 11px; }
+      .profile-preview { flex-direction:row; gap:10px; padding:10px; }
+      main.container { margin: 12px auto; padding: 12px; max-width: 100%; overflow-x: hidden; }
+      .hero { padding:16px; }
+    }
+
+    .friends-container::-webkit-scrollbar { width: 8px; }
+    .friends-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.04); border-radius: 6px; }
+    .modal::-webkit-scrollbar { width: 10px; }
+    .modal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 6px; }
+  </style>
+
+  <script>
+    // Firebase configuration goes here. Initialize at the top, before the page logic.
+    // Replace these placeholders with your real config.
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  </script>
+</head>
+<body>
+  <dp-topbar></dp-topbar>
+
+  <div id="toast"></div>
+
+  <main class="container">
+    <section class="left-column" style="display:flex; flex-direction:column; gap:20px; min-width:0;">
+      <div class="card hero">
+        <div style="min-width:0; flex:1;">
+          <div class="title-line">
+            <h1 id="pageTitle" style="margin:0; font-size:28px; line-height:1.1;">設定</h1>
+            <span class="tiny-chip" id="sessionChip">ゲスト</span>
+          </div>
+          <p class="muted" style="margin:10px 0 0;">1つの安全な画面から、アカウントの各種オプションと設定を管理できます。</p>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-head">
+          <span>👤</span>
+          <h2>ユーザー情報</h2>
+        </div>
+        <div class="settings-card-body" id="userInfoCard">
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">ログイン</p>
+              <p class="setting-desc">このブラウザに関連付けられたアカウントにログインまたはログアウトします。</p>
+            </div>
+            <button class="action-button" id="btnLoginLogout" type="button">ログイン</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">ベータプログラムに参加</p>
+              <p class="setting-desc">先行アクセスプログラムに参加して、新機能を試します。</p>
+            </div>
+            <button class="action-button" id="btnBetaProgram" type="button">開く</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-head">
+          <span>🌐</span>
+          <h2>公開プロフィール</h2>
+        </div>
+        <div class="settings-card-body">
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">地域を変更</p>
+              <p class="setting-desc" id="regionDesc">地域データを読み込み中...</p>
+            </div>
+            <button class="action-button" id="btnRegion" type="button">編集</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">生年月日を設定</p>
+              <p class="setting-desc" id="birthdayDesc">生年月日を読み込み中...</p>
+            </div>
+            <button class="action-button" id="btnBirthday" type="button">編集</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">言語</p>
+              <p class="setting-desc" id="langDesc">言語を読み込み中...</p>
+            </div>
+            <button class="action-button" id="btnLang" type="button">編集</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">ブロックしたユーザーを管理</p>
+              <p class="setting-desc">ブロックしたユーザーの一覧を確認します。</p>
+            </div>
+            <button class="action-button" id="btnBlocked" type="button">開く</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">本人確認を行う</p>
+              <p class="setting-desc">このオプションはまだ利用できません。</p>
+            </div>
+            <button class="action-button disabled" type="button">近日公開</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">公開プロフィール</p>
+              <p class="setting-desc">プロフィールを他のユーザーに表示するかを切り替えます。</p>
+            </div>
+            <label class="switch" title="公開プロフィール">
+              <input id="togglePublicProfile" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">掲示板への投稿を許可</p>
+              <p class="setting-desc">あなたの掲示板への投稿を有効または無効にします。</p>
+            </div>
+            <label class="switch" title="掲示板への投稿を許可">
+              <input id="toggleAllowPosts" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-head">
+          <span>✨</span>
+          <h2>その他</h2>
+        </div>
+        <div class="settings-card-body">
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">設定をリセット</p>
+              <p class="setting-desc">ログアウトして、このブラウザのローカルセッションデータを削除します。</p>
+            </div>
+            <button class="action-button" id="btnReset" type="button">リセット</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Language modal -->
+  <div class="overlay" id="languageModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>言語を変更</h3>
+        <button class="action-button" type="button" data-close="languageModal">閉じる</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper">アプリの言語を選択してください。Android アプリとこの画面で使用されます。Android ではシステム言語よりこの設定が優先されます。</p>
+
+        <div style="margin-top:12px;">
+          <label class="helper">言語</label>
+          <select class="select" id="langSelect">
+            <option value="ja">日本語</option>
+            <option value="de">Deutsch</option>
+            <option value="ru">Русский</option>
+            <option value="es">Español</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="languageModal">キャンセル</button>
+        <button class="action-button" id="btnSaveLang" type="button">言語を保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Region modal -->
+  <div class="overlay" id="regionModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>地域を設定</h3>
+        <button class="action-button" type="button" data-close="regionModal">閉じる</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper">2文字の国コードを選択してください。</p>
+        <div class="grid-two" style="margin-top:12px;">
+          <div>
+            <label class="helper">検索</label>
+            <input class="input" id="regionSearch" placeholder="国を検索..." />
+          </div>
+          <div>
+            <label class="helper">選択済みコード</label>
+            <input class="input" id="regionCodeInput" maxlength="2" placeholder="MX" />
+          </div>
+        </div>
+        <div style="margin-top:12px; max-height:280px; overflow:auto; border:1px solid var(--border); border-radius:12px;">
+          <div id="regionList" style="display:grid; gap:6px; padding:10px;"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="regionModal">キャンセル</button>
+        <button class="action-button" id="btnSaveRegion" type="button">地域を保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Birthday modal -->
+  <div class="overlay" id="birthdayModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>生年月日を設定</h3>
+        <button class="action-button" type="button" data-close="birthdayModal">閉じる</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper"><strong>dd/mm/yyyy</strong> 形式を使ってください。保存後は、この日付の変更にサポート対応が必要になる場合があります。</p>
+        <div style="margin-top:12px;">
+          <label class="helper">生年月日</label>
+          <input class="input" id="birthdayInput" placeholder="dd/mm/yyyy" />
+        </div>
+        <p class="helper" id="birthdayError" style="color:#fca5a5; display:none; margin-top:10px;"></p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="birthdayModal">キャンセル</button>
+        <button class="action-button" id="btnSaveBirthday" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout confirm -->
+  <div class="overlay" id="logoutModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>ログアウト</h3>
+        <button class="action-button" type="button" data-close="logoutModal">閉じる</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper" id="logoutText">本当にログアウトしますか？</p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="logoutModal">キャンセル</button>
+        <button class="action-button" id="btnConfirmLogout" type="button">ログアウト</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset confirm -->
+  <div class="overlay" id="resetModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>設定をリセット</h3>
+        <button class="action-button" type="button" data-close="resetModal">閉じる</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper">現在のアカウントをログアウトし、このページで使用しているブラウザの保存データを削除します。</p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="resetModal">キャンセル</button>
+        <button class="action-button" id="btnConfirmReset" type="button">今すぐリセット</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credits modal -->
+  <div class="overlay" id="creditsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>システム設定</h3>
+        <button class="action-button" type="button" data-close="creditsModal">閉じる</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper"><strong id="creditsTapTarget" style="cursor:pointer; user-select:none;">システム設定</strong> <span class="muted">もう一度押すとデバッグツールを表示します</span></p>
+        <p class="helper">Copyright © Dark Purple OF 2023-2025. All rights reserved.</p>
+        <p class="helper">無断使用は禁止されています。</p>
+        <div class="separator"></div>
+        <p class="helper"><span class="linkish" id="btnMoreInfo">サイトでさらに詳しく見る</span></p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="creditsModal">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Translation modal -->
+  <div class="overlay" id="translationsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>翻訳</h3>
+        <button class="action-button" type="button" data-close="translationsModal">閉じる</button>
+      </div>
+      <div class="modal-body" id="translationsBody">
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="translationsModal">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debug modal -->
+  <div class="overlay" id="debugModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>デバッグ</h3>
+        <button class="action-button" type="button" data-close="debugModal">閉じる</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-item" style="padding-top:0;">
+          <div class="setting-main">
+            <p class="setting-title">デバッグ設定を開く</p>
+            <p class="setting-desc">実験的な設定にアクセスします。</p>
+          </div>
+          <button class="action-button" id="btnOpenDebug" type="button">開く</button>
+        </div>
+        <div class="setting-item">
+          <div class="setting-main">
+            <p class="setting-title">デバッグを無効化</p>
+            <p class="setting-desc">デバッグモードを無効にして、詳細コントロールを非表示にします。</p>
+          </div>
+          <button class="action-button" id="btnDisableDebug" type="button">無効化</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="debugModal">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+    const toast = {
+      el: $('#toast'),
+      show(message, kind = 'purple', ms = 2400) {
+        this.el.className = '';
+        this.el.classList.add(kind);
+        this.el.textContent = message;
+        this.el.style.display = 'block';
+        clearTimeout(this._t);
+        this._t = setTimeout(() => { this.el.style.display = 'none'; }, ms);
+      }
+    };
+
+    const REGION_LIST = [
+      ['MX','メキシコ'], ['US','アメリカ合衆国'], ['ES','スペイン'], ['AR','アルゼンチン'], ['CO','コロンビア'], ['CL','チリ'], ['PE','ペルー'],
+      ['VE','ベネズエラ'], ['EC','エクアドル'], ['GT','グアテマラ'], ['CR','コスタリカ'], ['PA','パナマ'], ['DO','ドミニカ共和国'],
+      ['UY','ウルグアイ'], ['PY','パラグアイ'], ['BO','ボリビア'], ['BR','ブラジル'], ['CA','カナダ'], ['GB','イギリス'],
+      ['FR','フランス'], ['DE','ドイツ'], ['IT','イタリア'], ['PT','ポルトガル'], ['NL','オランダ'], ['BE','ベルギー'], ['SE','スウェーデン'],
+      ['NO','ノルウェー'], ['FI','フィンランド'], ['PL','ポーランド'], ['CZ','チェコ'], ['AT','オーストリア'], ['CH','スイス'], ['IE','アイルランド'],
+      ['JP','日本'], ['KR','韓国'], ['CN','中国'], ['TW','台湾'], ['HK','香港'], ['IN','インド'], ['PH','フィリピン'],
+      ['ID','インドネシア'], ['MY','マレーシア'], ['SG','シンガポール'], ['AU','オーストラリア'], ['NZ','ニュージーランド'], ['ZA','南アフリカ']
+    ];
+
+    const state = {
+      user: null,
+      userDoc: null,
+      profilePublic: true,
+      postsAllowed: true,
+      region: null,
+      birthDate: null,
+      lang: null,
+      debugEnabled: false,
+      tapCount: 0,
+      lastTapTime: 0,
+      friendsUnsub: null,
+      userUnsub: null
+    };
+
+    const LANG_LIST = [
+      ['ja', '日本語'],
+      ['de', 'Deutsch'],
+      ['ru', 'Русский'],
+      ['es', 'Español'],
+      ['en', 'English']
+    ];
+
+    function formatLang(code) {
+      if (!code) return '言語が選択されていません。';
+      const item = LANG_LIST.find(([c]) => c === String(code).toLowerCase());
+      return item ? `${item[1]} (${item[0]})` : String(code).toLowerCase();
+    }
+
+    function getUserKey(user) {
+      return user?.email || user?.uid || null;
+    }
+
+    function userRef(user) {
+      const key = getUserKey(user);
+      return key ? db.collection('user_data').doc(key) : null;
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[m]));
+    }
+
+    function openModal(id) { $('#' + id).classList.add('show'); }
+    function closeModal(id) { $('#' + id).classList.remove('show'); }
+
+    function closeAllModals() {
+      $$('.overlay').forEach(o => o.classList.remove('show'));
+    }
+
+    function formatRegion(code) {
+      if (!code) return 'アカウントの地域を設定してください。変更は年1回のみ可能です。';
+      const item = REGION_LIST.find(([c]) => c.toUpperCase() === code.toUpperCase());
+      return item ? `${item[1]} (${item[0]})` : code.toUpperCase();
+    }
+
+    function regionEmoji(code) {
+      if (!code || code.length !== 2) return '❔';
+      return code.toUpperCase().split('').map(ch => String.fromCodePoint(0x1F1E6 + (ch.charCodeAt(0) - 65))).join('');
+    }
+
+    function calculateAge(birthdayString) {
+      if (!birthdayString) return null;
+      const parts = birthdayString.split('/');
+      if (parts.length !== 3) return null;
+      const d = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const y = parseInt(parts[2], 10);
+      if (!d || !m && m !== 0 || !y) return null;
+      const dob = new Date(y, m, d);
+      if (isNaN(dob.getTime())) return null;
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const md = today.getMonth() - dob.getMonth();
+      if (md < 0 || (md === 0 && today.getDate() < dob.getDate())) age--;
+      return age;
+    }
+
+    function validateBirthdayInput(input) {
+      const parts = String(input).trim().split('/');
+      if (parts.length !== 3) return '形式が正しくありません。dd/mm/yyyy を使用してください。';
+      const [dd, mm, yyyy] = parts.map(v => parseInt(v, 10));
+      if (![dd, mm, yyyy].every(Number.isFinite)) return '日付の形式が正しくありません。';
+      if (mm < 1 || mm > 12) return '月は1から12の間で入力してください。';
+      const dt = new Date(yyyy, mm - 1, dd);
+      if (dt.getFullYear() !== yyyy || dt.getMonth() !== mm - 1 || dt.getDate() !== dd) return 'その日付は存在しません。';
+      const now = new Date();
+      if (dt > now) return '未来の日付は入力できません。';
+      const age = calculateAge(`${dd}/${mm}/${yyyy}`);
+      if (age === null || age < 1) return '少なくとも1歳以上である必要があります。';
+      return null;
+    }
+
+    function mailToFeedback() {
+      const email = (navigator.language || '').toLowerCase().startsWith('ja')
+        ? 'boykisser2189@gmail.com'
+        : 'javiercorzo387@gmail.com';
+      const subject = 'フィードバック';
+      return `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+    }
+
+    function setProfileHeader(user) {
+      const name = user?.displayName || user?.email?.split('@')[0] || 'ゲスト';
+      const profileNameEl = $('#profileName');
+      if (profileNameEl) profileNameEl.textContent = name;
+      const profileEmailEl = $('#profileEmail');
+      if (profileEmailEl) profileEmailEl.textContent = user?.email || 'まだログインしていません';
+      const profileUidEl = $('#profileUid');
+      if (profileUidEl) profileUidEl.textContent = `uid: ${user?.uid || '-'}`;
+      $('#sessionChip').textContent = user?.email ? '接続済み' : 'ゲスト';
+      $('#btnLoginLogout').textContent = user ? 'ログアウト' : 'ログイン';
+      const logoutTopBtn = $('#btnLogoutTop');
+      if (logoutTopBtn) logoutTopBtn.textContent = user ? '⎋ ログアウト' : 'ログイン';
+    }
+
+    function setBadgeIfNeeded(user) {
+      const badge = $('#profileBadge');
+      if (!badge) return;
+      const isVerified = !!(user?.email && user.email.endsWith('@darkpurpleof.github.io'));
+      if (isVerified) {
+        badge.style.display = 'inline-block';
+        badge.alt = 'verified';
+        badge.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l2.4 2.2 3.2-.1 1.2 3 2.9 1.4-.6 3.1 1.7 2.8-2.1 2.4-.1 3.2-3 1.2-1.4 2.9-3.1-.6L12 22l-2.2-2.4-3.1.6-1.4-2.9-3-1.2-.1-3.2-2.1-2.4 1.7-2.8-.6-3.1 2.9-1.4 1.2-3 3.2.1L12 2z" fill="#22c55e"/>
+            <path d="M9.5 12.6l1.9 1.9 3.9-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `);
+      } else {
+        badge.style.display = 'none';
+        badge.removeAttribute('src');
+      }
+    }
+
+    function setVisibilityByLogin(user) {
+      const loggedIn = !!user;
+      const setState = (id, value) => { const el = $('#' + id); if (el) el.disabled = value; };
+      setState('btnVerifyUser', !loggedIn);
+      setState('btnBetaProgram', !loggedIn);
+      setState('btnPlugins', !loggedIn);
+      setState('btnRegion', !loggedIn);
+      setState('btnBirthday', !loggedIn);
+      setState('btnBlocked', !loggedIn);
+      setState('btnLang', !loggedIn);
+      setState('btnDemo', !loggedIn);
+      setState('btnReset', !loggedIn);
+      setState('btnOverlay', false);
+      setState('togglePublicProfile', !loggedIn);
+      setState('toggleAllowPosts', !loggedIn);
+    }
+
+    function updateDerivedTexts(doc) {
+      const region = doc?.region || null;
+      const nextChange = doc?.regionchange_next?.toDate ? doc.regionchange_next.toDate() : null;
+      const birthDate = doc?.birth_date || null;
+      const loggedIn = !!state.user;
+
+      const now = new Date();
+      const canChange = !nextChange || nextChange <= now;
+      const regionName = region ? formatRegion(region) : null;
+      const regionFlag = region ? regionEmoji(region) : '❔';
+
+      if (!loggedIn) {
+        $('#regionDesc').textContent = '地域を設定するにはログインが必要です。';
+        $('#birthdayDesc').textContent = '生年月日を設定するにはログインしてください。';
+      } else {
+        $('#regionDesc').textContent = region
+          ? (canChange ? `あなたの地域は ${regionName} ${regionFlag} に設定されています。今すぐ変更できます。` : `あなたの地域は ${regionName} ${regionFlag} に設定されています。変更可能日は ${nextChange.toLocaleDateString()} です。`)
+          : 'アカウントの地域を設定してください。変更は年1回のみ可能です。';
+        if (!birthDate) {
+          $('#birthdayDesc').textContent = 'クリックして生年月日を設定してください。後から変更するにはサポートが必要です。';
+        } else {
+          const age = calculateAge(birthDate);
+          $('#birthdayDesc').textContent = age ? `${birthDate} • ${age}歳` : birthDate;
+        }
+      }
+
+      const lang = doc?.lang || null;
+      $('#langDesc').textContent = lang
+        ? `現在の言語: ${formatLang(lang)}。`
+        : 'お好みの言語を選択してください。';
+
+      $('#togglePublicProfile').checked = !!doc?.isProfilePublic;
+      $('#toggleAllowPosts').checked = !!doc?.postsAllowed;
+
+      // Hide/show edit buttons based on data state
+      $('#btnBirthday').style.display = birthDate ? 'none' : '';
+      $('#btnRegion').style.display = canChange ? '' : 'none';
+    }
+
+    function renderFriends(list = []) {
+      const box = $('#friendsContainer');
+      const empty = $('#friendsEmpty');
+      if (!box) return;
+      box.innerHTML = '';
+      if (!list.length) {
+        if (empty) empty.style.display = 'block';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      list.slice(0, 15).forEach(friend => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'friend-card';
+        card.innerHTML = `
+          <div class="friend-pfp" style="background-image:url('${friend.photoURL || ''}')"></div>
+          <div class="friend-name">${escapeHtml(friend.name || friend.email || '友達')} ${friend.verified ? '<img alt="verified" src="data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 2.2 3.2-.1 1.2 3 2.9 1.4-.6 3.1 1.7 2.8-2.1 2.4-.1 3.2-3 1.2-1.4 2.9-3.1-.6L12 22l-2.2-2.4-3.1.6-1.4-2.9-3-1.2-.1-3.2-2.1-2.4 1.7-2.8-.6-3.1 2.9-1.4 1.2-3 3.2.1L12 2z" fill="#22c55e"/></svg>`) + '" />' : ''}</div>
+        `;
+        card.addEventListener('click', () => {
+          if (friend.email) {
+            window.location.href = `./viewprofile.html?email=${encodeURIComponent(friend.email)}`;
+          }
+        });
+        box.appendChild(card);
+      });
+    }
+
+    async function loadUserDoc() {
+      if (!state.user) {
+        state.userDoc = null;
+        updateDerivedTexts(null);
+        renderFriends([]);
+        return;
+      }
+
+      const ref = userRef(state.user);
+      if (!ref) return;
+
+      if (state.userUnsub) state.userUnsub();
+      state.userUnsub = ref.onSnapshot((snap) => {
+        const doc = snap.exists ? snap.data() : {};
+        state.userDoc = doc;
+        updateDerivedTexts(doc);
+        $('#togglePublicProfile').checked = !!doc?.isProfilePublic;
+        $('#langDesc').dataset.lang = doc?.lang || '';
+        $('#toggleAllowPosts').checked = !!doc?.postsAllowed;
+        $('#birthdayDesc').dataset.birth = doc?.birth_date || '';
+        $('#regionDesc').dataset.region = doc?.region || '';
+      }, () => {
+        toast.show('ユーザーデータを読み込めませんでした。', 'red');
+      });
+
+      // Friends preview: try common fields, but stay graceful if not present.
+      if (state.friendsUnsub) state.friendsUnsub();
+      state.friendsUnsub = ref.collection('friends').onSnapshot((snap) => {
+        const list = [];
+        snap.forEach(doc => {
+          const d = doc.data() || {};
+          list.push({
+            name: d.name || d.displayName || d.email,
+            email: d.email,
+            photoURL: d.photoURL,
+            verified: !!d.verified
+          });
+        });
+        renderFriends(list);
+      }, () => renderFriends([]));
+    }
+
+    async function updateUserField(field, value) {
+      if (!state.user) throw new Error('ログインしていません');
+      const ref = userRef(state.user);
+      if (!ref) throw new Error('ユーザー参照がありません');
+      await ref.set({ [field]: value }, { merge: true });
+    }
+
+    function buildTranslationBody() {
+      const body = $('#translationsBody');
+      body.innerHTML = `
+        <div class="helper">元の設定ダイアログに表示される言語クレジットです。</div>
+        <div class="separator"></div>
+        <div style="display:grid; gap:12px;">
+          <div>
+            <div class="muted">スペイン語訳</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+          <div>
+            <div class="muted">ロシア語訳</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+          <div>
+            <div class="muted">英語訳</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+          <div>
+            <div class="muted">日本語訳</div>
+            <div class="linkish" data-profile="boykisser2189@darkpurpleof.github.io">Amethyst</div>
+          </div>
+          <div>
+            <div class="muted">ドイツ語訳</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+        </div>
+      `;
+      $$('[data-profile]', body).forEach(el => {
+        el.addEventListener('click', () => {
+          const email = el.getAttribute('data-profile');
+          window.location.href = `./viewprofile.html?email=${encodeURIComponent(email)}`;
+        });
+      });
+    }
+
+    function buildRegionList(filterText = '') {
+      const q = filterText.trim().toLowerCase();
+      const list = $('#regionList');
+      const filtered = REGION_LIST.filter(([code, name]) => {
+        return !q || code.toLowerCase().includes(q) || name.toLowerCase().includes(q);
+      });
+      list.innerHTML = filtered.map(([code, name]) => `
+        <button type="button" class="action-button" data-code="${code}" style="justify-content:space-between; width:100%;">
+          <span>${code}</span><span style="opacity:.8">${name}</span>
+        </button>
+      `).join('') || '<div class="helper">一致する項目がありません。</div>';
+      $$('[data-code]', list).forEach(btn => {
+        btn.addEventListener('click', () => {
+          $('#regionCodeInput').value = btn.getAttribute('data-code');
+          toast.show(`地域を選択しました: ${btn.getAttribute('data-code')}`, 'green');
+        });
+      });
+    }
+
+    async function saveLang() {
+      const code = $('#langSelect').value.trim().toLowerCase();
+      if (!['ja', 'de', 'ru', 'es', 'en'].includes(code)) {
+        toast.show('無効な言語コードです。', 'red');
+        return;
+      }
+      await updateUserField('lang', code);
+      toast.show('言語を保存しました。', 'green');
+      closeModal('languageModal');
+    }
+
+    async function saveRegion() {
+      const code = $('#regionCodeInput').value.trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(code)) {
+        toast.show('有効な2文字の地域コードを入力してください。', 'red');
+        return;
+      }
+      await updateUserField('region', code);
+      const nextChange = new Date();
+      nextChange.setFullYear(nextChange.getFullYear() + 1);
+      await updateUserField('regionchange_next', firebase.firestore.Timestamp.fromDate(nextChange));
+      toast.show('地域を保存しました。', 'green');
+      closeModal('regionModal');
+    }
+
+    async function saveBirthday() {
+      const input = $('#birthdayInput').value.trim();
+      const error = validateBirthdayInput(input);
+      if (error) {
+        $('#birthdayError').textContent = error;
+        $('#birthdayError').style.display = 'block';
+        return;
+      }
+      $('#birthdayError').style.display = 'none';
+      await updateUserField('birth_date', input);
+      toast.show('生年月日を保存しました。', 'green');
+      closeModal('birthdayModal');
+    }
+
+    async function toggleField(field, value) {
+      if (!state.user) {
+        toast.show('先にログインしてください。', 'red');
+        return;
+      }
+      await updateUserField(field, value);
+      toast.show('保存しました。', 'green');
+    }
+
+    async function logoutAndRedirect() {
+      try {
+        await auth.signOut();
+        toast.show('ログアウトしました。', 'green');
+        setTimeout(() => { window.location.href = '/login'; }, 500);
+      } catch (e) {
+        toast.show('ログアウト中にエラーが発生しました。', 'red');
+      }
+    }
+
+    async function resetSettings() {
+      try {
+        await auth.signOut();
+        localStorage.clear();
+        sessionStorage.clear();
+        toast.show('ブラウザの保存データを削除しました。', 'green');
+        setTimeout(() => { window.location.href = '/login'; }, 500);
+      } catch (e) {
+        toast.show('リセット中にエラーが発生しました。', 'red');
+      }
+    }
+
+    function revealDebugMaybe() {
+      const now = Date.now();
+      if (now - state.lastTapTime > 1000) state.tapCount = 0;
+      state.tapCount += 1;
+      state.lastTapTime = now;
+      if (state.tapCount >= 7) {
+        state.tapCount = 0;
+        state.debugEnabled = true;
+        toast.show('デバッグが有効になりました。', 'purple');
+        openModal('debugModal');
+        localStorage.setItem('debug_enabled', 'true');
+      }
+    }
+
+    function initThemeToggle() {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.body.classList.toggle('light', saved === 'light');
+      const themeBtn = $('#btnToggleTheme');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+          const light = document.body.classList.toggle('light');
+          localStorage.setItem('theme', light ? 'light' : 'dark');
+        });
+      }
+    }
+
+    function initQuickLinks() {
+      const openLoginBtn = $('#btnOpenLogin');
+      if (openLoginBtn) openLoginBtn.addEventListener('click', () => window.location.href = '/login');
+      const systemInfoBtn = $('#btnSystemInfo');
+      if (systemInfoBtn) systemInfoBtn.addEventListener('click', () => window.location.href = 'https://darkpurpleof.github.io/systeminfo');
+      const blockedBtn = $('#btnBlocked');
+      if (blockedBtn) blockedBtn.addEventListener('click', () => window.location.href = 'https://darkpurpleof.github.io/manageblockedusers');
+      const betaProgramBtn = $('#btnBetaProgram');
+      if (betaProgramBtn) betaProgramBtn.addEventListener('click', () => window.location.href = '/beta-features');
+      const moreInfoBtn = $('#btnMoreInfo');
+      if (moreInfoBtn) moreInfoBtn.addEventListener('click', () => window.open('https://darkpurpleof.github.io/systeminfo', '_blank'));
+      const mailFeedbackBtn = $('#btnMailFeedback');
+      if (mailFeedbackBtn) mailFeedbackBtn.setAttribute('href', mailToFeedback());
+    }
+
+    function initModalButtons() {
+      $$('[data-close]').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
+      });
+      $$('.overlay').forEach(ov => {
+        ov.addEventListener('click', (e) => {
+          if (e.target === ov) ov.classList.remove('show');
+        });
+      });
+    }
+
+    function initStaticButtons() {
+      $('#btnLoginLogout').addEventListener('click', () => {
+        if (state.user) openModal('logoutModal');
+        else window.location.href = '/login';
+      });
+      const logoutTopBtn = $('#btnLogoutTop');
+      if (logoutTopBtn) {
+        logoutTopBtn.addEventListener('click', () => {
+          if (state.user) openModal('logoutModal');
+          else window.location.href = '/login';
+        });
+      }
+      $('#btnConfirmLogout').addEventListener('click', logoutAndRedirect);
+      $('#btnLang').addEventListener('click', () => {
+        if (!state.user) return toast.show('先にログインしてください。', 'red');
+        $('#langSelect').value = (state.userDoc?.lang || 'es').toLowerCase();
+        openModal('languageModal');
+      });
+      $('#btnSaveLang').addEventListener('click', saveLang);
+      $('#btnConfirmReset').addEventListener('click', resetSettings);
+      $('#btnReset').addEventListener('click', () => openModal('resetModal'));
+      const creditsBtn = $('#btnCredits');
+      if (creditsBtn) creditsBtn.addEventListener('click', () => openModal('creditsModal'));
+      const translationsBtn = $('#btnTranslations');
+      if (translationsBtn) translationsBtn.addEventListener('click', () => openModal('translationsModal'));
+      $('#btnRegion').addEventListener('click', () => {
+        if (!state.user) return toast.show('先にログインしてください。', 'red');
+        $('#regionCodeInput').value = (state.userDoc?.region || '').toUpperCase();
+        $('#regionSearch').value = '';
+        buildRegionList('');
+        openModal('regionModal');
+      });
+      $('#btnBirthday').addEventListener('click', () => {
+        if (!state.user) return toast.show('先にログインしてください。', 'red');
+        $('#birthdayInput').value = state.userDoc?.birth_date || '';
+        $('#birthdayError').style.display = 'none';
+        openModal('birthdayModal');
+      });
+      $('#btnSaveRegion').addEventListener('click', saveRegion);
+      $('#btnSaveBirthday').addEventListener('click', saveBirthday);
+      $('#togglePublicProfile').addEventListener('change', async (e) => {
+        if (!state.user) return;
+        const on = e.target.checked;
+        if (on) {
+          await toggleField('isProfilePublic', true);
+        } else {
+          // Keep the same safety flow as the app: ask before making private.
+          e.target.checked = true;
+          openModal('logoutModal');
+          $('#logoutText').textContent = 'このモーダルは確認用として再利用されています。アプリの手順に従って、予定された確認ステップでプロフィールの公開設定を変更してください。';
+          $('#btnConfirmLogout').textContent = '閉じる';
+          $('#btnConfirmLogout').onclick = () => {
+            $('#btnConfirmLogout').textContent = 'ログアウト';
+            $('#logoutText').textContent = '本当にログアウトしますか？';
+            $('#btnConfirmLogout').onclick = logoutAndRedirect;
+            closeModal('logoutModal');
+          };
+          return;
+        }
+      });
+      $('#toggleAllowPosts').addEventListener('change', async (e) => {
+        if (!state.user) return;
+        await toggleField('postsAllowed', e.target.checked);
+      });
+      $('#creditsTapTarget').addEventListener('click', revealDebugMaybe);
+      const openDebugBtn = $('#btnOpenDebug');
+      if (openDebugBtn) openDebugBtn.addEventListener('click', () => window.location.href = './debug.html');
+      $('#btnDisableDebug').addEventListener('click', () => {
+        state.debugEnabled = false;
+        localStorage.removeItem('debug_enabled');
+        closeModal('debugModal');
+        toast.show('デバッグを非表示にしました。', 'green');
+      });
+      $('#regionSearch').addEventListener('input', (e) => buildRegionList(e.target.value));
+      $('#regionCodeInput').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().slice(0, 2); });
+      const systemInfoBtn = $('#btnSystemInfo');
+      if (systemInfoBtn) systemInfoBtn.addEventListener('click', () => window.open('https://darkpurpleof.github.io/systeminfo', '_blank'));
+    }
+
+    function initAuth() {
+      auth.onAuthStateChanged(async (user) => {
+        state.user = user || null;
+        setProfileHeader(user);
+        setBadgeIfNeeded(user);
+        setVisibilityByLogin(user);
+        await loadUserDoc();
+      });
+    }
+
+    function initPage() {
+      initThemeToggle();
+      initQuickLinks();
+      initModalButtons();
+      initStaticButtons();
+      initAuth();
+      buildTranslationBody();
+      buildRegionList('');
+      setProfileHeader(null);
+      setVisibilityByLogin(null);
+      setBadgeIfNeeded(null);
+
+      $('#pageTitle').addEventListener('click', revealDebugMaybe);
+      const profileNameEl = $('#profileName');
+      if (profileNameEl) profileNameEl.addEventListener('click', revealDebugMaybe);
+      $('#regionDesc').addEventListener('click', () => {
+        if (state.user) openModal('regionModal');
+      });
+      $('#birthdayDesc').addEventListener('click', () => {
+        if (state.user) openModal('birthdayModal');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', initPage);
+  </script>
+</body>
+</html>

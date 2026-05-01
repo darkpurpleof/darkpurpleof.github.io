@@ -389,6 +389,13 @@
             <button class="action-button" id="btnBirthday" type="button">Edit</button>
           </div>
           <div class="setting-item">
+  <div class="setting-main">
+    <p class="setting-title">Language</p>
+    <p class="setting-desc" id="langDesc">Loading language...</p>
+  </div>
+  <button class="action-button" id="btnLang" type="button">Edit</button>
+</div>
+          <div class="setting-item">
             <div class="setting-main">
               <p class="setting-title">Manage blocked users</p>
               <p class="setting-desc">Review the list of users you have blocked.</p>
@@ -444,6 +451,33 @@
 
   </main>
 
+  <!-- Language modal -->
+<div class="overlay" id="languageModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Change language</h3>
+      <button class="action-button" type="button" data-close="languageModal">Close</button>
+    </div>
+    <div class="modal-body">
+      <p class="helper">Select the app language. It will be used in the android app and here, in Android, this will ignore your system language.</p>
+
+      <div style="margin-top:12px;">
+        <label class="helper">Language</label>
+        <select class="select" id="langSelect">
+          <option value="ja">日本語</option>
+          <option value="de">Deutsch</option>
+          <option value="ru">Русский</option>
+          <option value="es">Español</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="action-button" type="button" data-close="languageModal">Cancel</button>
+      <button class="action-button" id="btnSaveLang" type="button">Save language</button>
+    </div>
+  </div>
+</div>
   <!-- Region modal -->
   <div class="overlay" id="regionModal">
     <div class="modal">
@@ -625,6 +659,7 @@
       userDoc: null,
       profilePublic: true,
       postsAllowed: true,
+      lang: null,
       region: null,
       birthDate: null,
       debugEnabled: false,
@@ -633,6 +668,20 @@
       friendsUnsub: null,
       userUnsub: null
     };
+
+    const LANG_LIST = [
+  ['ja', 'Japanese'],
+  ['de', 'German'],
+  ['ru', 'Russian'],
+  ['es', 'Spanish'],
+  ['en', 'English']
+];
+
+function formatLang(code) {
+  if (!code) return 'No language selected yet.';
+  const item = LANG_LIST.find(([c]) => c === String(code).toLowerCase());
+  return item ? `${item[1]} (${item[0]})` : String(code).toLowerCase();
+}
 
     function getUserKey(user) {
       return user?.email || user?.uid || null;
@@ -745,6 +794,7 @@
       setState('btnBetaProgram', !loggedIn);
       setState('btnPlugins', !loggedIn);
       setState('btnRegion', !loggedIn);
+            setState('btnLang', !loggedIn);
       setState('btnBirthday', !loggedIn);
       setState('btnBlocked', !loggedIn);
       setState('btnDemo', !loggedIn);
@@ -759,6 +809,11 @@
       const nextChange = doc?.regionchange_next?.toDate ? doc.regionchange_next.toDate() : null;
       const birthDate = doc?.birth_date || null;
       const loggedIn = !!state.user;
+
+            const lang = doc?.lang || null;
+      $('#langDesc').textContent = lang
+        ? `Current language: ${formatLang(lang)}.`
+        : 'Select your preferred language.';
 
       const now = new Date();
       const canChange = !nextChange || nextChange <= now;
@@ -918,6 +973,17 @@
       });
     }
 
+        async function saveLang() {
+      const code = $('#langSelect').value.trim().toLowerCase();
+      if (!['ja', 'de', 'ru', 'es', 'en'].includes(code)) {
+        toast.show('Invalid language code.', 'red');
+        return;
+      }
+      await updateUserField('lang', code);
+      toast.show('Language saved.', 'green');
+      closeModal('languageModal');
+    }
+
     async function saveRegion() {
       const code = $('#regionCodeInput').value.trim().toUpperCase();
       if (!/^[A-Z]{2}$/.test(code)) {
@@ -1041,6 +1107,12 @@
           else window.location.href = '/login';
         });
       }
+            $('#btnLang').addEventListener('click', () => {
+        if (!state.user) return toast.show('You need to log in first.', 'red');
+        $('#langSelect').value = (state.userDoc?.lang || 'es').toLowerCase();
+        openModal('languageModal');
+      });
+      $('#btnSaveLang').addEventListener('click', saveLang);
       $('#btnConfirmLogout').addEventListener('click', logoutAndRedirect);
       $('#btnConfirmReset').addEventListener('click', resetSettings);
       $('#btnReset').addEventListener('click', () => openModal('resetModal'));

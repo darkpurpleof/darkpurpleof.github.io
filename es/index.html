@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Inicio | DarkPurpleOF's Website</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    img { max-width: 100%; display: block; }
+
+    :root{
+      --bg: #171717;
+      --panel: #1b1b1b;
+      --card: #1f1f1f;
+      --card-2: #232323;
+      --muted: #a8a8a8;
+      --text: #eaeaea;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --border: rgba(255,255,255,0.05);
+      --border-strong: rgba(255,255,255,0.08);
+      --soft: rgba(255,255,255,0.03);
+
+      --friend-row-height: 110px;
+      --friend-row-height-mobile: 84px;
+      --radius: 14px;
+    }
+
+    body.light {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --card: #ffffff;
+      --card-2: #f8fafc;
+      --muted: #475569;
+      --text: #0f172a;
+      --border: rgba(0,0,0,0.06);
+      --border-strong: rgba(0,0,0,0.09);
+      --soft: rgba(0,0,0,0.025);
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background .25s ease, color .25s ease;
+    }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+    .top-bar { display:none !important; }
+
+    main.container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 22px auto;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 18px;
+      overflow-x: hidden;
+    }
+
+    @media (max-width: 920px){
+      main.container {
+        grid-template-columns: 1fr;
+        padding: 14px;
+        margin: 12px auto;
+      }
+      aside.right-column { order: 2; }
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--card), var(--panel));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      color: var(--text);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+      min-width: 0;
+    }
+
+    .hero {
+      display: grid;
+      gap: 14px;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .hero-copy {
+      min-width: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .02em;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 62ch;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .meta-pill {
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .section {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .section-title-wrap {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .section-desc {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .section-badge {
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      background: var(--soft);
+      border: 1px solid var(--border);
+      padding: 7px 10px;
+      border-radius: 999px;
+    }
+
+    .announcement-card,
+    .quote-card,
+    .preview-card {
+      display: grid;
+      gap: 10px;
+    }
+
+    .announcement-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+
+    .announcement-message {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 0;
+      white-space: pre-wrap;
+    }
+
+    .quote-text {
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.65;
+      margin: 0;
+    }
+
+    .quote-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .profile-preview {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      background: linear-gradient(180deg, var(--card), var(--panel));
+      border-radius: var(--radius);
+      padding: 14px;
+      border: 1px solid var(--border);
+      min-width: 0;
+    }
+
+    .profile-pfp-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .profile-pfp {
+      width: 76px;
+      height: 76px;
+      border-radius: 14px;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--border-strong);
+      background-color: var(--soft);
+    }
+
+    .profile-pfp-frame {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: 14px;
+      background-size: cover;
+      background-position: center;
+      display: none;
+    }
+
+    .profile-text {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .profile-name-verif {
+      font-weight: 800;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      line-height: 1.2;
+    }
+
+    .profile-name-verif span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .profile-name-verif img {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .profile-bio {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+
+    .friends-shell {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .friends-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .friends-count {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      background: var(--soft);
+      border: 1px solid var(--border);
+      padding: 7px 10px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    .friends-container {
+      display: grid;
+      gap: 12px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-auto-rows: var(--friend-row-height);
+      align-items: start;
+      overflow-x: hidden;
+      box-sizing: border-box;
+      border-radius: 12px;
+    }
+
+    @media (min-width: 921px) {
+      .friends-container {
+        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
+        overflow-y: auto;
+        padding-right: 2px;
+      }
+    }
+
+    @media (min-width: 601px) and (max-width: 920px) {
+      .friends-container {
+        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
+        overflow-y: auto;
+        padding-right: 2px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .friends-container {
+        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-auto-rows: var(--friend-row-height-mobile);
+        max-height: calc((var(--friend-row-height-mobile) * 3) + (8px * 2));
+        overflow-y: auto;
+      }
+    }
+
+    .friend-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-width: 0;
+      text-align: center;
+      cursor: pointer;
+      background: linear-gradient(180deg, var(--card-2), var(--card));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      box-sizing: border-box;
+      overflow: hidden;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+
+    .friend-card:hover {
+      transform: translateY(-1px);
+      border-color: var(--border-strong);
+    }
+
+    .friend-pfp {
+      width: 64px;
+      height: 64px;
+      border-radius: 13px;
+      margin: 0 auto 8px auto;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--border-strong);
+      background-repeat: no-repeat;
+      flex-shrink: 0;
+      background-color: var(--soft);
+    }
+
+    .friend-name {
+      font-size: 13px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+      font-weight: 600;
+    }
+
+    .friend-name img {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+
+    .empty-state {
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px dashed var(--border-strong);
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top: 2px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 8px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .action-button {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--text);
+      text-align: left;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+
+    .action-button:hover {
+      transform: translateY(-1px);
+      border-color: var(--border-strong);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .action-button img {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .action-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .mini-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    #toast {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 14px;
+      border-radius: 11px;
+      font-weight: 800;
+      display: none;
+      z-index: 99999;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.22);
+    }
+
+    #toast.purple { background: var(--accent-strong); color: #fff; }
+    #toast.yellow { background: #e6b800; color: #222; }
+    #toast.red { background: #c00; color: #fff; }
+
+    .friends-container::-webkit-scrollbar { width: 8px; }
+    .friends-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 999px; }
+    body.light .friends-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 24px; }
+      .card { padding: 14px; }
+      .profile-preview { flex-direction: row; gap: 10px; padding: 12px; }
+      .profile-pfp { width: 68px; height: 68px; border-radius: 12px; }
+      .hero-top { flex-direction: column; }
+      .section-head { align-items: flex-start; flex-direction: column; }
+      main.container { padding: 12px; }
+    }
+  </style>
+
+  <script type="module" src="/dp-topbar.js"></script>
+
+  <script>
+    window.isMobile = function() {
+      try {
+        const mm = window.matchMedia && window.matchMedia('(max-width: 600px)').matches;
+        if (typeof mm === 'boolean') return mm;
+        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+      } catch (e) { return false; }
+    };
+
+    window.isWebView = function() {
+      try {
+        const ua = navigator.userAgent || '';
+        const standalone = window.navigator.standalone === true;
+        const isAndroidWebView = /\bwv\b/.test(ua) || (/Version\/[\d.]+.*Chrome/.test(ua) && !/Chrome\/[\d.]+ Mobile/.test(ua));
+        const isNoChrome = !window.chrome && /Safari/.test(ua) && !/Chrome/.test(ua);
+        return standalone || isAndroidWebView || isNoChrome;
+      } catch (e) { return false; }
+    };
+  </script>
+</head>
+
+<body>
+  <dp-topbar></dp-topbar>
+
+  <main class="container">
+    <section class="stack">
+      <div class="card hero" role="region" aria-label="Welcome">
+        <div class="hero-top">
+          <div class="hero-copy">
+            <div class="hero-kicker">Inicio</div>
+            <h1>Bienvenido de nuevo</h1>
+            <p class="hero-subtitle">
+              Este es tu panel.
+            </p>
+          </div>
+        </div>
+
+        <div class="hero-meta" aria-label="Page summary">
+          <div class="meta-pill auth-required">Lista de amigos</div>
+          <div class="meta-pill">Anuncios</div>
+          <div class="meta-pill">Cita diaria</div>
+          <div class="meta-pill">Vista previa del perfil</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title-wrap">
+            <h2 class="section-title">Tus Amigos</h2>
+          </div>
+          <div class="friends-count" id="friends-count">0 amigos</div>
+        </div>
+
+        <div class="card friends-shell">
+          <div class="friends-container" id="friends-list" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title-wrap">
+            <h2 class="section-title">Anuncio</h2>
+            <p class="section-desc">Lee el último anuncio del sitio.</p>
+          </div>
+        </div>
+
+        <div class="card announcement-card" aria-live="polite">
+          <div class="announcement-title" id="announcement-title">Cargando...</div>
+          <div class="announcement-message" id="announcement-message">Por favor, espere...</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title-wrap">
+            <h2 class="section-title">Cita Diaria</h2>
+            <p class="section-desc">Disfruta de una cita inspiradora todos los días.</p>
+          </div>
+        </div>
+
+        <div class="card quote-card">
+          <div class="quote-label">Cita</div>
+          <div id="quote-card" class="quote-text">Cargando cita...</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title-wrap">
+            <h2 class="section-title">Vista Previa del Perfil</h2>
+          </div>
+        </div>
+
+        <div id="profile-preview" class="profile-preview" style="display:none;">
+          <div class="profile-pfp-wrap">
+            <div class="profile-pfp" id="preview-pfp"></div>
+            <div id="preview-pfp-frame" class="profile-pfp-frame"></div>
+          </div>
+
+          <div class="profile-text">
+            <div class="profile-name-verif">
+              <span id="preview-name">Cargando...</span>
+              <img id="preview-verified" src="/assets/verified.png" alt="Verified" style="display:none;">
+            </div>
+            <div class="profile-bio" id="preview-bio"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right-column">
+      <div class="card section">
+        <div class="section-head">
+          <div class="section-title-wrap">
+            <h2 class="section-title">Acciones Rápidas</h2>
+            <p class="section-desc">Accede a funciones esenciales rápidamente con botones simples y directos.</p>
+          </div>
+        </div>
+
+        <div class="action-group">
+          <button class="action-button auth-required" onclick="location.href='./redeem'">
+            <img src="/assets/redeem.png" alt="">
+            <span>Canjear</span>
+          </button>
+
+          <button class="action-button auth-required" onclick="location.href='./manageblockedusers'">
+            <img src="/assets/block.png" alt="">
+            <span>Administrar Usuarios Bloqueados</span>
+          </button>
+
+          <div class="mini-label">App de Android</div>
+
+          <button class="action-button" onclick="location.href='/release/download'">
+            <img src="/assets/download.png" alt="">
+            <span>Descargar ahora</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    function formatNumber(num) {
+      return Intl.NumberFormat('en', { notation: 'compact' }).format(num);
+    }
+
+    function showToast(message, color = "purple", duration = 3500) {
+      const toast = document.getElementById("toast");
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = color;
+      toast.style.display = "block";
+      setTimeout(() => {
+        toast.style.display = "none";
+        toast.className = "";
+      }, duration);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, s => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+      })[s]);
+    }
+
+    db.collection('announcements').orderBy('timestamp', 'desc').limit(1).onSnapshot(snapshot => {
+      const t = document.getElementById('announcement-title');
+      const m = document.getElementById('announcement-message');
+
+      if (!snapshot.empty) {
+        snapshot.forEach(doc => {
+          const data = doc.data() || {};
+          if (t) t.textContent = data.title || 'Announcement';
+          if (m) m.textContent = data.message || '';
+        });
+      } else {
+        if (t) t.textContent = 'No hay anuncios';
+        if (m) m.textContent = 'No hay nada nuevo en este momento.';
+      }
+    });
+
+    fetch("/assets/quotes.txt")
+      .then(r => r.text())
+      .then(text => {
+        const quotes = text.split('\n').map(q => q.trim()).filter(q => q);
+        if (quotes.length > 0) {
+          const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+          const q = document.getElementById('quote-card');
+          if (q) q.textContent = randomQuote;
+        } else {
+          const q = document.getElementById('quote-card');
+          if (q) q.textContent = 'No hay citas disponibles.';
+        }
+      })
+      .catch(() => {
+        const q = document.getElementById('quote-card');
+        if (q) q.textContent = 'Error al cargar la cita.';
+      });
+  </script>
+
+  <script>
+    auth.onAuthStateChanged(async user => {
+      const card = document.getElementById('profile-preview');
+      if (!card) return;
+
+      if (!user) {
+        card.style.display = 'none';
+        return;
+      }
+
+      try {
+        const docRef = db.collection('user_data').doc(user.email);
+        const docSnap = await docRef.get();
+
+        if (!docSnap.exists) {
+          card.style.display = 'none';
+          return;
+        }
+
+        const data = docSnap.data() || {};
+        card.style.display = 'flex';
+
+        const pfp = document.getElementById('preview-pfp');
+        if (pfp) pfp.style.backgroundImage = `url(${data.profile_picture || '/org-owner.jpg'})`;
+
+        const previewFrame = document.getElementById('preview-pfp-frame');
+        if (previewFrame) {
+          if (data.profile_picture_frame && data.profile_picture_frame.trim() !== '') {
+            previewFrame.style.backgroundImage = `url(${data.profile_picture_frame})`;
+            previewFrame.style.display = 'block';
+          } else {
+            previewFrame.style.display = 'none';
+          }
+        }
+
+        const displayName = data['display name'] || user.email;
+        const nameEl = document.getElementById('preview-name');
+        if (nameEl) nameEl.textContent = displayName;
+
+        const verifiedEl = document.getElementById('preview-verified');
+        if (verifiedEl) verifiedEl.style.display = data.is_verified ? 'inline' : 'none';
+
+        const bioEl = document.getElementById('preview-bio');
+        if (bioEl) {
+          const bio = data.bio || '';
+          bioEl.textContent = bio.length > 96 ? bio.substring(0, 93) + '...' : bio || 'Sin biografía.';
+        }
+      } catch (e) {
+        console.warn('profile preview failed', e);
+        card.style.display = 'none';
+      }
+    });
+  </script>
+
+  <div id="toast"></div>
+
+  <script>
+    (function () {
+      if (window.__friendsInit) return;
+      window.__friendsInit = true;
+
+      const state = { unsub: null, friends: [], user: null, loading: false };
+
+      function setFriendsCount(n) {
+        const el = document.getElementById("friends-count");
+        if (!el) return;
+        el.textContent = `${n} amigo${n === 1 ? '' : 's'}`;
+        el.style.display = state.user ? 'block' : 'none';
+      }
+
+      function makeEmptyState(message) {
+        const wrap = document.createElement("div");
+        wrap.className = "empty-state";
+        wrap.textContent = message;
+        return wrap;
+      }
+
+      function makeLoadingState() {
+        const wrap = document.createElement("div");
+        wrap.className = "empty-state";
+        wrap.innerHTML = '<div class="spinner"></div>Cargando amigos...';
+        return wrap;
+      }
+
+      function makeCard(f) {
+        const card = document.createElement("div");
+        card.className = "friend-card";
+        card.onclick = () => location.href = `./viewprofile?profile=${encodeURIComponent(f.email)}`;
+
+        const pfpUrl = f.profilePic ? f.profilePic.replace(/'/g, "\\'") : '/org-owner.jpg';
+
+        card.innerHTML = `
+          <div class="friend-pfp" style="background-image:url('${pfpUrl}')"></div>
+          <div class="friend-name">
+            <span title="${escapeHtml(f.displayName)}">${escapeHtml(f.displayName)}</span>
+            ${f.verified ? `<img src="/assets/verified.png" alt="Verified">` : ''}
+          </div>
+        `;
+        return card;
+      }
+
+      function renderLayout() {
+        const container = document.getElementById("friends-list");
+        if (!container) return;
+
+        container.innerHTML = "";
+
+        if (state.loading) {
+          container.appendChild(makeLoadingState());
+        } else if (!state.user) {
+          container.appendChild(makeEmptyState("Inicia sesión para comenzar"));
+        } else if (!state.friends.length) {
+          container.appendChild(makeEmptyState("Intenta enviar una solicitud a alguien"));
+        } else {
+          for (const f of state.friends) {
+            container.appendChild(makeCard(f));
+          }
+        }
+
+        setFriendsCount(state.friends.length);
+      }
+
+      window.addEventListener('resize', () => {
+        renderLayout();
+      });
+
+      auth.onAuthStateChanged(async user => {
+        const container = document.getElementById("friends-list");
+        if (state.unsub) {
+          state.unsub();
+          state.unsub = null;
+        }
+
+        state.user = user;
+        state.loading = !!user;
+        state.friends = [];
+        renderLayout();
+
+        if (!user || !container) {
+          return;
+        }
+
+        const friendsListRef = db.collection("friends").doc(user.email).collection("friendlist");
+
+        state.unsub = friendsListRef.onSnapshot(async snapshot => {
+          const emails = [];
+          snapshot.forEach(d => {
+            const id = String(d.id || "").trim().toLowerCase();
+            if (id && !emails.includes(id)) emails.push(id);
+          });
+
+          const docs = await Promise.all(emails.map(email => db.collection("user_data").doc(email).get()));
+
+          state.friends = docs.map((snap, i) => {
+            const email = emails[i];
+            const data = snap.exists ? snap.data() : {};
+            return {
+              displayName: data && data["display name"] ? data["display name"] : email,
+              profilePic: (data && data.profile_picture) || "/org-owner.jpg",
+              verified: !!(data && data.is_verified === true),
+              frameUrl: data ? data.profile_picture_frame : undefined,
+              email
+            };
+          });
+
+          state.loading = false;
+          renderLayout();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

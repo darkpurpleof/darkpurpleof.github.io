@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Post — DarkPurpleOF</title>
+  <title>Post — DarkPurpleOF's Website</title>
 
   <!-- Firebase compat (matches other pages) -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
@@ -657,7 +657,7 @@ function canViewerComment() {
       });
 
       reportBtn.addEventListener('click', () => {
-        window.location.href = `/reportabuse?post=${encodeURIComponent(postId)}`;
+        window.location.href = `/reportabuse?email=${encodeURIComponent(authorEmail)}`;
       });
 
       // Live comments listener (only active while visible)

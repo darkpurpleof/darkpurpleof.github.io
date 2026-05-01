@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ブロックしたユーザーの管理</title>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Avoid horizontal scroll globally (user hates it) */
+    html,body { overflow-x: hidden; }
+
+    :root{
+      --bg:#171717;
+      --card:#1f1f1f;
+      --muted:#9ca3af;
+      --accent:#6b21a8;
+      --accent-strong:#5b21b6;
+      --text:#eaeaea;
+      --border:rgba(255,255,255,0.06);
+    }
+    body.light{
+      --bg:#f6f8fb;
+      --card:#fff;
+      --muted:#475569;
+      --text:#0f172a;
+      --border:rgba(0,0,0,0.06);
+    }
+
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;background:var(--bg);color:var(--text);transition:background .25s,color .25s;}
+    body{display:flex;flex-direction:column;min-height:100vh;}
+
+    /* Topbar component */
+    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+
+    /* Page layout - responsive, no horizontal overflow, wraps on small screens */
+    main.wrapper{
+      flex:1;
+      display:flex;
+      gap:20px;
+      align-items:flex-start;
+      justify-content:center;
+      padding:24px;
+      box-sizing:border-box;
+      max-width:1200px;
+      margin:0 auto;
+      width:100%;
+      flex-wrap:wrap; /* ensure wrapping */
+    }
+    .panel{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--border);box-sizing:border-box;color:var(--text);}
+    .left { flex:1 1 560px; min-width:280px; max-width:880px; }
+    .right { flex: 0 0 320px; min-width:260px; }
+
+    h1{margin:0 0 6px 0;font-size:20px;font-weight:700;}
+    p.lead { margin:0 0 16px 0; color:var(--muted); font-size:14px; }
+
+    /* controls */
+    .controls { display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+    .search { flex:1; min-width:160px; }
+    input[type="text"], input[type="email"] { width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); box-sizing:border-box; }
+    .btn { display:inline-flex; gap:8px; align-items:center; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font-weight:600; white-space:nowrap; }
+    .btn.primary { background:var(--accent); color:#fff; border:none; }
+    .btn.critical { background:#c53737; color:#fff; border:none; }
+    .meta { color:var(--muted); font-size:13px; }
+
+    /* list */
+    .list { display:grid; gap:10px; max-height:60vh; overflow:auto; padding-right:6px; box-sizing:border-box; }
+    .blocked-item {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.01);
+      min-width:0; /* important to prevent horizontal overflow */
+    }
+    .pfp { width:48px; height:48px; border-radius:8px; background-size:cover; background-position:center; background-repeat:no-repeat; border:1px solid var(--border); flex-shrink:0; }
+    .info { flex:1 1 0; min-width:0; } /* allow text to wrap and avoid overflow */
+    .name { font-weight:700; font-size:14px; display:flex; gap:8px; align-items:center; color:var(--text); }
+    .tag { font-size:13px; color:var(--muted); word-break:break-all; }
+    .item-actions { display:flex; gap:8px; align-items:center; flex-shrink:0; }
+
+    /* right column cards */
+    .card { margin-bottom:12px; padding:12px; border-radius:8px; border:1px solid var(--border); background:transparent; }
+    .small { font-size:13px; color:var(--muted); }
+
+    /* responsive adjustments */
+    @media (max-width:920px){
+      main.wrapper{flex-direction:column;padding:16px;align-items:stretch;}
+      .right{width:100%;flex:1 1 auto;}
+      .list{max-height:45vh;}
+    }
+
+    /* toast */
+    #toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 14px; border-radius: 10px; font-weight:700; display:none; z-index:99999; color:#fff; box-sizing:border-box; }
+    #toast.purple{ background: var(--accent-strong); } #toast.yellow{ background:#e6b800; color:#222 } #toast.red{ background:#c00; }
+
+    /* subtle helper */
+    .muted { color:var(--muted); font-size:13px; }
+    .spaced { margin-top:12px; }
+  </style>
+</head>
+<body>
+  <script type="module" src="/dp-topbar.js"></script>
+  <dp-topbar></dp-topbar>
+
+  <main class="wrapper" role="main" aria-label="ブロックしたユーザーの管理">
+    <section class="panel left" aria-label="ブロックしたユーザー一覧">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="min-width:0;">
+          <h1>ブロックしたユーザーの管理</h1>
+          <p class="lead">ブロックしたユーザーを表示、検索、解除、またはエクスポートできます。変更はすぐにアカウントへ同期されます。</p>
+        </div>
+
+        <div class="meta" id="stats">読み込み中…</div>
+      </div>
+
+      <!-- controls -->
+      <div class="controls spaced">
+        <input id="searchInput" class="search" type="text" placeholder="名前またはメールアドレスで検索" aria-label="ブロックしたユーザーを検索">
+        <button id="refreshBtn" class="btn" title="一覧を更新">更新</button>
+        <button id="exportBtn" class="btn" title="CSV をエクスポート">エクスポート</button>
+      </div>
+
+      <!-- add block -->
+      <div class="card">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="blockEmail" type="email" placeholder="メールアドレスでユーザーをブロック (example@domain.com)" aria-label="ブロックするメールアドレス" />
+          <button id="addBlockBtn" class="btn primary" title="ユーザーをブロック">ブロック</button>
+        </div>
+      </div>
+
+      <!-- blocked list -->
+      <div id="listContainer" class="list spaced" aria-live="polite"></div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button id="unblockAllBtn" class="btn critical">すべて解除</button>
+        <button id="clearSearchBtn" class="btn">検索をクリア</button>
+      </div>
+    </section>
+
+    <!-- right column - info / help -->
+    <aside class="panel right" aria-label="ヘルプと情報">
+      <div class="card">
+        <div class="muted">ブロック済みユーザー</div>
+        <div id="count" style="font-weight:700;font-size:18px;margin-top:6px">—</div>
+      </div>
+
+      <div class="card">
+        <div class="muted">クイック操作</div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-direction:column;">
+          <button id="openBlockedProfileBtn" class="btn">選択中のプロフィールを開く</button>
+          <button id="copyListBtn" class="btn">メールアドレスをコピー</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="muted">FAQ</div>
+        <ul style="margin:8px 0 0 16px;color:var(--muted);">
+          <li>ユーザーを解除すると、その相手と再び交流できるようになります。</li>
+          <li>ブロックしたユーザー情報はあなたのアカウント内だけに保存されます。</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // UI refs
+    const listContainer = document.getElementById('listContainer');
+    const stats = document.getElementById('stats');
+    const countEl = document.getElementById('count');
+    const searchInput = document.getElementById('searchInput');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const addBlockBtn = document.getElementById('addBlockBtn');
+    const blockEmailInput = document.getElementById('blockEmail');
+    const unblockAllBtn = document.getElementById('unblockAllBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const copyListBtn = document.getElementById('copyListBtn');
+    const openProfileBtn = document.getElementById('openBlockedProfileBtn');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const toastEl = document.getElementById('toast');
+
+    // state
+    let currentUserEmail = null;
+    let blockedList = [];
+    let blockedDetails = [];
+    let selectedEmail = null;
+
+    function showToast(message, color = 'purple', duration = 3000) {
+      toastEl.textContent = message;
+      toastEl.className = color;
+      toastEl.style.display = 'block';
+      setTimeout(() => {
+        toastEl.style.display = 'none';
+        toastEl.className = '';
+      }, duration);
+    }
+
+    async function fetchUserData(email) {
+      try {
+        const snap = await db.collection('user_data').doc(email).get();
+        if (!snap.exists) return null;
+        return snap.data();
+      } catch (e) {
+        console.warn('fetchUserData error', e);
+        return null;
+      }
+    }
+
+    function renderList(filter = '') {
+      listContainer.innerHTML = '';
+      const normalized = (filter || '').toLowerCase().trim();
+
+      const visible = blockedDetails.filter(b => {
+        if (!b) return false;
+        return !normalized || (b.displayName && b.displayName.toLowerCase().includes(normalized)) || b.email.toLowerCase().includes(normalized) || (b.tagline && b.tagline.toLowerCase().includes(normalized));
+      });
+
+      if (visible.length === 0) {
+        listContainer.innerHTML = '<div class="muted">ブロックしたユーザーはいません。</div>';
+        countEl.textContent = `${visible.length}`;
+        return;
+      }
+
+      visible.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'blocked-item';
+        el.tabIndex = 0;
+
+        const pfp = document.createElement('div');
+        pfp.className = 'pfp';
+        pfp.style.backgroundImage = `url('${item.profile_picture || '/org-owner.jpg'}')`;
+
+        const info = document.createElement('div');
+        info.className = 'info';
+
+        const nameLine = document.createElement('div');
+        nameLine.className = 'name';
+        nameLine.innerHTML = `<span>${escapeHtml(item.displayName || item.email)}</span>`;
+
+        const tag = document.createElement('div');
+        tag.className = 'tag muted';
+        tag.textContent = item.tagline || item.email;
+
+        info.appendChild(nameLine);
+        info.appendChild(tag);
+
+        const actions = document.createElement('div');
+        actions.className = 'item-actions';
+
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'btn';
+        viewBtn.textContent = '見る';
+        viewBtn.onclick = () => { window.location.href = `/viewprofile?profile=${encodeURIComponent(item.email)}`; };
+
+        const unblockBtn = document.createElement('button');
+        unblockBtn.className = 'btn';
+        unblockBtn.textContent = '解除';
+        unblockBtn.onclick = async () => {
+          if (!confirm(`本当に ${item.email} を解除しますか？`)) return;
+          await unblockEmail(item.email);
+        };
+
+        actions.appendChild(viewBtn);
+        actions.appendChild(unblockBtn);
+
+        el.appendChild(pfp);
+        el.appendChild(info);
+        el.appendChild(actions);
+
+        el.addEventListener('click', () => {
+          document.querySelectorAll('.blocked-item').forEach(n => n.style.outline = '');
+          el.style.outline = '2px solid rgba(107,33,168,0.18)';
+          selectedEmail = item.email;
+        });
+
+        listContainer.appendChild(el);
+      });
+
+      countEl.textContent = `${visible.length}`;
+    }
+
+    async function loadBlockedUsers(email) {
+      showLoading(true);
+      try {
+        const userSnap = await db.collection('user_data').doc(email).get();
+        if (!userSnap.exists) {
+          blockedList = [];
+          blockedDetails = [];
+          renderList(searchInput.value);
+          stats.textContent = 'ユーザーデータがありません';
+          showToast('ユーザーデータがありません', 'yellow', 2000);
+          return;
+        }
+        const data = userSnap.data();
+        blockedList = Array.isArray(data.blockedUsers) ? data.blockedUsers.slice() : [];
+        stats.textContent = `${blockedList.length} 件ブロック中`;
+        const emails = blockedList.slice(0, 200);
+        const detailPromises = emails.map(async e => {
+          const ud = await fetchUserData(e).catch(()=>null);
+          return {
+            email: e,
+            displayName: ud && ud['display name'] ? ud['display name'] : e,
+            profile_picture: ud && ud.profile_picture ? ud.profile_picture : '/org-owner.jpg',
+            tagline: ud && ud.tagline ? ud.tagline : ''
+          };
+        });
+        blockedDetails = await Promise.all(detailPromises);
+        renderList(searchInput.value);
+      } catch (err) {
+        console.error('loadBlockedUsers', err);
+        showToast('ブロックしたユーザーを読み込めませんでした', 'red', 3000);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function showLoading(on) {
+      if (on) {
+        stats.textContent = '読み込み中...';
+      } else {
+        stats.textContent = `${blockedList.length} 件ブロック中`;
+      }
+    }
+
+    async function unblockEmail(email) {
+      if (!currentUserEmail) return showToast('ログインしていません', 'yellow');
+      try {
+        await db.collection('user_data').doc(currentUserEmail).update({
+          blockedUsers: firebase.firestore.FieldValue.arrayRemove(email)
+        });
+        showToast(`${email} を解除しました`, 'purple', 2000);
+        await loadBlockedUsers(currentUserEmail);
+      } catch (e) {
+        console.error('unblockEmail', e);
+        showToast('解除できませんでした', 'red', 3000);
+      }
+    }
+
+    async function unblockAll() {
+      if (!currentUserEmail) return showToast('ログインしていません', 'yellow');
+      if (!confirm('すべてのユーザーを解除しますか？ この操作は元に戻せません。')) return;
+      try {
+        await db.collection('user_data').doc(currentUserEmail).update({
+          blockedUsers: []
+        });
+        showToast('すべてのユーザーを解除しました', 'purple', 2000);
+        await loadBlockedUsers(currentUserEmail);
+      } catch (e) {
+        console.error('unblockAll', e);
+        showToast('すべて解除できませんでした', 'red', 3000);
+      }
+    }
+
+    // add block w/ deletion of social links and self-block prevention
+    async function addBlock(emailToBlock) {
+      if (!currentUserEmail) return showToast('ログインしていません', 'yellow');
+
+      emailToBlock = (emailToBlock || '').trim().toLowerCase();
+      if (!emailToBlock || !/\S+@\S+\.\S+/.test(emailToBlock)) return showToast('有効なメールアドレスを入力してください', 'yellow');
+      if (emailToBlock === currentUserEmail) return showToast("自分自身はブロックできません", 'red');
+
+      try {
+        // add to blockedUsers (create array if needed)
+        try {
+          await db.collection('user_data').doc(currentUserEmail).update({
+            blockedUsers: firebase.firestore.FieldValue.arrayUnion(emailToBlock)
+          });
+        } catch (updateErr) {
+          // if field doesn't exist, set it
+          await db.collection('user_data').doc(currentUserEmail).set({ blockedUsers: [emailToBlock] }, { merge: true });
+        }
+
+        // delete social connections in batch
+        const batch = db.batch();
+        batch.delete(db.doc(`followers/${currentUserEmail}/usersWhoFollowMe/${emailToBlock}`));
+        batch.delete(db.doc(`following/${currentUserEmail}/usersIFollow/${emailToBlock}`));
+        batch.delete(db.doc(`friends/${currentUserEmail}/friendlist/${emailToBlock}`));
+        batch.delete(db.doc(`friends/${emailToBlock}/friendlist/${currentUserEmail}`));
+        batch.delete(db.doc(`friends/${currentUserEmail}/requests/${emailToBlock}`));
+        await batch.commit();
+
+        showToast(`${emailToBlock} をブロックし、関連するつながりを削除しました`, 'purple', 2500);
+        blockEmailInput.value = '';
+        await loadBlockedUsers(currentUserEmail);
+
+      } catch (e) {
+        console.error('addBlock', e);
+        showToast('ユーザーをブロックできませんでした', 'red', 3000);
+      }
+    }
+
+    function exportCSV() {
+      if (!blockedDetails.length) return showToast('エクスポートするブロック済みユーザーがいません', 'yellow');
+      const csvRows = [['displayName','email','tagline']];
+      blockedDetails.forEach(b => csvRows.push([`"${(b.displayName||'').replace(/"/g,'""')}"`, b.email, `"${(b.tagline||'').replace(/"/g,'""')}"`]));
+      const csv = csvRows.map(r => r.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'blocked_users.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('エクスポートを開始しました', 'purple', 2000);
+    }
+
+    async function copyEmails() {
+      if (!blockedList.length) return showToast('コピーするメールアドレスがありません', 'yellow');
+      try {
+        await navigator.clipboard.writeText(blockedList.join('\n'));
+        showToast('クリップボードにコピーしました', 'purple', 2000);
+      } catch (e) {
+        showToast('コピーに失敗しました', 'red', 2000);
+      }
+    }
+
+    function escapeHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function openSelectedProfile() {
+      if (!selectedEmail) return showToast('まずユーザーを選択してください', 'yellow');
+      window.location.href = `./viewprofile?profile=${encodeURIComponent(selectedEmail)}`;
+    }
+
+    // events
+    refreshBtn.addEventListener('click', ()=>{ if (currentUserEmail) loadBlockedUsers(currentUserEmail); });
+    searchInput.addEventListener('input', () => renderList(searchInput.value));
+    addBlockBtn.addEventListener('click', () => addBlock((blockEmailInput.value||'').trim().toLowerCase()));
+    unblockAllBtn.addEventListener('click', unblockAll);
+    exportBtn.addEventListener('click', exportCSV);
+    copyListBtn.addEventListener('click', copyEmails);
+    openProfileBtn.addEventListener('click', openSelectedProfile);
+    clearSearchBtn.addEventListener('click', ()=>{ searchInput.value=''; renderList(''); });
+
+    // disable block button when input equals your email (quick UX guard)
+    blockEmailInput.addEventListener('input', () => {
+      const v = (blockEmailInput.value||'').trim().toLowerCase();
+      addBlockBtn.disabled = !v || (v === (currentUserEmail || '').toLowerCase());
+      addBlockBtn.style.opacity = addBlockBtn.disabled ? 0.6 : 1;
+    });
+
+    // auth state
+    auth.onAuthStateChanged(async user => {
+      if (!user) {
+        showToast('ブロックしたユーザーを管理するにはログインしてください', 'yellow', 3000);
+        currentUserEmail = null;
+        blockedList = []; blockedDetails = [];
+        renderList();
+        stats.textContent = 'ログアウト済み';
+        countEl.textContent = '—';
+        return;
+      }
+      currentUserEmail = user.email;
+      addBlockBtn.disabled = false;
+      await loadBlockedUsers(currentUserEmail);
+    });
+  </script>
+</body>
+</html>

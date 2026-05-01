@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Iniciar sesión</title>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --warning-bg: rgba(107,33,168,0.06);
+      --warning-border: rgba(107,33,168,0.14);
+    }
+    body.light {
+      --bg: #f6f8fb;
+      --card:#fff;
+      --muted:#475569;
+      --text:#0f172a;
+      --border: rgba(0,0,0,0.06);
+      --warning-bg: rgba(107,33,168,0.04);
+      --warning-border: rgba(107,33,168,0.08);
+    }
+
+    html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background-color: var(--bg); color:var(--text); transition: background .25s, color .25s; }
+    body { display:flex; flex-direction:column; min-height:100vh; }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+
+    main.wrapper {
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      box-sizing:border-box;
+    }
+
+    .card {
+      background:var(--card);
+      border-radius:12px;
+      padding:24px;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:0 6px 18px rgba(2,6,23,0.45);
+      max-width:420px;
+      width:100%;
+      box-sizing:border-box;
+    }
+
+    h1 { margin:0 0 18px 0; font-size:22px; font-weight:700; }
+
+    .input-group { margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
+    label { font-size:13px; color:var(--muted); }
+    input {
+      padding:12px;
+      border-radius:8px;
+      border:1px solid var(--border);
+      background:var(--card);
+      color:var(--text);
+      font-size:14px;
+      box-sizing:border-box;
+    }
+    .actions { display:flex; gap:12px; flex-direction:column; margin-top:8px; }
+
+    button[type="submit"] {
+      width:100%;
+      padding:12px;
+      background:var(--accent);
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+      transition:opacity .15s;
+    }
+    button[type="submit"]:hover { opacity:.9; }
+
+    .forgot-password { margin-top:8px; font-size:13px; text-align:left; color:var(--muted); }
+    .forgot-password a { color:var(--accent); text-decoration:none; }
+    .forgot-password a:hover { text-decoration:underline; }
+
+    /* Tarjeta de OAuth */
+    .oauth-card { margin-bottom:14px; display:flex; gap:12px; align-items:center; }
+    .oauth-image {
+      width:64px; height:64px; border-radius:10px; object-fit:cover; flex:0 0 64px; background:#111;
+      border:1px solid var(--border);
+    }
+    .oauth-meta { display:flex; flex-direction:column; gap:6px; min-width:0; }
+    .oauth-title { font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px; flex-wrap:nowrap; overflow:hidden; }
+    .oauth-client-name { white-space:nowrap; text-overflow:ellipsis; overflow:hidden; max-width:220px; }
+    .oauth-by { font-size:13px; color:var(--muted); display:flex; align-items:center; gap:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
+    .oauth-note { font-size:13px; color:var(--muted); margin-top:6px; display:flex; gap:8px; align-items:center; }
+
+    .oauth-actions { display:flex; gap:8px; margin-top:6px; }
+
+    /* Icono de verificado */
+    .verified-icon { width:16px; height:16px; display:inline-block; vertical-align:middle; margin-left:4px; }
+
+    /* Advertencia de sobrescritura de sesión */
+    .session-warning {
+      margin-top:12px;
+      padding:10px 12px;
+      border-radius:10px;
+      background: var(--warning-bg);
+      border:1px solid var(--warning-border);
+      color: var(--muted);
+      font-size:13px;
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+      justify-content:space-between;
+    }
+    .session-warning b { color:var(--text); font-weight:700; }
+
+    .small-btn {
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    .small-btn.ghost { background:transparent; }
+
+    #toast {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      display: none;
+      z-index: 99999;
+      color: #fff;
+      box-sizing: border-box;
+    }
+    #toast.purple { background: var(--accent-strong); color:#fff; }
+    #toast.yellow { background: #e6b800; color:#222; }
+    #toast.red { background: #c00; color:#fff; }
+
+    @media (max-width:600px){
+      main.wrapper { padding:16px; }
+      .card { padding:16px; }
+      input, button[type="submit"] { padding:10px; font-size:14px; }
+      .oauth-image { width:56px; height:56px; flex:0 0 56px; }
+    }
+  </style>
+
+  <!-- dp-topbar -->
+  <script type="module" src="/dp-topbar.js"></script>
+</head>
+<body>
+  <dp-topbar></dp-topbar>
+
+  <main class="wrapper" role="main" aria-label="Área de inicio de sesión">
+    <div id="cardsContainer" style="width:100%; max-width:420px;">
+      <div class="card" role="region" aria-label="Formulario de inicio de sesión" id="loginCard">
+        <h1>Iniciar sesión</h1>
+
+        <form id="loginForm" autocomplete="on" novalidate>
+          <div class="input-group">
+            <label for="email">Correo electrónico</label>
+            <input id="email" name="email" type="email" inputmode="email" placeholder="tu@proveedor.com" required>
+          </div>
+
+          <div class="input-group">
+            <label for="password">Contraseña</label>
+            <input id="password" name="password" type="password" placeholder="Tu contraseña" required>
+          </div>
+
+          <div class="actions">
+            <button type="submit" id="loginBtn">Iniciar sesión</button>
+            <div class="forgot-password"><a href="./forgot.html">¿Olvidaste tu contraseña?</a></div>
+            <div class="forgot-password"><a href="./registration.html">¿No tienes una cuenta?</a></div>
+          </div>
+        </form>
+
+        <div id="sessionWarningContainer" aria-live="polite"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // asegurarse de que firebase compat ya esté inicializado
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Utilidad para toast
+    function showToast(message, color = "purple", duration = 3500) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.className = color;
+      toast.style.display = "block";
+      setTimeout(() => {
+        toast.style.display = "none";
+        toast.className = "";
+      }, duration);
+    }
+
+    // Ayudante para leer parámetros de URL
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+
+    // Quitar un parámetro de la URL sin recargar
+    function removeQueryParam(name) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete(name);
+      window.history.replaceState({}, document.title, url.toString());
+    }
+
+    // Validar redirectUrl: debe contener el marcador "__" y tener scheme://
+    function isValidRedirectUrl(url) {
+      if (!url || typeof url !== "string") return false;
+      if (!url.includes("__")) return false;
+      return /^[a-z][a-z0-9+\-.]*:\/\//i.test(url);
+    }
+
+    // Variables globales
+    let oauthClient = null;
+    let oauthClientId = null;
+    let oauthClientValidRedirect = false;
+    let triedLoadingOauthClient = false;
+    let sessionExists = false;
+
+    // Esta bandera marca que el usuario presionó Iniciar sesión en esta página.
+    // Se usa para asegurar que la redirección OAuth solo ocurra por esa acción explícita.
+    let loginPressed = false;
+
+    // Esperar a que termine de cargar OAuth
+    function waitForOauthLoad(maxMs = 3000) {
+      return new Promise((resolve) => {
+        const start = Date.now();
+        (function check() {
+          if (oauthClient || triedLoadingOauthClient) return resolve();
+          if (Date.now() - start > maxMs) return resolve();
+          setTimeout(check, 100);
+        })();
+      });
+    }
+
+    // Cargar cliente OAuth si existe ?auth=<id>
+    (async function tryLoadOauthClient() {
+      try {
+        const authParam = getQueryParam("auth");
+        if (!authParam) {
+          triedLoadingOauthClient = true;
+          return;
+        }
+        oauthClientId = String(authParam);
+
+        const docRef = db.collection("oauthclients").doc(oauthClientId);
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) {
+          console.info("Cliente OAuth no encontrado:", oauthClientId);
+          triedLoadingOauthClient = true;
+          return;
+        }
+        const data = docSnap.data() || {};
+        oauthClient = data;
+        oauthClient.__id = oauthClientId;
+
+        oauthClientValidRedirect = isValidRedirectUrl(data.redirectUrl);
+        if (!oauthClientValidRedirect) {
+          console.warn("Redirección OAuth inválida o sin '__':", data.redirectUrl);
+          oauthClient = null;
+          triedLoadingOauthClient = true;
+          return;
+        }
+
+        insertOAuthCard(data);
+        triedLoadingOauthClient = true;
+      } catch (e) {
+        console.error("No se pudo cargar el cliente OAuth:", e);
+        triedLoadingOauthClient = true;
+      }
+    })();
+
+    // Insertar la tarjeta de consentimiento OAuth arriba del login
+    function insertOAuthCard(data) {
+      const container = document.getElementById("cardsContainer");
+      if (!container) return;
+
+      // eliminar tarjeta oauth previa si existe
+      const old = document.querySelector(".oauth-card");
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+
+      const card = document.createElement("div");
+      card.className = "card oauth-card";
+      card.setAttribute("role", "region");
+      card.setAttribute("aria-label", "Consentimiento OAuth");
+      card.id = "oauthCard";
+
+      const img = document.createElement("img");
+      img.className = "oauth-image";
+      img.alt = (data.CN ? data.CN + " logo" : "Logo de la app");
+      img.src = data.image || "/assets/default_client.png";
+      img.onerror = function() { this.src = "/assets/default_client.png"; };
+
+      const meta = document.createElement("div");
+      meta.className = "oauth-meta";
+
+      const you = document.createElement("div");
+      you.style.fontSize = "13px";
+      you.style.color = "var(--muted)";
+      you.textContent = "Estás iniciando sesión en:";
+
+      const title = document.createElement("div");
+      title.className = "oauth-title";
+
+      const clientName = document.createElement("div");
+      clientName.className = "oauth-client-name";
+      clientName.textContent = data.CN || "Aplicación sin nombre";
+
+      title.appendChild(clientName);
+
+      if (data.clientverified === true) {
+        const ico = document.createElement("img");
+        ico.className = "verified-icon";
+        ico.src = "/assets/verified.png";
+        ico.alt = "verificado";
+        title.appendChild(ico);
+      }
+
+      const byLine = document.createElement("div");
+      byLine.className = "oauth-by";
+      const byText = document.createElement("span");
+      byText.textContent = "por " + (data.author || "Desconocido");
+      byLine.appendChild(byText);
+
+      if (data.author_verified === true) {
+        const aico = document.createElement("img");
+        aico.className = "verified-icon";
+        aico.src = "/assets/verified.png";
+        aico.alt = "autor verificado";
+        byLine.appendChild(aico);
+      }
+
+      const noteRow = document.createElement("div");
+      noteRow.className = "oauth-note";
+      noteRow.innerHTML = '<div>Solo inicia sesión si confías en esta app</div>';
+
+      // acciones: botón cancelar OAuth
+      const actions = document.createElement("div");
+      actions.className = "oauth-actions";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "small-btn ghost";
+      cancelBtn.type = "button";
+      cancelBtn.textContent = "Cancelar OAuth";
+      cancelBtn.onclick = () => {
+        cancelOauth();
+      };
+
+      actions.appendChild(cancelBtn);
+
+      meta.appendChild(you);
+      meta.appendChild(title);
+      meta.appendChild(byLine);
+      meta.appendChild(noteRow);
+      meta.appendChild(actions);
+
+      card.appendChild(img);
+      card.appendChild(meta);
+
+      container.insertBefore(card, container.firstChild);
+    }
+
+    // Cancelar OAuth (quitar ?auth, ocultar tarjeta oauth)
+    function cancelOauth() {
+      oauthClient = null;
+      oauthClientId = null;
+      oauthClientValidRedirect = false;
+      triedLoadingOauthClient = true;
+      removeQueryParam("auth");
+      const c = document.getElementById("oauthCard");
+      if (c && c.parentNode) c.parentNode.removeChild(c);
+      showToast("OAuth cancelado", "yellow", 2000);
+      // también asegurar que la advertencia de sesión se muestre si existe sesión
+      if (sessionExists) showSessionOverwriteWarning();
+    }
+
+    // Mostrar advertencia de sobrescritura de sesión
+    function showSessionOverwriteWarning() {
+      if (oauthClient && oauthClientValidRedirect) return;
+
+      const container = document.getElementById("sessionWarningContainer");
+      if (!container) return;
+      if (document.getElementById("sessionWarning")) return;
+
+      const warn = document.createElement("div");
+      warn.id = "sessionWarning";
+      warn.className = "session-warning";
+
+      const left = document.createElement("div");
+      left.innerHTML = '<div style="display:flex;gap:10px;align-items:flex-start;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden><path d="M12 2v12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.2a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        + '<div><b>Sesión activa detectada.</b><div style="margin-top:4px;color:var(--muted)">Si inicias sesión con otra cuenta, la sesión actual será reemplazada.</div></div></div>';
+
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.gap = "8px";
+      right.style.alignItems = "center";
+      right.style.flexShrink = "0";
+
+      const useBtn = document.createElement("button");
+      useBtn.className = "small-btn";
+      useBtn.type = "button";
+      useBtn.textContent = "Usar sesión actual";
+      useBtn.onclick = () => {
+        // saltar el inicio de sesión, ir al inicio
+        window.location.href = "./";
+      };
+
+      right.appendChild(useBtn);
+      warn.appendChild(left);
+      warn.appendChild(right);
+
+      container.appendChild(warn);
+    }
+
+    function removeSessionOverwriteWarning() {
+      const warn = document.getElementById("sessionWarning");
+      if (warn && warn.parentNode) warn.parentNode.removeChild(warn);
+    }
+
+    // CAMBIO DE ESTADO DE AUTH
+    // Nota: la redirección OAuth no se hace aquí al cambiar auth.
+    // Esto evita que la página redirija apenas abre cuando ya existe una sesión.
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        sessionExists = false;
+        removeSessionOverwriteWarning();
+        return;
+      }
+
+      sessionExists = true;
+
+      // Comprobar estado de baneo
+      try {
+        const email = user.email;
+        if (email) {
+          const bannedSnap = await db.collection("banned_users").doc(email).get();
+          if (bannedSnap.exists) {
+            // Si un usuario baneado termina autenticado, proteger el sitio enviándolo a la página de no aprobado
+            window.location.href = "./not-approved";
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Falló la comprobación de banned_users al cambiar auth:", e);
+      }
+
+      // Esperar a que termine de cargar OAuth si hay auth param
+      await waitForOauthLoad(3000);
+
+      // Mostrar la advertencia de sobrescritura de sesión
+      showSessionOverwriteWarning();
+      return;
+    });
+
+    // Manejo del formulario de inicio de sesión
+    document.getElementById("loginForm").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+
+      // marcar que el inicio de sesión fue iniciado explícitamente por el usuario
+      loginPressed = true;
+
+      const email = (document.getElementById("email").value || "").trim().toLowerCase();
+      const password = document.getElementById("password").value || "";
+
+      if (!email || !password) { showToast("Se requieren el correo y la contraseña.", "yellow"); return; }
+
+      try {
+        // Revisar primero el documento banned_users para este correo
+        const bannedSnap = await db.collection("banned_users").doc(email).get();
+        if (bannedSnap.exists) {
+          try {
+            await auth.signInWithEmailAndPassword(email, password);
+            showToast("Inicio de sesión exitoso. Redirigiendo...", "purple");
+            setTimeout(() => window.location.href = "./not-approved", 900);
+            return;
+          } catch (signErr) {
+            console.warn("Falló el inicio de sesión de usuario baneado:", signErr);
+            showToast("No puedes acceder al sitio porque estás baneado.", "red");
+            return;
+          }
+        }
+
+        // No baneado: iniciar sesión
+        await auth.signInWithEmailAndPassword(email, password);
+        showToast("¡Inicio de sesión exitoso!", "purple");
+
+        // Esperar a que termine de cargar OAuth
+        await waitForOauthLoad(3000);
+
+        // Solo hacer redirección OAuth aquí y solo porque el usuario presionó Iniciar sesión
+        if (loginPressed && oauthClient && oauthClientValidRedirect) {
+          try {
+            const token = await auth.currentUser.getIdToken(true);
+            const redirectUrl = String(oauthClient.redirectUrl).replace("__", encodeURIComponent(token));
+            if (isValidRedirectUrl(redirectUrl) || redirectUrl.startsWith(oauthClient.redirectUrl.split("__")[0])) {
+              // hacer la redirección
+              setTimeout(() => { window.location.assign(redirectUrl); }, 700);
+              return;
+            } else {
+              console.warn("Redirección OAuth inválida después de insertar el token:", redirectUrl);
+            }
+          } catch (tokErr) {
+            console.error("No se pudo obtener el token ID para la redirección OAuth:", tokErr);
+          }
+        }
+
+        // respaldo: ir al inicio
+        setTimeout(() => window.location.href = "./", 900);
+      } catch (err) {
+        console.warn("Error de inicio de sesión", err);
+        showToast("Falló el inicio de sesión: " + (err && err.message ? err.message : "desconocido"), "red");
+      } finally {
+        // reiniciar la bandera después del intento para evitar redirecciones accidentales futuras
+        loginPressed = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -4,11 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DarkPurpleOF's Website</title>
+
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="manifest" href="/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
 <style>
 :root{
   --bg:#171717;
@@ -30,25 +32,130 @@ body.light{
   --accent-strong:#5b21b6;
   --border:rgba(0,0,0,0.06);
 }
-html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);transition:background .25s,color .25s;}
-body{display:flex;flex-direction:column;min-height:100vh;}
-dp-topbar{display:block;position:sticky;top:0;z-index:100;}
-main.wrapper{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;}
-.card{background:var(--card);border-radius:12px;padding:24px;border:1px solid var(--border);max-width:600px;width:100%;color:var(--text);}
-h1{margin:0 0 12px 0;font-size:22px;font-weight:700;}
-p, span{font-size:14px;color:var(--text);margin:6px 0;}
-strong{color:var(--text);}
-.inner-card{background:var(--inner-card);border-radius:8px;padding:12px;margin:12px 0;border:1px solid var(--border);}
-button, .footer-btn{background:var(--accent);color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;cursor:pointer;margin-top:12px;width:100%;transition:background .2s;}
-button:hover,.footer-btn:hover{background:var(--accent-strong);}
-.footer{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;justify-content:center;}
-.footer-btn{background:var(--card);color:var(--text);border:1px solid var(--border);text-decoration:none;text-align:center;}
-#toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:10px 14px;border-radius:10px;font-weight:700;display:none;z-index:99999;color:#fff;box-sizing:border-box;}
+html,body{
+  height:100%;
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  background:var(--bg);
+  color:var(--text);
+  transition:background .25s,color .25s;
+}
+body{
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+dp-topbar{
+  display:block;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+main.wrapper{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  box-sizing:border-box;
+}
+.card{
+  background:var(--card);
+  border-radius:12px;
+  padding:24px;
+  border:1px solid var(--border);
+  max-width:600px;
+  width:100%;
+  color:var(--text);
+}
+h1{
+  margin:0 0 12px 0;
+  font-size:22px;
+  font-weight:700;
+}
+p, span{
+  font-size:14px;
+  color:var(--text);
+  margin:6px 0;
+}
+strong{
+  color:var(--text);
+}
+.inner-card{
+  background:var(--inner-card);
+  border-radius:8px;
+  padding:12px;
+  margin:12px 0;
+  border:1px solid var(--border);
+}
+button, .footer-btn{
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  padding:12px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:12px;
+  width:100%;
+  transition:background .2s;
+}
+button:hover,.footer-btn:hover{
+  background:var(--accent-strong);
+}
+.footer{
+  display:flex;
+  gap:12px;
+  margin-top:12px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.footer-btn{
+  background:var(--card);
+  color:var(--text);
+  border:1px solid var(--border);
+  text-decoration:none;
+  text-align:center;
+}
+#toast{
+  position:fixed;
+  top:18px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:10px 14px;
+  border-radius:10px;
+  font-weight:700;
+  display:none;
+  z-index:99999;
+  color:#fff;
+  box-sizing:border-box;
+}
 #toast.purple{background:var(--accent-strong);}
 #toast.red{background:#c00;}
 #toast.yellow{background:#e6b800;color:#222;}
 </style>
-<script type="module" src="/dp-topbar.js"></script>
+
+<!-- Firebase clásico arriba de todo -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+    authDomain: "darkpurpleof-s-website.firebaseapp.com",
+    projectId: "darkpurpleof-s-website",
+    storageBucket: "darkpurpleof-s-website.appspot.com",
+    messagingSenderId: "520651082420",
+    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+  };
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+</script>
+
+<script src="/dp-topbar.js"></script>
 </head>
 <body>
 <dp-topbar></dp-topbar>
@@ -83,137 +190,143 @@ button:hover,.footer-btn:hover{background:var(--accent-strong);}
 <div id="toast"></div>
 
 <script>
-function showToast(msg,color="purple",duration=3500){
-  const t=document.getElementById("toast");
-  t.textContent=msg;
-  t.className=color+" show";
-  t.style.display="block";
-  setTimeout(()=>{t.className=color+" hide";setTimeout(()=>{t.style.display="none";t.className="";},400);},duration);
+function showToast(msg, color="purple", duration=3500){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = color + " show";
+  t.style.display = "block";
+  setTimeout(() => {
+    t.className = color + " hide";
+    setTimeout(() => {
+      t.style.display = "none";
+      t.className = "";
+    }, 400);
+  }, duration);
 }
 
 // Dark/Light toggle
-const toggleBtn=document.createElement("button");
-toggleBtn.textContent="🌙";
-toggleBtn.style.position="absolute";
-toggleBtn.style.top="10px";
-toggleBtn.style.right="10px";
-toggleBtn.style.fontSize="1.5em";
-toggleBtn.style.background="none";
-toggleBtn.style.border="none";
-toggleBtn.style.cursor="pointer";
+const toggleBtn = document.createElement("button");
+toggleBtn.textContent = "🌙";
+toggleBtn.style.position = "absolute";
+toggleBtn.style.top = "10px";
+toggleBtn.style.right = "10px";
+toggleBtn.style.fontSize = "1.5em";
+toggleBtn.style.background = "none";
+toggleBtn.style.border = "none";
+toggleBtn.style.cursor = "pointer";
 document.body.appendChild(toggleBtn);
-toggleBtn.addEventListener("click",()=>{
-  const isLight=document.body.classList.contains("light");
-  document.body.classList.toggle("light",!isLight);
-  toggleBtn.textContent=isLight?"🌙":"☀️";
-  localStorage.setItem("theme",!isLight?"light":"dark");
+
+toggleBtn.addEventListener("click", () => {
+  const isLight = document.body.classList.contains("light");
+  document.body.classList.toggle("light", !isLight);
+  toggleBtn.textContent = isLight ? "🌙" : "☀️";
+  localStorage.setItem("theme", !isLight ? "light" : "dark");
 });
-if(localStorage.getItem("theme")==="light"){document.body.classList.add("light");toggleBtn.textContent="☀️";}
-</script>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+if (localStorage.getItem("theme") === "light") {
+  document.body.classList.add("light");
+  toggleBtn.textContent = "☀️";
+}
 
-const firebaseConfig={apiKey:"AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",authDomain:"darkpurpleof-s-website.firebaseapp.com",projectId:"darkpurpleof-s-website",storageBucket:"darkpurpleof-s-website.appspot.com",messagingSenderId:"520651082420",appId:"1:520651082420:web:bb05c0c3fd64517952e5e1"};
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
+const agreeCheckbox = document.getElementById("agree-checkbox");
+const reactivateBtn = document.getElementById("reactivate-btn");
 
-const agreeCheckbox=document.getElementById("agree-checkbox");
-const reactivateBtn=document.getElementById("reactivate-btn");
-agreeCheckbox.addEventListener("change",e=>{reactivateBtn.disabled=!e.target.checked;});
+agreeCheckbox.addEventListener("change", e => {
+  reactivateBtn.disabled = !e.target.checked;
+});
 
-document.getElementById("reactivate-btn").addEventListener("click",async()=>{
-  const user=auth.currentUser;
-  if(!user) return;
-  try{
-    await deleteDoc(doc(db,"banned_users",user.email));
-    showToast("Account reactivated!","purple");
-    window.location.href="/index";
-  }catch(err){
-    showToast("Failed to reactivate!","red");
+document.getElementById("reactivate-btn").addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  try {
+    await db.collection("banned_users").doc(user.email).delete();
+    showToast("Account reactivated!", "purple");
+    window.location.href = "/index";
+  } catch (err) {
+    showToast("Failed to reactivate!", "red");
     console.error(err);
   }
 });
 
-document.getElementById("logout-btn").addEventListener("click",async()=>{await signOut(auth);window.location.href="/login";});
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  await auth.signOut();
+  window.location.href = "/login";
+});
 
-function formatDate(ts){return ts.toLocaleString();}
+function formatDate(ts) {
+  return ts.toLocaleString();
+}
 
-onAuthStateChanged(auth,async user=>{
-  const title=document.getElementById("title");
-  const reviewed=document.getElementById("reviewed");
-  const modNote=document.getElementById("mod-note");
-  const details=document.getElementById("details");
-  const reasonEl=document.getElementById("reason");
-  const offensive=document.getElementById("offensive-preview");
-  const reactivateContainer=document.getElementById("reactivate-container");
-  const reactivateText=document.getElementById("reactivate-text");
-  const checkbox=document.getElementById("agree-checkbox");
-  const reactivateBtn=document.getElementById("reactivate-btn");
-
-  if(!user){
-    title.innerText="Not logged in!";
-    reviewed.innerHTML='Please <a href="/login" style="color:var(--accent);text-decoration:underline;">log in</a> first.';
-    return;
-  }
-
-
-  const email=user.email;
-  const banSnap=await getDoc(doc(db,"banned_users",email));
-  if(!banSnap.exists()){
-    title.innerText="You're not banned!";
-    reviewed.innerText="";
-    modNote.innerText="";
-    details.style.display="none";
-    reactivateContainer.style.display="none";
-    return;
-  }
-
-  const data=banSnap.data();
-  const since=new Date(data.banned_since?.toDate?.() || data.banned_since);
-  const until=data.until ? new Date(data.until?.toDate?.() || data.until) : null;
-  const isWarning=data.type==="warning";
-  const expired=until ? new Date()>=until : false;
-
-  // title
-  if(isWarning){title.innerText="Warning";}
-  else if(!until){title.innerText="Account Terminated";}
-  else{title.innerText=`Banned for ${Math.ceil((until-since)/(1000*60*60*24))} Days`; }
-
-  reviewed.innerText=`Reviewed: ${formatDate(since)}`;
-  modNote.innerText=`Moderation Note: ${data.ban_extra_note || "None provided"}`;
-
-  reasonEl.innerText=data.ban_reason||"Unspecified";
-  offensive.innerHTML=/^https?:\/\//.test(data.ban_offensive)?`<img src="${data.ban_offensive}" style="max-width:100%;margin-top:6px;border:1px solid var(--border);border-radius:6px;">`:data.ban_offensive||"Unspecified";
-  details.style.display="block";
-
-  // reactivate text & checkbox
-  reactivateContainer.style.display="none";
-  checkbox.checked=false;
-  reactivateBtn.disabled=true;
-
-  
+auth.onAuthStateChanged(async user => {
+  const title = document.getElementById("title");
+  const reviewed = document.getElementById("reviewed");
+  const modNote = document.getElementById("mod-note");
+  const details = document.getElementById("details");
+  const reasonEl = document.getElementById("reason");
+  const offensive = document.getElementById("offensive-preview");
+  const reactivateContainer = document.getElementById("reactivate-container");
+  const reactivateText = document.getElementById("reactivate-text");
+  const checkbox = document.getElementById("agree-checkbox");
+  const reactivateBtn = document.getElementById("reactivate-btn");
   const statusText = document.getElementById("status-text");
 
-// Reactivate conditions / dynamic text
-if(isWarning || expired){
-  statusText.innerText = "You may re-activate your account by agreeing to our Terms Of Service";
-  reactivateContainer.style.display = "block";
-  reactivateBtn.disabled = true;
-  agreeCheckbox.checked = false;
-} else if(!isWarning && until && !expired){
-  // Timed ban, not yet expired
-  statusText.innerHTML = `Your account has been de-activated. You may re-activate it after <span id="ban-end-date">${until.toString()}</span>.`;
-  reactivateContainer.style.display = "none"; // Reactivate only after expiry
-} else if(!isWarning && !until){
-  // Permanent ban
-  statusText.innerText = "Your account has been terminated";
+  if (!user) {
+    title.innerText = "Not logged in!";
+    reviewed.innerHTML = 'Please <a href="/login" style="color:var(--accent);text-decoration:underline;">log in</a> first.';
+    return;
+  }
+
+  const email = user.email;
+  const banSnap = await db.collection("banned_users").doc(email).get();
+
+  if (!banSnap.exists) {
+    window.location.href = "./home";
+    return;
+  }
+
+  const data = banSnap.data();
+  const since = new Date(data.banned_since?.toDate?.() || data.banned_since);
+  const until = data.until ? new Date(data.until?.toDate?.() || data.until) : null;
+  const isWarning = data.type === "warning";
+  const expired = until ? new Date() >= until : false;
+
+  if (isWarning) {
+    title.innerText = "Warning";
+  } else if (!until) {
+    title.innerText = "Account Terminated";
+  } else {
+    title.innerText = `Banned for ${Math.ceil((until - since) / (1000 * 60 * 60 * 24))} Days`;
+  }
+
+  reviewed.innerText = `Reviewed: ${formatDate(since)}`;
+  modNote.innerText = `Moderation Note: ${data.ban_extra_note || "None provided"}`;
+
+  reasonEl.innerText = data.ban_reason || "Unspecified";
+  offensive.innerHTML = /^https?:\/\//.test(data.ban_offensive)
+    ? `<img src="${data.ban_offensive}" style="max-width:100%;margin-top:6px;border:1px solid var(--border);border-radius:6px;">`
+    : (data.ban_offensive || "Unspecified");
+  details.style.display = "block";
+
   reactivateContainer.style.display = "none";
-}
+  checkbox.checked = false;
+  reactivateBtn.disabled = true;
+
+  if (isWarning || expired) {
+    statusText.innerText = "You may re-activate your account by agreeing to our Terms Of Service";
+    reactivateContainer.style.display = "block";
+    reactivateBtn.disabled = true;
+    agreeCheckbox.checked = false;
+  } else if (!isWarning && until && !expired) {
+    statusText.innerHTML = `Your account has been de-activated. You may re-activate it after <span id="ban-end-date">${until.toString()}</span>.`;
+    reactivateContainer.style.display = "none";
+  } else if (!isWarning && !until) {
+    statusText.innerText = "Your account has been terminated";
+    reactivateContainer.style.display = "none";
+  }
 });
 </script>
 </body>

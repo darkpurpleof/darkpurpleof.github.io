@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>プロフィール編集</title>
+
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#171717;
+      --card:#1f1f1f;
+      --muted:#9ca3af;
+      --accent:#6b21a8;
+      --accent-strong:#5b21b6;
+      --text:#eaeaea;
+      --border:rgba(255,255,255,0.06);
+      --field:rgba(255,255,255,0.03);
+      --shadow:0 8px 24px rgba(2,6,23,0.35);
+      --focus:rgba(107,33,168,0.35);
+    }
+    body.light{
+      --bg:#f6f8fb;
+      --card:#fff;
+      --muted:#475569;
+      --text:#0f172a;
+      --border:rgba(0,0,0,0.06);
+      --field:rgba(15,23,42,0.02);
+      --shadow:0 10px 24px rgba(15,23,42,0.08);
+      --focus:rgba(107,33,168,0.18);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+    body{ display:flex; flex-direction:column; min-height:100vh; }
+
+    dp-topbar{ display:block; position:sticky; top:0; z-index:100; }
+
+    main.container{
+      width:min(1120px, calc(100% - 28px));
+      margin:22px auto;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 320px;
+      gap:18px;
+    }
+    @media (max-width: 940px){
+      main.container{ grid-template-columns:1fr; width:min(100% - 20px, 1120px); margin:14px auto 22px; }
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      color:var(--text);
+      padding:18px;
+    }
+
+    .heading{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .title{ font-size:18px; font-weight:700; margin:0; }
+    .subtitle{ color:var(--muted); font-size:13px; margin-top:6px; line-height:1.45; }
+    .muted{ color:var(--muted); }
+
+    .banner{
+      width:100%; height:164px; border-radius:14px;
+      background:#2a2a2a center/cover no-repeat;
+      cursor:pointer; border:1px solid var(--border);
+      transition:transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+    }
+    .banner:hover, .pfp:hover, .frame:hover{ transform:translateY(-1px); border-color:rgba(107,33,168,0.25); box-shadow:0 0 0 3px var(--focus); }
+
+    .profile-row{ display:flex; gap:18px; align-items:flex-start; margin-top:14px; flex-wrap:wrap; }
+    .pfp-wrap{ position:relative; width:124px; flex:0 0 124px; }
+    .pfp{ width:124px; height:124px; border-radius:16px; background-repeat:no-repeat; background-size:cover; background-position:center; border:1px solid var(--border); cursor:pointer; transition:transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
+    .frame{ position:absolute; inset:0; border-radius:16px; pointer-events:auto; background-size:cover; background-position:center; background-repeat:no-repeat; display:none; cursor:pointer; }
+
+    .meta{ flex:1; min-width:260px; }
+    .display-name{ font-size:20px; font-weight:700; display:flex; align-items:center; gap:8px; line-height:1.1; }
+    .verified{ width:18px; height:18px; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; display:inline-block; flex:0 0 auto; }
+    .email{ color:var(--muted); font-size:13px; margin-top:6px; word-break:break-all; }
+    .bio-block{ margin-top:14px; }
+    .bio-block strong{ display:block; font-size:13px; margin-bottom:8px; }
+    .bio-text{ line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+
+    .section-label{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:14px; margin-bottom:8px; }
+
+    .controls{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+    .btn{
+      appearance:none; border:1px solid var(--border); background:transparent; color:var(--text);
+      border-radius:10px; padding:9px 12px; cursor:pointer; font-weight:600; font-size:14px;
+      transition:transform .12s ease, border-color .12s ease, background .12s ease, opacity .12s ease;
+    }
+    .btn:hover{ transform:translateY(-1px); border-color:rgba(107,33,168,0.25); }
+    .btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+    .btn.primary{ background:var(--accent); color:#fff; border:none; }
+    .btn.primary:hover{ background:var(--accent-strong); }
+    .btn.ghost{ background:transparent; }
+
+    .field-card{ margin-top:12px; border:1px solid var(--border); border-radius:14px; background:var(--field); padding:12px; }
+    .field-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .field-title{ font-weight:700; font-size:14px; }
+    .field-help{ font-size:12px; color:var(--muted); margin-top:4px; line-height:1.4; }
+    .field-row{ display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap; }
+    input[type="text"], textarea{
+      width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text);
+      font:inherit; outline:none; transition:border-color .12s ease, box-shadow .12s ease;
+    }
+    input[type="text"]:focus, textarea:focus{ border-color:rgba(107,33,168,0.45); box-shadow:0 0 0 3px var(--focus); }
+    textarea{ min-height:90px; resize:vertical; }
+    .inline-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+    .inline-actions .btn{ padding:8px 11px; font-size:13px; }
+
+    .switch-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0 2px; }
+    .switch-label{ display:flex; flex-direction:column; gap:3px; }
+    .switch-label strong{ font-size:14px; }
+    .switch-label span{ font-size:12px; color:var(--muted); line-height:1.4; }
+    .switch{ position:relative; width:44px; height:26px; flex:0 0 auto; }
+    .switch input{ opacity:0; width:0; height:0; }
+    .slider{
+      position:absolute; cursor:pointer; inset:0; background:rgba(148,163,184,.35); border-radius:999px; transition:.18s ease; border:1px solid var(--border);
+    }
+    .slider::before{ content:""; position:absolute; width:20px; height:20px; left:3px; top:2px; background:#fff; border-radius:50%; transition:.18s ease; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+    .switch input:checked + .slider{ background:var(--accent); }
+    .switch input:checked + .slider::before{ transform:translateX(18px); }
+
+    .right-column .card + .card{ margin-top:12px; }
+    .list{ display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+    .role-pill{ display:inline-flex; align-items:center; width:fit-content; padding:6px 10px; border-radius:999px; background:var(--field); border:1px solid var(--border); font-size:13px; color:var(--text); }
+    .small-muted{ color:var(--muted); font-size:13px; margin-top:8px; line-height:1.5; }
+
+    .toast{
+      position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:99999;
+      padding:10px 14px; border-radius:11px; font-weight:700; display:none; color:#fff; box-shadow:0 10px 24px rgba(0,0,0,.25);
+    }
+    .toast.purple{ background:var(--accent-strong); }
+    .toast.red{ background:#c00; }
+    .toast.yellow{ background:#e6b800; color:#222; }
+
+    .dialog-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.52); display:none; align-items:center; justify-content:center;
+      z-index:100000; padding:18px;
+    }
+    .dialog-backdrop.open{ display:flex; }
+    .dialog{
+      width:min(520px, 100%); background:var(--card); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow); overflow:hidden;
+    }
+    .dialog-head{ padding:18px 18px 10px; }
+    .dialog-title{ font-size:17px; font-weight:700; margin:0; }
+    .dialog-desc{ margin:7px 0 0; color:var(--muted); font-size:13px; line-height:1.5; }
+    .dialog-body{ padding:0 18px 16px; }
+    .dialog-foot{ padding:14px 18px 18px; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border); background:var(--field); }
+
+    @media (max-width:560px){
+      .banner{ height:140px; }
+      .pfp-wrap{ width:98px; flex-basis:98px; }
+      .pfp{ width:98px; height:98px; border-radius:14px; }
+      .frame{ border-radius:14px; }
+    }
+  </style>
+</head>
+<body>
+  <script src="/dp-diag.js"></script>
+  <script type="module" src="/dp-topbar.js"></script>
+  <script type="module" src="/dp-rich-components.js"></script>
+  <dp-topbar></dp-topbar>
+
+  <main class="container" role="main" aria-label="プロフィール編集">
+    <section class="card">
+      <div class="heading">
+        <div>
+          <div class="title">プロフィール編集</div>
+          <div class="subtitle">公開プロフィールを整えて、見やすく保ちましょう。</div>
+        </div>
+        <div class="muted" id="last-updated">更新: —</div>
+      </div>
+
+      <div id="banner" class="banner" title="クリックしてバナーを変更"></div>
+
+      <div class="profile-row">
+        <div class="pfp-wrap">
+          <div id="profile-pic" class="pfp" title="クリックしてプロフィール写真を変更"></div>
+          <div id="pfp-frame" class="frame" title="クリックしてフレームを変更"></div>
+        </div>
+
+        <div class="meta">
+          <div class="display-name">
+            <div id="display-name">読み込み中…</div>
+            <div id="verified" class="verified" title="認証済み" style="display:none;"></div>
+          </div>
+          <div id="email" class="email"></div>
+
+          <div class="bio-block">
+            <strong>自己紹介</strong>
+            <div id="bio-text" class="bio-text">読み込み中…</div>
+          </div>
+
+          <div class="field-card">
+            <div class="field-top">
+              <div>
+                <div class="field-title">表示名</div>
+                <div class="field-help">他の人がプロフィールで見る名前です。</div>
+              </div>
+              <div class="inline-actions">
+                <button id="saveNameBtn" class="btn primary">保存</button>
+              </div>
+            </div>
+            <div class="field-row">
+              <input id="displayNameInput" type="text" placeholder="表示名" aria-label="表示名">
+            </div>
+          </div>
+
+          <div class="field-card">
+            <div class="field-top">
+              <div>
+                <div class="field-title">自己紹介</div>
+                <div class="field-help">短く、人間らしく、500文字以内に収めましょう。</div>
+              </div>
+              <div class="inline-actions">
+                <button id="saveBioBtn" class="btn primary">自己紹介を保存</button>
+                <button id="clearBioBtn" class="btn ghost">クリア</button>
+              </div>
+            </div>
+            <textarea id="bioInput" placeholder="短い自己紹介（最大500文字）"></textarea>
+          </div>
+
+          <div class="field-card">
+            <div class="switch-row">
+              <div class="switch-label">
+                <strong>公開プロフィール</strong>
+                <span>他のユーザーがこのプロフィールを閲覧できるようにします。</span>
+              </div>
+              <label class="switch" title="公開プロフィールのオン/オフ">
+                <input id="publicCheckbox" type="checkbox">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="openPublicBtn" class="btn">公開プロフィールを見る</button>
+            <button id="copyProfileLinkBtn" class="btn">プロフィールリンクをコピー</button>
+            <button id="blockedUsersBtn" class="btn">ブロック済みユーザーを管理</button>
+          </div>
+
+          <div class="section-label">役割と情報</div>
+          <div id="rolesList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right-column">
+      <div class="card">
+        <div style="font-weight:700">クイック操作</div>
+        <div class="small-muted">追加機能</div>
+        <div style="margin-top:12px; display:flex; gap:8px; flex-direction:column;">
+          <button id="refreshProfileBtn" class="btn">プロフィールを更新</button>
+          <button id="deleteFrameBtn" class="btn">フレームを外す</button>
+          <button id="resetLocalViewBtn" class="btn">プレビュー値をリセット</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-weight:700">ヘルプ</div>
+        <div class="small-muted" style="margin-top:8px">
+          バナー、プロフィール写真、フレームをクリックして変更できます。フレームを外したい場合は、クイック操作の「フレームを外す」を使ってください。「プレビュー値をリセット」を押すと、保存前の変更を取り消してサーバーから再読み込みします。
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="urlDialog" class="dialog-backdrop" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <div class="dialog-head">
+        <h2 id="dialogTitle" class="dialog-title">画像を変更</h2>
+        <p id="dialogDesc" class="dialog-desc">画像の直リンクURLを貼り付けてください。</p>
+      </div>
+      <div class="dialog-body">
+        <input id="dialogInput" type="text" placeholder="https://example.com/image.png" autocomplete="off" />
+      </div>
+      <div class="dialog-foot">
+        <button id="dialogCancel" class="btn">キャンセル</button>
+        <button id="dialogSave" class="btn primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const serverTimestamp = () => firebase.firestore.FieldValue.serverTimestamp();
+
+    const els = {
+      banner: document.getElementById('banner'),
+      profilePic: document.getElementById('profile-pic'),
+      pfpFrame: document.getElementById('pfp-frame'),
+      displayName: document.getElementById('display-name'),
+      email: document.getElementById('email'),
+      verified: document.getElementById('verified'),
+      bioText: document.getElementById('bio-text'),
+      rolesList: document.getElementById('rolesList'),
+      displayNameInput: document.getElementById('displayNameInput'),
+      saveNameBtn: document.getElementById('saveNameBtn'),
+      bioInput: document.getElementById('bioInput'),
+      saveBioBtn: document.getElementById('saveBioBtn'),
+      clearBioBtn: document.getElementById('clearBioBtn'),
+      publicCheckbox: document.getElementById('publicCheckbox'),
+      openPublicBtn: document.getElementById('openPublicBtn'),
+      copyProfileLinkBtn: document.getElementById('copyProfileLinkBtn'),
+      blockedUsersBtn: document.getElementById('blockedUsersBtn'),
+      refreshProfileBtn: document.getElementById('refreshProfileBtn'),
+      deleteFrameBtn: document.getElementById('deleteFrameBtn'),
+      resetLocalViewBtn: document.getElementById('resetLocalViewBtn'),
+      lastUpdated: document.getElementById('last-updated'),
+      toast: document.getElementById('toast'),
+      dialog: document.getElementById('urlDialog'),
+      dialogTitle: document.getElementById('dialogTitle'),
+      dialogDesc: document.getElementById('dialogDesc'),
+      dialogInput: document.getElementById('dialogInput'),
+      dialogCancel: document.getElementById('dialogCancel'),
+      dialogSave: document.getElementById('dialogSave')
+    };
+
+    let currentUser = null;
+    let currentEmail = null;
+    let currentProfile = {};
+    let dialogResolver = null;
+    let dialogMode = null;
+
+    function showToast(msg, color='purple', duration=2600){
+      els.toast.textContent = msg;
+      els.toast.className = `toast ${color}`;
+      els.toast.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => { els.toast.style.display='none'; els.toast.className='toast'; }, duration);
+    }
+
+    function safeUrl(url, fallback=''){
+      const v = (url || '').trim();
+      return v || fallback;
+    }
+
+    function renderRichText(target, text){
+      target.innerHTML = '';
+      const richEl = document.createElement('rich-text');
+      richEl.textContent = text || '自己紹介はまだ設定されていません';
+      target.appendChild(richEl);
+    }
+
+    async function saveUserFields(email, fields){
+      const ref = db.collection('user_data').doc(email);
+      await ref.set({ ...fields, last_updated: serverTimestamp() }, { merge: true });
+    }
+
+    async function loadProfileFor(email){
+      try{
+        const snap = await db.collection('user_data').doc(email).get();
+        currentProfile = snap.exists ? (snap.data() || {}) : {};
+
+        const banner = safeUrl(currentProfile.banner, '/assets/default_banner.png');
+        const pfp = safeUrl(currentProfile.profile_picture, 'https://darkpurpleof.github.io/org-owner.jpg');
+        const display = currentProfile['display name'] || currentProfile.displayName || email;
+        const bio = typeof currentProfile.bio === 'string' ? currentProfile.bio : '';
+        const isVerified = !!currentProfile.is_verified;
+        const frame = safeUrl(currentProfile.profile_picture_frame, '');
+
+        els.banner.style.backgroundImage = `url(${banner})`;
+        els.profilePic.style.backgroundImage = `url(${pfp})`;
+        els.displayName.textContent = display;
+        els.displayNameInput.value = display;
+        els.email.textContent = email;
+        els.verified.style.display = isVerified ? 'inline-block' : 'none';
+        els.publicCheckbox.checked = !!currentProfile.isProfilePublic;
+        els.bioInput.value = bio;
+        renderRichText(els.bioText, bio);
+
+        if (frame){
+          els.pfpFrame.style.backgroundImage = `url(${frame})`;
+          els.pfpFrame.style.display = 'block';
+        } else {
+          els.pfpFrame.style.display = 'none';
+          els.pfpFrame.style.backgroundImage = '';
+        }
+
+        els.rolesList.innerHTML = '';
+        const roles = Array.isArray(currentProfile.roles) ? currentProfile.roles : (currentProfile.role ? [currentProfile.role] : ['メンバー']);
+        roles.forEach(role => {
+          const pill = document.createElement('div');
+          pill.className = 'role-pill';
+          pill.textContent = role;
+          els.rolesList.appendChild(pill);
+        });
+
+        if (currentProfile.last_updated){
+          const raw = currentProfile.last_updated.seconds ? currentProfile.last_updated.seconds * 1000 : currentProfile.last_updated;
+          const date = new Date(raw);
+          els.lastUpdated.textContent = `更新: ${date.toLocaleString()}`;
+        } else {
+          els.lastUpdated.textContent = '更新: —';
+        }
+      } catch (err){
+        console.error('プロフィール読み込み', err);
+        showToast('プロフィールを読み込めませんでした', 'red');
+      }
+    }
+
+    async function openImageDialog(kind, currentValue=''){
+      return new Promise((resolve) => {
+        dialogMode = kind;
+        els.dialogTitle.textContent = kind === 'banner' ? 'バナーを変更' : kind === 'pfp' ? 'プロフィール写真を変更' : 'プロフィールフレームを変更';
+        els.dialogDesc.textContent = kind === 'banner'
+          ? 'バナー用の画像直リンクURLを貼り付けてください。'
+          : kind === 'pfp'
+            ? 'プロフィール写真用の画像直リンクURLを貼り付けてください。'
+            : 'フレーム用の画像直リンクURLを貼り付けてください。';
+        els.dialogInput.value = currentValue || '';
+        els.dialog.style.display = 'flex';
+        els.dialog.classList.add('open');
+        els.dialog.setAttribute('aria-hidden', 'false');
+        dialogResolver = resolve;
+        setTimeout(() => els.dialogInput.focus(), 0);
+      });
+    }
+
+    function closeImageDialog(result = null){
+      els.dialog.classList.remove('open');
+      els.dialog.style.display = 'none';
+      els.dialog.setAttribute('aria-hidden', 'true');
+      const resolver = dialogResolver;
+      dialogResolver = null;
+      if (resolver) resolver(result);
+    }
+
+    async function saveProfileField(field, value, successMsg){
+      if (!currentUser || !currentEmail) return showToast('ログインしていません', 'yellow');
+      try{
+        await saveUserFields(currentEmail, { [field]: value });
+        currentProfile[field] = value;
+        await loadProfileFor(currentEmail);
+        showToast(successMsg, 'purple');
+      } catch (e){
+        console.error(e);
+        showToast('保存できませんでした', 'red');
+      }
+    }
+
+    async function saveDisplayName(){
+      const v = (els.displayNameInput.value || '').trim();
+      if (!v) return showToast('表示名を入力してください', 'yellow');
+      if (v.length > 48) return showToast('表示名が長すぎます', 'yellow');
+      await saveProfileField('display name', v, '表示名を保存しました');
+    }
+
+    async function saveBio(){
+      const v = (els.bioInput.value || '').trim();
+      if (v.length > 500) return showToast('自己紹介が長すぎます（最大500文字）', 'yellow');
+      await saveProfileField('bio', v, '自己紹介を保存しました');
+    }
+
+    async function saveImageField(field, url, successMsg){
+      const value = (url || '').trim();
+      if (!value) return showToast('先にURLを貼り付けてください', 'yellow');
+      try{
+        const payload = { [field]: value };
+        await saveUserFields(currentEmail, payload);
+        await loadProfileFor(currentEmail);
+        showToast(successMsg, 'purple');
+      } catch (e){
+        console.error(e);
+        showToast('画像を保存できませんでした', 'red');
+      }
+    }
+
+    els.dialogCancel.addEventListener('click', () => closeImageDialog(null));
+    els.dialogSave.addEventListener('click', () => closeImageDialog(els.dialogInput.value.trim()));
+    els.dialogInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') closeImageDialog(els.dialogInput.value.trim());
+      if (e.key === 'Escape') closeImageDialog(null);
+    });
+    els.dialog.addEventListener('click', (e) => {
+      if (e.target === els.dialog) closeImageDialog(null);
+    });
+
+    els.saveNameBtn.addEventListener('click', saveDisplayName);
+    els.saveBioBtn.addEventListener('click', saveBio);
+    els.clearBioBtn.addEventListener('click', async () => {
+      els.bioInput.value = '';
+      await saveProfileField('bio', '', '自己紹介をクリアしました');
+    });
+
+    els.publicCheckbox.addEventListener('change', async () => {
+      if (!currentUser) return showToast('ログインしていません', 'yellow');
+      const checked = els.publicCheckbox.checked;
+      try{
+        await saveUserFields(currentEmail, { isProfilePublic: checked });
+        currentProfile.isProfilePublic = checked;
+        showToast('公開設定を保存しました', 'purple');
+      } catch (e){
+        console.error(e);
+        els.publicCheckbox.checked = !checked;
+        showToast('保存できませんでした', 'red');
+      }
+    });
+
+    els.openPublicBtn.addEventListener('click', () => {
+      if (!currentUser) return showToast('ログインしていません', 'yellow');
+      window.location.href = `./viewprofile?profile=${encodeURIComponent(currentEmail)}`;
+    });
+
+    els.copyProfileLinkBtn.addEventListener('click', async () => {
+      if (!currentUser) return showToast('ログインしていません', 'yellow');
+      const url = new URL(`./viewprofile?profile=${encodeURIComponent(currentEmail)}`, window.location.href).href;
+      try{
+        await navigator.clipboard.writeText(url);
+        showToast('プロフィールリンクをコピーしました', 'purple');
+      } catch (e){
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        showToast('プロフィールリンクをコピーしました', 'purple');
+      }
+    });
+
+    els.blockedUsersBtn.addEventListener('click', () => window.location.href = './manageblockedusers');
+    els.refreshProfileBtn.addEventListener('click', () => { if (currentEmail) loadProfileFor(currentEmail); });
+
+    els.deleteFrameBtn.addEventListener('click', async () => {
+      if (!currentUser) return showToast('ログインしていません', 'yellow');
+      if (!confirm('プロフィールのフレームを外しますか？')) return;
+      try{
+        await saveUserFields(currentEmail, { profile_picture_frame: '' });
+        currentProfile.profile_picture_frame = '';
+        els.pfpFrame.style.display = 'none';
+        els.pfpFrame.style.backgroundImage = '';
+        showToast('フレームを外しました', 'purple');
+      } catch (e){
+        console.error(e);
+        showToast('フレームを外せませんでした', 'red');
+      }
+    });
+
+    els.resetLocalViewBtn.addEventListener('click', async () => {
+      if (!currentEmail) return;
+      await loadProfileFor(currentEmail);
+      showToast('プレビューをリセットしました', 'purple');
+    });
+
+    els.banner.addEventListener('click', async () => {
+      if (!currentUser) return showToast('ログインしていません', 'yellow');
+      const value = await openImageDialog('banner', currentProfile.banner || '');
+      if (value !== null) await saveImageField('banner', value, 'バナーを保存しました');
+    });
+
+    els.profilePic.addEventListener('click', async () => {
+      if (!currentUser) return showToast('ログインしていません', 'yellow');
+      const value = await openImageDialog('pfp', currentProfile.profile_picture || '');
+      if (value !== null) await saveImageField('profile_picture', value, 'プロフィール写真を保存しました');
+    });
+
+    els.pfpFrame.addEventListener('click', async () => {
+      if (!currentUser) return showToast('ログインしていません', 'yellow');
+      const value = await openImageDialog('frame', currentProfile.profile_picture_frame || '');
+      if (value !== null) await saveImageField('profile_picture_frame', value, 'プロフィールフレームを保存しました');
+    });
+
+    auth.onAuthStateChanged(async (u) => {
+      if (!u){
+        window.location.href = './login';
+        return;
+      }
+      currentUser = u;
+      currentEmail = u.email || u.uid;
+      els.email.textContent = currentEmail;
+      await loadProfileFor(currentEmail);
+    });
+
+    window.addEventListener('resize', () => { document.documentElement.style.overflowX = 'hidden'; });
+  </script>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Canjear código</title>
+
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#171717;
+      --card:#1f1f1f;
+      --text:#eaeaea;
+      --muted:#9ca3af;
+      --accent:#6b21a8;
+      --accent-strong:#5b21b6;
+      --border:rgba(255,255,255,0.06);
+      --radius:12px;
+      --max-width:920px;
+    }
+    body.light{ --bg:#f6f8fb; --card:#fff; --text:#0f172a; --muted:#475569; --border:rgba(0,0,0,0.06); }
+
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow-x:hidden;}
+    body{display:flex;flex-direction:column;min-height:100vh;}
+
+    /* topbar */
+    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+
+    main.container{ width:100%; max-width:var(--max-width); margin:20px auto; padding:16px; box-sizing:border-box; }
+    .card{ background:var(--card); border-radius:var(--radius); padding:16px; border:1px solid var(--border); box-shadow:0 6px 18px rgba(2,6,23,0.45); }
+
+    h1{ margin:0 0 8px 0; font-size:18px; font-weight:700; color:var(--text); }
+    p.lead{ margin:6px 0 12px 0; color:var(--muted); }
+
+    .form-row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .input { flex:1; min-width:160px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); box-sizing:border-box; }
+    .btn { padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700; background:var(--accent); color:#fff; }
+    .btn.ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+
+    .muted { color:var(--muted); font-size:13px; }
+
+    .confirm { display:flex; gap:12px; align-items:center; padding:12px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid var(--border); margin-top:12px; }
+    .confirm img { width:72px; height:72px; border-radius:10px; object-fit:cover; border:1px solid var(--border); }
+    .confirm .meta { flex:1; min-width:0; }
+    .confirm .title { font-weight:700; font-size:16px; color:var(--text); display:flex; gap:8px; align-items:center; }
+    .confirm .by { font-size:13px; color:var(--muted); margin-top:6px; }
+
+    .actions { display:flex; gap:8px; margin-left:auto; }
+    .actions .btn { padding:8px 12px; font-size:14px; }
+
+    .result { margin-top:12px; padding:12px; border-radius:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); }
+
+    @media(max-width:720px){
+      .confirm{ flex-direction:row; align-items:center; }
+      .confirm img{ width:64px; height:64px; }
+      .actions{ margin-top:8px; width:100%; justify-content:flex-end; }
+    }
+  </style>
+</head>
+<body>
+  <script type="module" src="/dp-topbar.js"></script>
+  <dp-topbar></dp-topbar>
+
+  <main class="container">
+    <div class="card" id="ui-root" role="region" aria-label="Canjear código">
+      <h1>Canjear código</h1>
+      <p class="lead">Ingresa un código de canje para recibir monedas o artículos. Los códigos nuevos se ven como <code>ABCDE-ABCDE-ABCDE-ABCDE-ABCDE</code>.</p>
+
+      <div id="entry-area" class="form-row">
+        <input id="codeInput" class="input" placeholder="Ingresa un código (antiguo o nuevo)" autocomplete="off" />
+        <button id="redeemBtn" class="btn">Canjear</button>
+        <button id="openApp" class="btn ghost">Abrir app</button>
+      </div>
+
+      <div id="message" class="muted" style="margin-top:10px;"></div>
+
+      <div id="confirmArea" style="display:none; margin-top:12px;"></div>
+
+      <div id="resultArea" style="display:none;margin-top:12px;"></div>
+    </div>
+  </main>
+
+  <div id="toast" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);display:none;padding:10px 14px;border-radius:10px;color:#fff;z-index:99999;"></div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+    authDomain: "darkpurpleof-s-website.firebaseapp.com",
+    projectId: "darkpurpleof-s-website",
+    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+    messagingSenderId: "520651082420",
+    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+  };
+  if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const codeInput = document.getElementById('codeInput');
+  const redeemBtn = document.getElementById('redeemBtn');
+  const openApp = document.getElementById('openApp');
+  const messageEl = document.getElementById('message');
+  const confirmArea = document.getElementById('confirmArea');
+  const resultArea = document.getElementById('resultArea');
+  const toast = document.getElementById('toast');
+  let currentUser = null;
+
+  function showToast(text, color='purple', t=3000){
+    toast.textContent = text;
+    toast.style.display = 'block';
+    toast.style.background = (color==='red')? '#c00': (color==='yellow'? '#e6b800' : 'linear-gradient(180deg,var(--accent-strong),var(--accent))');
+    setTimeout(()=> toast.style.display='none', t);
+  }
+
+  auth.onAuthStateChanged(u => {
+    currentUser = u || null;
+  });
+
+  openApp.addEventListener('click', ()=> location.href = 'darkpurpleof://redeem');
+
+  const NEW_CODE_RE = /^[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}$/i;
+
+  redeemBtn.addEventListener('click', onRedeem);
+
+  async function onRedeem(){
+    clearMessage();
+    confirmArea.style.display='none';
+    resultArea.style.display='none';
+
+    if (!currentUser) { showError('Debes iniciar sesión para canjear códigos.'); return; }
+    const codeRaw = (codeInput.value||'').trim();
+    if (!codeRaw) { showError('Ingresa un código.'); return; }
+
+    const code = codeRaw.toUpperCase();
+    const isNew = NEW_CODE_RE.test(code);
+
+    try {
+      const codeRef = db.collection('redeemable').doc(code);
+      const codeSnap = await codeRef.get();
+
+      if (!codeSnap.exists) {
+        showError('Código no encontrado o ya usado.');
+        return;
+      }
+
+      const data = codeSnap.data() || {};
+      if (isNew) {
+        const type = (data.type || '').toLowerCase();
+        if (!type) { showError('Carga inválida del código nuevo.'); return; }
+
+        if (type === 'coins') {
+          const amount = Number(data.amount || 0);
+          if (!amount || amount <= 0) { showError('Cantidad de monedas inválida.'); return; }
+          showConfirmCoins(code, amount, data, codeRef);
+        } else if (type === 'shop' || type === 'dev') {
+          const author = data.author;
+          const itemId = data.id;
+          if (!author || !itemId) { showError('Carga inválida del código, faltan author/id.'); return; }
+
+          const path = (type === 'dev') ? `ugc/${author}/development-items/${itemId}` : `ugc/${author}/store-items/${itemId}`;
+          const itemSnap = await db.doc(path).get();
+          if (!itemSnap.exists) { showError('El artículo referenciado no se encontró.'); return; }
+          const item = itemSnap.data();
+          showConfirmItem(code, type, data, item, author, itemId, codeRef);
+        } else {
+          showError('Tipo de código desconocido.');
+          return;
+        }
+      } else {
+        const digits = (code.match(/\d+/g) || []).join('');
+        const coins = digits ? parseInt(digits,10) : 0;
+        if (!coins || coins <= 0) {
+          showError('El código antiguo no contenía una cantidad de monedas.');
+          return;
+        }
+        showConfirmLegacy(code, coins, codeRef);
+      }
+    } catch (err) {
+      console.error(err);
+      showError('No se pudo validar el código. Intenta de nuevo.');
+    }
+  }
+
+  function clearMessage(){ messageEl.textContent=''; messageEl.className='muted'; }
+  function showError(txt){ messageEl.textContent=txt; messageEl.className='muted'; showToast(txt,'red',3500); }
+
+  async function writeTransaction(userEmail, docId, payload){
+    const txRef = db.collection('transactions').doc(userEmail).collection('records').doc(docId);
+    await txRef.set(payload);
+  }
+
+  async function addCoinsToUser(userEmail, amount){
+    const userRef = db.collection('user_data').doc(userEmail);
+    const userSnap = await userRef.get();
+    let current = 0;
+
+    if (userSnap.exists){
+      const c = userSnap.data().coins;
+      current = parseInt(c || '0', 10) || 0;
+    }
+
+    const newVal = current + Number(amount || 0);
+    await userRef.set({ coins: String(newVal) }, { merge: true });
+
+    return newVal;
+  }
+
+  function showConfirmLegacy(code, coins, codeRef){
+    confirmArea.innerHTML = `
+      <div class="confirm">
+        <img src="https://darkpurpleof.github.io/org-owner.jpg" alt="monedas">
+        <div class="meta">
+          <div class="title">${coins} monedas</div>
+          <div class="by">por el sistema</div>
+          <div class="muted" style="margin-top:6px;">Después de canjearlas, las monedas se agregarán a tu cuenta al instante.</div>
+        </div>
+        <div class="actions">
+          <button id="cancelBtn" class="btn ghost">Cancelar</button>
+          <button id="confirmBtn" class="btn">Continuar</button>
+        </div>
+      </div>
+    `;
+    confirmArea.style.display='block';
+    document.getElementById('cancelBtn').onclick = ()=> { confirmArea.style.display='none'; };
+    document.getElementById('confirmBtn').onclick = async ()=>{
+      try {
+        const newCoins = await addCoinsToUser(currentUser.email, coins);
+
+        const payload = {
+          amount: Number(coins),
+          date: firebase.firestore.FieldValue.serverTimestamp(),
+          description: "Código canjeado",
+          image: "https://darkpurpleof.github.io/org-owner.jpg",
+          source: "system@darkpurpleof.github.io",
+          type: "incoming"
+        };
+        await writeTransaction(currentUser.email, code, payload);
+
+        await codeRef.delete();
+
+        resultArea.style.display='block';
+        resultArea.innerHTML = `<div class="result"><strong>¡Éxito!</strong> Se agregaron ${coins} monedas a tu cuenta. Ahora tienes ${newCoins} monedas. <div style="margin-top:8px;"><button id="backBtn" class="btn ghost">Canjear otro</button> <button id="txBtn" class="btn">Ver transacciones</button></div></div>`;
+        document.getElementById('backBtn').onclick = ()=> { resultArea.style.display='none'; confirmArea.style.display='none'; codeInput.value=''; };
+        document.getElementById('txBtn').onclick = ()=> { window.location.href = './transactions'; };
+      } catch (err) {
+        console.error(err);
+        showError('No se pudo finalizar el canje.');
+      }
+    };
+  }
+
+  async function showConfirmCoins(code, amount, codeData, codeRef){
+    let authorDisplay = 'system@darkpurpleof.github.io';
+    let authorVerified = false;
+    if (codeData.author) {
+      try {
+        const aSnap = await db.collection('user_data').doc(codeData.author).get();
+        if (aSnap.exists()) {
+          const a = aSnap.data();
+          authorDisplay = a['display name'] || codeData.author || authorDisplay;
+          authorVerified = !!a.is_verified;
+        }
+      } catch(e){ console.warn(e); }
+    }
+
+    confirmArea.innerHTML = `
+      <div class="confirm">
+        <img src="${escapeHtml(codeData.image || 'https://darkpurpleof.github.io/org-owner.jpg')}" alt="monedas">
+        <div class="meta">
+          <div class="title">${amount} monedas <span class="muted" style="font-weight:600">(DF$)</span></div>
+          <div class="by">
+            por ${escapeHtml(authorDisplay)}
+            ${authorVerified ? '<img src="/assets/verified.png" style="width:14px;height:14px;margin-left:6px;vertical-align:middle;">' : ''}
+          </div>
+          <div class="muted" style="margin-top:6px;">Después de canjearlas, las monedas se agregarán a tu cuenta al instante.</div>
+        </div>
+        <div class="actions">
+          <button id="cancelBtn" class="btn ghost">Cancelar</button>
+          <button id="confirmBtn" class="btn">Continuar</button>
+        </div>
+      </div>
+    `;
+    confirmArea.style.display='block';
+    document.getElementById('cancelBtn').onclick = ()=> { confirmArea.style.display='none'; };
+    document.getElementById('confirmBtn').onclick = async ()=>{
+      try {
+        const newCoins = await addCoinsToUser(currentUser.email, amount);
+
+        const payload = {
+          amount: Number(amount),
+          date: firebase.firestore.FieldValue.serverTimestamp(),
+          description: "DF$",
+          image: codeData.image || "https://darkpurpleof.github.io/org-owner.jpg",
+          source: codeData.author || "system@darkpurpleof.github.io",
+          type: "incoming"
+        };
+        await writeTransaction(currentUser.email, code, payload);
+
+        await codeRef.delete();
+
+        resultArea.style.display='block';
+        resultArea.innerHTML = `<div class="result"><strong>¡Éxito!</strong> Se agregaron ${amount} monedas. Ahora tienes ${newCoins} monedas. <div style="margin-top:8px;"><button id="backBtn" class="btn ghost">Canjear otro</button> <button id="txBtn" class="btn">Ver transacciones</button></div></div>`;
+        document.getElementById('backBtn').onclick = ()=> { resultArea.style.display='none'; confirmArea.style.display='none'; codeInput.value=''; };
+        document.getElementById('txBtn').onclick = ()=> { window.location.href = './transactions'; };
+      } catch (err) {
+        console.error(err);
+        showError('No se pudo finalizar el canje.');
+      }
+    };
+  }
+
+  async function showConfirmItem(code, type, codeData, itemDocData, authorEmail, itemId, codeRef){
+    let authorDisplay = authorEmail;
+    let authorVerified = false;
+    try {
+      const aSnap = await db.collection('user_data').doc(authorEmail).get();
+      if (aSnap.exists){
+        const a = aSnap.data();
+        authorDisplay = a['display name'] || authorEmail;
+        authorVerified = !!a.is_verified;
+      }
+    } catch (e) {
+      console.warn("No se pudo obtener la información del autor:", e);
+    }
+
+    const itemImage = itemDocData.image || itemDocData.img || "https://darkpurpleof.github.io/org-owner.jpg";
+    const itemName = itemDocData.name || itemDocData.title || ("Artículo " + itemId);
+
+    const verifiedBadge = authorVerified
+      ? '<img src="/assets/verified.png" style="width:14px;height:14px;margin-left:6px;display:inline-block;vertical-align:middle;">'
+      : '';
+
+    confirmArea.innerHTML = `
+      <div class="confirm">
+        <img src="${escapeHtml(itemImage)}" alt="${escapeHtml(itemName)}">
+        <div class="meta">
+          <div class="title">${escapeHtml(itemName)}</div>
+          <div class="by">por ${escapeHtml(authorDisplay)} ${verifiedBadge}</div>
+          <div class="muted" style="margin-top:6px;">Después de canjear este código, el objeto se agregará a tu cuenta al instante.</div>
+        </div>
+        <div class="actions">
+          <button id="cancelBtn" class="btn ghost">Cancelar</button>
+          <button id="confirmBtn" class="btn">Continuar</button>
+        </div>
+      </div>
+    `;
+
+    confirmArea.style.display='block';
+    document.getElementById('cancelBtn').onclick = ()=> { confirmArea.style.display='none'; };
+
+    document.getElementById('confirmBtn').onclick = async ()=>{
+      try {
+        const userRef = db.collection('user_data').doc(currentUser.email);
+        await userRef.set({ purchasedIds: firebase.firestore.FieldValue.arrayUnion(itemId) }, { merge: true });
+
+        const payload = {
+          amount: 0,
+          date: firebase.firestore.FieldValue.serverTimestamp(),
+          description: String(itemName),
+          image: itemImage,
+          source: authorEmail,
+          type: "outgoing"
+        };
+        await writeTransaction(currentUser.email, itemId, payload);
+
+        await codeRef.delete();
+
+        resultArea.style.display='block';
+        resultArea.innerHTML = `
+          <div class="result">
+            <strong>¡Éxito!</strong> ${escapeHtml(itemName)} se agregó a tu cuenta.
+            <div style="margin-top:8px;">
+              <button id="backBtn" class="btn ghost">Canjear otro</button>
+              <button id="txBtn" class="btn">Ver transacciones</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('backBtn').onclick = ()=> { resultArea.style.display='none'; confirmArea.style.display='none'; codeInput.value=''; };
+        document.getElementById('txBtn').onclick = ()=> { window.location.href = './transactions'; };
+      } catch (err) {
+        console.error(err);
+        showError('No se pudo entregar el artículo: ' + (err.message || err));
+      }
+    };
+  }
+
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>

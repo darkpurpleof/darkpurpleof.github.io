@@ -219,7 +219,7 @@ async function loadTransactions(){
       badge.className = "verified";
       source.appendChild(badge);
     }
-
+ 
     source.onclick = () => {
       window.location.href = `viewprofile?profile=${tx.source}`;
     };

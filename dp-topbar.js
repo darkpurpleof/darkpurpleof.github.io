@@ -651,7 +651,7 @@ template.innerHTML = `
         <a href="/home" data-target="/home">Home</a>
         <a href="/ugc/posts" data-target="/ugc/posts">Posts</a>
         <a href="/creator/dashboard" data-target="/creator/dashboard">Create</a>
-        <a href="/chats" data-target="/chats">Chats</a>
+        <a href="/chat" data-target="/chat">Chats</a>
       </nav>
 
       <button class="hamburger" id="hamburger" aria-label="Open menu" aria-haspopup="true" aria-expanded="false">
@@ -664,7 +664,7 @@ template.innerHTML = `
         <a href="/home" data-target="/home">Home</a>
         <a href="/ugc/posts" data-target="/ugc/posts">Posts</a>
         <a href="/creator/dashboard" data-target="/creator/dashboard">Create</a>
-        <a href="/chats" data-target="/chats">Chats</a>
+        <a href="/chat" data-target="/chat">Chats</a>
       </div>
     </div>
 
@@ -698,7 +698,7 @@ template.innerHTML = `
             <div class="coin-dropdown-value" id="coin-balance-summary">DF$ - 0</div>
           </div>
           <a id="redeem-link" href="/redeem">Redeem DarkPurpleOF's Website codes</a>
-          <a id="trans-link" href="/transactions" class="disabled">My transactions (Coming Soon)</a>
+          <a id="trans-link" href="/transactions">My transactions</a>
         </div>
       </div>
 
@@ -724,6 +724,189 @@ template.innerHTML = `
   </div>
 `;
 
+const SUPPORTED_LOCALES = ['en', 'es', 'ru', 'de', 'ja'];
+const LOCALE_FALLBACK = 'en';
+const LOCALE_ROUTE_PREFIX = {
+  en: '',
+  es: '/es',
+  ru: '/ru',
+  de: '/de',
+  ja: '/ja'
+};
+
+const LOCALE_STRINGS = {
+  en: {
+    brandAria: 'Go to home',
+    mobileSearchAria: 'Open search',
+    mobileCoinAria: 'Open DF options',
+    coinAria: 'Open DF options',
+    searchPlaceholder: 'Search users by name or email...',
+    searchUsers: 'Search users',
+    searchSearching: 'Searching...',
+    searchUnavailable: 'Search unavailable',
+    noResults: 'No results',
+    foundResults: 'Found {count} result{s}',
+    navHome: 'Home',
+    navPosts: 'Posts',
+    navCreate: 'Create',
+    navChats: 'Chats',
+    login: 'Login',
+    settings: 'Settings',
+    support: 'Support (Coming Soon)',
+    manageBlocked: 'Manage Blocked Users',
+    beta: 'Beta Program',
+    editProfile: 'Edit Profile',
+    logout: 'Logout',
+    redeem: "Redeem DarkPurpleOF's Website codes",
+    transactions: 'My transactions',
+    balanceLabel: 'Balance',
+    termsTitle: 'Updated Terms of Service',
+    termsIntro: 'The Terms of Service have changed. You need to accept the latest version to keep using the site.',
+    termsConfirm: 'By accepting, you confirm that you agree to the current terms and can continue.',
+    termsReadMore: 'Read the full Terms of Service',
+    acceptButton: 'Accept',
+    declineButton: 'Decline',
+    signedOutName: 'Not signed in',
+    noUsersFoundFor: 'No users found for "{query}"'
+  },
+  es: {
+    brandAria: 'Ir a inicio',
+    mobileSearchAria: 'Abrir búsqueda',
+    mobileCoinAria: 'Abrir opciones DF',
+    coinAria: 'Abrir opciones DF',
+    searchPlaceholder: 'Buscar usuarios por nombre o correo...',
+    searchUsers: 'Buscar usuarios',
+    searchSearching: 'Buscando...',
+    searchUnavailable: 'Búsqueda no disponible',
+    noResults: 'Sin resultados',
+    foundResults: 'Encontrado {count} resultado{s}',
+    navHome: 'Inicio',
+    navPosts: 'Publicaciones',
+    navCreate: 'Crear',
+    navChats: 'Chats',
+    login: 'Iniciar sesión',
+    settings: 'Ajustes',
+    support: 'Soporte (Próximamente)',
+    manageBlocked: 'Gestionar usuarios bloqueados',
+    beta: 'Programa beta',
+    editProfile: 'Editar perfil',
+    logout: 'Cerrar sesión',
+    redeem: 'Canjear códigos del sitio',
+    transactions: 'Mis transacciones',
+    balanceLabel: 'Saldo',
+    termsTitle: 'Términos de servicio actualizados',
+    termsIntro: 'Los Términos de Servicio han cambiado. Debes aceptar la versión más reciente para seguir usando el sitio.',
+    termsConfirm: 'Al aceptar, confirmas que estás de acuerdo con los términos actuales y puedes continuar.',
+    termsReadMore: 'Lee los Términos de Servicio completos',
+    acceptButton: 'Aceptar',
+    declineButton: 'Rechazar',
+    signedOutName: 'No has iniciado sesión',
+    noUsersFoundFor: 'No se encontraron usuarios para "{query}"'
+  },
+  ru: {
+    brandAria: 'Перейти на главную',
+    mobileSearchAria: 'Открыть поиск',
+    mobileCoinAria: 'Открыть DF опции',
+    coinAria: 'Открыть DF опции',
+    searchPlaceholder: 'Искать пользователей по имени или email...',
+    searchUsers: 'Поиск пользователей',
+    searchSearching: 'Поиск...',
+    searchUnavailable: 'Поиск недоступен',
+    noResults: 'Нет результатов',
+    foundResults: 'Найдено {count} результатов',
+    navHome: 'Главная',
+    navPosts: 'Посты',
+    navCreate: 'Создать',
+    navChats: 'Чаты',
+    login: 'Войти',
+    settings: 'Настройки',
+    support: 'Поддержка (скоро)',
+    manageBlocked: 'Управление заблокированными',
+    beta: 'Бета-программа',
+    editProfile: 'Редактировать профиль',
+    logout: 'Выйти',
+    redeem: 'Обменять коды сайта',
+    transactions: 'Мои транзакции',
+    balanceLabel: 'Баланс',
+    termsTitle: 'Обновлённые Условия использования',
+    termsIntro: 'Условия использования изменились. Необходимо принять последнюю версию, чтобы продолжать пользоваться сайтом.',
+    termsConfirm: 'Приняв, вы подтверждаете согласие с текущими условиями и можете продолжить.',
+    termsReadMore: 'Прочитать полные Условия использования',
+    acceptButton: 'Принять',
+    declineButton: 'Отклонить',
+    signedOutName: 'Не вошли в систему',
+    noUsersFoundFor: 'Пользователей не найдено для "{query}"'
+  },
+  de: {
+    brandAria: 'Zur Startseite',
+    mobileSearchAria: 'Suche öffnen',
+    mobileCoinAria: 'DF-Optionen öffnen',
+    coinAria: 'DF-Optionen öffnen',
+    searchPlaceholder: 'Benutzer nach Name oder E-Mail suchen...',
+    searchUsers: 'Benutzer suchen',
+    searchSearching: 'Suche...',
+    searchUnavailable: 'Suche nicht verfügbar',
+    noResults: 'Keine Ergebnisse',
+    foundResults: '{count} Ergebnis{s} gefunden',
+    navHome: 'Start',
+    navPosts: 'Beiträge',
+    navCreate: 'Erstellen',
+    navChats: 'Chats',
+    login: 'Anmelden',
+    settings: 'Einstellungen',
+    support: 'Support (demnächst)',
+    manageBlocked: 'Blockierte Benutzer verwalten',
+    beta: 'Beta-Programm',
+    editProfile: 'Profil bearbeiten',
+    logout: 'Abmelden',
+    redeem: 'Website-Codes einlösen',
+    transactions: 'Meine Transaktionen',
+    balanceLabel: 'Kontostand',
+    termsTitle: 'Aktualisierte Nutzungsbedingungen',
+    termsIntro: 'Die Nutzungsbedingungen wurden geändert. Du musst die neueste Version akzeptieren, um die Seite weiterhin nutzen zu können.',
+    termsConfirm: 'Durch Akzeptieren bestätigst du, dass du den aktuellen Bedingungen zustimmst und fortfahren kannst.',
+    termsReadMore: 'Lies die vollständigen Nutzungsbedingungen',
+    acceptButton: 'Akzeptieren',
+    declineButton: 'Ablehnen',
+    signedOutName: 'Nicht angemeldet',
+    noUsersFoundFor: 'Für "{query}" wurden keine Nutzer gefunden'
+  },
+  ja: {
+    brandAria: 'ホームへ移動',
+    mobileSearchAria: '検索を開く',
+    mobileCoinAria: 'DFオプションを開く',
+    coinAria: 'DFオプションを開く',
+    searchPlaceholder: '名前またはメールでユーザーを検索...',
+    searchUsers: 'ユーザーを検索',
+    searchSearching: '検索中...',
+    searchUnavailable: '検索できません',
+    noResults: '結果がありません',
+    foundResults: '{count}件の結果',
+    navHome: 'ホーム',
+    navPosts: '投稿',
+    navCreate: '作成',
+    navChats: 'チャット',
+    login: 'ログイン',
+    settings: '設定',
+    support: 'サポート（近日公開）',
+    manageBlocked: 'ブロックユーザー管理',
+    beta: 'ベータプログラム',
+    editProfile: 'プロフィール編集',
+    logout: 'ログアウト',
+    redeem: 'サイトコードを交換',
+    transactions: 'マイトランザクション',
+    balanceLabel: '残高',
+    termsTitle: '利用規約が更新されました',
+    termsIntro: '利用規約が変更されました。サイトの利用を継続するには最新バージョンに同意する必要があります。',
+    termsConfirm: '同意することで、現在の利用規約に同意し、続行できることを確認します。',
+    termsReadMore: '利用規約全文を読む',
+    acceptButton: '同意する',
+    declineButton: '拒否する',
+    signedOutName: 'ログインしていません',
+    noUsersFoundFor: '「{query}」のユーザーは見つかりませんでした'
+  }
+};
+
 class DPTopbar extends HTMLElement {
   constructor() {
     super();
@@ -737,6 +920,7 @@ class DPTopbar extends HTMLElement {
     this._mobileSearchOpen = false;
     this._verifiedIcon = null;
     this._pageLocked = false;
+    this._locale = LOCALE_FALLBACK;
     this._globalGatePromise = null;
     this._globalGatesChecked = false;
     this._searchCache = { ts: 0, users: [] };
@@ -751,7 +935,26 @@ class DPTopbar extends HTMLElement {
     this._setupElements();
     this._setupTheme();
     this._wireUI();
+    this._setLocale(this._getBrowserLocale());
     this._waitForFirebaseAndInit();
+    
+    // Detect URL changes and update locale
+    this._lastPathname = window.location.pathname;
+    this._boundOnUrlChange = this._onUrlChange.bind(this);
+    window.addEventListener('popstate', this._boundOnUrlChange);
+    // Also monitor for SPA navigation
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
+    window.history.pushState = (...args) => {
+      originalPushState.apply(window.history, args);
+      this._onUrlChange();
+      return;
+    };
+    window.history.replaceState = (...args) => {
+      originalReplaceState.apply(window.history, args);
+      this._onUrlChange();
+      return;
+    };
   }
 
   disconnectedCallback() {
@@ -759,7 +962,19 @@ class DPTopbar extends HTMLElement {
     document.removeEventListener('click', this._boundOnDocumentClick, true);
     window.removeEventListener('keydown', this._boundOnWindowKeydown);
     window.removeEventListener('resize', this._boundOnResize);
+    window.removeEventListener('popstate', this._boundOnUrlChange);
     if (this._searchTimer) clearTimeout(this._searchTimer);
+  }
+
+  _onUrlChange() {
+    const currentPathname = window.location.pathname;
+    if (currentPathname !== this._lastPathname) {
+      this._lastPathname = currentPathname;
+      const newLocale = this._getBrowserLocale();
+      if (newLocale !== this._locale) {
+        this._setLocale(newLocale);
+      }
+    }
   }
 
   _setupElements() {
@@ -784,6 +999,7 @@ class DPTopbar extends HTMLElement {
     this.$mobileSearchBtn = s.getElementById('mobile-search-btn');
     this.$mobileCoinBtn = s.getElementById('mobile-coin-btn');
     this.$coinBalanceSummary = s.getElementById('coin-balance-summary');
+    this.$coinLabel = s.querySelector('.coin-dropdown-label');
 
     this.$settings = s.getElementById('settings-link');
     this.$support = s.getElementById('support-link');
@@ -804,7 +1020,7 @@ class DPTopbar extends HTMLElement {
       e.stopPropagation();
       if (this.$coinDropdown.contains(e.target)) return;
       if (!this._currentUser) {
-        window.location.href = '/login';
+        window.location.href = this._localizePath('/login');
         return;
       }
       this._toggleCoinDropdown();
@@ -818,7 +1034,7 @@ class DPTopbar extends HTMLElement {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         if (!this._currentUser) {
-          window.location.href = '/login';
+          window.location.href = this._localizePath('/login');
           return;
         }
         this._toggleCoinDropdown();
@@ -875,7 +1091,7 @@ class DPTopbar extends HTMLElement {
         if (this._pageLocked) return;
         e.stopPropagation();
         if (!this._currentUser) {
-          window.location.href = '/login';
+          window.location.href = this._localizePath('/login');
           return;
         }
         this._toggleCoinDropdown();
@@ -889,7 +1105,7 @@ class DPTopbar extends HTMLElement {
       a.addEventListener('click', e => {
         if (this._pageLocked) return;
         e.preventDefault();
-        const target = a.getAttribute('data-target') || a.getAttribute('href');
+        const target = this._resolveNavigationTarget(a);
         if (target) window.location.href = target;
       });
     });
@@ -897,19 +1113,19 @@ class DPTopbar extends HTMLElement {
     this.$brand.addEventListener('click', e => {
       if (this._pageLocked) return;
       e.preventDefault();
-      window.location.href = '/home';
+      window.location.href = this._localizePath('/home');
     });
 
     this.$login.addEventListener('click', e => {
       if (this._pageLocked) return;
       e.preventDefault();
-      window.location.href = '/login';
+      window.location.href = this._localizePath('/login');
     });
 
     this.$edit.addEventListener('click', e => {
       if (this._pageLocked) return;
       e.preventDefault();
-      window.location.href = '/profile';
+      window.location.href = this._localizePath('/profile');
     });
 
     this.$logout.addEventListener('click', async () => {
@@ -929,19 +1145,23 @@ class DPTopbar extends HTMLElement {
 
     if (this.$redeem) this.$redeem.addEventListener('click', e => { if (this._pageLocked) e.preventDefault(); });
     // Removed preventDefault for transactions link to enable navigation
-    if (this.$settings) this.$settings.addEventListener('click', e => e.preventDefault());
+    if (this.$settings) this.$settings.addEventListener('click', e => {
+      if (this._pageLocked) return;
+      e.preventDefault();
+      window.location.href = this._localizePath('/my/account');
+    });
     if (this.$support) this.$support.addEventListener('click', e => e.preventDefault());
 
     if (this.$manageBlocked) this.$manageBlocked.addEventListener('click', e => {
       if (this._pageLocked) return;
       e.preventDefault();
-      window.location.href = '/manageblockedusers';
+      window.location.href = this._localizePath('/manageblockedusers');
     });
 
     if (this.$beta) this.$beta.addEventListener('click', e => {
       if (this._pageLocked) return;
       e.preventDefault();
-      window.location.href = '/creator/beta-features';
+      window.location.href = this._localizePath('/creator/beta-features');
     });
 
     this._setupSearch();
@@ -967,7 +1187,7 @@ class DPTopbar extends HTMLElement {
       if (this._pageLocked) return;
       e.stopPropagation();
       if (!this._currentUserEmail) {
-        window.location.href = '/login';
+        window.location.href = this._localizePath('/login');
         return;
       }
       if (this.$searchInput.value.trim()) {
@@ -978,7 +1198,7 @@ class DPTopbar extends HTMLElement {
     this.$searchInput.addEventListener('input', e => {
       if (this._pageLocked) return;
       if (!this._currentUserEmail) {
-        window.location.href = '/login';
+        window.location.href = this._localizePath('/login');
         return;
       }
       this._scheduleSearch(e.target.value);
@@ -999,7 +1219,7 @@ class DPTopbar extends HTMLElement {
       if (this._pageLocked) return;
       e.stopPropagation();
       if (!this._currentUserEmail) {
-        window.location.href = '/login';
+        window.location.href = this._localizePath('/login');
         return;
       }
       if (this.$searchInput.value.trim()) {
@@ -1020,18 +1240,18 @@ class DPTopbar extends HTMLElement {
     const token = ++this._searchRequestId;
 
     if (!query) {
-      this._clearSearchResults('Search users');
+      this._clearSearchResults(this._getStrings().searchUsers);
       this._hideSearchDropdown();
       return;
     }
 
     if (!this._currentUserEmail) {
-      window.location.href = '/login';
+      window.location.href = this._localizePath('/login');
       return;
     }
 
     this._showSearchDropdown();
-    this._setSearchState('Searching...');
+    this._setSearchState(this._getStrings().searchSearching);
 
     try {
       const users = await this._fetchUsersForSearch();
@@ -1043,8 +1263,8 @@ class DPTopbar extends HTMLElement {
     } catch (err) {
       if (token !== this._searchRequestId) return;
       console.warn('Search failed:', err);
-      this._setSearchState('Search unavailable');
-      this._clearSearchResults('Search unavailable');
+      this._setSearchState(this._getStrings().searchUnavailable);
+      this._clearSearchResults(this._getStrings().searchUnavailable);
       this._showSearchDropdown();
     }
   }
@@ -1109,22 +1329,22 @@ class DPTopbar extends HTMLElement {
     this.$searchResults.innerHTML = '';
 
     if (!query.trim()) {
-      this._setSearchState('Search users');
+      this._setSearchState(this._getStrings().searchUsers);
       this._hideSearchDropdown();
       return;
     }
 
     if (!users.length) {
-      this._setSearchState(`No users found for "${query}"`);
+      this._setSearchState(this._formatMessage('noUsersFoundFor', { query }));
       const empty = document.createElement('div');
       empty.className = 'search-empty';
-      empty.textContent = 'No results';
+      empty.textContent = this._getStrings().noResults;
       this.$searchResults.appendChild(empty);
       this._showSearchDropdown();
       return;
     }
 
-    this._setSearchState(`Found ${users.length} result${users.length === 1 ? '' : 's'}`);
+    this._setSearchState(this._formatMessage('foundResults', { count: users.length }));
 
     users.forEach(user => {
       const item = document.createElement('button');
@@ -1179,7 +1399,7 @@ class DPTopbar extends HTMLElement {
       item.appendChild(text);
 
       item.addEventListener('click', () => {
-        window.location.href = `/viewprofile?profile=${encodeURIComponent(user.email)}`;
+        window.location.href = this._localizePath(`/viewprofile?profile=${encodeURIComponent(user.email)}`);
       });
 
       this.$searchResults.appendChild(item);
@@ -1330,6 +1550,138 @@ class DPTopbar extends HTMLElement {
     this._applyTheme(saved);
   }
 
+  _normalizeLocale(value) {
+    if (!value || typeof value !== 'string') return LOCALE_FALLBACK;
+    const code = String(value).trim().toLowerCase().split(/[-_]/)[0];
+    return SUPPORTED_LOCALES.includes(code) ? code : LOCALE_FALLBACK;
+  }
+
+  _getBrowserLocale() {
+    // First, try to get locale from URL path
+    const pathname = window.location.pathname;
+    const pathMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
+    if (pathMatch) {
+      const urlLocale = this._normalizeLocale(pathMatch[1]);
+      if (urlLocale !== LOCALE_FALLBACK || pathMatch[1] === LOCALE_FALLBACK) {
+        return urlLocale;
+      }
+    }
+    
+    // Fall back to browser language
+    const source = Array.isArray(navigator.languages) && navigator.languages.length ? navigator.languages[0] : navigator.language || navigator.userLanguage || LOCALE_FALLBACK;
+    return this._normalizeLocale(source);
+  }
+
+  _getStrings() {
+    return LOCALE_STRINGS[this._locale] || LOCALE_STRINGS[LOCALE_FALLBACK];
+  }
+
+  _formatMessage(key, data = {}) {
+    let message = String(this._getStrings()[key] || '');
+    message = message.replace(/\{count\}/g, String(data.count ?? ''));
+    message = message.replace(/\{query\}/g, String(data.query ?? ''));
+    message = message.replace(/\{s\}/g, data.count === 1 ? '' : 's');
+    return message;
+  }
+
+  _localizePath(rawPath) {
+    if (!rawPath || typeof rawPath !== 'string') return rawPath || '';
+    const path = rawPath.trim();
+    if (!path.startsWith('/')) return path;
+    if (/^\/\/[\w\W]/.test(path) || /^https?:\/\//.test(path)) return path;
+
+    const ignoredPrefixes = ['/assets/', '/org-owner.jpg', '/favicon', '/site.webmanifest', '/manifest', '/robots.txt'];
+    if (ignoredPrefixes.some(prefix => path.startsWith(prefix))) return path;
+
+    if (SUPPORTED_LOCALES.some(loc => path === `/${loc}` || path.startsWith(`/${loc}/`))) {
+      return path;
+    }
+
+    const prefix = LOCALE_ROUTE_PREFIX[this._locale] || '';
+    if (!prefix) return path;
+
+    const queryStart = path.indexOf('?');
+    const hashStart = path.indexOf('#');
+    const splitIndex = queryStart > -1 ? queryStart : hashStart > -1 ? hashStart : path.length;
+    const base = path.slice(0, splitIndex);
+    const rest = path.slice(splitIndex);
+    return `${prefix}${base}${rest}`;
+  }
+
+  _resolveNavigationTarget(element) {
+    const rawTarget = element.getAttribute('data-target') || element.getAttribute('href') || '';
+    return this._localizePath(rawTarget);
+  }
+
+  _setLocale(locale) {
+    const normalized = this._normalizeLocale(locale);
+    this._locale = normalized;
+    const strings = this._getStrings();
+
+    if (this.$searchInput) {
+      this.$searchInput.placeholder = strings.searchPlaceholder;
+      this.$searchInput.setAttribute('aria-label', strings.searchPlaceholder);
+    }
+    if (this.$searchMeta) this.$searchMeta.textContent = strings.searchUsers;
+    if (this.$coin) this.$coin.setAttribute('aria-label', strings.coinAria);
+    if (this.$brand) {
+      this.$brand.setAttribute('aria-label', strings.brandAria);
+      this.$brand.href = this._localizePath('/home');
+    }
+    if (this.$mobileSearchBtn) this.$mobileSearchBtn.setAttribute('aria-label', strings.mobileSearchAria);
+    if (this.$mobileCoinBtn) this.$mobileCoinBtn.setAttribute('aria-label', strings.mobileCoinAria);
+    if (this.$coinLabel) this.$coinLabel.textContent = strings.balanceLabel;
+
+    const navLabels = [strings.navHome, strings.navPosts, strings.navCreate, strings.navChats];
+    this._shadow.querySelectorAll('.nav a').forEach((a, index) => {
+      if (navLabels[index]) a.textContent = navLabels[index];
+      a.href = this._localizePath(a.getAttribute('data-target') || a.getAttribute('href'));
+    });
+    this._shadow.querySelectorAll('.mobile-menu a').forEach((a, index) => {
+      if (navLabels[index]) a.textContent = navLabels[index];
+      a.href = this._localizePath(a.getAttribute('data-target') || a.getAttribute('href'));
+    });
+
+    if (this.$redeem) {
+      this.$redeem.textContent = strings.redeem;
+      this.$redeem.href = this._localizePath('/redeem');
+    }
+    if (this.$trans) {
+      this.$trans.textContent = strings.transactions;
+      this.$trans.href = this._localizePath('/transactions');
+    }
+    if (this.$login) {
+      this.$login.textContent = strings.login;
+      this.$login.href = this._localizePath('/login');
+    }
+    if (this.$settings) {
+      this.$settings.textContent = strings.settings;
+      this.$settings.href = this._localizePath('/my/account');
+    }
+    if (this.$support) {
+      this.$support.textContent = strings.support;
+      this.$support.href = this._localizePath('/support-feedback');
+    }
+    if (this.$manageBlocked) {
+      this.$manageBlocked.textContent = strings.manageBlocked;
+      this.$manageBlocked.href = this._localizePath('/manageblockedusers');
+    }
+    if (this.$beta) {
+      this.$beta.textContent = strings.beta;
+      this.$beta.href = this._localizePath('/creator/beta-features');
+    }
+    if (this.$edit) {
+      this.$edit.textContent = strings.editProfile;
+      this.$edit.href = this._localizePath('/profile');
+    }
+    if (this.$logout) {
+      this.$logout.textContent = strings.logout;
+    }
+    if (this.$name && !this._currentUser) {
+      this.$name.textContent = strings.signedOutName;
+    }
+  }
+
   _applyTheme(name) {
     if (name === 'light') {
       document.body.classList.remove('dark');
@@ -1421,8 +1773,8 @@ class DPTopbar extends HTMLElement {
             isBanned = true;
             this.$coin.textContent = 'DF$ - ?';
 
-            if (!window.location.pathname.startsWith('/not-approved')) {
-              await this._takeoverWithHTML('/not-approved');
+            if (!window.location.pathname.includes('/not-approved')) {
+              window.location.replace(this._localizePath('/not-approved.html'));
               return;
             }
           }
@@ -1433,6 +1785,8 @@ class DPTopbar extends HTMLElement {
         try {
           const snap = await db.collection('user_data').doc(user.email).get();
           const data = snap.exists ? snap.data() : {};
+          const locale = this._normalizeLocale(data.lang || this._getBrowserLocale());
+          this._setLocale(locale);
           const coins = Number(data.coins || 0);
 
           if (!isBanned) {
@@ -1688,13 +2042,13 @@ class DPTopbar extends HTMLElement {
           }
         </style>
         <div class="card" role="dialog" aria-modal="true" aria-labelledby="dp-terms-title">
-          <h2 id="dp-terms-title">Updated Terms of Service</h2>
-          <p>The Terms of Service have changed. You need to accept the latest version to keep using the site.</p>
-          <p>By accepting, you confirm that you agree to the current terms and can continue.</p>
-          <p><a href="https://darkpurpleof.github.io/terms" target="_blank" rel="noopener noreferrer">Read the full Terms of Service</a></p>
+          <h2 id="dp-terms-title">${this._getStrings().termsTitle}</h2>
+          <p>${this._getStrings().termsIntro}</p>
+          <p>${this._getStrings().termsConfirm}</p>
+          <p><a href="https://darkpurpleof.github.io/terms" target="_blank" rel="noopener noreferrer">${this._getStrings().termsReadMore}</a></p>
           <div class="actions">
-            <button class="decline" id="dp-terms-decline">Decline</button>
-            <button class="accept" id="dp-terms-accept">Accept</button>
+            <button class="decline" id="dp-terms-decline">${this._getStrings().declineButton}</button>
+            <button class="accept" id="dp-terms-accept">${this._getStrings().acceptButton}</button>
           </div>
         </div>
       `;
@@ -1789,7 +2143,7 @@ class DPTopbar extends HTMLElement {
 
     if (this.$trans) {
       this.$trans.classList.remove('disabled');
-      this.$trans.textContent = 'My transactions';
+      this.$trans.textContent = this._getStrings().transactions;
     }
 
     if (this.$support) this.$support.classList.add('disabled');
@@ -1805,10 +2159,11 @@ class DPTopbar extends HTMLElement {
 
   _renderSignedOut() {
     if (this._pageLocked) return;
+    this._setLocale(this._getBrowserLocale());
     this.$coin.textContent = `DF$ - 0`;
     if (this.$coinBalanceSummary) this.$coinBalanceSummary.textContent = `DF$ - 0`;
     this.$pfp.style.backgroundImage = `url('/org-owner.jpg')`;
-    this.$name.textContent = 'Not signed in';
+    this.$name.textContent = this._getStrings().signedOutName;
     this.$email.textContent = '';
     this._showSignedOutDropdownOptions();
     this._currentUserEmail = null;
@@ -1816,6 +2171,7 @@ class DPTopbar extends HTMLElement {
 
   _renderSignedInBasic(user) {
     if (this._pageLocked) return;
+    this._setLocale(this._getBrowserLocale());
     this.$coin.textContent = `DF$ - 0`;
     if (this.$coinBalanceSummary) this.$coinBalanceSummary.textContent = `DF$ - 0`;
     this.$pfp.style.backgroundImage = `url('/org-owner.jpg')`;

@@ -467,7 +467,7 @@
       if (v.length > 48) return showToast('Display name is too long', 'yellow');
       await saveProfileField('display name', v, 'Display name saved');
     }
-
+ 
     async function saveBio(){
       const v = (els.bioInput.value || '').trim();
       if (v.length > 500) return showToast('Bio too long (max 500 chars)', 'yellow');
