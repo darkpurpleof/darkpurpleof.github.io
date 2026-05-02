@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Beiträge</title>
+
+<!-- Topbar component (your site has this) -->
+<script type="module" src="/dp-topbar.js"></script>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+
+<!-- Rich markdown component -->
+<script type="module" src="/dp-rich-components.js"></script>
+
+<style>
+:root{
+  --bg: #171717;
+  --card: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.03));
+  --muted: #9aa0b2;
+  --text: #e9e6ef;
+  --accent-1: #1f1f1f;
+  --accent-2: #1f1f1f;
+  --glass: rgba(255,255,255,0.03);
+  --border: rgba(255,255,255,0.06);
+  --radius: 14px;
+  --max-width: 960px;
+  --card-gap: 18px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+/* Remove margin/padding from body for topbar */
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+}
+
+/* Make topbar full width and flush to top */
+dp-topbar {
+  width: 100%;
+  margin: 0;
+  display: block;
+  flex-shrink: 0;
+}
+
+.container{ width:100%; max-width:var(--max-width); }
+
+/* header */
+.header{
+  display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;
+}
+.page-title{
+  font-family: 'Orbitron', system-ui, sans-serif;
+  font-size:28px; letter-spacing:0.6px; margin:0;
+  text-shadow: 0 6px 20px rgba(255,255,255,0.06);
+  color:var(--text);
+}
+.header-controls{ display:flex; gap:12px; align-items:center; }
+
+/* mobile adjustments */
+@media (max-width: 700px) {
+  .container {
+    width: calc(100% - 24px);
+    max-width: none;
+    margin: 0 auto;
+  }
+
+  .post-card {
+    padding: 12px;
+  }
+
+  .avatar{
+    display: block;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    min-width: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    aspect-ratio: 1 / 1;
+    border: 2px solid var(--border);
+    position: relative;
+  }
+
+  .profile-pic-frame {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    pointer-events: none;
+  }
+
+  .post-images img {
+    max-width: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+}
+@media (min-width: 701px){
+  .avatar{ width:56px; height:56px; min-width:56px; aspect-ratio:1/1; }
+}
+
+@media (max-width: 360px){
+  .avatar{ width:40px; height:40px; min-width:40px; }
+}
+
+/* posts list */
+.posts-list{ display:flex; flex-direction:column; gap:var(--card-gap); }
+
+/* card */
+.post-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px;
+  transition: transform .14s ease, box-shadow .14s ease;
+  position: relative;
+}
+
+.post-meta{ display:flex; align-items:center; gap:8px; justify-content:flex-end; min-width:0; }
+.post-date{ font-size:12px; color:var(--muted); white-space:nowrap; }
+.menu-btn{ width:28px; height:28px; border-radius:12px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.menu-btn:hover{ background: rgba(255,255,255,0.08); }
+.post-menu{ position:absolute; top:44px; right:16px; min-width:170px; background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:0 14px 40px rgba(0,0,0,0.35); display:none; flex-direction:column; padding:6px 0; z-index:50; }
+.post-menu.open{ display:flex; }
+.post-menu button{ width:100%; padding:10px 12px; text-align:left; border:none; background:transparent; color:var(--text); cursor:pointer; font-size:14px; }
+.post-menu button:hover:not([disabled]){ background: rgba(255,255,255,0.08); }
+.post-menu button[disabled]{ opacity:0.45; cursor:not-allowed; }
+
+.author-row{ display:flex; gap:12px; align-items:center; justify-content:space-between; }
+.author-left{ display:flex; gap:12px; align-items:center; min-width:0; }
+.avatar{
+  width:56px; height:56px; background-repeat: no-repeat; border-radius:50%; background-size:cover; background-position:center; flex:0 0 56px;
+  border:2px solid var(--border);
+}
+.author-meta{ min-width:0; overflow:hidden; }
+.display-name{ display:flex; gap:8px; align-items:center; font-weight:700; font-size:1.05rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.email-text{ font-size:13px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.verified-badge{ width:18px; height:18px; display:inline-block; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; margin-left:4px; }
+
+/* post content */
+.post-text{ margin-top:12px; font-size:15px; color:var(--text); line-height:1.5; white-space:pre-wrap; }
+.post-images{ margin-top:12px; display:flex; background-repeat: no-repeat; gap:10px; flex-wrap:wrap; }
+.post-images img{ max-width:100%; max-height:320px; object-fit:cover; border-radius:10px; border:1px solid var(--border); }
+
+/* Video preview styles */
+.video-preview{ position:relative; display:inline-block; border-radius:10px; overflow:hidden; max-width:100%; }
+.video-preview .preview-video{ display:block; width:100%; max-height:320px; object-fit:cover; pointer-events:none; user-select:none; }
+.video-preview .play-overlay{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:auto; }
+.video-preview .play-overlay svg{ width:48px; height:48px; }
+.video-preview:focus{ outline:2px solid rgba(255,255,255,0.06); }
+
+/* actions row */
+.actions-row{ display:flex; gap:8px; margin-top:12px; align-items:center; flex-wrap:wrap; }
+.icon-btn{
+  display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px; background:transparent; border:1px solid var(--border);
+  color:var(--text); cursor:pointer; transition: background .12s ease, transform .06s ease, box-shadow .12s ease;
+}
+.icon{ width:18px; height:18px; display:inline-block; vertical-align:middle; fill:currentColor; opacity:0.95; }
+
+/* like active */
+.icon-btn.liked{ background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:white; box-shadow:0 8px 30px rgba(255,255,255,0.03); border-color:transparent; }
+.like-count{ font-size:13px; color:inherit; }
+
+/* responsive */
+@media (max-width:700px){ .avatar{ width:48px; height:48px; } .display-name{ font-size:1rem; } .post-images img{ max-height:180px; } .page-title{ font-size:22px; } }
+
+/* small helpers */
+.sep{ height:1px; background:var(--border); margin:12px 0; border-radius:2px; }
+.muted{ color:var(--muted); font-size:13px; }
+
+/* accessibility: prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce){
+  .post-card, .icon-btn{ transition:none; animation:none; transform:none; }
+}
+</style>
+</head>
+<body>
+  <dp-topbar></dp-topbar>
+
+  <div class="container">
+    <div class="header">
+    </div>
+
+    <div class="post-card" style="text-align: center; margin-bottom: var(--card-gap);">
+      <a href="./createpost" style="color: var(--text); text-decoration: none; font-size: 16px; font-weight: 600;">Neuen Beitrag erstellen</a>
+    </div>
+
+    <div id="postsList" class="posts-list" aria-live="polite"></div>
+  </div>
+
+<script>
+/* Firebase init */
+const firebaseConfig = {
+  apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+  authDomain: "darkpurpleof-s-website.firebaseapp.com",
+  projectId: "darkpurpleof-s-website",
+  storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+  messagingSenderId: "520651082420",
+  appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+};
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+/* Utility: attempt to fetch user doc by a few keys for robustness */
+async function getUserDoc(email){
+  if(!email) return null;
+  const lower = String(email).toLowerCase();
+  // 1) direct doc
+  try{
+    let snap = await db.collection('user_data').doc(lower).get();
+    if(snap.exists) return { id: snap.id, data: snap.data() };
+    // 2) encoded key
+    snap = await db.collection('user_data').doc(encodeURIComponent(lower)).get();
+    if(snap.exists) return { id: snap.id, data: snap.data() };
+    // 3) fallback query
+    const q = await db.collection('user_data').where('email','==', lower).limit(1).get();
+    if(!q.empty) return { id: q.docs[0].id, data: q.docs[0].data() };
+    return null;
+  }catch(err){
+    console.warn('getUserDoc error', err);
+    return null;
+  }
+}
+
+/* Small helper to safely escape text content for insertion into DOM elements */
+function safeText(s){ return (s === undefined || s === null) ? '' : String(s); }
+
+// Convert Firestore timestamps + unix ms/seconds into JS ms
+function toMillis(value){
+  if (value == null) return null;
+  if (typeof value === 'number') return value;
+  if (value instanceof Date) return value.getTime();
+  if (value?.toDate) return value.toDate().getTime();
+  if (typeof value === 'object' && typeof value.seconds === 'number') {
+    const seconds = Number(value.seconds || 0);
+    const nanos = Number(value.nanoseconds || 0);
+    return seconds * 1000 + Math.floor(nanos / 1e6);
+  }
+  return null;
+}
+
+function formatPostDate(value){
+  const ms = toMillis(value);
+  if (!ms) return '';
+  const d = new Date(ms);
+  const pad = v => String(v).padStart(2,'0');
+  const monthNames = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const hours = pad(d.getHours());
+  const mins = pad(d.getMinutes());
+  const day = pad(d.getDate());
+  const month = monthNames[d.getMonth()] || '';
+  const year = String(d.getFullYear()).slice(-2);
+  return `${hours}:${mins} - ${day} ${month}, ${year}`;
+}
+
+/* Icon SVGs */
+const ICONS = {
+  heart: function(filled){
+    filled = filled || false;
+    if(filled){
+      return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 21s-7.5-4.5-10-8c-1.9-2.6-1-6 2-7.5C6 4 8.5 5 9.5 6.2 10.5 5 13 4 16 5.5c3 1.5 3.9 4.9 2 7.5-2.5 3.5-10 8-10 8z"/>
+      </svg>`;
+    } else {
+      return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="none" stroke="currentColor" stroke-width="1.6" d="M12 21s-7.5-4.5-10-8c-1.9-2.6-1-6 2-7.5C6 4 8.5 5 9.5 6.2 10.5 5 13 4 16 5.5c3 1.5 3.9 4.9 2 7.5-2.5 3.5-10 8-10 8z"/>
+      </svg>`;
+    }
+  },
+
+  flag: `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 3v18" stroke="currentColor" stroke-width="1.6" fill="none"/>
+    <path d="M19 7s-3 0-5 1-4-1-6-1v8s3 1 6 0 5 1 5 1V7z" fill="currentColor"/>
+  </svg>`,
+
+  open: `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M14 3h7v7" stroke="currentColor" stroke-width="1.6" fill="none"/>
+    <path d="M10 14L21 3" stroke="currentColor" stroke-width="1.6" fill="none"/>
+    <path d="M21 21H3V3" stroke="currentColor" stroke-width="1.2" fill="none"/>
+  </svg>`
+};
+
+/* Play button SVG */
+const PLAY_SVG = `<svg width="48" height="48" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.45)" />
+  <path d="M10 8l6 4-6 4z" fill="white" />
+</svg>`;
+
+/* Render media items */
+function renderMediaItems(images){
+  if(!images || !images.length) return '';
+  return `<div class="post-images">${images.map(u => {
+    try{
+      const url = String(u||'');
+      if(url.match(/\.(mp4)(\?.*)?$/i)){
+        return `<div class="video-preview" data-src="${escapeHtml(url)}" tabindex="0" role="button" aria-label="Video-Vorschau">
+            <video class="preview-video" src="${escapeHtml(url)}" preload="metadata" muted playsinline></video>
+            <div class="play-overlay">${PLAY_SVG}</div>
+          </div>`;
+      }
+    }catch(e){ }
+    return `<img src="${encodeURI(u)}" loading="lazy" alt="Beitragsbild" />`;
+  }).join('')}</div>`;
+}
+
+/* Render a single post card DOM element */
+function createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy, createdAt, towall, pinnedByOwner }, currentUserEmail){
+  const userLiked = currentUserEmail ? likedBy.map(e=>String(e).toLowerCase()).includes(currentUserEmail) : false;
+  const likeCount = likedBy.length || 0;
+
+  const card = document.createElement('article');
+  card.className = 'post-card';
+  card.id = `post-${postId}`;
+
+  const avatarUrl = profilePic || '/org-owner.jpg';
+  const verifiedHtml = verified ? `<span class="verified-badge" title="Verifiziert"></span>` : '';
+  const dateLabel = formatPostDate(createdAt);
+  const isOwner = currentUserEmail && editorEmail && currentUserEmail === String(editorEmail).toLowerCase();
+  const canRemoveFromWall = currentUserEmail && towall && currentUserEmail === String(towall).toLowerCase();
+  const isPinned = Boolean(pinnedByOwner);
+
+  card.innerHTML = `
+    <div class="author-row">
+      <div class="author-left">
+        <div class="avatar" style="background-image:url('${encodeURI(avatarUrl)}');" title="${escapeHtml(displayName)}"></div>
+        <div class="author-meta">
+          <div class="display-name">${escapeHtml(displayName)} ${verifiedHtml}</div>
+          <div class="email-text">${escapeHtml(editorEmail)}</div>
+        </div>
+      </div>
+
+      <div class="post-meta">
+        ${dateLabel ? `<div class="post-date">${escapeHtml(dateLabel)}</div>` : ''}
+        <button class="menu-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Beitragsaktionen">⋮</button>
+        <div class="post-menu" role="menu" aria-label="Beitragsaktionen">
+          <button type="button" class="menu-item delete-post" ${isOwner ? '' : 'disabled'}>Beitrag löschen</button>
+          <button type="button" class="menu-item pin-post" ${isOwner ? '' : 'disabled'}>${isPinned ? 'Abpinnen' : 'Anpinnen'}</button>
+          <button type="button" class="menu-item remove-wall" ${canRemoveFromWall ? '' : 'disabled'}>Von deiner Pinnwand entfernen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="post-text" role="article"><rich-markdown mode="markdown" chat-components>${escapeHtml(text)}</rich-markdown></div>
+    ${ images && images.length ? renderMediaItems(images) : '' }
+
+    <div class="sep" aria-hidden="true"></div>
+
+    <div class="actions-row">
+        <button class="icon-btn like-btn ${userLiked ? 'liked' : ''}" aria-pressed="${userLiked}" title="${userLiked ? 'Gefällt mir entfernen' : 'Gefällt mir'}">
+        ${ICONS.heart(userLiked)} <span class="like-count">${likeCount}</span>
+      </button>
+
+      <button class="icon-btn report-btn" title="Пожаловаться">
+        ${ICONS.flag} <span class="muted" style="font-size:13px">Melden</span>
+      </button>
+
+      <button class="icon-btn open-btn" title="Открыть запись">
+        ${ICONS.open} <span class="muted" style="font-size:13px">Öffnen</span>
+      </button>
+    </div>
+  `;
+
+  const menuBtn = card.querySelector('.menu-btn');
+  const menu = card.querySelector('.post-menu');
+  const deleteBtn = card.querySelector('.delete-post');
+  const pinBtn = card.querySelector('.pin-post');
+  const removeWallBtn = card.querySelector('.remove-wall');
+
+  function closeMenu() {
+    if (menu) menu.classList.remove('open');
+    if (menuBtn) menuBtn.setAttribute('aria-expanded','false');
+    document.removeEventListener('click', onDocumentClick);
+  }
+
+  function onDocumentClick(e) {
+    if (!card.contains(e.target)) closeMenu();
+  }
+
+  if (menuBtn && menu) {
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = menu.classList.toggle('open');
+      menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        document.addEventListener('click', onDocumentClick);
+      } else {
+        document.removeEventListener('click', onDocumentClick);
+      }
+    });
+  }
+
+      if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      if (!isOwner) return;
+      if (!confirm('Diesen Beitrag löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
+      try {
+        await db.collection('posts').doc(postId).delete();
+        window.location.href = './posts';
+      } catch (err) {
+        console.error('delete post', err);
+            alert('Beitrag konnte nicht gelöscht werden.');
+      }
+    });
+  }
+
+      if (pinBtn) {
+    pinBtn.addEventListener('click', async () => {
+      if (!isOwner) return;
+      const willUnpin = isPinned;
+      const actionText = willUnpin ? 'Diesen Beitrag abpinnen' : 'Diesen Beitrag anpinnen';
+      if (!confirm(`${actionText}?`)) return;
+      try {
+        if (willUnpin) {
+          await db.collection('posts').doc(postId).update({ pinnedByOwner: firebase.firestore.FieldValue.delete() });
+          pinBtn.textContent = 'Anpinnen';
+          isPinned = false;
+        } else {
+          await db.collection('posts').doc(postId).update({ pinnedByOwner: true });
+          pinBtn.textContent = 'Abpinnen';
+          isPinned = true;
+        }
+        alert(`Beitrag ${willUnpin ? 'wurde abgepinnt' : 'wurde angepinnt'}.`);
+      } catch (err) {
+        console.error('pin post', err);
+        alert('Der Anpinnstatus konnte nicht aktualisiert werden.');
+      }
+    });
+  }
+
+    if (removeWallBtn) {
+    removeWallBtn.addEventListener('click', async () => {
+      if (!canRemoveFromWall) return;
+      if (!confirm('Diesen Beitrag von deiner Pinnwand entfernen?')) return;
+      try {
+        await db.collection('posts').doc(postId).update({ towall: firebase.firestore.FieldValue.delete() });
+        alert('Beitrag von deiner Pinnwand entfernt.');
+        removeWallBtn.disabled = true;
+      } catch (err) {
+        console.error('remove from wall', err);
+        alert('Konnte nicht von der Pinnwand entfernt werden.');
+      }
+    });
+  }
+
+  return card;
+}
+
+/* Escape helper for attributes/text inserted as textContent */
+function escapeHtml (unsafe) {
+  return String(unsafe || '').replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
+}
+
+/* main: load posts */
+const postsListEl = document.getElementById('postsList');
+
+auth.onAuthStateChanged(async user => {
+  postsListEl.innerHTML = '';
+  const currentUserEmail = user?.email?.toLowerCase?.() || null;
+
+  try{
+    const snapshot = await db.collection('posts').orderBy('timestamp','desc').get();
+    if(snapshot.empty){
+      postsListEl.innerHTML = `<div class="muted" style="padding:18px; text-align:center">Постов пока нет.</div>`;
+      return;
+    }
+
+    for(const doc of snapshot.docs){
+      const postData = doc.data();
+      const postId = doc.id;
+      const editorEmailRaw = postData.editor || '';
+      const editorEmail = String(editorEmailRaw).toLowerCase();
+
+      if(!editorEmail) continue;
+
+      const userDocSnapshot = await (async ()=>{
+        try{
+          let snap = await db.collection('user_data').doc(editorEmail).get();
+          if(snap.exists) return snap;
+          snap = await db.collection('user_data').doc(encodeURIComponent(editorEmail)).get();
+          if(snap.exists) return snap;
+          const q = await db.collection('user_data').where('email','==', editorEmail).limit(1).get();
+          if(!q.empty) return q.docs[0];
+          return null;
+        }catch(e){
+          console.warn('author fetch error', e);
+          return null;
+        }
+      })();
+
+      let displayName = editorEmail;
+      let profilePic = '/org-owner.jpg';
+      let verified = false;
+      let blockedUsers = [];
+      let frameUrl = '';
+
+      if(userDocSnapshot && userDocSnapshot.exists){
+        const ud = userDocSnapshot.data();
+        displayName = ud['display name'] || ud.displayName || ud.name || editorEmail;
+        profilePic = ud.profile_picture || ud.avatar || '/org-owner.jpg';
+        verified = !!ud.is_verified || !!ud.verified;
+        blockedUsers = Array.isArray(ud.blockedUsers) ? ud.blockedUsers.map(x=>String(x).toLowerCase()) : [];
+        frameUrl = ud.profile_picture_frame || '';
+      }
+
+      if(currentUserEmail && blockedUsers.includes(currentUserEmail)) continue;
+
+      const text = postData.text || '';
+      const images = Array.isArray(postData.images) ? postData.images : [];
+      const likedBy = Array.isArray(postData.likedBy) ? postData.likedBy : [];
+      const createdAt = postData.timestamp || postData.createdAt || postData.created || postData.created_at;
+      const towall = postData.towall || '';
+      const pinnedByOwner = postData.pinnedByOwner || postData.pinned_by_owner || postData.pinned || false;
+
+      const card = createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy, createdAt, towall, pinnedByOwner }, currentUserEmail);
+      postsListEl.appendChild(card);
+
+      try{
+        const rm = card.querySelector('rich-markdown');
+        if(rm){ rm.setAttribute('mode','markdown'); rm.setAttribute('chat-components',''); rm.textContent = text || ''; }
+      }catch(e){}
+
+      const videoPreviews = card.querySelectorAll('.video-preview');
+      videoPreviews.forEach(vp => {
+        const video = vp.querySelector('video');
+        const overlay = vp.querySelector('.play-overlay');
+        if(video){
+          video.addEventListener('play', ()=>{ try{ video.pause(); }catch(e){} });
+          video.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); try{ video.pause(); }catch(e){} });
+        }
+        vp.addEventListener('click', (ev)=>{ ev.preventDefault(); ev.stopPropagation(); if(video){ try{ video.pause(); }catch(e){} } });
+        vp.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); ev.stopPropagation(); if(video){ try{ video.pause(); }catch(e){} } } });
+      });
+
+      if(frameUrl){
+        const avatarEl = card.querySelector('.avatar');
+        const frameEl = document.createElement('div');
+        frameEl.className = 'profile-pic-frame';
+        frameEl.style.cssText = `position:absolute; left:0; top:0; width:56px; height:56px; border-radius:50%; background-image:url('${encodeURI(frameUrl)}'); background-size:cover; background-position:center; pointer-events:none;`;
+        avatarEl.style.position = 'relative';
+        avatarEl.appendChild(frameEl);
+      }
+
+      const likeBtn = card.querySelector('.like-btn');
+      const likeCountEl = card.querySelector('.like-count');
+      const reportBtn = card.querySelector('.report-btn');
+      const openBtn = card.querySelector('.open-btn');
+
+      likeBtn.addEventListener('click', async ()=>{
+        if(!currentUserEmail){
+          alert('Для лайка требуется вход.');
+          return;
+        }
+        likeBtn.disabled = true;
+        const postRef = db.collection('posts').doc(postId);
+        try{
+          const already = likeBtn.classList.contains('liked');
+          if(already){
+            await postRef.update({ likedBy: firebase.firestore.FieldValue.arrayRemove(currentUserEmail) });
+            likeBtn.classList.remove('liked');
+            likeBtn.setAttribute('aria-pressed','false');
+            let n = Math.max(0, Number(likeCountEl.textContent || 0) - 1);
+            likeCountEl.textContent = n;
+          } else {
+            await postRef.update({ likedBy: firebase.firestore.FieldValue.arrayUnion(currentUserEmail) });
+            likeBtn.classList.add('liked');
+            likeBtn.setAttribute('aria-pressed','true');
+            let n = Math.max(0, Number(likeCountEl.textContent || 0) + 1);
+            likeCountEl.textContent = n;
+          }
+        }catch(err){
+          console.error('like failed', err);
+          alert('Не удалось обновить лайк. Пожалуйста, попробуйте ещё раз.');
+        }finally{
+          likeBtn.disabled = false;
+        }
+      });
+
+      reportBtn.addEventListener('click', ()=>{
+        window.location.href = `./reportabuse?reporting=${encodeURIComponent(editorEmail)}`;
+      });
+
+      openBtn.addEventListener('click', ()=>{
+        window.location.href = `./posts?post=${encodeURIComponent(postId)}`;
+      });
+
+    }
+
+      }catch(err){
+    console.error('load posts failed', err);
+    postsListEl.innerHTML = `<div class="muted" style="padding:18px; text-align:center; color:#ff6b6b">Не удалось загрузить посты.</div>`;
+  }
+});
+</script>
+</body>
+</html>

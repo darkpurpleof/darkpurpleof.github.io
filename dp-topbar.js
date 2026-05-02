@@ -1680,6 +1680,54 @@ class DPTopbar extends HTMLElement {
     if (this.$name && !this._currentUser) {
       this.$name.textContent = strings.signedOutName;
     }
+    // After updating UI, ensure the URL matches the selected locale.
+    try {
+      if (typeof this._maybeRedirectForLocale === 'function') this._maybeRedirectForLocale();
+    } catch (err) {
+      console.warn('Locale redirect check failed:', err);
+    }
+  }
+
+  _maybeRedirectForLocale() {
+    try {
+      const pathname = window.location.pathname || '/';
+      // Avoid redirecting for static assets or special paths
+      const ignoredPrefixes = ['/assets/', '/org-owner.jpg', '/favicon', '/site.webmanifest', '/manifest', '/robots.txt', '/extras/', '/public/', '/flatpak/', '/release/', '/downloads/', '/legacy/', '/system/'];
+      if (ignoredPrefixes.some(p => pathname.startsWith(p))) return;
+
+      const pathMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
+      const currentPrefixLocale = pathMatch ? this._normalizeLocale(pathMatch[1]) : null;
+      const desiredLocale = this._locale || this._getBrowserLocale();
+      if (!desiredLocale) return;
+      if (currentPrefixLocale === desiredLocale) return;
+
+      const desiredPrefix = LOCALE_ROUTE_PREFIX[desiredLocale] || '';
+
+      // Compute base path without any leading locale prefix
+      let base = pathname;
+      if (currentPrefixLocale) {
+        const prefixStr = `/${pathMatch[1]}`;
+        if (pathname === prefixStr || pathname === `${prefixStr}/`) {
+          base = '/';
+        } else {
+          base = pathname.slice(prefixStr.length);
+        }
+      }
+
+      let newPath = desiredPrefix + (base === '/' ? '/' : base);
+      if (!newPath.startsWith('/')) newPath = '/' + newPath;
+
+      // Nothing to do if already at same path
+      if (newPath === pathname) return;
+
+      const search = window.location.search || '';
+      const hash = window.location.hash || '';
+
+      // Use replace to avoid adding back/forward history entries
+      window.location.replace(newPath + search + hash);
+    } catch (err) {
+      console.warn('Locale redirect failed:', err);
+    }
   }
 
   _applyTheme(name) {

@@ -1,0 +1,1214 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Einstellungen</title>
+
+  <!-- Firebase classic (compat) only, no modular imports -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+  <script src="/dp-topbar.js"></script>
+
+  <style>
+    /* Global box-sizing and overflow guard to prevent any accidental horizontal scroll */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    img { max-width: 100%; display: block; }
+
+    :root{
+      --bg: #171717;
+      --card: #1f1f1f;
+      --muted: #a8a8a8;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --text: #eaeaea;
+      --border: rgba(255,255,255,0.04);
+      --friend-row-height: 110px;
+      --friend-row-height-mobile: 84px;
+      --danger: #b91c1c;
+      --success: #7214be;
+      --soft: rgba(255,255,255,0.03);
+    }
+    body.light {
+      --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06); --soft: rgba(0,0,0,0.03);
+    }
+
+    body {
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background-color: var(--bg);
+      color:var(--text);
+      transition: background .25s, color .25s;
+      min-height:100vh;
+    }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+    .top-bar { display:none !important; }
+
+    main.container {
+      max-width:1200px;
+      width:100%;
+      margin:24px auto;
+      padding:20px;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:20px;
+      box-sizing:border-box;
+      overflow-x: hidden;
+    }
+    @media (max-width:920px){
+      main.container{ grid-template-columns:1fr; padding:16px; }
+      aside.right-column{ order:2; }
+    }
+
+    .card {
+      background:var(--card);
+      border-radius:12px;
+      padding:18px;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:0 6px 18px rgba(2,6,23,0.45);
+      overflow:visible;
+    }
+
+    .hero {
+      display:flex;
+      gap:16px;
+      align-items:center;
+      justify-content:space-between;
+      padding:20px;
+      border-radius:12px;
+      min-width:0;
+    }
+    .hero > div { min-width:0; }
+    .muted { color:var(--muted); font-size:13px; }
+    .title-line { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+    .tiny-chip {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:var(--soft);
+      border:1px solid var(--border);
+      color:var(--muted);
+      font-size:12px;
+      user-select:none;
+    }
+
+    .grid-two {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:720px){ .grid-two { grid-template-columns:1fr; } }
+
+    .profile-preview {
+      display:flex;
+      gap:14px;
+      align-items:center;
+      background:var(--card);
+      border-radius:12px;
+      padding:12px;
+      border:1px solid var(--border);
+    }
+    .profile-pfp {
+      width:72px; height:72px; border-radius:12px;
+      background-size:cover; background-position:center;
+      border:1px solid var(--border);
+      flex-shrink:0;
+      background-color: var(--soft);
+    }
+    .profile-text { display:flex; flex-direction:column; gap:6px; min-width:0; }
+    .profile-name-verif { font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px; min-width:0; }
+    .profile-name-verif span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .profile-name-verif img { width:14px; height:14px; margin-left:4px; }
+
+    .action-button {
+      display:inline-flex; gap:10px; align-items:center;
+      padding:10px 14px; border-radius:10px;
+      border:1px solid var(--border);
+      background:transparent; cursor:pointer;
+      font-weight:600; color:var(--text);
+      text-decoration:none;
+    }
+    .action-button:hover { background:var(--soft); }
+    .action-button:disabled, .action-button.disabled {
+      opacity:.5; cursor:not-allowed; pointer-events:none;
+    }
+    .action-button img{ width:18px; height:18px; }
+    .action-row { display:flex; gap:10px; flex-wrap:wrap; }
+
+    #toast {
+      position:fixed; top:18px; left:50%; transform:translateX(-50%);
+      padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999;
+      box-shadow:0 12px 30px rgba(0,0,0,.25);
+      max-width:min(92vw, 520px);
+      text-align:center;
+    }
+    #toast.purple { background:var(--accent-strong); color:#fff; }
+    #toast.yellow{ background:#e6b800; color:#222; }
+    #toast.red{ background:#c00; color:#fff; }
+    #toast.green{ background:var(--success); color:#fff; }
+
+    .settings-card { background:var(--card); border-radius:12px; border:1px solid var(--border); box-shadow:0 6px 18px rgba(2,6,23,0.3); overflow:hidden; }
+    .settings-card-head {
+      display:flex; align-items:center; gap:10px;
+      padding:16px 16px 10px 16px; border-bottom:1px solid var(--border);
+    }
+    .settings-card-head h2 { margin:0; font-size:18px; }
+    .settings-card-body { padding:0 16px 8px 16px; }
+
+    .setting-item {
+      display:flex; align-items:center; gap:12px;
+      padding:14px 0; border-bottom:1px solid var(--border);
+      min-width:0;
+    }
+    .setting-item:last-child { border-bottom:none; }
+    .setting-main { flex:1; min-width:0; }
+    .setting-title {
+      margin:0 0 4px 0; font-size:15px; font-weight:700;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .setting-desc { margin:0; font-size:13px; color:var(--muted); line-height:1.4; }
+    .setting-item .click-target { display:flex; width:100%; align-items:center; gap:12px; cursor:pointer; }
+    .setting-item .click-target.disabled { cursor:not-allowed; opacity:.45; }
+
+    .switch {
+      position:relative; width:46px; height:26px; flex-shrink:0;
+    }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider {
+      position:absolute; inset:0; cursor:pointer; background:#555; transition:.2s; border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .slider:before {
+      position:absolute; content:""; height:20px; width:20px; left:3px; top:2px; background:white; transition:.2s; border-radius:50%;
+    }
+    .switch input:checked + .slider { background:var(--accent-strong); }
+    .switch input:checked + .slider:before { transform:translateX(20px); }
+
+    .friends-container {
+      display:grid;
+      gap:12px;
+      padding:12px;
+      width:100%; max-width:100%; min-width:0;
+      grid-template-columns:repeat(5, minmax(0, 1fr));
+      grid-auto-rows:var(--friend-row-height);
+      align-items:start;
+      overflow-x:hidden;
+      box-sizing:border-box;
+      border-radius:8px;
+      background:rgba(255,255,255,.01);
+      border:1px solid var(--border);
+    }
+    @media (min-width: 921px) {
+      .friends-container {
+        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
+        overflow-y:auto;
+      }
+    }
+    @media (min-width: 601px) and (max-width: 920px) {
+      .friends-container {
+        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
+        overflow-y:auto;
+      }
+    }
+    @media (max-width: 600px) {
+      .friends-container {
+        gap:8px; padding:10px;
+        grid-auto-rows:var(--friend-row-height-mobile);
+        max-height: calc((var(--friend-row-height-mobile) * 2) + (8px * 1));
+        overflow-y:auto;
+      }
+    }
+    .friend-card {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      width:100%; min-width:0; text-align:center; cursor:pointer;
+      background:var(--soft); border:1px solid var(--border); border-radius:12px;
+      padding:10px; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .friend-card:hover { background:rgba(107,33,168,.12); }
+    .friend-pfp {
+      width:64px; height:64px; border-radius:12px; margin:0 auto 8px auto;
+      background-size:cover; background-position:center; border:2px solid rgba(0,0,0,0.06);
+      flex-shrink:0; background-repeat:no-repeat;
+      background-color:var(--soft);
+    }
+    .friend-name {
+      font-size:13px; color:var(--text); display:flex; align-items:center; justify-content:center; gap:6px;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;
+    }
+    .friend-name img { width:12px; height:12px; margin-left:6px; }
+    .friends-empty { color:var(--muted); font-size:13px; padding:8px 2px 2px; }
+
+    .overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.55);
+      display:none; align-items:center; justify-content:center; padding:16px; z-index:2000;
+    }
+    .overlay.show { display:flex; }
+    .modal {
+      width:min(640px, 100%);
+      max-height:min(90vh, 900px);
+      overflow:auto;
+      background:var(--card); color:var(--text);
+      border:1px solid var(--border);
+      border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.45);
+    }
+    .modal-head {
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:18px 18px 12px; border-bottom:1px solid var(--border);
+      position:sticky; top:0; background:linear-gradient(to bottom, var(--card), color-mix(in srgb, var(--card) 88%, transparent));
+      backdrop-filter: blur(8px);
+    }
+    .modal-head h3 { margin:0; font-size:18px; }
+    .modal-body { padding:18px; }
+    .modal-actions {
+      display:flex; gap:10px; justify-content:flex-end; padding:0 18px 18px;
+      flex-wrap:wrap;
+    }
+    .input, .select, .textarea {
+      width:100%; background:var(--soft); color:var(--text);
+      border:1px solid var(--border); border-radius:12px; padding:12px 14px;
+      outline:none; font:inherit;
+    }
+    .input:focus, .select:focus, .textarea:focus { border-color: rgba(107,33,168,.6); box-shadow:0 0 0 3px rgba(107,33,168,.15); }
+    .textarea { min-height:110px; resize:vertical; }
+    .helper { color:var(--muted); font-size:13px; line-height:1.5; }
+    .separator { height:1px; background:var(--border); margin:14px 0; }
+    .pill-list { display:flex; gap:8px; flex-wrap:wrap; }
+    .pill {
+      display:inline-flex; align-items:center; gap:6px; padding:8px 10px;
+      border-radius:999px; background:var(--soft); border:1px solid var(--border); font-size:12px;
+    }
+    .linkish { color:#c4b5fd; cursor:pointer; text-decoration:underline; }
+    .hidden { display:none !important; }
+
+    .right-column { display:flex; flex-direction:column; gap:20px; }
+    .footer-note { font-size:12px; color:var(--muted); line-height:1.5; }
+
+    /* smaller visuals for small screens */
+    @media (max-width: 600px) {
+      .friend-card { padding: 6px; }
+      .friend-pfp { width: 40px; height: 40px; margin-bottom:6px; }
+      .friend-name { font-size: 11px; }
+      .profile-preview { flex-direction:row; gap:10px; padding:10px; }
+      main.container { margin: 12px auto; padding: 12px; max-width: 100%; overflow-x: hidden; }
+      .hero { padding:16px; }
+    }
+
+    .friends-container::-webkit-scrollbar { width: 8px; }
+    .friends-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.04); border-radius: 6px; }
+    .modal::-webkit-scrollbar { width: 10px; }
+    .modal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 6px; }
+  </style>
+
+  <script>
+    // Firebase configuration goes here. Initialize at the top, before the page logic.
+    // Replace these placeholders with your real config.
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  </script>
+</head>
+<body>
+  <dp-topbar></dp-topbar>
+
+  <div id="toast"></div>
+
+  <main class="container">
+    <section class="left-column" style="display:flex; flex-direction:column; gap:20px; min-width:0;">
+      <div class="card hero">
+        <div style="min-width:0; flex:1;">
+          <div class="title-line">
+            <h1 id="pageTitle" style="margin:0; font-size:28px; line-height:1.1;">Einstellungen</h1>
+            <span class="tiny-chip" id="sessionChip">Gast</span>
+          </div>
+          <p class="muted" style="margin:10px 0 0;">Verwalten Sie Ihr Konto bequem über einen sicheren Bildschirm.</p>
+        </div>
+      </div>
+
+      <div class="settings-card">
+          <div class="settings-card-head">
+          <span>👤</span>
+          <h2>Benutzerinformationen</h2>
+        </div>
+        <div class="settings-card-body" id="userInfoCard">
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Anmeldung</p>
+              <p class="setting-desc">Melden Sie sich an oder ab, um das mit diesem Browser verknüpfte Konto zu verwalten.</p>
+            </div>
+            <button class="action-button" id="btnLoginLogout" type="button">Anmelden</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Beta-Programm</p>
+              <p class="setting-desc">Nehmen Sie am Frühzugangsprogramm teil und testen Sie neue Funktionen.</p>
+            </div>
+            <button class="action-button" id="btnBetaProgram" type="button">Öffnen</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-head">
+          <span>🌐</span>
+          <h2>Öffentliches Profil</h2>
+        </div>
+        <div class="settings-card-body">
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Region ändern</p>
+              <p class="setting-desc" id="regionDesc">Region wird geladen...</p>
+            </div>
+            <button class="action-button" id="btnRegion" type="button">Bearbeiten</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Geburtsdatum festlegen</p>
+              <p class="setting-desc" id="birthdayDesc">Geburtsdatum wird geladen...</p>
+            </div>
+            <button class="action-button" id="btnBirthday" type="button">Bearbeiten</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Sprache</p>
+              <p class="setting-desc" id="langDesc">Sprache wird geladen...</p>
+            </div>
+            <button class="action-button" id="btnLang" type="button">Bearbeiten</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Blockierte Benutzer verwalten</p>
+              <p class="setting-desc">Liste der blockierten Benutzer ansehen.</p>
+            </div>
+            <button class="action-button" id="btnBlocked" type="button">Öffnen</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Identitätsprüfung</p>
+              <p class="setting-desc">Diese Option ist derzeit noch nicht verfügbar.</p>
+            </div>
+            <button class="action-button disabled" type="button">Bald verfügbar</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Öffentliches Profil</p>
+              <p class="setting-desc">Steuert die Sichtbarkeit Ihres Profils für andere Benutzer.</p>
+            </div>
+            <label class="switch" title="Öffentliches Profil">
+              <input id="togglePublicProfile" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Beiträge an der Pinnwand erlauben</p>
+              <p class="setting-desc">Aktiviert oder deaktiviert, ob andere an Ihrer Pinnwand posten dürfen.</p>
+            </div>
+            <label class="switch" title="Beiträge an der Pinnwand erlauben">
+              <input id="toggleAllowPosts" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-head">
+          <span>✨</span>
+          <h2>Sonstiges</h2>
+        </div>
+        <div class="settings-card-body">
+          <div class="setting-item">
+            <div class="setting-main">
+              <p class="setting-title">Einstellungen zurücksetzen</p>
+              <p class="setting-desc">Melden Sie sich ab und löschen Sie die lokalen Sitzungsdaten dieses Browsers.</p>
+            </div>
+            <button class="action-button" id="btnReset" type="button">Zurücksetzen</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Language modal -->
+  <div class="overlay" id="languageModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Sprache ändern</h3>
+        <button class="action-button" type="button" data-close="languageModal">Schließen</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper">Wählen Sie die App-Sprache aus. Sie wird in der Android-App und auf dieser Seite verwendet. In Android hat diese Einstellung Vorrang vor der Systemsprache.</p>
+
+        <div style="margin-top:12px;">
+          <label class="helper">Sprache</label>
+          <select class="select" id="langSelect">
+            <option value="ja">Japanisch</option>
+            <option value="de">Deutsch</option>
+            <option value="ru">Russisch</option>
+            <option value="es">Spanisch</option>
+            <option value="en">Englisch</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="languageModal">Abbrechen</button>
+        <button class="action-button" id="btnSaveLang" type="button">Sprache speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Region modal -->
+  <div class="overlay" id="regionModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Region festlegen</h3>
+        <button class="action-button" type="button" data-close="regionModal">Schließen</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper">Wählen Sie einen zweistelligen Ländercode aus.</p>
+        <div class="grid-two" style="margin-top:12px;">
+          <div>
+            <label class="helper">Suche</label>
+            <input class="input" id="regionSearch" placeholder="Land suchen..." />
+          </div>
+          <div>
+            <label class="helper">Gewählter Code</label>
+            <input class="input" id="regionCodeInput" maxlength="2" placeholder="MX" />
+          </div>
+        </div>
+        <div style="margin-top:12px; max-height:280px; overflow:auto; border:1px solid var(--border); border-radius:12px;">
+          <div id="regionList" style="display:grid; gap:6px; padding:10px;"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="regionModal">Abbrechen</button>
+        <button class="action-button" id="btnSaveRegion" type="button">Region speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Birthday modal -->
+  <div class="overlay" id="birthdayModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Geburtsdatum festlegen</h3>
+        <button class="action-button" type="button" data-close="birthdayModal">Schließen</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper"><strong>dd/mm/yyyy</strong> — bitte verwenden Sie dieses Format. Nach dem Speichern kann eine Änderung des Datums eine Kontaktaufnahme mit dem Support erfordern.</p>
+        <div style="margin-top:12px;">
+          <label class="helper">Geburtsdatum</label>
+          <input class="input" id="birthdayInput" placeholder="dd/mm/yyyy" />
+        </div>
+        <p class="helper" id="birthdayError" style="color:#fca5a5; display:none; margin-top:10px;"></p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="birthdayModal">Abbrechen</button>
+        <button class="action-button" id="btnSaveBirthday" type="button">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout confirm -->
+  <div class="overlay" id="logoutModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Abmelden</h3>
+        <button class="action-button" type="button" data-close="logoutModal">Schließen</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper" id="logoutText">Möchten Sie sich wirklich abmelden?</p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="logoutModal">Abbrechen</button>
+        <button class="action-button" id="btnConfirmLogout" type="button">Abmelden</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset confirm -->
+  <div class="overlay" id="resetModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Einstellungen zurücksetzen</h3>
+        <button class="action-button" type="button" data-close="resetModal">Schließen</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper">Melden Sie sich vom aktuellen Konto ab und löschen Sie die gespeicherten Browserdaten, die auf dieser Seite verwendet werden.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="resetModal">Abbrechen</button>
+        <button class="action-button" id="btnConfirmReset" type="button">Jetzt zurücksetzen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credits modal -->
+  <div class="overlay" id="creditsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Systemeinstellungen</h3>
+        <button class="action-button" type="button" data-close="creditsModal">Schließen</button>
+      </div>
+      <div class="modal-body">
+        <p class="helper"><strong id="creditsTapTarget" style="cursor:pointer; user-select:none;">Systemeinstellungen</strong> <span class="muted">Noch einmal tippen, um Debug-Tools zu öffnen</span></p>
+        <p class="helper">Copyright © Dark Purple OF 2023-2025. Alle Rechte vorbehalten.</p>
+        <p class="helper">Unerlaubte Nutzung ist verboten.</p>
+        <div class="separator"></div>
+        <p class="helper"><span class="linkish" id="btnMoreInfo">Mehr auf der Website erfahren</span></p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="creditsModal">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Translation modal -->
+  <div class="overlay" id="translationsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Übersetzungen</h3>
+        <button class="action-button" type="button" data-close="translationsModal">Schließen</button>
+      </div>
+      <div class="modal-body" id="translationsBody">
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="translationsModal">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debug modal -->
+  <div class="overlay" id="debugModal">
+    <div class="modal">
+      <div class="modal-head">
+            <h3>Debugging</h3>
+            <button class="action-button" type="button" data-close="debugModal">Schließen</button>
+          </div>
+      <div class="modal-body">
+        <div class="setting-item" style="padding-top:0;">
+          <div class="setting-main">
+            <p class="setting-title">Debug-Einstellungen öffnen</p>
+            <p class="setting-desc">Zugriff auf experimentelle Einstellungen.</p>
+          </div>
+          <button class="action-button" id="btnOpenDebug" type="button">Öffnen</button>
+        </div>
+        <div class="setting-item">
+          <div class="setting-main">
+            <p class="setting-title">Debugging deaktivieren</p>
+            <p class="setting-desc">Deaktiviert den Debug-Modus und blendet die erweiterten Steuerelemente aus.</p>
+          </div>
+          <button class="action-button" id="btnDisableDebug" type="button">Deaktivieren</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="action-button" type="button" data-close="debugModal">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+    const toast = {
+      el: $('#toast'),
+      show(message, kind = 'purple', ms = 2400) {
+        this.el.className = '';
+        this.el.classList.add(kind);
+        this.el.textContent = message;
+        this.el.style.display = 'block';
+        clearTimeout(this._t);
+        this._t = setTimeout(() => { this.el.style.display = 'none'; }, ms);
+      }
+    };
+
+    const REGION_LIST = [
+      ['MX','Mexiko'], ['US','Vereinigte Staaten'], ['ES','Spanien'], ['AR','Argentinien'], ['CO','Kolumbien'], ['CL','Chile'], ['PE','Peru'],
+      ['VE','Venezuela'], ['EC','Ecuador'], ['GT','Guatemala'], ['CR','Costa Rica'], ['PA','Panama'], ['DO','Dominikanische Republik'],
+      ['UY','Uruguay'], ['PY','Paraguay'], ['BO','Bolivien'], ['BR','Brasilien'], ['CA','Kanada'], ['GB','Vereinigtes Königreich'],
+      ['FR','Frankreich'], ['DE','Deutschland'], ['IT','Italien'], ['PT','Portugal'], ['NL','Niederlande'], ['BE','Belgien'], ['SE','Schweden'],
+      ['NO','Norwegen'], ['FI','Finnland'], ['PL','Polen'], ['CZ','Tschechien'], ['AT','Österreich'], ['CH','Schweiz'], ['IE','Irland'],
+      ['JP','Japan'], ['KR','Südkorea'], ['CN','China'], ['TW','Taiwan'], ['HK','Hongkong'], ['IN','Indien'], ['PH','Philippinen'],
+      ['ID','Indonesien'], ['MY','Malaysia'], ['SG','Singapur'], ['AU','Australien'], ['NZ','Neuseeland'], ['ZA','Südafrika']
+    ];
+
+    const state = {
+      user: null,
+      userDoc: null,
+      profilePublic: true,
+      postsAllowed: true,
+      region: null,
+      birthDate: null,
+      lang: null,
+      debugEnabled: false,
+      tapCount: 0,
+      lastTapTime: 0,
+      friendsUnsub: null,
+      userUnsub: null
+    };
+
+    const LANG_LIST = [
+      ['ja', 'Japanisch'],
+      ['de', 'Deutsch'],
+      ['ru', 'Russisch'],
+      ['es', 'Spanisch'],
+      ['en', 'Englisch']
+    ];
+
+    function formatLang(code) {
+      if (!code) return 'Keine Sprache ausgewählt.';
+      const item = LANG_LIST.find(([c]) => c === String(code).toLowerCase());
+      return item ? `${item[1]} (${item[0]})` : String(code).toLowerCase();
+    }
+
+    function getUserKey(user) {
+      return user?.email || user?.uid || null;
+    }
+
+    function userRef(user) {
+      const key = getUserKey(user);
+      return key ? db.collection('user_data').doc(key) : null;
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[m]));
+    }
+
+    function openModal(id) { $('#' + id).classList.add('show'); }
+    function closeModal(id) { $('#' + id).classList.remove('show'); }
+
+    function closeAllModals() {
+      $$('.overlay').forEach(o => o.classList.remove('show'));
+    }
+
+    function formatRegion(code) {
+      if (!code) return 'Legen Sie die Kontoregion fest. Eine Änderung ist nur einmal pro Jahr möglich.';
+      const item = REGION_LIST.find(([c]) => c.toUpperCase() === code.toUpperCase());
+      return item ? `${item[1]} (${item[0]})` : code.toUpperCase();
+    }
+
+    function regionEmoji(code) {
+      if (!code || code.length !== 2) return '❔';
+      return code.toUpperCase().split('').map(ch => String.fromCodePoint(0x1F1E6 + (ch.charCodeAt(0) - 65))).join('');
+    }
+
+    function calculateAge(birthdayString) {
+      if (!birthdayString) return null;
+      const parts = birthdayString.split('/');
+      if (parts.length !== 3) return null;
+      const d = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const y = parseInt(parts[2], 10);
+      if (!d || (!m && m !== 0) || !y) return null;
+      const dob = new Date(y, m, d);
+      if (isNaN(dob.getTime())) return null;
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const md = today.getMonth() - dob.getMonth();
+      if (md < 0 || (md === 0 && today.getDate() < dob.getDate())) age--;
+      return age;
+    }
+
+    function validateBirthdayInput(input) {
+      const parts = String(input).trim().split('/');
+      if (parts.length !== 3) return 'Ungültiges Format. Verwenden Sie dd/mm/yyyy.';
+      const [dd, mm, yyyy] = parts.map(v => parseInt(v, 10));
+      if (![dd, mm, yyyy].every(Number.isFinite)) return 'Ungültiges Datumsformat.';
+      if (mm < 1 || mm > 12) return 'Der Monat muss zwischen 1 und 12 liegen.';
+      const dt = new Date(yyyy, mm - 1, dd);
+      if (dt.getFullYear() !== yyyy || dt.getMonth() !== mm - 1 || dt.getDate() !== dd) return 'Dieses Datum existiert nicht.';
+      const now = new Date();
+      if (dt > now) return 'Sie können kein zukünftiges Datum eingeben.';
+      const age = calculateAge(`${dd}/${mm}/${yyyy}`);
+      if (age === null || age < 1) return 'Das Alter muss mindestens 1 Jahr betragen.';
+      return null;
+    }
+
+    function mailToFeedback() {
+      const email = (navigator.language || '').toLowerCase().startsWith('ja')
+        ? 'boykisser2189@gmail.com'
+        : 'javiercorzo387@gmail.com';
+      const subject = 'Feedback';
+      return `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+    }
+
+    function setProfileHeader(user) {
+      const name = user?.displayName || user?.email?.split('@')[0] || 'Gast';
+      const profileNameEl = $('#profileName');
+      if (profileNameEl) profileNameEl.textContent = name;
+      const profileEmailEl = $('#profileEmail');
+      if (profileEmailEl) profileEmailEl.textContent = user?.email || 'Sie sind noch nicht eingeloggt';
+      const profileUidEl = $('#profileUid');
+      if (profileUidEl) profileUidEl.textContent = `uid: ${user?.uid || '-'}`;
+      $('#sessionChip').textContent = user?.email ? 'Online' : 'Gast';
+      $('#btnLoginLogout').textContent = user ? 'Abmelden' : 'Anmelden';
+      const logoutTopBtn = $('#btnLogoutTop');
+      if (logoutTopBtn) logoutTopBtn.textContent = user ? '⎋ Abmelden' : 'Anmelden';
+    }
+
+    function setBadgeIfNeeded(user) {
+      const badge = $('#profileBadge');
+      if (!badge) return;
+      const isVerified = !!(user?.email && user.email.endsWith('@darkpurpleof.github.io'));
+      if (isVerified) {
+        badge.style.display = 'inline-block';
+        badge.alt = 'verified';
+        badge.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l2.4 2.2 3.2-.1 1.2 3 2.9 1.4-.6 3.1 1.7 2.8-2.1 2.4-.1 3.2-3 1.2-1.4 2.9-3.1-.6L12 22l-2.2-2.4-3.1.6-1.4-2.9-3-1.2-.1-3.2-2.1-2.4 1.7-2.8-.6-3.1 2.9-1.4 1.2-3 3.2.1L12 2z" fill="#22c55e"/>
+            <path d="M9.5 12.6l1.9 1.9 3.9-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `);
+      } else {
+        badge.style.display = 'none';
+        badge.removeAttribute('src');
+      }
+    }
+
+    function setVisibilityByLogin(user) {
+      const loggedIn = !!user;
+      const setState = (id, value) => { const el = $('#' + id); if (el) el.disabled = value; };
+      setState('btnVerifyUser', !loggedIn);
+      setState('btnBetaProgram', !loggedIn);
+      setState('btnPlugins', !loggedIn);
+      setState('btnRegion', !loggedIn);
+      setState('btnBirthday', !loggedIn);
+      setState('btnBlocked', !loggedIn);
+      setState('btnLang', !loggedIn);
+      setState('btnDemo', !loggedIn);
+      setState('btnReset', !loggedIn);
+      setState('btnOverlay', false);
+      setState('togglePublicProfile', !loggedIn);
+      setState('toggleAllowPosts', !loggedIn);
+    }
+
+    function updateDerivedTexts(doc) {
+      const region = doc?.region || null;
+      const nextChange = doc?.regionchange_next?.toDate ? doc.regionchange_next.toDate() : null;
+      const birthDate = doc?.birth_date || null;
+      const loggedIn = !!state.user;
+
+      const now = new Date();
+      const canChange = !nextChange || nextChange <= now;
+      const regionName = region ? formatRegion(region) : null;
+      const regionFlag = region ? regionEmoji(region) : '❔';
+
+      if (!loggedIn) {
+        $('#regionDesc').textContent = 'Melden Sie sich an, um die Region festzulegen.';
+        $('#birthdayDesc').textContent = 'Melden Sie sich an, um Ihr Geburtsdatum festzulegen.';
+      } else {
+        $('#regionDesc').textContent = region
+          ? (canChange ? `Ihre Region: ${regionName} ${regionFlag}. Sie können sie jetzt ändern.` : `Ihre Region: ${regionName} ${regionFlag}. Nächste mögliche Änderung: ${nextChange.toLocaleDateString()}.`)
+          : 'Legen Sie die Kontoregion fest. Eine Änderung ist nur einmal pro Jahr möglich.';
+        if (!birthDate) {
+          $('#birthdayDesc').textContent = 'Tippen Sie, um Ihr Geburtsdatum festzulegen. Für spätere Änderungen wenden Sie sich bitte an den Support.';
+        } else {
+          const age = calculateAge(birthDate);
+          $('#birthdayDesc').textContent = age ? `${birthDate} • ${age} Jahre` : birthDate;
+        }
+      }
+
+      const lang = doc?.lang || null;
+      $('#langDesc').textContent = lang
+        ? `Aktuelle Sprache: ${formatLang(lang)}.`
+        : 'Wählen Sie Ihre bevorzugte Sprache aus.';
+
+      $('#togglePublicProfile').checked = !!doc?.isProfilePublic;
+      $('#toggleAllowPosts').checked = !!doc?.postsAllowed;
+
+      // Hide/show edit buttons based on data state
+      $('#btnBirthday').style.display = birthDate ? 'none' : '';
+      $('#btnRegion').style.display = canChange ? '' : 'none';
+    }
+
+    function renderFriends(list = []) {
+      const box = $('#friendsContainer');
+      const empty = $('#friendsEmpty');
+      if (!box) return;
+      box.innerHTML = '';
+      if (!list.length) {
+        if (empty) empty.style.display = 'block';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      list.slice(0, 15).forEach(friend => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'friend-card';
+        card.innerHTML = `
+          <div class="friend-pfp" style="background-image:url('${friend.photoURL || ''}')"></div>
+          <div class="friend-name">${escapeHtml(friend.name || friend.email || 'Freund')} ${friend.verified ? '<img alt="verified" src="data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 2.2 3.2-.1 1.2 3 2.9 1.4-.6 3.1 1.7 2.8-2.1 2.4-.1 3.2-3 1.2-1.4 2.9-3.1-.6L12 22l-2.2-2.4-3.1.6-1.4-2.9-3-1.2-.1-3.2-2.1-2.4 1.7-2.8-.6-3.1 2.9-1.4 1.2-3 3.2.1L12 2z" fill="#22c55e"/></svg>`) + '" />' : ''}</div>
+        `;
+        card.addEventListener('click', () => {
+          if (friend.email) {
+            window.location.href = `./viewprofile.html?email=${encodeURIComponent(friend.email)}`;
+          }
+        });
+        box.appendChild(card);
+      });
+    }
+
+    async function loadUserDoc() {
+      if (!state.user) {
+        state.userDoc = null;
+        updateDerivedTexts(null);
+        renderFriends([]);
+        return;
+      }
+
+      const ref = userRef(state.user);
+      if (!ref) return;
+
+      if (state.userUnsub) state.userUnsub();
+      state.userUnsub = ref.onSnapshot((snap) => {
+        const doc = snap.exists ? snap.data() : {};
+        state.userDoc = doc;
+        updateDerivedTexts(doc);
+        $('#togglePublicProfile').checked = !!doc?.isProfilePublic;
+        $('#langDesc').dataset.lang = doc?.lang || '';
+        $('#toggleAllowPosts').checked = !!doc?.postsAllowed;
+        $('#birthdayDesc').dataset.birth = doc?.birth_date || '';
+        $('#regionDesc').dataset.region = doc?.region || '';
+      }, () => {
+        toast.show('Die Benutzerdaten konnten nicht geladen werden.', 'red');
+      });
+
+      // Friends preview: try common fields, but stay graceful if not present.
+      if (state.friendsUnsub) state.friendsUnsub();
+      state.friendsUnsub = ref.collection('friends').onSnapshot((snap) => {
+        const list = [];
+        snap.forEach(doc => {
+          const d = doc.data() || {};
+          list.push({
+            name: d.name || d.displayName || d.email,
+            email: d.email,
+            photoURL: d.photoURL,
+            verified: !!d.verified
+          });
+        });
+        renderFriends(list);
+      }, () => renderFriends([]));
+    }
+
+    async function updateUserField(field, value) {
+      if (!state.user) throw new Error('Sie sind nicht eingeloggt');
+      const ref = userRef(state.user);
+      if (!ref) throw new Error('Benutzerverweis fehlt');
+      await ref.set({ [field]: value }, { merge: true });
+    }
+
+    function buildTranslationBody() {
+      const body = $('#translationsBody');
+      body.innerHTML = `
+        <div class="helper">Die Übersetzungsautoren, die im ursprünglichen Einstellungsfenster angegeben wurden.</div>
+        <div class="separator"></div>
+        <div style="display:grid; gap:12px;">
+          <div>
+            <div class="muted">Übersetzung ins Spanische</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+          <div>
+            <div class="muted">Übersetzung ins Russische</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+          <div>
+            <div class="muted">Übersetzung ins Englische</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+          <div>
+            <div class="muted">Übersetzung ins Japanische</div>
+            <div class="linkish" data-profile="boykisser2189@darkpurpleof.github.io">Amethyst</div>
+          </div>
+          <div>
+            <div class="muted">Übersetzung ins Deutsche</div>
+            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
+          </div>
+        </div>
+      `;
+      $$('[data-profile]', body).forEach(el => {
+        el.addEventListener('click', () => {
+          const email = el.getAttribute('data-profile');
+          window.location.href = `./viewprofile.html?email=${encodeURIComponent(email)}`;
+        });
+      });
+    }
+
+    function buildRegionList(filterText = '') {
+      const q = filterText.trim().toLowerCase();
+      const list = $('#regionList');
+      const filtered = REGION_LIST.filter(([code, name]) => {
+        return !q || code.toLowerCase().includes(q) || name.toLowerCase().includes(q);
+      });
+      list.innerHTML = filtered.map(([code, name]) => `
+        <button type="button" class="action-button" data-code="${code}" style="justify-content:space-between; width:100%;">
+          <span>${code}</span><span style="opacity:.8">${name}</span>
+        </button>
+      `).join('') || '<div class="helper">Keine Treffer gefunden.</div>';
+      $$('[data-code]', list).forEach(btn => {
+        btn.addEventListener('click', () => {
+          $('#regionCodeInput').value = btn.getAttribute('data-code');
+          toast.show(`Region gewählt: ${btn.getAttribute('data-code')}`, 'green');
+        });
+      });
+    }
+
+    async function saveLang() {
+      const code = $('#langSelect').value.trim().toLowerCase();
+      if (!['ja', 'de', 'ru', 'es', 'en'].includes(code)) {
+        toast.show('Ungültiger Sprachcode.', 'red');
+        return;
+      }
+      await updateUserField('lang', code);
+      toast.show('Sprache gespeichert.', 'green');
+      closeModal('languageModal');
+    }
+
+    async function saveRegion() {
+      const code = $('#regionCodeInput').value.trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(code)) {
+        toast.show('Bitte geben Sie einen gültigen zweistelligen Regioncode ein.', 'red');
+        return;
+      }
+      await updateUserField('region', code);
+      const nextChange = new Date();
+      nextChange.setFullYear(nextChange.getFullYear() + 1);
+      await updateUserField('regionchange_next', firebase.firestore.Timestamp.fromDate(nextChange));
+      toast.show('Region gespeichert.', 'green');
+      closeModal('regionModal');
+    }
+
+    async function saveBirthday() {
+      const input = $('#birthdayInput').value.trim();
+      const error = validateBirthdayInput(input);
+      if (error) {
+        $('#birthdayError').textContent = error;
+        $('#birthdayError').style.display = 'block';
+        return;
+      }
+      $('#birthdayError').style.display = 'none';
+      await updateUserField('birth_date', input);
+      toast.show('Geburtsdatum gespeichert.', 'green');
+      closeModal('birthdayModal');
+    }
+
+    async function toggleField(field, value) {
+      if (!state.user) {
+        toast.show('Bitte melden Sie sich zuerst an.', 'red');
+        return;
+      }
+      await updateUserField(field, value);
+      toast.show('Gespeichert.', 'green');
+    }
+
+    async function logoutAndRedirect() {
+      try {
+        await auth.signOut();
+        toast.show('Sie wurden erfolgreich abgemeldet.', 'green');
+        setTimeout(() => { window.location.href = '/login'; }, 500);
+      } catch (e) {
+        toast.show('Beim Abmelden ist ein Fehler aufgetreten.', 'red');
+      }
+    }
+
+    async function resetSettings() {
+      try {
+        await auth.signOut();
+        localStorage.clear();
+        sessionStorage.clear();
+        toast.show('Browserdaten wurden gelöscht.', 'green');
+        setTimeout(() => { window.location.href = '/login'; }, 500);
+      } catch (e) {
+        toast.show('Beim Zurücksetzen ist ein Fehler aufgetreten.', 'red');
+      }
+    }
+
+    function revealDebugMaybe() {
+      const now = Date.now();
+      if (now - state.lastTapTime > 1000) state.tapCount = 0;
+      state.tapCount += 1;
+      state.lastTapTime = now;
+      if (state.tapCount >= 7) {
+        state.tapCount = 0;
+        state.debugEnabled = true;
+        toast.show('Debugging aktiviert.', 'purple');
+        openModal('debugModal');
+        localStorage.setItem('debug_enabled', 'true');
+      }
+    }
+
+    function initThemeToggle() {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.body.classList.toggle('light', saved === 'light');
+      const themeBtn = $('#btnToggleTheme');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+          const light = document.body.classList.toggle('light');
+          localStorage.setItem('theme', light ? 'light' : 'dark');
+        });
+      }
+    }
+
+    function initQuickLinks() {
+      const openLoginBtn = $('#btnOpenLogin');
+      if (openLoginBtn) openLoginBtn.addEventListener('click', () => window.location.href = '/login');
+      const systemInfoBtn = $('#btnSystemInfo');
+      if (systemInfoBtn) systemInfoBtn.addEventListener('click', () => window.location.href = 'https://darkpurpleof.github.io/systeminfo');
+      const blockedBtn = $('#btnBlocked');
+      if (blockedBtn) blockedBtn.addEventListener('click', () => window.location.href = 'https://darkpurpleof.github.io/manageblockedusers');
+      const betaProgramBtn = $('#btnBetaProgram');
+      if (betaProgramBtn) betaProgramBtn.addEventListener('click', () => window.location.href = '/beta-features');
+      const moreInfoBtn = $('#btnMoreInfo');
+      if (moreInfoBtn) moreInfoBtn.addEventListener('click', () => window.open('https://darkpurpleof.github.io/systeminfo', '_blank'));
+      const mailFeedbackBtn = $('#btnMailFeedback');
+      if (mailFeedbackBtn) mailFeedbackBtn.setAttribute('href', mailToFeedback());
+    }
+
+    function initModalButtons() {
+      $$('[data-close]').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
+      });
+      $$('.overlay').forEach(ov => {
+        ov.addEventListener('click', (e) => {
+          if (e.target === ov) ov.classList.remove('show');
+        });
+      });
+    }
+
+    function initStaticButtons() {
+      $('#btnLoginLogout').addEventListener('click', () => {
+        if (state.user) openModal('logoutModal');
+        else window.location.href = '/login';
+      });
+      const logoutTopBtn = $('#btnLogoutTop');
+      if (logoutTopBtn) {
+        logoutTopBtn.addEventListener('click', () => {
+          if (state.user) openModal('logoutModal');
+          else window.location.href = '/login';
+        });
+      }
+      $('#btnConfirmLogout').addEventListener('click', logoutAndRedirect);
+      $('#btnLang').addEventListener('click', () => {
+        if (!state.user) return toast.show('Bitte melden Sie sich zuerst an.', 'red');
+        $('#langSelect').value = (state.userDoc?.lang || 'es').toLowerCase();
+        openModal('languageModal');
+      });
+      $('#btnSaveLang').addEventListener('click', saveLang);
+      $('#btnConfirmReset').addEventListener('click', resetSettings);
+      $('#btnReset').addEventListener('click', () => openModal('resetModal'));
+      const creditsBtn = $('#btnCredits');
+      if (creditsBtn) creditsBtn.addEventListener('click', () => openModal('creditsModal'));
+      const translationsBtn = $('#btnTranslations');
+      if (translationsBtn) translationsBtn.addEventListener('click', () => openModal('translationsModal'));
+      $('#btnRegion').addEventListener('click', () => {
+        if (!state.user) return toast.show('Bitte melden Sie sich zuerst an.', 'red');
+        $('#regionCodeInput').value = (state.userDoc?.region || '').toUpperCase();
+        $('#regionSearch').value = '';
+        buildRegionList('');
+        openModal('regionModal');
+      });
+      $('#btnBirthday').addEventListener('click', () => {
+        if (!state.user) return toast.show('Bitte melden Sie sich zuerst an.', 'red');
+        $('#birthdayInput').value = state.userDoc?.birth_date || '';
+        $('#birthdayError').style.display = 'none';
+        openModal('birthdayModal');
+      });
+      $('#btnSaveRegion').addEventListener('click', saveRegion);
+      $('#btnSaveBirthday').addEventListener('click', saveBirthday);
+      $('#togglePublicProfile').addEventListener('change', async (e) => {
+        if (!state.user) return;
+        const on = e.target.checked;
+        if (on) {
+          await toggleField('isProfilePublic', true);
+        } else {
+          // Keep the same safety flow as the app: ask before making private.
+          e.target.checked = true;
+          openModal('logoutModal');
+          $('#logoutText').textContent = 'Dieses Fenster wird erneut zur Bestätigung verwendet. Folgen Sie den Schritten der App, um die Sichtbarkeit des Profils über die vorgesehene Bestätigung zu ändern.';
+          $('#btnConfirmLogout').textContent = 'Schließen';
+          $('#btnConfirmLogout').onclick = () => {
+            $('#btnConfirmLogout').textContent = 'Abmelden';
+            $('#logoutText').textContent = 'Möchten Sie sich wirklich abmelden?';
+            $('#btnConfirmLogout').onclick = logoutAndRedirect;
+            closeModal('logoutModal');
+          };
+          return;
+        }
+      });
+      $('#toggleAllowPosts').addEventListener('change', async (e) => {
+        if (!state.user) return;
+        await toggleField('postsAllowed', e.target.checked);
+      });
+      $('#creditsTapTarget').addEventListener('click', revealDebugMaybe);
+      const openDebugBtn = $('#btnOpenDebug');
+      if (openDebugBtn) openDebugBtn.addEventListener('click', () => window.location.href = './debug.html');
+      $('#btnDisableDebug').addEventListener('click', () => {
+        state.debugEnabled = false;
+        localStorage.removeItem('debug_enabled');
+        closeModal('debugModal');
+        toast.show('Debugging ausgeblendet.', 'green');
+      });
+      $('#regionSearch').addEventListener('input', (e) => buildRegionList(e.target.value));
+      $('#regionCodeInput').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().slice(0, 2); });
+      const systemInfoBtn = $('#btnSystemInfo');
+      if (systemInfoBtn) systemInfoBtn.addEventListener('click', () => window.open('https://darkpurpleof.github.io/systeminfo', '_blank'));
+    }
+
+    function initAuth() {
+      auth.onAuthStateChanged(async (user) => {
+        state.user = user || null;
+        setProfileHeader(user);
+        setBadgeIfNeeded(user);
+        setVisibilityByLogin(user);
+        await loadUserDoc();
+      });
+    }
+
+    function initPage() {
+      initThemeToggle();
+      initQuickLinks();
+      initModalButtons();
+      initStaticButtons();
+      initAuth();
+      buildTranslationBody();
+      buildRegionList('');
+      setProfileHeader(null);
+      setVisibilityByLogin(null);
+      setBadgeIfNeeded(null);
+
+      $('#pageTitle').addEventListener('click', revealDebugMaybe);
+      const profileNameEl = $('#profileName');
+      if (profileNameEl) profileNameEl.addEventListener('click', revealDebugMaybe);
+      $('#regionDesc').addEventListener('click', () => {
+        if (state.user) openModal('regionModal');
+      });
+      $('#birthdayDesc').addEventListener('click', () => {
+        if (state.user) openModal('birthdayModal');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', initPage);
+  </script>
+</body>
+</html>

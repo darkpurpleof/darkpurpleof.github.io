@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Состояние аккаунта</title>
+
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase (классическая совместимость) -->
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+<script>
+  if (!window.firebase || !firebase.apps.length) {
+    firebase.initializeApp({
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.appspot.com",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    });
+  }
+</script>
+
+<script src="/dp-topbar.js"></script>
+
+<style>
+:root{
+  --bg:#171717;
+  --card:#1f1f1f;
+  --inner-card:#111111;
+  --text:#eaeaea;
+  --muted:#a8a8a8;
+  --accent:#6b21a8;
+  --accent-strong:#5b21b6;
+  --border:rgba(255,255,255,0.1);
+}
+body.light{
+  --bg:#f6f8fb;
+  --card:#fff;
+  --inner-card:#e5e7eb;
+  --text:#0f172a;
+  --muted:#475569;
+  --accent:#6b21a8;
+  --accent-strong:#5b21b6;
+  --border:rgba(0,0,0,0.06);
+}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);transition:background .25s,color .25s;}
+body{display:flex;flex-direction:column;min-height:100vh;}
+dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+main.wrapper{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;}
+.card{background:var(--card);border-radius:12px;padding:24px;border:1px solid var(--border);max-width:600px;width:100%;color:var(--text);}
+h1{margin:0 0 12px 0;font-size:22px;font-weight:700;}
+p, span{font-size:14px;color:var(--text);margin:6px 0;}
+strong{color:var(--text);}
+.inner-card{background:var(--inner-card);border-radius:8px;padding:12px;margin:12px 0;border:1px solid var(--border);}
+button, .footer-btn{background:var(--accent);color:#fff;border:none;padding:12px;border-radius:8px;font-weight:700;cursor:pointer;margin-top:12px;width:100%;transition:background .2s;}
+button:hover,.footer-btn:hover{background:var(--accent-strong);}
+.footer{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;justify-content:center;}
+.footer-btn{background:var(--card);color:var(--text);border:1px solid var(--border);text-decoration:none;text-align:center;}
+#toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:10px 14px;border-radius:10px;font-weight:700;display:none;z-index:99999;color:#fff;box-sizing:border-box;}
+#toast.purple{background:var(--accent-strong);}
+#toast.red{background:#c00;}
+#toast.yellow{background:#e6b800;color:#222;}
+</style>
+</head>
+<body>
+<dp-topbar></dp-topbar>
+
+<main class="wrapper">
+  <div class="card" role="region" aria-label="Статус аккаунта">
+    <h1 id="title"></h1>
+    <p id="reviewed"></p>
+    <p id="mod-note"></p>
+
+    <div class="inner-card" id="details" style="display:none;">
+      <p><strong>Причина:</strong> <span id="reason"></span></p>
+      <p><strong>Неприемлемое содержимое предмета:</strong></p>
+      <div id="offensive-preview"></div>
+    </div>
+
+    <p id="guidelines" style="margin-top:12px;">Соблюдайте правила сообщества, чтобы платформа оставалась приятным местом для всех.</p>
+
+    <p id="status-text" style="margin-top:12px;"></p>
+
+    <div id="reactivate-container" style="display:none;margin-top:12px;">
+      <p id="reactivate-text"></p>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+        <input type="checkbox" id="agree-checkbox"> Я согласен с условиями использования
+      </label>
+      <button id="reactivate-btn" disabled>Восстановить аккаунт</button>
+    </div>
+    <button id="logout-btn">Выйти</button>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+function showToast(msg,color="purple",duration=3500){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.className=color+" show";
+  t.style.display="block";
+  setTimeout(()=>{t.className=color+" hide";setTimeout(()=>{t.style.display="none";t.className="";},400);},duration);
+}
+
+// Переключение тёмной/светлой темы
+const toggleBtn=document.createElement("button");
+toggleBtn.textContent="🌙";
+toggleBtn.style.position="absolute";
+toggleBtn.style.top="10px";
+toggleBtn.style.right="10px";
+toggleBtn.style.fontSize="1.5em";
+toggleBtn.style.background="none";
+toggleBtn.style.border="none";
+toggleBtn.style.cursor="pointer";
+document.body.appendChild(toggleBtn);
+toggleBtn.addEventListener("click",()=>{
+  const isLight=document.body.classList.contains("light");
+  document.body.classList.toggle("light",!isLight);
+  toggleBtn.textContent=isLight?"🌙":"☀️";
+  localStorage.setItem("theme",!isLight?"light":"dark");
+});
+if(localStorage.getItem("theme")==="light"){document.body.classList.add("light");toggleBtn.textContent="☀️";}
+</script>
+
+<script>
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const agreeCheckbox=document.getElementById("agree-checkbox");
+const reactivateBtn=document.getElementById("reactivate-btn");
+agreeCheckbox.addEventListener("change",e=>{reactivateBtn.disabled=!e.target.checked;});
+
+document.getElementById("reactivate-btn").addEventListener("click",async()=>{
+  const user=auth.currentUser;
+  if(!user) return;
+  try{
+    await db.collection("banned_users").doc(user.email).delete();
+    showToast("Аккаунт восстановлен!","purple");
+    window.location.href="./";
+  }catch(err){
+    showToast("Не удалось восстановить аккаунт!","red");
+    console.error(err);
+  }
+});
+
+document.getElementById("logout-btn").addEventListener("click",async()=>{
+  await auth.signOut();
+  window.location.href="./login";
+});
+
+function formatDate(ts){ return ts.toLocaleString(); }
+
+auth.onAuthStateChanged(async user=>{
+  const title=document.getElementById("title");
+  const reviewed=document.getElementById("reviewed");
+  const modNote=document.getElementById("mod-note");
+  const details=document.getElementById("details");
+  const reasonEl=document.getElementById("reason");
+  const offensive=document.getElementById("offensive-preview");
+  const reactivateContainer=document.getElementById("reactivate-container");
+  const reactivateText=document.getElementById("reactivate-text");
+  const checkbox=document.getElementById("agree-checkbox");
+  const reactivateBtn=document.getElementById("reactivate-btn");
+
+  if(!user){
+    title.innerText="Вы не вошли в систему!";
+    reviewed.innerHTML='Пожалуйста, <a href="./login" style="color:var(--accent);text-decoration:underline;">войдите</a> сначала.';
+    modNote.innerText="";
+    details.style.display="none";
+    reactivateContainer.style.display="none";
+    return;
+  }
+
+  const email=user.email;
+  const banSnap=await db.collection("banned_users").doc(email).get();
+
+  if(!banSnap.exists){
+    window.location.href="./home";
+    return;
+  }
+
+  const data=banSnap.data();
+  const since=new Date(data.banned_since?.toDate?.() || data.banned_since);
+  const until=data.until ? new Date(data.until?.toDate?.() || data.until) : null;
+  const isWarning=data.type==="warning";
+  const expired=until ? new Date()>=until : false;
+
+  if(isWarning){
+    title.innerText="Предупреждение";
+  }else if(!until){
+    title.innerText="Аккаунт заблокирован";
+  }else{
+    title.innerText=`Блокировка на ${Math.ceil((until-since)/(1000*60*60*24))} дней`;
+  }
+
+  reviewed.innerText=`Дата проверки: ${formatDate(since)}`;
+  modNote.innerText=`Примечание модератора: ${data.ban_extra_note || "Не указано"}`;
+
+  reasonEl.innerText=data.ban_reason||"Не указано";
+  offensive.innerHTML=/^https?:\/\//.test(data.ban_offensive)
+    ? `<img src="${data.ban_offensive}" style="max-width:100%;margin-top:6px;border:1px solid var(--border);border-radius:6px;">`
+    : (data.ban_offensive||"Не указано");
+  details.style.display="block";
+
+  reactivateContainer.style.display="none";
+  checkbox.checked=false;
+  reactivateBtn.disabled=true;
+
+  const statusText = document.getElementById("status-text");
+
+  if(isWarning || expired){
+    statusText.innerText = "Согласившись с условиями использования, вы сможете восстановить аккаунт";
+    reactivateContainer.style.display = "block";
+    reactivateBtn.disabled = true;
+    agreeCheckbox.checked = false;
+  } else if(!isWarning && until && !expired){
+    statusText.innerHTML = `Этот аккаунт деактивирован. Его можно восстановить после <span id="ban-end-date">${until.toString()}</span>.`;
+    reactivateContainer.style.display = "none";
+  } else if(!isWarning && !until){
+    statusText.innerText = "Этот аккаунт заблокирован";
+    reactivateContainer.style.display = "none";
+  }
+});
+</script>
+</body>
+</html>

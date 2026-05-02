@@ -9,7 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
+ 
 <!-- Firebase を初期化 -->
 <script>
 firebase.initializeApp({
@@ -215,7 +215,7 @@ async function loadTransactions(){
 
     if(userData.is_verified){
       const badge = document.createElement("img");
-      badge.src = "assets/verified.png";
+      badge.src = "/assets/verified.png";
       badge.className = "verified";
       source.appendChild(badge);
     }
