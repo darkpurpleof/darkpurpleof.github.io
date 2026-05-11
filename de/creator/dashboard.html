@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Creator Dashboard</title>
+  <title>Ersteller-Dashboard</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -761,6 +761,15 @@
         "Sample": ["dpfhtml","html","beta","json","delta","data","dat"]
       };
 
+      const TYPE_LABELS = {
+        "Sticker Pack": "Stickerpaket",
+        "Profile Frame": "Profilrahmen",
+        "Package": "Paket",
+        "File": "Datei",
+        "Plugin": "Plugin",
+        "Sample": "Beispiel"
+      };
+
       const state = {
         activeTab: "store",
         dialogRoot: null,
@@ -871,14 +880,14 @@
 
       async function userDomainIsValidForUrl(email, url) {
         try {
-          if (!email) return { ok: false, reason: "Not signed in" };
-          if (!url) return { ok: false, reason: "No URL provided" };
+          if (!email) return { ok: false, reason: "Du bist nicht angemeldet" };
+          if (!url) return { ok: false, reason: "Keine URL angegeben" };
 
           const urlHost = normalizeHostname(url);
           let ud = currentUserData;
           if (!ud || Object.keys(ud).length === 0) {
             const userSnap = await getUserDataDocument(email);
-            if (!userSnap || !userSnap.exists) return { ok: false, reason: "No user domain registered" };
+            if (!userSnap || !userSnap.exists) return { ok: false, reason: "Keine Benutzer-Domain gespeichert" };
             ud = userSnap.data();
           }
 
@@ -886,17 +895,17 @@
           const domainHost = normalizeHostname(rawDomain);
           const domainVerified = !!(ud && (ud.domain_verified || ud.is_verified || ud.isVerified));
 
-          if (!domainHost) return { ok: false, reason: "No domain registered" };
-          if (!urlHost) return { ok: false, reason: "Invalid URL" };
+          if (!domainHost) return { ok: false, reason: "Keine Domain registriert" };
+          if (!urlHost) return { ok: false, reason: "Ungültige URL" };
 
           const matches = (urlHost === domainHost) || urlHost.endsWith("." + domainHost);
-          if (!matches) return { ok: false, reason: "Host does not match registered domain" };
-          if (!domainVerified) return { ok: false, reason: "Domain not verified" };
+          if (!matches) return { ok: false, reason: "Der Host stimmt nicht mit der registrierten Domain überein" };
+          if (!domainVerified) return { ok: false, reason: "Domain nicht verifiziert" };
 
           return { ok: true };
         } catch (err) {
           console.error("domain check error", err);
-          return { ok: false, reason: "Domain verification error" };
+          return { ok: false, reason: "Fehler bei der Domain-Prüfung" };
         }
       }
 
@@ -1011,8 +1020,8 @@
 
         const editBtn = document.createElement("button");
         editBtn.className = "edit-link";
-        editBtn.title = "Edit item";
-        editBtn.setAttribute("aria-label", `Edit ${item.name || "item"}`);
+        editBtn.title = "Artikel bearbeiten";
+        editBtn.setAttribute("aria-label", `${item.name || "Artikel"} bearbeiten`);
         editBtn.innerHTML = '<img src="/assets/edit.png" alt="" />';
         editBtn.addEventListener("click", (e) => {
           e.preventDefault();
@@ -1037,12 +1046,12 @@
 
         const title = document.createElement("h3");
         title.className = "card-title";
-        title.textContent = item.name || "(no name)";
+        title.textContent = item.name || "(ohne Namen)";
         titleRow.appendChild(title);
 
         const priceChip = document.createElement("div");
         priceChip.className = "chip price-chip";
-        priceChip.textContent = (item.price !== undefined && item.price !== null) ? `${item.price} DF$` : "Free";
+        priceChip.textContent = (item.price !== undefined && item.price !== null) ? `${item.price} DF$` : "Kostenlos";
         titleRow.appendChild(priceChip);
 
         content.appendChild(titleRow);
@@ -1050,7 +1059,7 @@
         if (isDevelopment) {
           const typeLine = document.createElement("div");
           typeLine.className = "chip type-chip";
-          typeLine.textContent = item.type ? item.type.toUpperCase() : "UNKNOWN";
+          typeLine.textContent = item.type ? (TYPE_LABELS[item.type] || item.type.toUpperCase()) : "UNBEKANNT";
           content.appendChild(typeLine);
         }
 
@@ -1068,7 +1077,7 @@
           dl.href = item.download_link || "#";
           dl.target = "_blank";
           dl.rel = "noopener";
-          dl.textContent = "Download";
+          dl.textContent = "Herunterladen";
           bottom.appendChild(dl);
         }
 
@@ -1118,10 +1127,10 @@
               err => {
                 console.error("store snapshot err", err);
                 if (err && err.code === "permission-denied") {
-                  showPermissionBanner("Permission denied reading Store items at: " + pathCol.path);
+                  showPermissionBanner("Zugriff verweigert beim Lesen der Store-Artikel unter: " + pathCol.path);
                   if (unsubStore) { unsubStore(); unsubStore = null; }
                 } else {
-                  showPermissionBanner("Error loading store items: " + (err.message || err));
+                  showPermissionBanner("Fehler beim Laden der Store-Artikel: " + (err.message || err));
                 }
               }
             );
@@ -1160,10 +1169,10 @@
               err => {
                 console.error("dev snapshot err", err);
                 if (err && err.code === "permission-denied") {
-                  showPermissionBanner("Permission denied reading Development items at: " + pathCol.path);
+                  showPermissionBanner("Zugriff verweigert beim Lesen der Entwicklungsartikel unter: " + pathCol.path);
                   if (unsubDev) { unsubDev(); unsubDev = null; }
                 } else {
-                  showPermissionBanner("Error loading development items: " + (err.message || err));
+                  showPermissionBanner("Fehler beim Laden der Entwicklungsartikel: " + (err.message || err));
                 }
               }
             );
@@ -1175,22 +1184,22 @@
       }
 
       async function createStoreItem(data) {
-        if (!currentUser) throw new Error("Not signed in");
+        if (!currentUser) throw new Error("Du bist nicht angemeldet");
         return await db.collection("ugc").doc(currentUser.email).collection("store-items").add(data);
       }
 
       async function updateStoreItem(docId, data) {
-        if (!currentUser) throw new Error("Not signed in");
+        if (!currentUser) throw new Error("Du bist nicht angemeldet");
         return await db.collection("ugc").doc(currentUser.email).collection("store-items").doc(docId).set(data, { merge: true });
       }
 
       async function createDevItem(data) {
-        if (!currentUser) throw new Error("Not signed in");
+        if (!currentUser) throw new Error("Du bist nicht angemeldet");
         return await db.collection("ugc").doc(currentUser.email).collection("development-items").add(data);
       }
 
       async function updateDevItem(docId, data) {
-        if (!currentUser) throw new Error("Not signed in");
+        if (!currentUser) throw new Error("Du bist nicht angemeldet");
         return await db.collection("ugc").doc(currentUser.email).collection("development-items").doc(docId).set(data, { merge: true });
       }
 
@@ -1213,11 +1222,11 @@
         const desc = String(controls.description.value || "").trim();
         const onStock = String(controls.onStock.value) === "true";
 
-        if (!name) errs.push({ field: "name", msg: "Name is required" });
-        if (mode === "create" && !idVal) errs.push({ field: "id", msg: "ID is required when creating" });
+        if (!name) errs.push({ field: "name", msg: "Der Name ist erforderlich" });
+        if (mode === "create" && !idVal) errs.push({ field: "id", msg: "Die ID ist beim Erstellen erforderlich" });
 
         if (priceVal !== "" && isNaN(Number(priceVal))) {
-          errs.push({ field: "price", msg: "Price must be a number" });
+          errs.push({ field: "price", msg: "Der Preis muss eine Zahl sein" });
         }
 
         if (idVal) {
@@ -1234,50 +1243,50 @@
                   return !(foundDocId === currentDocId || storedId === currentDocId);
                 });
                 if (conflicts.length > 0) {
-                  errs.push({ field: "id", msg: "ID already used by another item" });
+                  errs.push({ field: "id", msg: "ID wird bereits von einem anderen Artikel verwendet" });
                   break;
                 }
               }
             }
           } catch (err) {
             console.error("ID uniqueness check error", err);
-            errs.push({ field: "id", msg: "Error checking ID uniqueness" });
+            errs.push({ field: "id", msg: "Fehler beim Prüfen der ID-Eindeutigkeit" });
           }
         }
 
         if (downloadable) {
           if (!downloadLink) {
-            errs.push({ field: "downloadLink", msg: "Download link required" });
+            errs.push({ field: "downloadLink", msg: "Ein Download-Link ist erforderlich" });
             return errs;
           }
           if (!downloadLink.startsWith("https://")) {
-            errs.push({ field: "downloadLink", msg: "Download link must start with https://" });
+            errs.push({ field: "downloadLink", msg: "Der Download-Link muss mit https:// beginnen" });
           }
           if (!version) {
-            errs.push({ field: "version", msg: "Version is required for downloadable items" });
+            errs.push({ field: "version", msg: "Für herunterladbare Artikel ist eine Version erforderlich" });
           }
           if (mode === "edit" && item.download_link && item.download_link !== downloadLink && item.version === version) {
-            errs.push({ field: "version", msg: "Version must be updated when download link changes" });
+            errs.push({ field: "version", msg: "Die Version muss aktualisiert werden, wenn sich der Download-Link ändert" });
           }
 
           const hostname = extractHostname(downloadLink);
           if (!hostname) {
-            errs.push({ field: "downloadLink", msg: "Invalid download link URL" });
+            errs.push({ field: "downloadLink", msg: "Ungültige Download-Link-URL" });
           } else if (hostIsBlacklisted(hostname) && !hostIsCloudAllowed(hostname)) {
-            errs.push({ field: "downloadLink", msg: "Download host not allowed" });
+            errs.push({ field: "downloadLink", msg: "Der Download-Host ist nicht erlaubt" });
           }
 
           if (!isDev) {
             if (!validateStoreTypeAndUrl(type, downloadLink)) {
-              errs.push({ field: "downloadLink", msg: `For type ${type} the link must match expected extension` });
+              errs.push({ field: "downloadLink", msg: `Für den Typ ${type} muss der Link zur erwarteten Dateiendung passen` });
             }
           } else {
             if (!validateDevTypeAndUrl(type, downloadLink)) {
-              errs.push({ field: "downloadLink", msg: `Dev type "${type}" does not match download extension` });
+              errs.push({ field: "downloadLink", msg: `Der Entwicklungstyp "${type}" stimmt nicht mit der Download-Endung überein` });
             }
             const domCheck = await userDomainIsValidForUrl(currentUser.email, downloadLink);
             if (!domCheck.ok) {
-              errs.push({ field: "downloadLink", msg: "Dev item must be hosted on your verified domain" });
+              errs.push({ field: "downloadLink", msg: "Der Entwicklungsartikel muss auf deiner verifizierten Domain gehostet werden" });
             }
           }
         }
@@ -1293,14 +1302,14 @@
                 })());
             const coinsStr = typeof ud.coins === "string" ? ud.coins : (ud.coins != null ? String(ud.coins) : "0");
             const numeric = parseInt(coinsStr.replace(/[^\d-]/g, ""), 10) || 0;
-            if (numeric < 500) errs.push({ field: "coins", msg: "Not enough coins (500 DF$ needed)" });
+            if (numeric < 500) errs.push({ field: "coins", msg: "Du hast nicht genug Münzen (500 DF$ werden benötigt)" });
           } catch (err) {
-            errs.push({ field: "coins", msg: "Error checking coins" });
+            errs.push({ field: "coins", msg: "Fehler beim Prüfen der Münzen" });
           }
         }
 
-        if (desc.length > 1800) errs.push({ field: "description", msg: "Description is too long" });
-        if (image && !/^https?:\/\//i.test(image)) errs.push({ field: "image", msg: "Image URL must start with http:// or https://" });
+        if (desc.length > 1800) errs.push({ field: "description", msg: "Die Beschreibung ist zu lang" });
+        if (image && !/^https?:\/\//i.test(image)) errs.push({ field: "image", msg: "Die Bild-URL muss mit http:// oder https:// beginnen" });
 
         return errs;
       }
@@ -1356,11 +1365,11 @@
         portal.id = "item-dialog-portal";
         portal.innerHTML = `
           <div class="dialog-backdrop" role="presentation"></div>
-          <div class="dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(mode === "create" ? "Create New Item" : `Edit ${item.name || ""}`)}">
+          <div class="dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(mode === "create" ? "Neuen Artikel erstellen" : `Bearbeiten von ${item.name || ""}`)}">
             <div class="dialog-inner">
               <header class="dialog-header">
-                <h3 class="dialog-title">${escapeHtml(mode === "create" ? "Create New Item" : `Edit ${item.name || ""}`)}</h3>
-                <button class="icon-button" type="button" aria-label="Close dialog">×</button>
+                <h3 class="dialog-title">${escapeHtml(mode === "create" ? "Neuen Artikel erstellen" : `Bearbeiten von ${item.name || ""}`)}</h3>
+                <button class="icon-button" type="button" aria-label="Dialog schließen">×</button>
               </header>
 
               <div class="dialog-body">
@@ -1375,13 +1384,13 @@
                     <div class="field">
                       <label class="field-label" for="dlg-id">ID</label>
                       <input class="input" id="dlg-id" type="text" value="${escapeHtml(item.id || "")}" ${mode === "edit" ? "readonly" : ""} />
-                      <div class="field-note">${mode === "create" ? "ID can be set when creating." : "ID cannot be changed."}</div>
+                      <div class="field-note">${mode === "create" ? "Die ID kann beim Erstellen festgelegt werden." : "Die ID kann nicht geändert werden."}</div>
                       <div class="field-error" id="err-dlg-id"></div>
                     </div>
 
                     <div class="field-row">
                       <div class="field">
-                        <label class="field-label" for="dlg-price">Price (DF$)</label>
+                        <label class="field-label" for="dlg-price">Preis (DF$)</label>
                         <input class="input" id="dlg-price" type="number" value="${item.price !== undefined && item.price !== null ? escapeHtml(item.price) : ""}" />
                         <div class="field-error" id="err-dlg-price"></div>
                       </div>
@@ -1393,45 +1402,45 @@
                     </div>
 
                     <div class="field">
-                      <label class="field-label" for="dlg-image">Image URL</label>
+                      <label class="field-label" for="dlg-image">Bild-URL</label>
                       <input class="input" id="dlg-image" type="url" value="${escapeHtml(item.image || "")}" />
                       <div class="field-error" id="err-dlg-image"></div>
                     </div>
 
                     <div class="field">
-                      <label class="field-label" for="dlg-desc">Description</label>
+                      <label class="field-label" for="dlg-desc">Beschreibung</label>
                       <textarea class="textarea" id="dlg-desc" rows="5">${escapeHtml(item.description || "")}</textarea>
                       <div class="field-error" id="err-dlg-description"></div>
                     </div>
 
                     <div class="field" id="type-field">
-                      <label class="field-label" for="dlg-type">Type</label>
+                      <label class="field-label" for="dlg-type">Typ</label>
                       <select class="select" id="dlg-type" ${mode === "edit" ? "disabled" : ""}></select>
                       <div class="field-error" id="err-dlg-type"></div>
                     </div>
 
                     <div class="field">
-                      <label class="field-label">Downloadable</label>
+                      <label class="field-label">Herunterladbar</label>
                       <div class="binary-grid">
-                        <label class="binary-option"><input type="radio" name="downloadable" value="true" ${mode === "edit" ? "disabled" : ""} ${item.downloadable ? "checked" : ""} /><span>Yes</span></label>
-                        <label class="binary-option"><input type="radio" name="downloadable" value="false" ${mode === "edit" ? "disabled" : ""} ${!item.downloadable ? "checked" : ""} /><span>No</span></label>
+                        <label class="binary-option"><input type="radio" name="downloadable" value="true" ${mode === "edit" ? "disabled" : ""} ${item.downloadable ? "checked" : ""} /><span>Ja</span></label>
+                        <label class="binary-option"><input type="radio" name="downloadable" value="false" ${mode === "edit" ? "disabled" : ""} ${!item.downloadable ? "checked" : ""} /><span>Nein</span></label>
                       </div>
                       <div class="field-error" id="err-dlg-downloadable"></div>
                     </div>
 
                     <div class="field">
-                      <label class="field-label">On Sale</label>
+                      <label class="field-label">Im Verkauf</label>
                       <div class="binary-grid">
-                        <label class="binary-option"><input type="radio" name="onstock" value="true" ${item.on_sale !== false ? "checked" : ""} /><span>Yes</span></label>
-                        <label class="binary-option"><input type="radio" name="onstock" value="false" ${item.on_sale === false ? "checked" : ""} /><span>No</span></label>
+                        <label class="binary-option"><input type="radio" name="onstock" value="true" ${item.on_sale !== false ? "checked" : ""} /><span>Ja</span></label>
+                        <label class="binary-option"><input type="radio" name="onstock" value="false" ${item.on_sale === false ? "checked" : ""} /><span>Nein</span></label>
                       </div>
                       <div class="field-error" id="err-dlg-onstock"></div>
                     </div>
 
                     <div class="field hidden" id="download-link-wrap">
-                      <label class="field-label" for="dlg-download-link">Download Link</label>
+                      <label class="field-label" for="dlg-download-link">Download-Link</label>
                       <input class="input" id="dlg-download-link" type="url" value="${escapeHtml(item.download_link || "")}" placeholder="https://..." />
-                      <div class="field-note">HTTPS required. Avoid blocked hosts. For dev items, the file must match the declared type and be on your verified domain.</div>
+                      <div class="field-note">HTTPS erforderlich. Gesperrte Hosts vermeiden. Für Entwicklungsartikel muss die Datei dem deklarierten Typ entsprechen und auf deiner verifizierten Domain liegen.</div>
                       <div class="field-error" id="err-dlg-download-link"></div>
                     </div>
 
@@ -1444,10 +1453,10 @@
                     <div class="preview-image" id="preview-image"></div>
                     <div class="preview-body">
                       <div class="preview-row">
-                        <div class="preview-title" id="preview-title">Preview</div>
-                        <div class="chip price-chip" id="preview-price">Free</div>
+                        <div class="preview-title" id="preview-title">Vorschau</div>
+                        <div class="chip price-chip" id="preview-price">Kostenlos</div>
                       </div>
-                      <div class="preview-type" id="preview-type">UNKNOWN</div>
+                      <div class="preview-type" id="preview-type">UNBEKANNT</div>
                       <div class="preview-desc" id="preview-desc"></div>
                     </div>
                   </div>
@@ -1455,8 +1464,8 @@
               </div>
 
               <footer class="dialog-footer">
-                <button class="button" type="button" id="dlg-discard">Discard</button>
-                <button class="button primary" type="button" id="dlg-save" disabled>Save</button>
+                <button class="button" type="button" id="dlg-discard">Verwerfen</button>
+                <button class="button primary" type="button" id="dlg-save" disabled>Speichern</button>
               </footer>
             </div>
           </div>
@@ -1466,7 +1475,7 @@
         state.dialogRoot = portal;
         state.dialog = portal.querySelector(".dialog");
         state.saveBtn = portal.querySelector("#dlg-save");
-        state.saveBtn.textContent = isDev && mode === "create" ? "Save for DF$ 500" : "Save";
+        state.saveBtn.textContent = isDev && mode === "create" ? "Für 500 DF$ speichern" : "Speichern";
         state.form = portal.querySelector(".item-form");
         state.preview = {
           image: portal.querySelector("#preview-image"),
@@ -1517,17 +1526,25 @@
           coins: portal.querySelector("#err-dlg-coins")
         };
 
-        const storeTypes = ["Sticker Pack", "Profile Frame"];
-        const devTypes = ["Package", "File", "Plugin", "Sample"];
+        const storeTypes = [
+          { value: "Sticker Pack", label: "Stickerpaket" },
+          { value: "Profile Frame", label: "Profilrahmen" }
+        ];
+        const devTypes = [
+          { value: "Package", label: "Paket" },
+          { value: "File", label: "Datei" },
+          { value: "Plugin", label: "Plugin" },
+          { value: "Sample", label: "Beispiel" }
+        ];
         const types = isDev ? devTypes : storeTypes;
 
         types.forEach(t => {
           const opt = document.createElement("option");
-          opt.value = t;
-          opt.textContent = t;
+          opt.value = t.value;
+          opt.textContent = t.label;
           type.appendChild(opt);
         });
-        type.value = item.type || types[0];
+        type.value = item.type || types[0].value;
 
         const refreshBinaryRefs = () => {
           state.controls.downloadable = portal.querySelector('input[name="downloadable"]:checked');
@@ -1535,10 +1552,10 @@
         };
 
         const updatePreview = () => {
-          const nm = name.value.trim() || "(no name)";
-          const pr = price.value.trim() !== "" ? `${price.value.trim()} DF$` : "Free";
+          const nm = name.value.trim() || "(ohne Namen)";
+          const pr = price.value.trim() !== "" ? `${price.value.trim()} DF$` : "Kostenlos";
           const img = image.value.trim() || "https://darkpurpleof.github.io/org-owner.jpg";
-          const typ = type.value || "UNKNOWN";
+          const typ = TYPE_LABELS[type.value] || type.value || "UNBEKANNT";
           const de = desc.value.trim();
 
           state.preview.image.style.backgroundImage = `url(${img})`;
@@ -1598,17 +1615,17 @@
           const hasErrors = await runValidationAndUpdateUI();
           if (hasErrors) return;
           if (state.isDev && !userCanCreateDevItems()) {
-            if (state.errors.coins) state.errors.coins.textContent = "You are not allowed to publish development items.";
-            showToast("You do not have permission to publish development items.", "red");
+            if (state.errors.coins) state.errors.coins.textContent = "Du hast keine Berechtigung, Entwicklungsartikel zu veröffentlichen.";
+            showToast("Du hast keine Berechtigung, Entwicklungsartikel zu veröffentlichen.", "red");
             return;
           }
 
           if (state.isDev && state.mode === "create") {
             const confirmed = await DPDiag.confirm({
-              title: "Publish development item?",
-              text: "This action will publish your development item and deduct 500 DF$ from your account.",
-              okText: "Save for DF$ 500",
-              cancelText: "Cancel"
+              title: "Entwicklungsartikel veröffentlichen?",
+              text: "Diese Aktion veröffentlicht deinen Entwicklungsartikel und zieht 500 DF$ von deinem Konto ab.",
+              okText: "Für 500 DF$ speichern",
+              cancelText: "Abbrechen"
             });
             if (!confirmed) return;
           }
@@ -1658,7 +1675,7 @@
                 const numeric = parseInt(coinsStr.replace(/[^\d-]/g, ""), 10) || 0;
 
                 if (numeric < 500) {
-                  if (state.errors.coins) state.errors.coins.textContent = "Not enough coins to publish dev item.";
+                  if (state.errors.coins) state.errors.coins.textContent = "Du hast nicht genug Münzen, um den Entwicklungsartikel zu veröffentlichen.";
                   state.saveBtn.disabled = true;
                   return;
                 }
@@ -1685,7 +1702,7 @@
                   const txPayload = {
                     amount: 500,
                     date: firebase.firestore.FieldValue.serverTimestamp(),
-                    description: `Upload ${nameVal}`,
+                    description: `Upload von ${nameVal}`,
                     image: imageVal || null,
                     source: "system@darkpurpleof.github.io",
                     type: "outgoing"
@@ -1711,7 +1728,7 @@
                     const txPayload = {
                       amount: 0,
                       date: firebase.firestore.FieldValue.serverTimestamp(),
-                      description: `Save Sticker Pack ${nameVal}`,
+                      description: `Stickerpaket ${nameVal} speichern`,
                       image: imageVal || null,
                       source: "system@darkpurpleof.github.io",
                       type: "outgoing"
@@ -1739,7 +1756,7 @@
                     const txPayload = {
                       amount: 0,
                       date: firebase.firestore.FieldValue.serverTimestamp(),
-                      description: `Save Sticker Pack ${nameVal}`,
+                      description: `Stickerpaket ${nameVal} speichern`,
                       image: imageVal || null,
                       source: "system@darkpurpleof.github.io",
                       type: "outgoing"
@@ -1753,12 +1770,12 @@
             }
 
             closeDialog();
-            showToast("Saved successfully", "purple");
+            showToast("Erfolgreich gespeichert", "purple");
           } catch (err) {
             console.error("save err", err);
-            if (state.errors.downloadLink) state.errors.downloadLink.textContent = "Failed to save: " + (err.message || String(err));
+            if (state.errors.downloadLink) state.errors.downloadLink.textContent = "Fehler beim Speichern: " + (err.message || String(err));
             state.saveBtn.disabled = true;
-            showToast("Could not save item", "red");
+            showToast("Der Artikel konnte nicht gespeichert werden", "red");
           }
         });
 
@@ -1770,12 +1787,12 @@
 
       function openItemDialog(options = {}) {
         if (!currentUser) {
-          showPermissionBanner("Sign in to create or edit items.");
+          showPermissionBanner("Melde dich an, um Artikel zu erstellen oder zu bearbeiten.");
           setTimeout(clearPermissionBanner, 2800);
           return;
         }
         if (options.isDev && !userCanCreateDevItems()) {
-          showToast("You do not have permission to publish development items.", "red");
+          showToast("Du hast keine Berechtigung, Entwicklungsartikel zu veröffentlichen.", "red");
           return;
         }
         buildDialog(options);
@@ -1875,44 +1892,42 @@
   <div id="toast" aria-live="polite"></div>
 
   <main class="page">
-    <section class="hero" aria-label="Dashboard summary">
+    <section class="hero" aria-label="Übersicht des Dashboards">
       <div class="hero-copy">
-        <h1>Creator Dashboard</h1>
+        <h1>Ersteller-Dashboard</h1>
       </div>
     </section>
 
-
-
-    <section class="tabs" aria-label="Creator dashboard tabs">
-      <button class="tab active" type="button" data-tab="store">Store</button>
-      <button class="tab" type="button" data-tab="dev">Development Items</button>
+    <section class="tabs" aria-label="Register des Ersteller-Dashboards">
+      <button class="tab active" type="button" data-tab="store">Shop</button>
+      <button class="tab" type="button" data-tab="dev">Entwicklungsartikel</button>
     </section>
 
-    <section id="store-panel" class="panel" role="tabpanel" aria-label="Store items">
+    <section id="store-panel" class="panel" role="tabpanel" aria-label="Shop-Artikel">
       <div class="panel-head">
-        <h2 class="panel-title">Store Items</h2>
+        <h2 class="panel-title">Shop-Artikel</h2>
         <div class="panel-actions">
-          <button id="new-store-btn" class="button primary" type="button">New Store Item</button>
+          <button id="new-store-btn" class="button primary" type="button">Neuen Shop-Artikel</button>
         </div>
       </div>
-      <div id="store-no-items" class="empty-state hidden">No store items yet. Create one with the button above.</div>
+      <div id="store-no-items" class="empty-state hidden">Es gibt noch keine Shop-Artikel. Erstelle oben einen neuen Artikel.</div>
       <div id="store-grid" class="cards-grid" aria-live="polite"></div>
     </section>
 
-    <section id="dev-panel" class="panel hidden" role="tabpanel" aria-label="Development items">
+    <section id="dev-panel" class="panel hidden" role="tabpanel" aria-label="Entwicklungsartikel">
       <div class="panel-head">
-        <h2 class="panel-title">Development Items</h2>
+        <h2 class="panel-title">Entwicklungsartikel</h2>
         <div class="panel-actions">
-          <button id="new-dev-btn" class="button primary" type="button">New Dev Item</button>
+          <button id="new-dev-btn" class="button primary" type="button">Neuen Entwicklungsartikel</button>
         </div>
       </div>
 
       <div id="dev-warning" class="dev-warning hidden" role="alert">
         <img class="warning-img" src="/assets/warning.png" alt="" />
-        <div class="msg">You're currently not allowed to publish development items, check later.</div>
+        <div class="msg">Du hast derzeit keine Berechtigung, Entwicklungsartikel zu veröffentlichen. Bitte später erneut prüfen.</div>
       </div>
 
-      <div id="dev-no-items" class="empty-state hidden">No development items yet. Add a plugin, sample, or file to get started.</div>
+      <div id="dev-no-items" class="empty-state hidden">Es gibt noch keine Entwicklungsartikel. Füge ein Plugin, ein Beispiel oder eine Datei hinzu, um zu beginnen.</div>
       <div id="dev-grid" class="cards-grid" aria-live="polite"></div>
     </section>
   </main>

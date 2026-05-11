@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Creator Dashboard</title>
+  <title>Панель создателя</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -761,6 +761,15 @@
         "Sample": ["dpfhtml","html","beta","json","delta","data","dat"]
       };
 
+      const TYPE_LABELS = {
+        "Sticker Pack": "Пак стикеров",
+        "Profile Frame": "Рамка профиля",
+        "Package": "Пакет",
+        "File": "Файл",
+        "Plugin": "Плагин",
+        "Sample": "Образец"
+      };
+
       const state = {
         activeTab: "store",
         dialogRoot: null,
@@ -871,14 +880,14 @@
 
       async function userDomainIsValidForUrl(email, url) {
         try {
-          if (!email) return { ok: false, reason: "Not signed in" };
-          if (!url) return { ok: false, reason: "No URL provided" };
+          if (!email) return { ok: false, reason: "Вы не вошли в систему" };
+          if (!url) return { ok: false, reason: "URL не указан" };
 
           const urlHost = normalizeHostname(url);
           let ud = currentUserData;
           if (!ud || Object.keys(ud).length === 0) {
             const userSnap = await getUserDataDocument(email);
-            if (!userSnap || !userSnap.exists) return { ok: false, reason: "No user domain registered" };
+            if (!userSnap || !userSnap.exists) return { ok: false, reason: "Домена пользователя нет в записи" };
             ud = userSnap.data();
           }
 
@@ -886,17 +895,17 @@
           const domainHost = normalizeHostname(rawDomain);
           const domainVerified = !!(ud && (ud.domain_verified || ud.is_verified || ud.isVerified));
 
-          if (!domainHost) return { ok: false, reason: "No domain registered" };
-          if (!urlHost) return { ok: false, reason: "Invalid URL" };
+          if (!domainHost) return { ok: false, reason: "Домен не зарегистрирован" };
+          if (!urlHost) return { ok: false, reason: "Недопустимый URL" };
 
           const matches = (urlHost === domainHost) || urlHost.endsWith("." + domainHost);
-          if (!matches) return { ok: false, reason: "Host does not match registered domain" };
-          if (!domainVerified) return { ok: false, reason: "Domain not verified" };
+          if (!matches) return { ok: false, reason: "Хост не совпадает с зарегистрированным доменом" };
+          if (!domainVerified) return { ok: false, reason: "Домен не подтвержден" };
 
           return { ok: true };
         } catch (err) {
           console.error("domain check error", err);
-          return { ok: false, reason: "Domain verification error" };
+          return { ok: false, reason: "Ошибка проверки домена" };
         }
       }
 
@@ -1011,8 +1020,8 @@
 
         const editBtn = document.createElement("button");
         editBtn.className = "edit-link";
-        editBtn.title = "Edit item";
-        editBtn.setAttribute("aria-label", `Edit ${item.name || "item"}`);
+        editBtn.title = "Редактировать товар";
+        editBtn.setAttribute("aria-label", `Редактировать ${item.name || "товар"}`);
         editBtn.innerHTML = '<img src="/assets/edit.png" alt="" />';
         editBtn.addEventListener("click", (e) => {
           e.preventDefault();
@@ -1037,12 +1046,12 @@
 
         const title = document.createElement("h3");
         title.className = "card-title";
-        title.textContent = item.name || "(no name)";
+        title.textContent = item.name || "(без названия)";
         titleRow.appendChild(title);
 
         const priceChip = document.createElement("div");
         priceChip.className = "chip price-chip";
-        priceChip.textContent = (item.price !== undefined && item.price !== null) ? `${item.price} DF$` : "Free";
+        priceChip.textContent = (item.price !== undefined && item.price !== null) ? `${item.price} DF$` : "Бесплатно";
         titleRow.appendChild(priceChip);
 
         content.appendChild(titleRow);
@@ -1050,7 +1059,7 @@
         if (isDevelopment) {
           const typeLine = document.createElement("div");
           typeLine.className = "chip type-chip";
-          typeLine.textContent = item.type ? item.type.toUpperCase() : "UNKNOWN";
+          typeLine.textContent = item.type ? (TYPE_LABELS[item.type] || item.type.toUpperCase()) : "НЕИЗВЕСТНО";
           content.appendChild(typeLine);
         }
 
@@ -1068,7 +1077,7 @@
           dl.href = item.download_link || "#";
           dl.target = "_blank";
           dl.rel = "noopener";
-          dl.textContent = "Download";
+          dl.textContent = "Скачать";
           bottom.appendChild(dl);
         }
 
@@ -1118,10 +1127,10 @@
               err => {
                 console.error("store snapshot err", err);
                 if (err && err.code === "permission-denied") {
-                  showPermissionBanner("Permission denied reading Store items at: " + pathCol.path);
+                  showPermissionBanner("Доступ запрещён для чтения товаров магазина по адресу: " + pathCol.path);
                   if (unsubStore) { unsubStore(); unsubStore = null; }
                 } else {
-                  showPermissionBanner("Error loading store items: " + (err.message || err));
+                  showPermissionBanner("Ошибка загрузки товаров магазина: " + (err.message || err));
                 }
               }
             );
@@ -1160,10 +1169,10 @@
               err => {
                 console.error("dev snapshot err", err);
                 if (err && err.code === "permission-denied") {
-                  showPermissionBanner("Permission denied reading Development items at: " + pathCol.path);
+                  showPermissionBanner("Доступ запрещён для чтения материалов разработки по адресу: " + pathCol.path);
                   if (unsubDev) { unsubDev(); unsubDev = null; }
                 } else {
-                  showPermissionBanner("Error loading development items: " + (err.message || err));
+                  showPermissionBanner("Ошибка загрузки материалов разработки: " + (err.message || err));
                 }
               }
             );
@@ -1175,22 +1184,22 @@
       }
 
       async function createStoreItem(data) {
-        if (!currentUser) throw new Error("Not signed in");
+        if (!currentUser) throw new Error("Вы не вошли в систему");
         return await db.collection("ugc").doc(currentUser.email).collection("store-items").add(data);
       }
 
       async function updateStoreItem(docId, data) {
-        if (!currentUser) throw new Error("Not signed in");
+        if (!currentUser) throw new Error("Вы не вошли в систему");
         return await db.collection("ugc").doc(currentUser.email).collection("store-items").doc(docId).set(data, { merge: true });
       }
 
       async function createDevItem(data) {
-        if (!currentUser) throw new Error("Not signed in");
+        if (!currentUser) throw new Error("Вы не вошли в систему");
         return await db.collection("ugc").doc(currentUser.email).collection("development-items").add(data);
       }
 
       async function updateDevItem(docId, data) {
-        if (!currentUser) throw new Error("Not signed in");
+        if (!currentUser) throw new Error("Вы не вошли в систему");
         return await db.collection("ugc").doc(currentUser.email).collection("development-items").doc(docId).set(data, { merge: true });
       }
 
@@ -1213,11 +1222,11 @@
         const desc = String(controls.description.value || "").trim();
         const onStock = String(controls.onStock.value) === "true";
 
-        if (!name) errs.push({ field: "name", msg: "Name is required" });
-        if (mode === "create" && !idVal) errs.push({ field: "id", msg: "ID is required when creating" });
+        if (!name) errs.push({ field: "name", msg: "Название обязательно" });
+        if (mode === "create" && !idVal) errs.push({ field: "id", msg: "ID обязателен при создании" });
 
         if (priceVal !== "" && isNaN(Number(priceVal))) {
-          errs.push({ field: "price", msg: "Price must be a number" });
+          errs.push({ field: "price", msg: "Цена должна быть числом" });
         }
 
         if (idVal) {
@@ -1234,50 +1243,50 @@
                   return !(foundDocId === currentDocId || storedId === currentDocId);
                 });
                 if (conflicts.length > 0) {
-                  errs.push({ field: "id", msg: "ID already used by another item" });
+                  errs.push({ field: "id", msg: "ID уже используется другим товаром" });
                   break;
                 }
               }
             }
           } catch (err) {
             console.error("ID uniqueness check error", err);
-            errs.push({ field: "id", msg: "Error checking ID uniqueness" });
+            errs.push({ field: "id", msg: "Ошибка проверки уникальности ID" });
           }
         }
 
         if (downloadable) {
           if (!downloadLink) {
-            errs.push({ field: "downloadLink", msg: "Download link required" });
+            errs.push({ field: "downloadLink", msg: "Требуется ссылка для скачивания" });
             return errs;
           }
           if (!downloadLink.startsWith("https://")) {
-            errs.push({ field: "downloadLink", msg: "Download link must start with https://" });
+            errs.push({ field: "downloadLink", msg: "Ссылка для скачивания должна начинаться с https://" });
           }
           if (!version) {
-            errs.push({ field: "version", msg: "Version is required for downloadable items" });
+            errs.push({ field: "version", msg: "Версия обязательна для скачиваемых материалов" });
           }
           if (mode === "edit" && item.download_link && item.download_link !== downloadLink && item.version === version) {
-            errs.push({ field: "version", msg: "Version must be updated when download link changes" });
+            errs.push({ field: "version", msg: "Версию нужно обновить, если ссылка для скачивания изменилась" });
           }
 
           const hostname = extractHostname(downloadLink);
           if (!hostname) {
-            errs.push({ field: "downloadLink", msg: "Invalid download link URL" });
+            errs.push({ field: "downloadLink", msg: "Недопустимый URL ссылки для скачивания" });
           } else if (hostIsBlacklisted(hostname) && !hostIsCloudAllowed(hostname)) {
-            errs.push({ field: "downloadLink", msg: "Download host not allowed" });
+            errs.push({ field: "downloadLink", msg: "Хост для скачивания не разрешён" });
           }
 
           if (!isDev) {
             if (!validateStoreTypeAndUrl(type, downloadLink)) {
-              errs.push({ field: "downloadLink", msg: `For type ${type} the link must match expected extension` });
+              errs.push({ field: "downloadLink", msg: `Для типа ${type} ссылка должна соответствовать ожидаемому расширению` });
             }
           } else {
             if (!validateDevTypeAndUrl(type, downloadLink)) {
-              errs.push({ field: "downloadLink", msg: `Dev type "${type}" does not match download extension` });
+              errs.push({ field: "downloadLink", msg: `Тип разработки "${type}" не совпадает с расширением ссылки` });
             }
             const domCheck = await userDomainIsValidForUrl(currentUser.email, downloadLink);
             if (!domCheck.ok) {
-              errs.push({ field: "downloadLink", msg: "Dev item must be hosted on your verified domain" });
+              errs.push({ field: "downloadLink", msg: "Материал разработки должен быть размещён на вашем подтверждённом домене" });
             }
           }
         }
@@ -1293,14 +1302,14 @@
                 })());
             const coinsStr = typeof ud.coins === "string" ? ud.coins : (ud.coins != null ? String(ud.coins) : "0");
             const numeric = parseInt(coinsStr.replace(/[^\d-]/g, ""), 10) || 0;
-            if (numeric < 500) errs.push({ field: "coins", msg: "Not enough coins (500 DF$ needed)" });
+            if (numeric < 500) errs.push({ field: "coins", msg: "Недостаточно монет (нужно 500 DF$)" });
           } catch (err) {
-            errs.push({ field: "coins", msg: "Error checking coins" });
+            errs.push({ field: "coins", msg: "Ошибка проверки монет" });
           }
         }
 
-        if (desc.length > 1800) errs.push({ field: "description", msg: "Description is too long" });
-        if (image && !/^https?:\/\//i.test(image)) errs.push({ field: "image", msg: "Image URL must start with http:// or https://" });
+        if (desc.length > 1800) errs.push({ field: "description", msg: "Описание слишком длинное" });
+        if (image && !/^https?:\/\//i.test(image)) errs.push({ field: "image", msg: "URL изображения должен начинаться с http:// или https://" });
 
         return errs;
       }
@@ -1356,18 +1365,18 @@
         portal.id = "item-dialog-portal";
         portal.innerHTML = `
           <div class="dialog-backdrop" role="presentation"></div>
-          <div class="dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(mode === "create" ? "Create New Item" : `Edit ${item.name || ""}`)}">
+          <div class="dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(mode === "create" ? "Создать новый товар" : `Редактировать ${item.name || ""}`)}">
             <div class="dialog-inner">
               <header class="dialog-header">
-                <h3 class="dialog-title">${escapeHtml(mode === "create" ? "Create New Item" : `Edit ${item.name || ""}`)}</h3>
-                <button class="icon-button" type="button" aria-label="Close dialog">×</button>
+                <h3 class="dialog-title">${escapeHtml(mode === "create" ? "Создать новый товар" : `Редактировать ${item.name || ""}`)}</h3>
+                <button class="icon-button" type="button" aria-label="Закрыть диалог">×</button>
               </header>
 
               <div class="dialog-body">
                 <div class="dialog-left">
                   <form class="item-form" novalidate>
                     <div class="field">
-                      <label class="field-label" for="dlg-name">Name</label>
+                      <label class="field-label" for="dlg-name">Название</label>
                       <input class="input" id="dlg-name" type="text" value="${escapeHtml(item.name || "")}" required />
                       <div class="field-error" id="err-dlg-name"></div>
                     </div>
@@ -1375,63 +1384,63 @@
                     <div class="field">
                       <label class="field-label" for="dlg-id">ID</label>
                       <input class="input" id="dlg-id" type="text" value="${escapeHtml(item.id || "")}" ${mode === "edit" ? "readonly" : ""} />
-                      <div class="field-note">${mode === "create" ? "ID can be set when creating." : "ID cannot be changed."}</div>
+                      <div class="field-note">${mode === "create" ? "ID можно задать при создании." : "ID нельзя изменить."}</div>
                       <div class="field-error" id="err-dlg-id"></div>
                     </div>
 
                     <div class="field-row">
                       <div class="field">
-                        <label class="field-label" for="dlg-price">Price (DF$)</label>
+                        <label class="field-label" for="dlg-price">Цена (DF$)</label>
                         <input class="input" id="dlg-price" type="number" value="${item.price !== undefined && item.price !== null ? escapeHtml(item.price) : ""}" />
                         <div class="field-error" id="err-dlg-price"></div>
                       </div>
                       <div class="field">
-                        <label class="field-label" for="dlg-version">Version</label>
+                        <label class="field-label" for="dlg-version">Версия</label>
                         <input class="input" id="dlg-version" type="text" value="${escapeHtml(item.version || "")}" />
                         <div class="field-error" id="err-dlg-version"></div>
                       </div>
                     </div>
 
                     <div class="field">
-                      <label class="field-label" for="dlg-image">Image URL</label>
+                      <label class="field-label" for="dlg-image">URL изображения</label>
                       <input class="input" id="dlg-image" type="url" value="${escapeHtml(item.image || "")}" />
                       <div class="field-error" id="err-dlg-image"></div>
                     </div>
 
                     <div class="field">
-                      <label class="field-label" for="dlg-desc">Description</label>
+                      <label class="field-label" for="dlg-desc">Описание</label>
                       <textarea class="textarea" id="dlg-desc" rows="5">${escapeHtml(item.description || "")}</textarea>
                       <div class="field-error" id="err-dlg-description"></div>
                     </div>
 
                     <div class="field" id="type-field">
-                      <label class="field-label" for="dlg-type">Type</label>
+                      <label class="field-label" for="dlg-type">Тип</label>
                       <select class="select" id="dlg-type" ${mode === "edit" ? "disabled" : ""}></select>
                       <div class="field-error" id="err-dlg-type"></div>
                     </div>
 
                     <div class="field">
-                      <label class="field-label">Downloadable</label>
+                      <label class="field-label">Скачиваемый</label>
                       <div class="binary-grid">
-                        <label class="binary-option"><input type="radio" name="downloadable" value="true" ${mode === "edit" ? "disabled" : ""} ${item.downloadable ? "checked" : ""} /><span>Yes</span></label>
-                        <label class="binary-option"><input type="radio" name="downloadable" value="false" ${mode === "edit" ? "disabled" : ""} ${!item.downloadable ? "checked" : ""} /><span>No</span></label>
+                        <label class="binary-option"><input type="radio" name="downloadable" value="true" ${mode === "edit" ? "disabled" : ""} ${item.downloadable ? "checked" : ""} /><span>Да</span></label>
+                        <label class="binary-option"><input type="radio" name="downloadable" value="false" ${mode === "edit" ? "disabled" : ""} ${!item.downloadable ? "checked" : ""} /><span>Нет</span></label>
                       </div>
                       <div class="field-error" id="err-dlg-downloadable"></div>
                     </div>
 
                     <div class="field">
-                      <label class="field-label">On Sale</label>
+                      <label class="field-label">В продаже</label>
                       <div class="binary-grid">
-                        <label class="binary-option"><input type="radio" name="onstock" value="true" ${item.on_sale !== false ? "checked" : ""} /><span>Yes</span></label>
-                        <label class="binary-option"><input type="radio" name="onstock" value="false" ${item.on_sale === false ? "checked" : ""} /><span>No</span></label>
+                        <label class="binary-option"><input type="radio" name="onstock" value="true" ${item.on_sale !== false ? "checked" : ""} /><span>Да</span></label>
+                        <label class="binary-option"><input type="radio" name="onstock" value="false" ${item.on_sale === false ? "checked" : ""} /><span>Нет</span></label>
                       </div>
                       <div class="field-error" id="err-dlg-onstock"></div>
                     </div>
 
                     <div class="field hidden" id="download-link-wrap">
-                      <label class="field-label" for="dlg-download-link">Download Link</label>
+                      <label class="field-label" for="dlg-download-link">Ссылка для скачивания</label>
                       <input class="input" id="dlg-download-link" type="url" value="${escapeHtml(item.download_link || "")}" placeholder="https://..." />
-                      <div class="field-note">HTTPS required. Avoid blocked hosts. For dev items, the file must match the declared type and be on your verified domain.</div>
+                      <div class="field-note">Требуется HTTPS. Избегайте заблокированных хостов. Для материалов разработки файл должен соответствовать указанному типу и находиться на вашем подтверждённом домене.</div>
                       <div class="field-error" id="err-dlg-download-link"></div>
                     </div>
 
@@ -1444,10 +1453,10 @@
                     <div class="preview-image" id="preview-image"></div>
                     <div class="preview-body">
                       <div class="preview-row">
-                        <div class="preview-title" id="preview-title">Preview</div>
-                        <div class="chip price-chip" id="preview-price">Free</div>
+                        <div class="preview-title" id="preview-title">Предпросмотр</div>
+                        <div class="chip price-chip" id="preview-price">Бесплатно</div>
                       </div>
-                      <div class="preview-type" id="preview-type">UNKNOWN</div>
+                      <div class="preview-type" id="preview-type">НЕИЗВЕСТНО</div>
                       <div class="preview-desc" id="preview-desc"></div>
                     </div>
                   </div>
@@ -1455,8 +1464,8 @@
               </div>
 
               <footer class="dialog-footer">
-                <button class="button" type="button" id="dlg-discard">Discard</button>
-                <button class="button primary" type="button" id="dlg-save" disabled>Save</button>
+                <button class="button" type="button" id="dlg-discard">Отменить</button>
+                <button class="button primary" type="button" id="dlg-save" disabled>Сохранить</button>
               </footer>
             </div>
           </div>
@@ -1466,7 +1475,7 @@
         state.dialogRoot = portal;
         state.dialog = portal.querySelector(".dialog");
         state.saveBtn = portal.querySelector("#dlg-save");
-        state.saveBtn.textContent = isDev && mode === "create" ? "Save for DF$ 500" : "Save";
+        state.saveBtn.textContent = isDev && mode === "create" ? "Сохранить за 500 DF$" : "Сохранить";
         state.form = portal.querySelector(".item-form");
         state.preview = {
           image: portal.querySelector("#preview-image"),
@@ -1517,17 +1526,25 @@
           coins: portal.querySelector("#err-dlg-coins")
         };
 
-        const storeTypes = ["Sticker Pack", "Profile Frame"];
-        const devTypes = ["Package", "File", "Plugin", "Sample"];
+        const storeTypes = [
+          { value: "Sticker Pack", label: "Пак стикеров" },
+          { value: "Profile Frame", label: "Рамка профиля" }
+        ];
+        const devTypes = [
+          { value: "Package", label: "Пакет" },
+          { value: "File", label: "Файл" },
+          { value: "Plugin", label: "Плагин" },
+          { value: "Sample", label: "Образец" }
+        ];
         const types = isDev ? devTypes : storeTypes;
 
         types.forEach(t => {
           const opt = document.createElement("option");
-          opt.value = t;
-          opt.textContent = t;
+          opt.value = t.value;
+          opt.textContent = t.label;
           type.appendChild(opt);
         });
-        type.value = item.type || types[0];
+        type.value = item.type || types[0].value;
 
         const refreshBinaryRefs = () => {
           state.controls.downloadable = portal.querySelector('input[name="downloadable"]:checked');
@@ -1535,10 +1552,10 @@
         };
 
         const updatePreview = () => {
-          const nm = name.value.trim() || "(no name)";
-          const pr = price.value.trim() !== "" ? `${price.value.trim()} DF$` : "Free";
+          const nm = name.value.trim() || "(без названия)";
+          const pr = price.value.trim() !== "" ? `${price.value.trim()} DF$` : "Бесплатно";
           const img = image.value.trim() || "https://darkpurpleof.github.io/org-owner.jpg";
-          const typ = type.value || "UNKNOWN";
+          const typ = TYPE_LABELS[type.value] || type.value || "НЕИЗВЕСТНО";
           const de = desc.value.trim();
 
           state.preview.image.style.backgroundImage = `url(${img})`;
@@ -1598,17 +1615,17 @@
           const hasErrors = await runValidationAndUpdateUI();
           if (hasErrors) return;
           if (state.isDev && !userCanCreateDevItems()) {
-            if (state.errors.coins) state.errors.coins.textContent = "You are not allowed to publish development items.";
-            showToast("You do not have permission to publish development items.", "red");
+            if (state.errors.coins) state.errors.coins.textContent = "У вас нет разрешения на публикацию материалов разработки.";
+            showToast("У вас нет разрешения на публикацию материалов разработки.", "red");
             return;
           }
 
           if (state.isDev && state.mode === "create") {
             const confirmed = await DPDiag.confirm({
-              title: "Publish development item?",
-              text: "This action will publish your development item and deduct 500 DF$ from your account.",
-              okText: "Save for DF$ 500",
-              cancelText: "Cancel"
+              title: "Опубликовать материал разработки?",
+              text: "Это действие опубликует ваш материал разработки и спишет 500 DF$ с вашего счёта.",
+              okText: "Сохранить за 500 DF$",
+              cancelText: "Отмена"
             });
             if (!confirmed) return;
           }
@@ -1658,7 +1675,7 @@
                 const numeric = parseInt(coinsStr.replace(/[^\d-]/g, ""), 10) || 0;
 
                 if (numeric < 500) {
-                  if (state.errors.coins) state.errors.coins.textContent = "Not enough coins to publish dev item.";
+                  if (state.errors.coins) state.errors.coins.textContent = "У вас недостаточно монет для публикации материала разработки.";
                   state.saveBtn.disabled = true;
                   return;
                 }
@@ -1685,7 +1702,7 @@
                   const txPayload = {
                     amount: 500,
                     date: firebase.firestore.FieldValue.serverTimestamp(),
-                    description: `Upload ${nameVal}`,
+                    description: `Загрузка ${nameVal}`,
                     image: imageVal || null,
                     source: "system@darkpurpleof.github.io",
                     type: "outgoing"
@@ -1711,7 +1728,7 @@
                     const txPayload = {
                       amount: 0,
                       date: firebase.firestore.FieldValue.serverTimestamp(),
-                      description: `Save Sticker Pack ${nameVal}`,
+                      description: `Сохранить пак стикеров ${nameVal}`,
                       image: imageVal || null,
                       source: "system@darkpurpleof.github.io",
                       type: "outgoing"
@@ -1739,7 +1756,7 @@
                     const txPayload = {
                       amount: 0,
                       date: firebase.firestore.FieldValue.serverTimestamp(),
-                      description: `Save Sticker Pack ${nameVal}`,
+                      description: `Сохранить пак стикеров ${nameVal}`,
                       image: imageVal || null,
                       source: "system@darkpurpleof.github.io",
                       type: "outgoing"
@@ -1753,12 +1770,12 @@
             }
 
             closeDialog();
-            showToast("Saved successfully", "purple");
+            showToast("Сохранено успешно", "purple");
           } catch (err) {
             console.error("save err", err);
-            if (state.errors.downloadLink) state.errors.downloadLink.textContent = "Failed to save: " + (err.message || String(err));
+            if (state.errors.downloadLink) state.errors.downloadLink.textContent = "Ошибка при сохранении: " + (err.message || String(err));
             state.saveBtn.disabled = true;
-            showToast("Could not save item", "red");
+            showToast("Не удалось сохранить товар", "red");
           }
         });
 
@@ -1770,12 +1787,12 @@
 
       function openItemDialog(options = {}) {
         if (!currentUser) {
-          showPermissionBanner("Sign in to create or edit items.");
+          showPermissionBanner("Войдите в систему, чтобы создавать или редактировать товары.");
           setTimeout(clearPermissionBanner, 2800);
           return;
         }
         if (options.isDev && !userCanCreateDevItems()) {
-          showToast("You do not have permission to publish development items.", "red");
+          showToast("У вас нет разрешения на публикацию материалов разработки.", "red");
           return;
         }
         buildDialog(options);
@@ -1875,44 +1892,44 @@
   <div id="toast" aria-live="polite"></div>
 
   <main class="page">
-    <section class="hero" aria-label="Dashboard summary">
+    <section class="hero" aria-label="Обзор панели">
       <div class="hero-copy">
-        <h1>Creator Dashboard</h1>
+        <h1>Панель создателя</h1>
       </div>
     </section>
 
 
 
-    <section class="tabs" aria-label="Creator dashboard tabs">
-      <button class="tab active" type="button" data-tab="store">Store</button>
-      <button class="tab" type="button" data-tab="dev">Development Items</button>
+    <section class="tabs" aria-label="Вкладки панели создателя">
+      <button class="tab active" type="button" data-tab="store">Магазин</button>
+      <button class="tab" type="button" data-tab="dev">Материалы разработки</button>
     </section>
 
-    <section id="store-panel" class="panel" role="tabpanel" aria-label="Store items">
+    <section id="store-panel" class="panel" role="tabpanel" aria-label="Товары магазина">
       <div class="panel-head">
-        <h2 class="panel-title">Store Items</h2>
+        <h2 class="panel-title">Товары магазина</h2>
         <div class="panel-actions">
-          <button id="new-store-btn" class="button primary" type="button">New Store Item</button>
+          <button id="new-store-btn" class="button primary" type="button">Новый товар магазина</button>
         </div>
       </div>
-      <div id="store-no-items" class="empty-state hidden">No store items yet. Create one with the button above.</div>
+      <div id="store-no-items" class="empty-state hidden">Пока нет товаров магазина. Создайте первый с помощью кнопки выше.</div>
       <div id="store-grid" class="cards-grid" aria-live="polite"></div>
     </section>
 
-    <section id="dev-panel" class="panel hidden" role="tabpanel" aria-label="Development items">
+    <section id="dev-panel" class="panel hidden" role="tabpanel" aria-label="Материалы разработки">
       <div class="panel-head">
-        <h2 class="panel-title">Development Items</h2>
+        <h2 class="panel-title">Материалы разработки</h2>
         <div class="panel-actions">
-          <button id="new-dev-btn" class="button primary" type="button">New Dev Item</button>
+          <button id="new-dev-btn" class="button primary" type="button">Новый материал разработки</button>
         </div>
       </div>
 
       <div id="dev-warning" class="dev-warning hidden" role="alert">
         <img class="warning-img" src="/assets/warning.png" alt="" />
-        <div class="msg">You're currently not allowed to publish development items, check later.</div>
+        <div class="msg">Сейчас у вас нет разрешения на публикацию материалов разработки. Проверьте позже.</div>
       </div>
 
-      <div id="dev-no-items" class="empty-state hidden">No development items yet. Add a plugin, sample, or file to get started.</div>
+      <div id="dev-no-items" class="empty-state hidden">Пока нет материалов разработки. Добавьте плагин, образец или файл, чтобы начать.</div>
       <div id="dev-grid" class="cards-grid" aria-live="polite"></div>
     </section>
   </main>

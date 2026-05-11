@@ -921,6 +921,7 @@ class DPTopbar extends HTMLElement {
     this._verifiedIcon = null;
     this._pageLocked = false;
     this._locale = LOCALE_FALLBACK;
+    this._localeRedirectEnabled = false;
     this._globalGatePromise = null;
     this._globalGatesChecked = false;
     this._searchCache = { ts: 0, users: [] };
@@ -935,7 +936,7 @@ class DPTopbar extends HTMLElement {
     this._setupElements();
     this._setupTheme();
     this._wireUI();
-    this._setLocale(this._getBrowserLocale());
+    this._setLocale(this._getBrowserLocale(), { redirect: false });
     this._waitForFirebaseAndInit();
     
     // Detect URL changes and update locale
@@ -970,9 +971,10 @@ class DPTopbar extends HTMLElement {
     const currentPathname = window.location.pathname;
     if (currentPathname !== this._lastPathname) {
       this._lastPathname = currentPathname;
-      const newLocale = this._getBrowserLocale();
+      const pathLocale = this._getPathLocale();
+      const newLocale = pathLocale || (this._currentUser ? this._locale : this._getBrowserLocale());
       if (newLocale !== this._locale) {
-        this._setLocale(newLocale);
+        this._setLocale(newLocale, { redirect: this._localeRedirectEnabled });
       }
     }
   }
@@ -1572,6 +1574,12 @@ class DPTopbar extends HTMLElement {
     return this._normalizeLocale(source);
   }
 
+  _getPathLocale() {
+    const pathname = window.location.pathname || '/';
+    const pathMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
+    return pathMatch ? this._normalizeLocale(pathMatch[1]) : null;
+  }
+
   _getStrings() {
     return LOCALE_STRINGS[this._locale] || LOCALE_STRINGS[LOCALE_FALLBACK];
   }
@@ -1613,7 +1621,7 @@ class DPTopbar extends HTMLElement {
     return this._localizePath(rawTarget);
   }
 
-  _setLocale(locale) {
+  _setLocale(locale, { redirect = true } = {}) {
     const normalized = this._normalizeLocale(locale);
     this._locale = normalized;
     const strings = this._getStrings();
@@ -1682,7 +1690,7 @@ class DPTopbar extends HTMLElement {
     }
     // After updating UI, ensure the URL matches the selected locale.
     try {
-      if (typeof this._maybeRedirectForLocale === 'function') this._maybeRedirectForLocale();
+      if (redirect && this._localeRedirectEnabled && typeof this._maybeRedirectForLocale === 'function') this._maybeRedirectForLocale();
     } catch (err) {
       console.warn('Locale redirect check failed:', err);
     }
@@ -1782,6 +1790,7 @@ class DPTopbar extends HTMLElement {
         setTimeout(step, 150);
       } else {
         console.warn('Firebase not detected. Topbar will show limited functionality.');
+        this._localeRedirectEnabled = true;
         this._renderSignedOut();
       }
     };
@@ -1800,6 +1809,7 @@ class DPTopbar extends HTMLElement {
 
     this._authUnsub = auth.onAuthStateChanged(async user => {
       if (this._pageLocked) return;
+      if (!this._localeRedirectEnabled) this._localeRedirectEnabled = true;
 
       this._currentUser = user;
       this._currentUserEmail = user?.email || null;
@@ -1833,7 +1843,8 @@ class DPTopbar extends HTMLElement {
         try {
           const snap = await db.collection('user_data').doc(user.email).get();
           const data = snap.exists ? snap.data() : {};
-          const locale = this._normalizeLocale(data.lang || this._getBrowserLocale());
+          const accountLang = this._normalizeLocale(data.lang || '');
+          const locale = accountLang || this._getPathLocale() || LOCALE_FALLBACK;
           this._setLocale(locale);
           const coins = Number(data.coins || 0);
 
@@ -2207,7 +2218,7 @@ class DPTopbar extends HTMLElement {
 
   _renderSignedOut() {
     if (this._pageLocked) return;
-    this._setLocale(this._getBrowserLocale());
+    this._setLocale(this._getBrowserLocale(), { redirect: this._localeRedirectEnabled });
     this.$coin.textContent = `DF$ - 0`;
     if (this.$coinBalanceSummary) this.$coinBalanceSummary.textContent = `DF$ - 0`;
     this.$pfp.style.backgroundImage = `url('/org-owner.jpg')`;
@@ -2219,7 +2230,8 @@ class DPTopbar extends HTMLElement {
 
   _renderSignedInBasic(user) {
     if (this._pageLocked) return;
-    this._setLocale(this._getBrowserLocale());
+    const locale = this._getPathLocale() || LOCALE_FALLBACK;
+    this._setLocale(locale, { redirect: this._localeRedirectEnabled });
     this.$coin.textContent = `DF$ - 0`;
     if (this.$coinBalanceSummary) this.$coinBalanceSummary.textContent = `DF$ - 0`;
     this.$pfp.style.backgroundImage = `url('/org-owner.jpg')`;
