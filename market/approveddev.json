@@ -1,0 +1,14 @@
+{
+  "marketplace": {
+    "items": [
+      {
+        "id": "FURRYROLE",
+        "name": "Furry Role",
+        "icon": "https://boykisser2189.neocities.org/he.png",
+        "author": "boykisser2189@darkpurpleof.github.io",
+        "type": 1,
+        "subtype": "Role"
+      }
+    ]
+  }
+}
