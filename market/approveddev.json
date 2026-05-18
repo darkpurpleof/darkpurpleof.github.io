@@ -8,7 +8,8 @@
         "author": "boykisser2189@darkpurpleof.github.io",
         "type": 1,
         "subtype": "Role"
-      }
+      },
+      {"id":"PFPFRAMES","name":"Profile Frames","icon":"https://boykisser2189.neocities.org/frames.jpg","author":"boykisser2189@darkpurpleof.github.io","type":1,"subtype":"Bundle"}
     ]
   }
 }
