@@ -6,6 +6,7 @@
   <title>プロフィール</title>
 
   <script src="/authorUGCList.js"></script>
+  <script src="/sendgift.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
@@ -778,6 +779,31 @@
         postBtn.addEventListener('click', () => { window.location.href = `./createpost?wall=${otherEmailEsc}`; });
       }
       interactionButtons.appendChild(postBtn);
+
+      const giftBtn = document.createElement('button');
+      giftBtn.className = 'btn';
+      giftBtn.textContent = `${nameForButtons} にギフトを送る`;
+      if (isActionDisabled('post')) {
+        giftBtn.disabled = true;
+        giftBtn.title = 'ユーザーが存在しません';
+        giftBtn.style.opacity = 0.6;
+      } else if (!window.SendGiftSheet) {
+        giftBtn.disabled = true;
+        giftBtn.title = 'ギフトシステムは利用できません';
+        giftBtn.style.opacity = 0.5;
+      } else {
+        giftBtn.addEventListener('click', () => {
+          if (!window.SendGiftSheet) {
+            showToast('ギフトシステムは利用できません', 'red');
+            return;
+          }
+          window.SendGiftSheet.open({
+            email: viewedEmail,
+            username: viewedData && viewedData.displayName
+          });
+        });
+      }
+      interactionButtons.appendChild(giftBtn);
 
       const chatBtn = document.createElement('button');
       chatBtn.className = 'btn';

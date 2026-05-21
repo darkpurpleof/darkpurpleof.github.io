@@ -108,6 +108,7 @@
 
   <!-- dp-topbar (user provided) -->
   <script type="module" src="/dp-topbar.js"></script>
+  <script src="/sendgift.js"></script>
 </head>
 <body>
   <dp-topbar></dp-topbar>
@@ -145,6 +146,7 @@
           <div class="action-row" id="action-row">
             <!-- single prominent action button; label & handler updated dynamically -->
             <button class="action-button" id="action-btn" style="display:none">Purchase</button>
+            <button class="action-button secondary" id="gift-btn" style="display:none">Gift this item</button>
             <button class="action-button secondary" id="migrate-btn" style="display:none">Migrate</button>
             <button class="action-button secondary" id="view-in-app-btn" style="display:none">View in App</button>
             <div class="small-muted" id="action-disclaimer"></div>
@@ -328,11 +330,12 @@
 
     async function updateActionState(){
       const actionBtn = document.getElementById('action-btn');
+      const giftBtn = document.getElementById('gift-btn');
       const migrateBtn = document.getElementById('migrate-btn');
       const viewInAppBtn = document.getElementById('view-in-app-btn');
       const disclaimer = document.getElementById('action-disclaimer');
       const viewInAppDisclaimer = document.getElementById('view-in-app-disclaimer');
-      actionBtn.style.display = 'none'; migrateBtn.style.display = 'none'; viewInAppBtn.style.display = 'none'; disclaimer.textContent = ''; viewInAppDisclaimer.textContent = '';
+      actionBtn.style.display = 'none'; giftBtn.style.display = 'none'; migrateBtn.style.display = 'none'; viewInAppBtn.style.display = 'none'; disclaimer.textContent = ''; viewInAppDisclaimer.textContent = '';
       if(!ugcDoc) return;
 
       const authorResolved = !!(authorDoc && (authorDoc['display name'] || authorDoc.displayName || authorDoc.display_name));
@@ -356,6 +359,16 @@
       if(!onSale) disclaimer.textContent = 'This item is not currently on sale';
 
       const android = isAndroid();
+
+      if (giftBtn) {
+        giftBtn.style.display = 'inline-flex';
+        giftBtn.disabled = !window.SendGiftSheet;
+        giftBtn.textContent = 'Gift this item';
+        giftBtn.onclick = window.SendGiftSheet ? () => {
+          const typeId = (typeof typeParam !== 'undefined' && typeParam !== null && typeParam !== '') ? Number(typeParam) : 0;
+          window.SendGiftSheet.open({ ugcId: itemId, author: authorParam, typeId });
+        } : null;
+      }
 
       if (owned) {
         if (ugcDoc.download_link) {

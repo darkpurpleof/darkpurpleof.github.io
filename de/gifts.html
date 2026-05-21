@@ -1,0 +1,1142 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Meine Geschenke</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <script type="module" src="/dp-topbar.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { width: 100%; min-height: 100%; overflow-x: hidden; }
+    img { max-width: 100%; display: block; }
+
+    :root{
+      --bg: #171717;
+      --panel: #1b1b1b;
+      --card: #1f1f1f;
+      --card-2: #232323;
+      --muted: #a8a8a8;
+      --text: #eaeaea;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --border: rgba(255,255,255,0.05);
+      --border-strong: rgba(255,255,255,0.08);
+      --soft: rgba(255,255,255,0.03);
+      --radius: 14px;
+    }
+
+    body.light {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --card: #ffffff;
+      --card-2: #f8fafc;
+      --muted: #475569;
+      --text: #0f172a;
+      --border: rgba(0,0,0,0.06);
+      --border-strong: rgba(0,0,0,0.09);
+      --soft: rgba(0,0,0,0.025);
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background .25s ease, color .25s ease;
+    }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+    .top-bar { display:none !important; }
+
+    main.container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 22px auto;
+      padding: 18px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--card), var(--panel));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+    }
+
+    .hero {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      max-width: 65ch;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 16px;
+      background: var(--soft);
+      border: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 14px;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .18s ease, color .18s ease, transform .18s ease;
+      min-width: 0;
+    }
+
+    .tab-btn:hover { transform: translateY(-1px); }
+    .tab-btn.active {
+      background: linear-gradient(180deg, rgba(107, 33, 168, .3), rgba(91, 33, 182, .22));
+      color: var(--text);
+      border: 1px solid rgba(107, 33, 168, .32);
+    }
+
+    .tab-btn .count {
+      display: inline-flex;
+      margin-left: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--soft);
+      font-size: 11px;
+      font-weight: 800;
+      color: inherit;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .empty-state {
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px dashed var(--border-strong);
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .gift-card {
+      background: linear-gradient(180deg, var(--card-2), var(--card));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .gift-card:hover {
+      transform: translateY(-1px);
+      border-color: var(--border-strong);
+    }
+
+    .gift-card.highlighted {
+      box-shadow: 0 0 0 1px rgba(107, 33, 168, .7), 0 0 0 6px rgba(107, 33, 168, .12), 0 10px 24px rgba(0,0,0,.14);
+    }
+
+    .gift-cover {
+      position: relative;
+      height: 190px;
+      overflow: hidden;
+    }
+
+    .gift-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .gift-cover::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.58));
+      pointer-events: none;
+    }
+
+    .gift-cover-copy {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      z-index: 1;
+      display: grid;
+      gap: 12px;
+    }
+
+    .gift-cover-title {
+      margin: 0;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .partner-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .partner-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+    }
+
+    .partner-avatar,
+    .partner-frame {
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .partner-frame {
+      position: absolute;
+      inset: 0;
+      display: none;
+      pointer-events: none;
+    }
+
+    .partner-meta {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .partner-name {
+      margin: 0;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .partner-name span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .gift-body {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .gift-message {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .gift-subtext {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+      min-width: 0;
+    }
+
+    .primary-btn,
+    .secondary-btn,
+    .tab-btn,
+    .sheet-close {
+      font: inherit;
+    }
+
+    .primary-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(107, 33, 168, .32);
+      background: linear-gradient(180deg, #7c3aed, #5b21b6);
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, opacity .15s ease;
+    }
+
+    .primary-btn:hover { transform: translateY(-1px); }
+    .primary-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+    .secondary-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+
+    .secondary-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--border-strong);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .secondary-btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top: 2px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 8px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.54);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 14px;
+      z-index: 9998;
+    }
+
+    .sheet-backdrop.open { display: flex; }
+
+    .sheet {
+      width: min(780px, 100%);
+      border-radius: 24px 24px 18px 18px;
+      background: linear-gradient(180deg, var(--card), var(--panel));
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 50px rgba(0,0,0,.32);
+      overflow: hidden;
+      transform: translateY(24px);
+      animation: sheetIn .22s ease forwards;
+      max-height: min(82vh, 820px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    @keyframes sheetIn {
+      from { transform: translateY(24px); opacity: 0.3; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .sheet-handle {
+      width: 54px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+      margin: 12px auto 0;
+    }
+
+    body.light .sheet-handle { background: rgba(0,0,0,.12); }
+
+    .sheet-content {
+      padding: 18px;
+      overflow: auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .sheet-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .sheet-title-wrap {
+      display: grid;
+      gap: 6px;
+    }
+
+    .sheet-title {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .sheet-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .sheet-close {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sheet-preview {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+    }
+
+    .ugc-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .ugc-art {
+      width: 62px;
+      height: 62px;
+      border-radius: 16px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--soft);
+      border: 1px solid var(--border-strong);
+    }
+
+    .ugc-meta {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .ugc-name {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .ugc-name span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ugc-sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .sheet-error {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .empty-inline {
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px dashed var(--border-strong);
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.10), rgba(255,255,255,.04));
+      background-size: 200% 100%;
+      animation: shimmer 1.25s linear infinite;
+      border-radius: 14px;
+    }
+
+    body.light .skeleton {
+      background: linear-gradient(90deg, rgba(0,0,0,.03), rgba(0,0,0,.08), rgba(0,0,0,.03));
+      background-size: 200% 100%;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    #toast {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 14px;
+      border-radius: 11px;
+      font-weight: 800;
+      display: none;
+      z-index: 99999;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.22);
+    }
+
+    #toast.purple { background: var(--accent-strong); color: #fff; }
+    #toast.red { background: #c00; color: #fff; }
+
+    @media (max-width: 600px) {
+      main.container { padding: 12px; margin: 12px auto; }
+      .card { padding: 14px; }
+      .hero h1 { font-size: 24px; }
+      .gift-cover { height: 170px; }
+      .sheet { max-height: 86vh; }
+      .sheet-head { flex-direction: column; }
+    }
+  </style>
+
+  <script>
+     const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+
+    if (!firebase.apps.length && !String(firebaseConfig.apiKey).includes("PASTE_YOUR")) {
+      firebase.initializeApp(firebaseConfig);
+    } else if (!firebase.apps.length) {
+      // Safe fallback so the page does not crash while you paste config.
+      console.warn("Firebase config is missing.");
+    }
+
+    const auth = firebase.apps.length ? firebase.auth() : null;
+    const db = firebase.apps.length ? firebase.firestore() : null;
+    const fieldValue = firebase.apps.length ? firebase.firestore.FieldValue : null;
+
+    const state = {
+      selectedTab: "received",
+      received: [],
+      sent: [],
+      loadingReceived: true,
+      loadingSent: true,
+      currentEmail: "",
+      highlightGiftId: new URLSearchParams(location.search).get("gift_doc_id") || "",
+      highlightedGiftId: "",
+      selectedGift: null,
+      sheetOpen: false,
+      sheetLoading: false,
+      sheetError: "",
+      selectedUgc: null,
+      unsubReceived: null,
+      unsubSent: null,
+      profileCache: new Map(),
+      ugcCache: new Map(),
+      configMissing: !firebase.apps.length
+    };
+
+    const els = {};
+    const $ = (id) => document.getElementById(id);
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function setToast(message, tone = "purple") {
+      const toast = els.toast;
+      toast.textContent = message;
+      toast.className = "";
+      toast.id = "toast";
+      toast.classList.add(tone);
+      toast.style.display = "block";
+      clearTimeout(setToast._timer);
+      setToast._timer = setTimeout(() => { toast.style.display = "none"; }, 2600);
+    }
+
+    function verifiedIcon() {
+      return `
+       <svg viewBox="0 0 20 20" height="16" width="16" preserveAspectRatio="xMidYMid meet" class="" fill="none"><title>psa-verified-blue</title><path fill-rule="evenodd" clip-rule="evenodd" d="M16.595 8.23978L17.7696 9.43025L17.7615 9.42221C18.0795 9.74022 18.0795 10.2538 17.7614 10.5718L16.5868 11.7623L17.011 13.3849C17.117 13.817 16.8641 14.2655 16.4318 14.3797L14.8167 14.82L14.3762 16.4345C14.2539 16.8666 13.8134 17.1275 13.3811 17.0134L11.7578 16.5894L10.5669 17.7635C10.4119 17.9185 10.1998 18 9.99592 18C9.792 18 9.57991 17.9185 9.42493 17.7635L8.234 16.5894L6.61076 17.0134C6.17844 17.1275 5.7298 16.8666 5.6156 16.4345L5.17512 14.82L3.56003 14.3797C3.13587 14.2574 2.87484 13.817 2.98904 13.3849L3.4132 11.7623L2.23859 10.5718C1.92047 10.2538 1.92047 9.74009 2.23859 9.42209L3.4132 8.23162L2.98904 6.60899C2.87484 6.17684 3.12771 5.72837 3.56003 5.61422L5.17512 5.17391L5.6156 3.55943C5.73796 3.13543 6.17844 2.87451 6.61076 2.98866L8.234 3.41266L9.42493 2.2385C9.74305 1.9205 10.2569 1.9205 10.5751 2.2385L11.766 3.41266L13.3892 2.98866C13.8216 2.88266 14.2702 3.13543 14.3844 3.56759L14.8249 5.18206L16.44 5.62237C16.8723 5.74468 17.1333 6.18499 17.0191 6.61715L16.595 8.23978ZM9.37506 12.7678C9.21482 12.9279 9.01452 13 8.80621 13C8.5979 13 8.3976 12.9199 8.23736 12.7678L6.23435 10.7658C5.92188 10.4535 5.92188 9.94895 6.23435 9.63664C6.54682 9.32432 7.05158 9.32432 7.36405 9.63664L8.7982 11.0701L12.636 7.23423C12.9484 6.92192 13.4532 6.92192 13.7656 7.23423C14.0781 7.54655 14.0781 8.05105 13.7656 8.36336L11.5784 10.5656L9.37506 12.7678Z" fill="#007BFC" style="fill: rgb(0, 123, 252); fill-opacity: 1;"></path></svg>
+      `;
+    }
+
+    function getCurrentList() {
+      return state.selectedTab === "received" ? state.received : state.sent;
+    }
+
+    function isCurrentLoading() {
+      return state.selectedTab === "received" ? state.loadingReceived : state.loadingSent;
+    }
+
+    function render() {
+      const receivedCount = state.received.length;
+      const sentCount = state.sent.length;
+      const list = getCurrentList();
+
+      els.tabReceived.classList.toggle("active", state.selectedTab === "received");
+      els.tabSent.classList.toggle("active", state.selectedTab === "sent");
+      els.tabReceived.querySelector(".count").textContent = receivedCount;
+      els.tabSent.querySelector(".count").textContent = sentCount;
+      els.sectionBadge.textContent = isCurrentLoading() ? "Wird geladen" : `${list.length} Geschenk${list.length === 1 ? "" : "e"}`;
+
+      els.metaRow.innerHTML = `
+        <span class="pill">${receivedCount} erhalten</span>
+        <span class="pill">${sentCount} gesendet</span>
+      `;
+
+      if (state.configMissing) {
+        els.content.innerHTML = `
+          <div class="empty-inline">
+            Firebase ist in dieser Datei nicht eingerichtet.
+          </div>
+        `;
+        return;
+      }
+
+      if (!state.currentEmail) {
+        els.content.innerHTML = `
+          <div class="empty-inline">
+            Melde dich an, um deine Geschenke zu sehen.
+          </div>
+        `;
+        return;
+      }
+
+      if (isCurrentLoading()) {
+        els.content.innerHTML = `
+          <div class="card" style="display:grid;gap:12px;">
+            <div class="skeleton" style="height:180px;"></div>
+            <div class="skeleton" style="height:18px;width:42%;"></div>
+            <div class="skeleton" style="height:14px;width:70%;"></div>
+            <div class="skeleton" style="height:14px;width:52%;"></div>
+          </div>
+        `;
+        return;
+      }
+
+      if (!list.length) {
+        els.content.innerHTML = `
+          <div class="empty-inline">
+            <strong>${escapeHtml(state.selectedTab === "received" ? "Keine erhaltenen Geschenke" : "Keine gesendeten Geschenke")}</strong><br>
+            ${escapeHtml(state.selectedTab === "received"
+              ? "Wenn dir jemand ein Geschenk schickt, erscheint es hier und du kannst es annehmen."
+              : "Hier werden die Geschenke angezeigt, die du verschickt hast.")}
+          </div>
+        `;
+        return;
+      }
+
+      els.content.innerHTML = `
+        <div class="grid">
+          ${list.map(renderGiftCard).join("")}
+        </div>
+      `;
+
+      if (state.highlightGiftId && state.selectedTab === "received") {
+        const target = els.content.querySelector(`[data-gift-id="${CSS.escape(state.highlightGiftId)}"]`);
+        if (target && !state.highlightedGiftId) {
+          state.highlightedGiftId = state.highlightGiftId;
+          target.classList.add("highlighted");
+          setTimeout(() => {
+            state.highlightedGiftId = "";
+            render();
+          }, 3200);
+        }
+      }
+    }
+
+    async function loadPartnerProfile(email) {
+      if (!email || !db) return null;
+      if (state.profileCache.has(email)) return state.profileCache.get(email);
+
+      try {
+        const snap = await db.collection("user_data").doc(email).get();
+        if (!snap.exists) {
+          state.profileCache.set(email, null);
+          return null;
+        }
+
+        const profile = {
+          email,
+          displayName: snap.get("display name") || "",
+          profilePicture: snap.get("profile_picture") || "",
+          profilePictureFrame: snap.get("profile_picture_frame") || "",
+          isAnzeigenified: snap.get("is_verified") === true
+        };
+
+        state.profileCache.set(email, profile);
+        return profile;
+      } catch {
+        return null;
+      }
+    }
+
+    async function preloadProfiles(list, isReceived) {
+      const emails = [...new Set(list.map((gift) => isReceived ? (gift.giftSentBy || "") : (gift.giftSentTo || "")).filter(Boolean))];
+      await Promise.allSettled(emails.map(loadPartnerProfile));
+      render();
+    }
+
+    function renderGiftCard(gift) {
+      const isReceived = state.selectedTab === "received";
+      const partnerEmail = isReceived ? (gift.giftSentBy || "") : (gift.giftSentTo || "");
+      const profile = state.profileCache.get(partnerEmail);
+      const name = profile?.displayName?.trim() ? profile.displayName : (partnerEmail || "Benutzer");
+      const avatar = profile?.profilePicture || "https://darkpurpleof.github.io/org-owner.jpg";
+      const frame = profile?.profilePictureFrame || "";
+      const verified = profile?.isAnzeigenified === true;
+      const actionLabel = isReceived ? (gift.giftClaimed ? "Eingelöst" : "Geschenk einlösen") : "Anzeigen";
+      const subtext = isReceived
+        ? (gift.giftClaimed ? "Dieses Geschenk wurde bereits eingelöst." : "Tippe darauf, um das Einlösen-Fenster zu öffnen.")
+        : `Gesendet an ${name}`;
+
+      return `
+        <article class="gift-card ${state.highlightGiftId === gift.docId ? "highlighted" : ""}" data-gift-id="${escapeHtml(gift.docId)}">
+          <div class="gift-cover">
+            <img src="${escapeHtml(gift.giftCardImg || "")}" alt="">
+            <div class="gift-cover-copy">
+              <h3 class="gift-cover-title">${escapeHtml(isReceived ? "Du hast ein Geschenk erhalten" : "Du hast ein Geschenk verschickt")}</h3>
+              <div class="partner-row">
+                <div class="partner-avatar-wrap">
+                  <img class="partner-avatar" src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}">
+                  ${frame ? `<img class="partner-frame" src="${escapeHtml(frame)}" alt="" style="display:block;">` : ""}
+                </div>
+                <div class="partner-meta">
+                  <p class="partner-name">
+                    <span>${escapeHtml(name)}</span>
+                    ${verified ? verifiedIcon() : ""}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gift-body">
+            ${gift.giftMessage ? `<p class="gift-message">${escapeHtml(gift.giftMessage)}</p>` : ""}
+            <div class="gift-subtext">${escapeHtml(subtext)}</div>
+            <button class="${isReceived ? "primary-btn" : "secondary-btn"}" data-action="open-gift" data-gift-id="${escapeHtml(gift.docId)}">
+              ${escapeHtml(actionLabel)}
+            </button>
+          </div>
+        </article>
+      `;
+    }
+
+    function closeSheet() {
+      state.sheetOpen = false;
+      state.selectedGift = null;
+      state.selectedUgc = null;
+      state.sheetError = "";
+      state.sheetLoading = false;
+      els.sheetBackdrop.classList.remove("open");
+      els.sheetBody.innerHTML = "";
+    }
+
+    async function loadUgcArtikel(author, typeId, ugcId) {
+      if (!author || !ugcId || !db) return null;
+      const cacheKey = `${author}:${typeId}:${ugcId}`;
+      if (state.ugcCache.has(cacheKey)) return state.ugcCache.get(cacheKey);
+
+      const typeCollection = Number(typeId) === 0 ? "store-items" : "development-items";
+
+      try {
+        const snap = await db.collection("ugc").doc(author).collection(typeCollection).doc(ugcId).get();
+        if (!snap.exists) {
+          state.ugcCache.set(cacheKey, null);
+          return null;
+        }
+
+        const item = {
+          name: snap.get("name") || snap.get("title") || "Artikel",
+          image: snap.get("image") || "",
+          rolename: snap.get("rolename") || "",
+          type: snap.get("type") || "",
+          verified: snap.get("verified") === true
+        };
+
+        state.ugcCache.set(cacheKey, item);
+        return item;
+      } catch {
+        return null;
+      }
+    }
+
+    async function redeemGift(gift, ugc) {
+      const currentEmail = state.currentEmail;
+      const giftDocRef = db.collection("gifts").doc(currentEmail).collection("received").doc(gift.docId);
+      const txRef = db.collection("transactions").doc(currentEmail).collection("records").doc(gift.giftUgcId);
+      const batch = db.batch();
+
+      batch.set(txRef, {
+        amount: 0,
+        date: firebase.firestore.FieldValue.serverTimestamp(),
+        description: `Gifted description: ${ugc.name}`,
+        image: ugc.image || "",
+        source: gift.giftSentBy || "",
+        type: "outgoing"
+      });
+
+      const userDocRef = db.collection("user_data").doc(currentEmail);
+      const updates = {};
+      if (ugc.rolename && ugc.rolename.trim()) updates.roles = firebase.firestore.FieldValue.arrayUnion(ugc.rolename);
+      if (/bundle/i.test(ugc.type || "")) updates.purchasedIds = firebase.firestore.FieldValue.arrayUnion(gift.giftUgcId);
+      if (Object.keys(updates).length) batch.set(userDocRef, updates, { merge: true });
+
+      batch.update(giftDocRef, { gift_claimed: true });
+      await batch.commit();
+    }
+
+    async function openGiftSheet(gift) {
+      state.selectedGift = gift;
+      state.sheetOpen = true;
+      state.sheetLoading = true;
+      state.sheetError = "";
+      state.selectedUgc = null;
+      els.sheetBackdrop.classList.add("open");
+      renderSheet();
+
+      try {
+        const ugc = await loadUgcArtikel(gift.giftAuthor, gift.giftTypeId, gift.giftUgcId);
+        state.selectedUgc = ugc;
+      } catch (err) {
+        state.sheetError = err?.message || "Das Geschenk konnte nicht geladen werden.";
+      } finally {
+        state.sheetLoading = false;
+        renderSheet();
+      }
+    }
+
+    function renderSheet() {
+      const gift = state.selectedGift;
+      if (!gift) return;
+
+      const isReceived = state.selectedTab === "received";
+      const ugc = state.selectedUgc;
+      const canRedeem = isReceived && ugc && !gift.giftClaimed && !state.sheetLoading;
+
+      els.sheetBody.innerHTML = `
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-content">
+            <div class="sheet-head">
+              <div class="sheet-title-wrap">
+                <h2 class="sheet-title">Vorschau</h2>
+              </div>
+              <button class="sheet-close" id="sheetCloseBtn" aria-label="Schließen">×</button>
+            </div>
+
+            ${state.sheetLoading ? `
+              <div class="sheet-preview">
+                <div class="skeleton" style="height:84px;"></div>
+              </div>
+            ` : ugc ? `
+              <div class="sheet-preview">
+                <div class="ugc-row">
+                  <img class="ugc-art" src="${escapeHtml(ugc.image || "https://darkpurpleof.github.io/org-owner.jpg")}" alt="">
+                  <div class="ugc-meta">
+                    <p class="ugc-name">
+                      <span>${escapeHtml(ugc.name)}</span>
+                      ${ugc.verified ? verifiedIcon() : ""}
+                    </p>
+                    <p class="ugc-sub">${escapeHtml(ugc.type || "Artikelvorschau")}</p>
+                  </div>
+                </div>
+                <button id="redeemBtn" class="primary-btn" ${canRedeem ? "" : "disabled"}>
+                  ${gift.giftClaimed ? "Bereits eingelöst" : "Einlösen"}
+                </button>
+                ${gift.giftClaimed ? `<p class="sheet-error">Dieses Geschenk wurde bereits eingelöst.</p>` : ""}
+              </div>
+            ` : `
+              <div class="sheet-preview">
+                <p class="sheet-error">Der mit diesem Geschenk verknüpfte Artikel konnte nicht geladen werden.</p>
+              </div>
+            `}
+
+            ${state.sheetError ? `<p class="sheet-error">${escapeHtml(state.sheetError)}</p>` : ""}
+          </div>
+        </div>
+      `;
+
+      const closeBtn = $("sheetCloseBtn");
+      if (closeBtn) closeBtn.onclick = closeSheet;
+
+      const redeemBtn = $("redeemBtn");
+      if (redeemBtn) {
+        redeemBtn.onclick = async () => {
+          if (!state.selectedGift || !state.selectedUgc || state.selectedGift.giftClaimed) return;
+          redeemBtn.disabled = true;
+          redeemBtn.innerHTML = `<span class="spinner" style="width:18px;height:18px;margin:0;"></span>`;
+          try {
+            await redeemGift(state.selectedGift, state.selectedUgc);
+            setToast("Geschenk eingelöst", "purple");
+            closeSheet();
+            await refreshLists();
+          } catch (err) {
+            state.sheetError = err?.message || "Das Einlösen war nicht möglich.";
+            renderSheet();
+          }
+        };
+      }
+    }
+
+    function attachEvents() {
+      els.tabReceived.addEventListener("click", () => {
+        state.selectedTab = "received";
+        render();
+      });
+
+      els.tabSent.addEventListener("click", () => {
+        state.selectedTab = "sent";
+        render();
+      });
+
+      document.addEventListener("click", async (e) => {
+        const btn = e.target.closest('[data-action="open-gift"]');
+        if (!btn) return;
+        const giftId = btn.getAttribute("data-gift-id");
+        const gift = getCurrentList().find((g) => g.docId === giftId);
+        if (gift) openGiftSheet(gift);
+      });
+
+      els.sheetBackdrop.addEventListener("click", (e) => {
+        if (e.target === els.sheetBackdrop) closeSheet();
+      });
+    }
+
+    async function refreshLists() {
+      if (!db || !state.currentEmail) return;
+
+      if (state.unsubReceived) state.unsubReceived();
+      if (state.unsubSent) state.unsubSent();
+
+      state.loadingReceived = true;
+      state.loadingSent = true;
+      render();
+
+      state.unsubReceived = db.collection("gifts")
+        .doc(state.currentEmail)
+        .collection("received")
+        .orderBy("gift_ugcid", "desc")
+        .onSnapshot((snapshot) => {
+          state.received = snapshot.docs.map((doc) => ({
+            docId: doc.id,
+            giftCardImg: doc.get("giftcard_img") || "",
+            giftAuthor: doc.get("gift_author") || "",
+            giftUgcId: doc.get("gift_ugcid") || "",
+            giftTypeId: doc.get("gift_typeid") || 0,
+            giftSentBy: doc.get("gift_sentBy") || "",
+            giftSentTo: doc.get("gift_sentTo") || "",
+            giftMessage: doc.get("gift_message") || "",
+            giftClaimed: doc.get("gift_claimed") === true
+          }));
+          state.loadingReceived = false;
+          preloadProfiles(state.received, true);
+        }, (error) => {
+          state.loadingReceived = false;
+          setToast(error?.message || "Die erhaltenen Geschenke konnten nicht geladen werden.", "red");
+          render();
+        });
+
+      state.unsubSent = db.collection("gifts")
+        .doc(state.currentEmail)
+        .collection("sent")
+        .orderBy("gift_ugcid", "desc")
+        .onSnapshot((snapshot) => {
+          state.sent = snapshot.docs.map((doc) => ({
+            docId: doc.id,
+            giftCardImg: doc.get("giftcard_img") || "",
+            giftAuthor: doc.get("gift_author") || "",
+            giftUgcId: doc.get("gift_ugcid") || "",
+            giftTypeId: doc.get("gift_typeid") || 0,
+            giftSentBy: doc.get("gift_sentBy") || "",
+            giftSentTo: doc.get("gift_sentTo") || "",
+            giftMessage: doc.get("gift_message") || "",
+            giftClaimed: doc.get("gift_claimed") === true
+          }));
+          state.loadingSent = false;
+          preloadProfiles(state.sent, false);
+        }, (error) => {
+          state.loadingSent = false;
+          setToast(error?.message || "Die gesendeten Geschenke konnten nicht geladen werden.", "red");
+          render();
+        });
+    }
+
+    function initUi() {
+      els.toast = $("toast");
+      els.tabReceived = $("tabReceived");
+      els.tabSent = $("tabSent");
+      els.sectionBadge = $("sectionBadge");
+      els.metaRow = $("metaRow");
+      els.content = $("content");
+      els.sheetBackdrop = $("sheetBackdrop");
+      els.sheetBody = $("sheetBody");
+      attachEvents();
+      render();
+
+      if (!auth) return;
+
+      auth.onAuthStateChanged(async (user) => {
+        state.currentEmail = user?.email || "";
+        if (!state.currentEmail) {
+          if (state.unsubReceived) state.unsubReceived();
+          if (state.unsubSent) state.unsubSent();
+          state.received = [];
+          state.sent = [];
+          state.loadingReceived = false;
+          state.loadingSent = false;
+          render();
+          return;
+        }
+
+        await refreshLists();
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", initUi);
+  </script>
+</head>
+<body>
+  <dp-topbar></dp-topbar>
+
+  <main class="container">
+    <section class="layout">
+      <article class="card hero">
+        <h1>Meine Geschenke</h1>
+        <p class="hero-subtitle">Hier kannst du die Geschenke sehen, die du erhalten und verschickt hast.</p>
+        <div class="meta-row" id="metaRow"></div>
+      </article>
+
+      <article class="card">
+        <div class="tabs">
+          <button class="tab-btn active" id="tabReceived">Erhalten <span class="count">0</span></button>
+          <button class="tab-btn" id="tabSent">Gesendet <span class="count">0</span></button>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="hero" style="margin-bottom:14px;">
+          <div class="hero-kicker" id="sectionBadge">Wird geladen</div>
+        </div>
+        <div id="content"></div>
+      </article>
+    </section>
+  </main>
+
+  <div id="toast"></div>
+
+  <div class="sheet-backdrop" id="sheetBackdrop" aria-hidden="true">
+    <div id="sheetBody" style="width:100%;display:flex;justify-content:center;"></div>
+  </div>
+</body>
+</html>

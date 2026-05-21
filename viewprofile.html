@@ -7,6 +7,8 @@
 
   <script src="/authorUGCList.js"></script>
 
+    <script src="/sendgift.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
@@ -770,7 +772,7 @@
       const postBtn = document.createElement('button');
       postBtn.className = 'btn';
       postBtn.textContent = 'Post to Wall';
-      if (isActionDisabled('post')) {
+      if (relationshipState.isBlockedByCurrent) {
         postBtn.disabled = true;
         postBtn.title = 'User does not exist';
         postBtn.style.opacity = 0.6;
@@ -779,10 +781,36 @@
       }
       interactionButtons.appendChild(postBtn);
 
+      const giftBtn = document.createElement('button');
+      giftBtn.className = 'btn';
+      giftBtn.textContent = `Send Gift to ${nameForButtons}`;
+      if (relationshipState.isBlockedByCurrent) {
+        giftBtn.disabled = true;
+        giftBtn.title = 'User does not exist';
+        giftBtn.style.opacity = 0.6;
+      } else if (!window.SendGiftSheet) {
+        giftBtn.disabled = true;
+        giftBtn.title = 'Gift system unavailable';
+        giftBtn.style.opacity = 0.5;
+      } else {
+        giftBtn.addEventListener("click", () => {
+          if (!window.SendGiftSheet) {
+            showToast("Gift system unavailable", "red");
+            return;
+          }
+
+          window.SendGiftSheet.open({
+              email: viewedEmail,
+              username: viewedData.displayName
+            });
+        });
+      }
+      interactionButtons.appendChild(giftBtn);
+
       const chatBtn = document.createElement('button');
       chatBtn.className = 'btn';
       chatBtn.textContent = `Chat with ${nameForButtons}`;
-      if (isActionDisabled('post')) {
+      if (relationshipState.isBlockedByCurrent) {
         chatBtn.disabled = true;
         chatBtn.title = 'User does not exist';
         chatBtn.style.opacity = 0.6;

@@ -698,6 +698,7 @@ template.innerHTML = `
             <div class="coin-dropdown-value" id="coin-balance-summary">DF$ - 0</div>
           </div>
           <a id="redeem-link" href="/redeem">Redeem DarkPurpleOF's Website codes</a>
+          <a id="gifts-link" href="/gifts">My Gifts</a>
           <a id="trans-link" href="/transactions">My transactions</a>
         </div>
       </div>
@@ -760,6 +761,7 @@ const LOCALE_STRINGS = {
     redeem: "Redeem DarkPurpleOF's Website codes",
     transactions: 'My transactions',
     balanceLabel: 'Balance',
+    myGifts: 'My Gifts',
     termsTitle: 'Updated Terms of Service',
     termsIntro: 'The Terms of Service have changed. You need to accept the latest version to keep using the site.',
     termsConfirm: 'By accepting, you confirm that you agree to the current terms and can continue.',
@@ -793,6 +795,7 @@ const LOCALE_STRINGS = {
     logout: 'Cerrar sesión',
     redeem: 'Canjear códigos del sitio',
     transactions: 'Mis transacciones',
+    myGifts: 'Mis regalos',
     balanceLabel: 'Saldo',
     termsTitle: 'Términos de servicio actualizados',
     termsIntro: 'Los Términos de Servicio han cambiado. Debes aceptar la versión más reciente para seguir usando el sitio.',
@@ -827,6 +830,7 @@ const LOCALE_STRINGS = {
     logout: 'Выйти',
     redeem: 'Обменять коды сайта',
     transactions: 'Мои транзакции',
+    myGifts: 'Мои подарки',
     balanceLabel: 'Баланс',
     termsTitle: 'Обновлённые Условия использования',
     termsIntro: 'Условия использования изменились. Необходимо принять последнюю версию, чтобы продолжать пользоваться сайтом.',
@@ -861,6 +865,7 @@ const LOCALE_STRINGS = {
     logout: 'Abmelden',
     redeem: 'Website-Codes einlösen',
     transactions: 'Meine Transaktionen',
+    myGifts: 'Meine Geschenke',
     balanceLabel: 'Kontostand',
     termsTitle: 'Aktualisierte Nutzungsbedingungen',
     termsIntro: 'Die Nutzungsbedingungen wurden geändert. Du musst die neueste Version akzeptieren, um die Seite weiterhin nutzen zu können.',
@@ -895,6 +900,7 @@ const LOCALE_STRINGS = {
     logout: 'ログアウト',
     redeem: 'サイトコードを交換',
     transactions: 'マイトランザクション',
+    myGifts: 'マイギフト',
     balanceLabel: '残高',
     termsTitle: '利用規約が更新されました',
     termsIntro: '利用規約が変更されました。サイトの利用を継続するには最新バージョンに同意する必要があります。',
@@ -984,6 +990,7 @@ class DPTopbar extends HTMLElement {
     this.$coin = s.getElementById('coin-display');
     this.$coinDropdown = s.getElementById('coin-dropdown');
     this.$redeem = s.getElementById('redeem-link');
+    this.$gifts = s.getElementById('gifts-link');
     this.$trans = s.getElementById('trans-link');
     this.$pfp = s.getElementById('top-pfp');
     this.$name = s.getElementById('top-name');
@@ -1653,6 +1660,10 @@ class DPTopbar extends HTMLElement {
     if (this.$redeem) {
       this.$redeem.textContent = strings.redeem;
       this.$redeem.href = this._localizePath('/redeem');
+    }
+    if (this.$gifts) {
+      this.$gifts.textContent = strings.myGifts;
+      this.$gifts.href = this._localizePath('/gifts');
     }
     if (this.$trans) {
       this.$trans.textContent = strings.transactions;
