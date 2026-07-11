@@ -298,6 +298,7 @@
   <script type="module" src="/dp-topbar.js"></script>
   <script type="module" src="/dp-rich-components.js"></script>
   <script src="/dp-diag.js"></script>
+  <script type="module" src="/imageviewer.js"></script>
   <dp-topbar></dp-topbar>
  
   <main class="container" role="main" aria-label="View profile">
@@ -1004,6 +1005,27 @@
       const uploadEls = document.querySelectorAll('input[type=file], .upload-box, #saveNameBtn, #saveBioBtn');
       uploadEls.forEach(e => e?.remove?.());
       interactionArea.style.display = 'none';
+    });
+
+    // Open imageviewer on profile picture or banner click
+    bannerEl.style.cursor = 'pointer';
+    bannerEl.addEventListener('click', async () => {
+      const bgImage = bannerEl.style.backgroundImage || '';
+      const urlMatch = bgImage.match(/url\(["']?([^"')]+)["']?\)/);
+      const imageUrl = urlMatch ? urlMatch[1] : '';
+      if (imageUrl && viewedEmail) {
+        window.ImageViewer.open({ imageUrl, authorEmail: viewedEmail, advancedMode: true });
+      }
+    });
+
+    profilePicEl.style.cursor = 'pointer';
+    profilePicEl.addEventListener('click', async () => {
+      const bgImage = profilePicEl.style.backgroundImage || '';
+      const urlMatch = bgImage.match(/url\(["']?([^"')]+)["']?\)/);
+      const imageUrl = urlMatch ? urlMatch[1] : '';
+      if (imageUrl && viewedEmail) {
+        window.ImageViewer.open({ imageUrl, authorEmail: viewedEmail, advancedMode: false });
+      }
     });
 
     window.addEventListener('beforeunload', () => clearUnsubscribes());

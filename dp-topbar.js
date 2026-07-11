@@ -913,6 +913,17 @@ const LOCALE_STRINGS = {
   }
 };
 
+// Ensure the ProfileBottomSheet module is loaded so `window.ProfileBottomSheet` is available.
+(async () => {
+  if (typeof window.ProfileBottomSheet === 'undefined') {
+    try {
+      await import('/dp-profile-sheet.js');
+    } catch (err) {
+      console.warn('Could not load /dp-profile-sheet.js', err);
+    }
+  }
+})();
+
 class DPTopbar extends HTMLElement {
   constructor() {
     super();
@@ -1054,10 +1065,22 @@ class DPTopbar extends HTMLElement {
       if (e.key === 'Escape') this._hideCoinDropdown();
     });
 
+    // Left-click or keyboard press toggles the profile dropdown; right-click opens profile sheet
     this.$profileArea.addEventListener('click', e => {
       if (this._pageLocked) return;
       e.stopPropagation();
       this._toggleDropdown();
+      this._hideCoinDropdown();
+      this._closeMobileMenu();
+      this._hideSearchDropdown();
+    });
+
+    this.$profileArea.addEventListener('contextmenu', e => {
+      if (this._pageLocked) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (navigator.vibrate) try { navigator.vibrate(50); } catch (er) {}
+      this._openProfileSheetForEmail(this._currentUserEmail);
       this._hideCoinDropdown();
       this._closeMobileMenu();
       this._hideSearchDropdown();
@@ -1119,6 +1142,44 @@ class DPTopbar extends HTMLElement {
       });
     });
 
+
+    this._openProfileSheetForEmail = async (email) => {
+    if (!email) {
+      // No user email — open login instead
+      window.location.href = this._localizePath('/login');
+      return;
+    }
+
+    try {
+      const db = firebase.firestore();
+      const snap = await db.collection('user_data').doc(email).get();
+      const data = snap.exists ? snap.data() || {} : {};
+
+      const username = data['display name'] || data.display_name || this._currentUserEmail || email;
+      const bio = data.bio || '';
+      const banner = data.profile_banner || data.banner || '/assets/default_banner.png';
+      const pfp = data.profile_picture || '/org-owner.jpg';
+      const frame = data.profile_picture_frame || '';
+      const verified = Boolean(data.is_verified);
+
+      if (window.ProfileBottomSheet && typeof window.ProfileBottomSheet.open === 'function') {
+        window.ProfileBottomSheet.open({
+          email,
+          username,
+          bio,
+          banner,
+          pfp,
+          frame,
+          verified
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to open profile sheet for', email, err);
+      if (window.ProfileBottomSheet && typeof window.ProfileBottomSheet.open === 'function') {
+        window.ProfileBottomSheet.open({ email, username: email, bio: '', banner: '/assets/default_banner.png', pfp: '/org-owner.jpg', frame: '', verified: false });
+      }
+    }
+  }
     this.$brand.addEventListener('click', e => {
       if (this._pageLocked) return;
       e.preventDefault();
@@ -1440,6 +1501,9 @@ class DPTopbar extends HTMLElement {
 
   _onDocumentClick(e) {
     if (this._pageLocked) return;
+    // Ignore the synthetic document click that Chrome Android fires immediately
+    // after .focus() is called — this would otherwise close the panel instantly.
+    if (this._mobileSearchJustOpened) return;
     const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
 
     const clickedInsideCoin = path.includes(this.$coin) || path.includes(this.$coinDropdown) || path.includes(this.$coin?.parentElement);
@@ -1488,9 +1552,18 @@ class DPTopbar extends HTMLElement {
   _showMobileSearchPanel() {
     if (this._pageLocked) return;
     this._mobileSearchOpen = true;
+    this._mobileSearchJustOpened = true;
     if (this.$center) this.$center.classList.add('mobile-visible');
     if (this.$searchInput) {
-      this.$searchInput.focus();
+      // Defer focus to the next animation frame so that the current tap/click
+      // event cycle fully completes first. On Chrome Android, calling .focus()
+      // synchronously during a click handler causes a synthetic document click
+      // which immediately triggers _onDocumentClick and closes the panel.
+      requestAnimationFrame(() => {
+        this.$searchInput.focus();
+        // Clear the guard after a short delay so normal outside-clicks still close
+        setTimeout(() => { this._mobileSearchJustOpened = false; }, 150);
+      });
     }
   }
 

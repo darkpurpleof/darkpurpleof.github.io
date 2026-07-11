@@ -9,7 +9,7 @@
 <script type="module" src="/dp-topbar.js"></script>
 
 <!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
@@ -30,167 +30,262 @@
   --glass: rgba(255,255,255,0.03);
   --border: rgba(255,255,255,0.06);
   --radius: 14px;
-  --max-width: 960px;
-  --card-gap: 18px;
+  --max-width: 600px;
+  --card-gap: 0px;
 }
 
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
-/* Remove margin/padding from body for topbar */
+
 body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0; /* removed 20px */
+  padding: 0;
 }
 
-/* Make topbar full width and flush to top */
+/* === BUGFIX: topbar must stay fixed at the top while scrolling, never
+   scroll away together with the posts feed === */
 dp-topbar {
+  position: sticky;
+  top: 0;
+  left: 0;
   width: 100%;
-  margin: 0;      /* remove previous margin-bottom */
+  margin: 0;
   display: block;
   flex-shrink: 0;
+  z-index: 1000;
+  background: var(--bg);
 }
 
-.container{ width:100%; max-width:var(--max-width); }
+.container{
+  width:100%;
+  max-width:none;
+  border-left:none;
+  border-right:none;
+  min-height: 100vh;
+}
 
-/* header */
+/* header (kept for compatibility, no visual footprint needed) */
 .header{
-  display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
 }
 .page-title{
   font-family: 'Orbitron', system-ui, sans-serif;
-  font-size:28px; letter-spacing:0.6px; margin:0;
-  text-shadow: 0 6px 20px rgba(255,255,255,0.06);
+  font-size:22px; letter-spacing:0.6px; margin:0;
   color:var(--text);
 }
-.header-controls{ display:flex; gap:12px; align-items:center; }
 
-/* mobile adjustments */
-@media (max-width: 700px) {
-  /* make container narrower than screen */
-  .container {
-    width: calc(100% - 24px); /* 12px padding each side */
-    max-width: none; /* ignore desktop max-width on small screens */
-    margin: 0 auto;
-  }
+/* ===== Compose prompt (top "Create new post" bar, X-like) ===== */
+.compose-card{
+  text-align:left;
+  border-bottom:1px solid var(--border);
+  padding:14px 16px;
+}
+.compose-card a{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  color:var(--bg);
+  background:var(--text);
+  text-decoration:none;
+  font-size:15px;
+  font-weight:800;
+  border-radius:999px;
+  padding:12px 16px;
+  transition: opacity .12s ease;
+}
+.compose-card a:hover{ opacity:0.9; }
 
-  /* card gets full container width but has some internal padding */
-  .post-card {
-    padding: 12px;
-  }
-
-  /* avatar smaller but keep aspect ratio */
-/* Strong avatar rules — forces a perfect circle and prevents stretching */
+/* ===== Avatar (single consolidated definition, fixes the duplicate/
+   conflicting rules and keeps a perfect circle at every breakpoint) ===== */
 .avatar{
-  display: block;               /* avoid flex stretch shenanigans */
-  width: 48px;
-  height: 48px;
-  flex: 0 0 auto;               /* don't let flex change size */
-  min-width: 48px;
-  border-radius: 50%;           /* circle */
-  overflow: hidden;             /* crop background or child img */
-  background-repeat: no-repeat;
-  background-size: cover;       /* fill without distortion */
-  background-position: center;
-  aspect-ratio: 1 / 1;          /* ensures a square shape */
-  border: 2px solid var(--border);
-  position: relative;           /* for overlay/frame positioning */
+  position:relative;
+  display:block;
+  width:48px;
+  height:48px;
+  min-width:48px;
+  flex:0 0 auto;
+  border-radius:50%;
+  overflow:hidden;
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-position:center;
+  aspect-ratio:1/1;
+  border:2px solid var(--border);
+  object-fit:cover;
 }
-
-/* Make sure any frame overlay matches the avatar perfectly */
-.profile-pic-frame {
-  position: absolute;
-  inset: 0;                     /* fills the avatar exactly */
-  border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  pointer-events: none;
+.avatar img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
 }
-
-  /* post images should not stretch full width */
-  .post-images img {
-    max-width: 100%;
-    max-height: 180px;
-    object-fit: cover;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-  }
+@media (min-width:701px){
+  .avatar{ width:52px; height:52px; min-width:52px; }
 }
-@media (min-width: 701px){
-  .avatar{ width:56px; height:56px; min-width:56px; aspect-ratio:1/1; }
-}
-
-/* Slightly smaller on small phones */
-@media (max-width: 360px){
+@media (max-width:360px){
   .avatar{ width:40px; height:40px; min-width:40px; }
 }
 
+/* profile picture frame overlay - always matches the avatar's current size
+   because it's positioned with inset:0 instead of a hardcoded pixel size */
+.profile-pic-frame{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  object-fit:cover;
+  pointer-events:none;
+}
 
-
-/* posts list */
-.posts-list{ display:flex; flex-direction:column; gap:var(--card-gap); }
-
-/* card */
+/* ===== post card, X-style: flat, separated by a bottom border, subtle
+   hover highlight instead of its own background box ===== */
 .post-card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:16px;
-  transition: transform .14s ease, box-shadow .14s ease;
+  border-bottom:1px solid var(--border);
+  padding:12px 16px;
   position: relative;
+  transition: background-color .12s ease;
+  cursor: pointer;
+}
+.post-card:hover{
+  background-color: rgba(255,255,255,0.025);
 }
 
-.post-meta{ display:flex; align-items:center; gap:8px; justify-content:flex-end; min-width:0; }
-.post-date{ font-size:12px; color:var(--muted); white-space:nowrap; }
-.menu-btn{ width:28px; height:28px; border-radius:12px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; }
-.menu-btn:hover{ background: rgba(255,255,255,0.08); }
-.post-menu{ position:absolute; top:44px; right:16px; min-width:170px; background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:0 14px 40px rgba(0,0,0,0.35); display:none; flex-direction:column; padding:6px 0; z-index:50; }
+.post-row{ display:flex; gap:12px; align-items:flex-start; min-width:0; }
+.post-main{ flex:1 1 auto; min-width:0; }
+
+.post-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;
+}
+.post-header-text{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  flex-wrap:wrap;
+  min-width:0;
+  overflow:hidden;
+}
+.display-name{
+  font-weight:700;
+  font-size:15px;
+  color:var(--text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:42vw;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+.handle{
+  font-size:14px;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:42vw;
+}
+.dot{ color:var(--muted); font-size:13px; }
+.post-date{ font-size:14px; color:var(--muted); white-space:nowrap; }
+
+.verified-badge{ width:16px; height:16px; display:inline-block; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; flex:0 0 auto; flex-shrink:0; }
+
+.post-meta{ position:relative; display:none; align-items:center; gap:2px; flex:0 0 auto; }
+.menu-btn{ width:30px; height:30px; border-radius:50%; border:none; background:transparent; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.menu-btn:hover{ background: rgba(255,255,255,0.08); color:var(--text); }
+.post-menu{ position:absolute; top:32px; right:0; min-width:180px; background:var(--bg); border:1px solid var(--border); border-radius:12px; box-shadow:0 14px 40px rgba(0,0,0,0.5); display:none; flex-direction:column; padding:6px 0; z-index:50; }
 .post-menu.open{ display:flex; }
-.post-menu button{ width:100%; padding:10px 12px; text-align:left; border:none; background:transparent; color:var(--text); cursor:pointer; font-size:14px; }
+.post-menu button{ width:100%; padding:10px 14px; text-align:left; border:none; background:transparent; color:var(--text); cursor:pointer; font-size:14px; }
 .post-menu button:hover:not([disabled]){ background: rgba(255,255,255,0.08); }
-.post-menu button[disabled]{ opacity:0.45; cursor:not-allowed; }
+.post-menu button[disabled]{ opacity:0.4; cursor:not-allowed; }
 
-.author-row{ display:flex; gap:12px; align-items:center; justify-content:space-between; }
-.author-left{ display:flex; gap:12px; align-items:center; min-width:0; }
-.avatar{
-  width:56px; height:56px; background-repeat: no-repeat; border-radius:50%; background-size:cover; background-position:center; flex:0 0 56px;
-  border:2px solid var(--border);
+/* post content - no white-space:pre-wrap here anymore: that was fighting
+   with the rich-markdown component's own rendered layout (paragraphs,
+   line breaks, lists, etc.) and is part of the rich-text bug fix */
+.post-text{ margin-top:2px; font-size:15px; color:var(--text); line-height:1.45; word-wrap:break-word; }
+.post-text rich-markdown{ display:block; }
+
+.post-images{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:4px;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid var(--border);
 }
-.author-meta{ min-width:0; overflow:hidden; }
-.display-name{ display:flex; gap:8px; align-items:center; font-weight:700; font-size:1.05rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.email-text{ font-size:13px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.verified-badge{ width:18px; height:18px; display:inline-block; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; margin-left:4px; }
-
-/* post content */
-.post-text{ margin-top:12px; font-size:15px; color:var(--text); line-height:1.5; white-space:pre-wrap; }
-.post-images{ margin-top:12px; display:flex; background-repeat: no-repeat; gap:10px; flex-wrap:wrap; }
-.post-images img{ max-width:100%; max-height:320px; object-fit:cover; border-radius:10px; border:1px solid var(--border); }
+.post-images:has(> :only-child){ grid-template-columns: 1fr; }
+.post-images img{ width:100%; height:100%; max-height:300px; object-fit:cover; display:block; }
 
 /* Video preview styles: show a non-playable preview with a centered play-overlay */
-.video-preview{ position:relative; display:inline-block; border-radius:10px; overflow:hidden; max-width:100%; }
-.video-preview .preview-video{ display:block; width:100%; max-height:320px; object-fit:cover; pointer-events:none; user-select:none; }
+.video-preview{ position:relative; display:block; width:100%; height:100%; overflow:hidden; }
+.video-preview .preview-video{ display:block; width:100%; height:100%; max-height:300px; object-fit:cover; pointer-events:none; user-select:none; }
 .video-preview .play-overlay{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:auto; }
 .video-preview .play-overlay svg{ width:48px; height:48px; }
 .video-preview:focus{ outline:2px solid rgba(255,255,255,0.06); }
 
-/* actions row */
-.actions-row{ display:flex; gap:8px; margin-top:12px; align-items:center; flex-wrap:wrap; }
+/* ===== actions row, X-style: evenly spaced, pill hover, no boxed buttons ===== */
+.actions-row{ display:flex; align-items:center; justify-content:space-between; max-width:320px; margin-top:8px; }
 .icon-btn{
-  display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px; background:transparent; border:1px solid var(--border);
-  color:var(--text); cursor:pointer; transition: background .12s ease, transform .06s ease, box-shadow .12s ease;
+  display:inline-flex; align-items:center; gap:6px; padding:6px 10px; margin-left:-10px; border-radius:999px; background:transparent; border:none;
+  color:var(--muted); cursor:pointer; transition: background .12s ease, color .12s ease;
 }
+.icon-btn:first-child{ margin-left:-10px; }
+.icon-btn:hover{ background: rgba(255,255,255,0.08); color:var(--text); }
 .icon{ width:18px; height:18px; display:inline-block; vertical-align:middle; fill:currentColor; opacity:0.95; }
-
-/* like active */
-.icon-btn.liked{ background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:white; box-shadow:0 8px 30px rgba(255,255,255,0.03); border-color:transparent; }
 .like-count{ font-size:13px; color:inherit; }
 
-/* responsive */
-@media (max-width:700px){ .avatar{ width:48px; height:48px; } .display-name{ font-size:1rem; } .post-images img{ max-height:180px; } .page-title{ font-size:22px; } }
+/* like active */
+.icon-btn.liked{ background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:var(--text); border-color:transparent; }
+
+/* ===== Mobile-only design: edge-to-edge feed + floating compose button,
+   distinct from the desktop layout rather than just a scaled-down version ===== */
+.fab-compose{
+  display:none;
+}
+@media (max-width:700px){
+  .container{
+    border-left:none;
+    border-right:none;
+  }
+  .post-card{ padding:10px 12px; }
+  .compose-card{ display:none; }
+  .fab-compose{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:fixed;
+    bottom:20px;
+    right:18px;
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    background:var(--text);
+    color:var(--bg);
+    text-decoration:none;
+    font-size:28px;
+    font-weight:700;
+    box-shadow:0 8px 24px rgba(0,0,0,0.5);
+    z-index:900;
+    line-height:0;
+  }
+  .display-name, .handle{ max-width:none; }
+  .post-images img, .post-images .video-preview, .post-images .preview-video{ max-height:220px; }
+}
+
+@media (max-width:360px){
+  .display-name, .handle{ max-width:28vw; }
+}
 
 /* small helpers */
-.sep{ height:1px; background:var(--border); margin:12px 0; border-radius:2px; }
 .muted{ color:var(--muted); font-size:13px; }
 
 /* accessibility: prefers-reduced-motion */
@@ -203,15 +298,16 @@ dp-topbar {
   <dp-topbar></dp-topbar>
 
   <div class="container">
-    <div class="header">
-    </div>
+    <div class="header"></div>
 
-    <div class="post-card" style="text-align: center; margin-bottom: var(--card-gap);">
-      <a href="/createpost" style="color: var(--text); text-decoration: none; font-size: 16px; font-weight: 600;">Create new post</a>
+    <div class="post-card compose-card">
+      <a id="composeLink" href="/createpost">Create new post</a>
     </div>
 
     <div id="postsList" class="posts-list" aria-live="polite"></div>
   </div>
+
+  <a id="fabCompose" href="/createpost" class="fab-compose" aria-label="Create new post">+</a>
 
 <script>
 /* Firebase init */
@@ -226,6 +322,162 @@ const firebaseConfig = {
 if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+
+const SUPPORTED_LOCALES = ['en','es','ru','de','ja'];
+const LOCALE_FALLBACK = 'en';
+const POST_TRANSLATIONS = {
+  en: {
+    createNewPost: 'Create new post',
+    noPostsYet: 'No posts yet.',
+    report: 'Report',
+    postActions: 'Post actions',
+    deletePost: 'Delete post',
+    pinPost: 'Pin',
+    unpinPost: 'Unpin',
+    removeFromWall: 'Remove from my wall',
+    like: 'Like',
+    unlike: 'Unlike',
+    likeUnavailable: 'Like unavailable',
+    deleteConfirm: 'Delete this post? This cannot be undone.',
+    deleteFailed: 'Failed to delete post.',
+    pinConfirm: 'Pin this post?',
+    unpinConfirm: 'Unpin this post?',
+    pinSuccess: 'Post pinned.',
+    unpinSuccess: 'Post unpinned.',
+    pinFailed: 'Failed to update pin state.',
+    removeWallConfirm: 'Remove this post from your wall?',
+    removeWallSuccess: 'Removed from your wall.',
+    removeWallFailed: 'Failed to remove from wall.',
+    signInToLike: 'You must sign in to like posts.',
+    likeFailed: 'Could not update like. Try again.'
+  },
+  es: {
+    createNewPost: 'Crear una nueva publicación',
+    noPostsYet: 'Todavía no hay publicaciones.',
+    report: 'Reportar',
+    postActions: 'Acciones de la publicación',
+    deletePost: 'Eliminar publicación',
+    pinPost: 'Fijar',
+    unpinPost: 'Desfijar',
+    removeFromWall: 'Quitar de mi muro',
+    like: 'Me gusta',
+    unlike: 'Quitar me gusta',
+    likeUnavailable: 'Me gusta no disponible',
+    deleteConfirm: '¿Eliminar esta publicación? Esto no se puede deshacer.',
+    deleteFailed: 'No se pudo eliminar la publicación.',
+    pinConfirm: '¿Fijar esta publicación?',
+    unpinConfirm: '¿Desfijar esta publicación?',
+    pinSuccess: 'Publicación fijada.',
+    unpinSuccess: 'Publicación desfijada.',
+    pinFailed: 'No se pudo actualizar el estado de fijado.',
+    removeWallConfirm: '¿Quitar esta publicación de tu muro?',
+    removeWallSuccess: 'Se quitó del muro.',
+    removeWallFailed: 'No se pudo quitar del muro.',
+    signInToLike: 'Debes iniciar sesión para dar me gusta.',
+    likeFailed: 'No se pudo actualizar el me gusta. Inténtalo de nuevo.'
+  },
+  ru: {
+    createNewPost: 'Создать новый пост',
+    noPostsYet: 'Постов пока нет.',
+    report: 'Пожаловаться',
+    postActions: 'Действия с постом',
+    deletePost: 'Удалить пост',
+    pinPost: 'Закрепить',
+    unpinPost: 'Открепить',
+    removeFromWall: 'Убрать с моей стены',
+    like: 'Нравится',
+    unlike: 'Убрать лайк',
+    likeUnavailable: 'Лайк недоступен',
+    deleteConfirm: 'Удалить этот пост? Это действие нельзя отменить.',
+    deleteFailed: 'Не удалось удалить пост.',
+    pinConfirm: 'Закрепить этот пост?',
+    unpinConfirm: 'Открепить этот пост?',
+    pinSuccess: 'Пост закреплён.',
+    unpinSuccess: 'Пост откреплён.',
+    pinFailed: 'Не удалось обновить состояние закрепления.',
+    removeWallConfirm: 'Убрать этот пост с вашей стены?',
+    removeWallSuccess: 'Удалено со стены.',
+    removeWallFailed: 'Не удалось удалить со стены.',
+    signInToLike: 'Чтобы ставить лайки, нужно войти в систему.',
+    likeFailed: 'Не удалось обновить лайк. Попробуйте ещё раз.'
+  },
+  de: {
+    createNewPost: 'Neuen Beitrag erstellen',
+    noPostsYet: 'Noch keine Beiträge.',
+    report: 'Melden',
+    postActions: 'Beitragsaktionen',
+    deletePost: 'Beitrag löschen',
+    pinPost: 'Anheften',
+    unpinPost: 'Lösen',
+    removeFromWall: 'Von meiner Wand entfernen',
+    like: 'Gefällt mir',
+    unlike: 'Gefällt mir nicht mehr',
+    likeUnavailable: 'Gefällt mir nicht verfügbar',
+    deleteConfirm: 'Diesen Beitrag löschen? Das kann nicht rückgängig gemacht werden.',
+    deleteFailed: 'Der Beitrag konnte nicht gelöscht werden.',
+    pinConfirm: 'Diesen Beitrag anheften?',
+    unpinConfirm: 'Diesen Beitrag lösen?',
+    pinSuccess: 'Beitrag angeheftet.',
+    unpinSuccess: 'Beitrag gelöst.',
+    pinFailed: 'Der Anhefte-Status konnte nicht aktualisiert werden.',
+    removeWallConfirm: 'Diesen Beitrag von deiner Wand entfernen?',
+    removeWallSuccess: 'Von der Wand entfernt.',
+    removeWallFailed: 'Konnte nicht von der Wand entfernt werden.',
+    signInToLike: 'Du musst dich anmelden, um Beiträge zu liken.',
+    likeFailed: 'Das Liken konnte nicht aktualisiert werden. Bitte versuche es erneut.'
+  },
+  ja: {
+    createNewPost: '新しい投稿を作成',
+    noPostsYet: 'まだ投稿はありません。',
+    report: '報告',
+    postActions: '投稿アクション',
+    deletePost: '投稿を削除',
+    pinPost: '固定',
+    unpinPost: '固定解除',
+    removeFromWall: 'マイウォールから削除',
+    like: 'いいね',
+    unlike: 'いいねを取り消す',
+    likeUnavailable: 'いいねできません',
+    deleteConfirm: 'この投稿を削除しますか？この操作は取り消せません。',
+    deleteFailed: '投稿の削除に失敗しました。',
+    pinConfirm: 'この投稿を固定しますか？',
+    unpinConfirm: 'この投稿の固定を解除しますか？',
+    pinSuccess: '投稿を固定しました。',
+    unpinSuccess: '投稿の固定を解除しました。',
+    pinFailed: '固定状態を更新できませんでした。',
+    removeWallConfirm: 'この投稿をあなたのウォールから削除しますか？',
+    removeWallSuccess: 'ウォールから削除しました。',
+    removeWallFailed: 'ウォールから削除できませんでした。',
+    signInToLike: 'いいねするにはログインする必要があります。',
+    likeFailed: 'いいねの更新に失敗しました。もう一度お試しください。'
+  }
+};
+
+function normalizeLocale(value) {
+  if (typeof value !== 'string') return null;
+  const raw = value.toLowerCase().trim();
+  if (raw.startsWith('de')) return 'de';
+  if (raw.startsWith('ru')) return 'ru';
+  if (raw.startsWith('ja')) return 'ja';
+  if (raw.startsWith('es')) return 'es';
+  if (raw.startsWith('en')) return 'en';
+  return null;
+}
+
+function getBrowserLocale() {
+  const source = Array.isArray(navigator.languages) && navigator.languages.length ? navigator.languages[0] : (navigator.language || navigator.userLanguage || '');
+  return normalizeLocale(source) || LOCALE_FALLBACK;
+}
+
+function getPreferredLocale(userDocData) {
+  const accountLang = normalizeLocale(userDocData && (userDocData.lang || userDocData.language));
+  return accountLang || getBrowserLocale();
+}
+
+function getStrings(locale) {
+  const normalized = SUPPORTED_LOCALES.includes(locale) ? locale : normalizeLocale(locale) || LOCALE_FALLBACK;
+  return POST_TRANSLATIONS[normalized] || POST_TRANSLATIONS[LOCALE_FALLBACK];
+}
 
 /* Utility: attempt to fetch user doc by a few keys for robustness */
 async function getUserDoc(email){
@@ -285,20 +537,13 @@ const ICONS = {
   heart: function(filled){
     filled = filled || false; // fallback for plain JS
     if(filled){
-      return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 21s-7.5-4.5-10-8c-1.9-2.6-1-6 2-7.5C6 4 8.5 5 9.5 6.2 10.5 5 13 4 16 5.5c3 1.5 3.9 4.9 2 7.5-2.5 3.5-10 8-10 8z"/>
-      </svg>`;
+      return `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#B7B7B7"><path d="m480-120-58-52q-101-91-167-157T150-447.5Q111-500 95.5-544T80-634q0-94 63-157t157-63q52 0 99 22t81 62q34-40 81-62t99-22q94 0 157 63t63 157q0 46-15.5 90T810-447.5Q771-395 705-329T538-172l-58 52Z"/></svg>`;
     } else {
-      return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="none" stroke="currentColor" stroke-width="1.6" d="M12 21s-7.5-4.5-10-8c-1.9-2.6-1-6 2-7.5C6 4 8.5 5 9.5 6.2 10.5 5 13 4 16 5.5c3 1.5 3.9 4.9 2 7.5-2.5 3.5-10 8-10 8z"/>
-      </svg>`;
+      return `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#B7B7B7"><path d="m480-120-58-52q-101-91-167-157T150-447.5Q111-500 95.5-544T80-634q0-94 63-157t157-63q52 0 99 22t81 62q34-40 81-62t99-22q94 0 157 63t63 157q0 46-15.5 90T810-447.5Q771-395 705-329T538-172l-58 52Zm0-108q96-86 158-147.5t98-107q36-45.5 50-81t14-70.5q0-60-40-100t-100-40q-47 0-87 26.5T518-680h-76q-15-41-55-67.5T300-774q-60 0-100 40t-40 100q0 35 14 70.5t50 81q36 45.5 98 107T480-228Zm0-273Z"/></svg>`;
     }
   },
 
-  flag: `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M5 3v18" stroke="currentColor" stroke-width="1.6" fill="none"/>
-    <path d="M19 7s-3 0-5 1-4-1-6-1v8s3 1 6 0 5 1 5 1V7z" fill="currentColor"/>
-  </svg>`,
+  flag: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#B7B7B7"><path d="M200-120v-680h360l16 80h224v400H520l-16-80H280v280h-80Zm300-440Zm86 160h134v-240H510l-16-80H280v240h290l16 80Z"/></svg>`,
 
   open: `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M14 3h7v7" stroke="currentColor" stroke-width="1.6" fill="none"/>
@@ -332,7 +577,7 @@ function renderMediaItems(images){
 
 
 /* Render a single post card DOM element */
-function createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy, createdAt, towall, pinnedByOwner }, currentUserEmail){
+function createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy, createdAt, towall, pinnedByOwner, canLike = true }, currentUserEmail, strings){
   const userLiked = currentUserEmail ? likedBy.map(e=>String(e).toLowerCase()).includes(currentUserEmail) : false;
   const likeCount = likedBy.length || 0;
 
@@ -342,50 +587,56 @@ function createPostCard({ postId, editorEmail, displayName, profilePic, verified
 
   // header
   const avatarUrl = profilePic || '/org-owner.jpg';
+  const safeDisplayName = escapeHtml(displayName);
   const verifiedHtml = verified ? `<span class="verified-badge" title="Verified"></span>` : '';
   const dateLabel = formatPostDate(createdAt);
   const isOwner = currentUserEmail && editorEmail && currentUserEmail === String(editorEmail).toLowerCase();
   const canRemoveFromWall = currentUserEmail && towall && currentUserEmail === String(towall).toLowerCase();
-  const isPinned = Boolean(pinnedByOwner);
+  let isPinned = Boolean(pinnedByOwner);
 
+  // NOTE: rich-markdown receives the raw markdown text (escaped only so it
+  // survives being placed inside an HTML template - the browser's HTML
+  // parser decodes the entities back to the original characters when it
+  // builds the text node, so the component still sees real markdown source).
   card.innerHTML = `
-    <div class="author-row">
-      <div class="author-left">
-        <div class="avatar" style="background-image:url('${encodeURI(avatarUrl)}');" title="${escapeHtml(displayName)}"></div>
-        <div class="author-meta">
-          <div class="display-name">${escapeHtml(displayName)} ${verifiedHtml}</div>
-          <div class="email-text">${escapeHtml(editorEmail)}</div>
-        </div>
+    <div class="post-row">
+      <div class="avatar" title="${escapeHtml(displayName)}">
+        <img src="${encodeURI(avatarUrl)}" alt="${escapeHtml(displayName)}" style="width:100%;height:100%;object-fit:cover;display:block;" />
       </div>
 
-      <div class="post-meta">
-        ${dateLabel ? `<div class="post-date">${escapeHtml(dateLabel)}</div>` : ''}
-        <button class="menu-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Post actions">⋮</button>
-        <div class="post-menu" role="menu" aria-label="Post actions">
-          <button type="button" class="menu-item delete-post" ${isOwner ? '' : 'disabled'}>Delete post</button>
-          <button type="button" class="menu-item pin-post" ${isOwner ? '' : 'disabled'}>${isPinned ? 'Unpin' : 'Pin'}</button>
-          <button type="button" class="menu-item remove-wall" ${canRemoveFromWall ? '' : 'disabled'}>Remove from my wall</button>
+      <div class="post-main">
+        <div class="post-header">
+          <div class="post-header-text">
+            <span class="display-name">${escapeHtml(displayName)} ${verifiedHtml}</span>
+            <span class="handle">${escapeHtml(editorEmail)}</span>
+            ${dateLabel ? `<span class="dot">·</span><span class="post-date">${escapeHtml(dateLabel)}</span>` : ''}
+          </div>
+
+          <div class="post-meta">
+            <button class="menu-btn" type="button" aria-haspopup="true" aria-expanded="false" title="${escapeHtml(strings.postActions)}">⋮</button>
+            <div class="post-menu" role="menu" aria-label="${escapeHtml(strings.postActions)}">
+              <button type="button" class="menu-item delete-post" ${isOwner ? '' : 'disabled'}>${escapeHtml(strings.deletePost)}</button>
+              <button type="button" class="menu-item pin-post" ${isOwner ? '' : 'disabled'}>${isPinned ? escapeHtml(strings.unpinPost) : escapeHtml(strings.pinPost)}</button>
+              <button type="button" class="menu-item remove-wall" ${canRemoveFromWall ? '' : 'disabled'}>${escapeHtml(strings.removeFromWall)}</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="post-text" role="article">
+          <rich-markdown mode="markdown" chat-components></rich-markdown>
+        </div>
+        ${ images && images.length ? renderMediaItems(images) : '' }
+
+        <div class="actions-row">
+          <button class="icon-btn like-btn ${userLiked ? 'liked' : ''}" aria-pressed="${userLiked}" title="${canLike ? (userLiked ? strings.unlike : strings.like) : strings.likeUnavailable}" ${canLike ? '' : 'disabled'}>
+            ${ICONS.heart(userLiked)} <span class="like-count">${likeCount}</span>
+          </button>
+
+          <button class="icon-btn report-btn" title="${escapeHtml(strings.report)}">
+            ${ICONS.flag} <span class="muted" style="font-size:13px">${escapeHtml(strings.report)}</span>
+          </button>
         </div>
       </div>
-    </div>
-
-    <div class="post-text" role="article"><rich-markdown mode="markdown" chat-components>${escapeHtml(text)}</rich-markdown></div>
-    ${ images && images.length ? renderMediaItems(images) : '' }
-
-    <div class="sep" aria-hidden="true"></div>
-
-    <div class="actions-row">
-      <button class="icon-btn like-btn ${userLiked ? 'liked' : ''}" aria-pressed="${userLiked}" title="${userLiked ? 'Unlike' : 'Like'}">
-        ${ICONS.heart(userLiked)} <span class="like-count">${likeCount}</span>
-      </button>
-
-      <button class="icon-btn report-btn" title="Report">
-        ${ICONS.flag} <span class="muted" style="font-size:13px">Report</span>
-      </button>
-
-      <button class="icon-btn open-btn" title="Open post">
-        ${ICONS.open} <span class="muted" style="font-size:13px">Open</span>
-      </button>
     </div>
   `;
 
@@ -394,6 +645,21 @@ function createPostCard({ postId, editorEmail, displayName, profilePic, verified
   const deleteBtn = card.querySelector('.delete-post');
   const pinBtn = card.querySelector('.pin-post');
   const removeWallBtn = card.querySelector('.remove-wall');
+  const markdownEl = card.querySelector('.post-text rich-markdown');
+  const likeBtn = card.querySelector('.like-btn');
+  const reportBtn = card.querySelector('.report-btn');
+
+  if (markdownEl) {
+    markdownEl.setAttribute('text', text);
+    markdownEl.setAttribute('mode', 'markdown');
+    markdownEl.setAttribute('chat-components', '');
+  }
+
+  card.addEventListener('click', (event) => {
+    const interactive = event.target.closest('button, a, input, textarea, select, [role="menu"], .post-menu');
+    if (interactive) return;
+    window.location.href = `/posts?post=${encodeURIComponent(postId)}`;
+  });
 
   function closeMenu() {
     if (menu) menu.classList.remove('open');
@@ -418,16 +684,21 @@ function createPostCard({ postId, editorEmail, displayName, profilePic, verified
     });
   }
 
+  if (!canLike && likeBtn) {
+    likeBtn.classList.add('disabled');
+    likeBtn.setAttribute('aria-disabled', 'true');
+  }
+
   if (deleteBtn) {
     deleteBtn.addEventListener('click', async () => {
       if (!isOwner) return;
-      if (!confirm('Delete this post? This cannot be undone.')) return;
+      if (!confirm(strings.deleteConfirm)) return;
       try {
         await db.collection('posts').doc(postId).delete();
         window.location.href = '/ugc/posts';
       } catch (err) {
         console.error('delete post', err);
-        alert('Failed to delete post.');
+        alert(strings.deleteFailed);
       }
     });
   }
@@ -436,21 +707,21 @@ function createPostCard({ postId, editorEmail, displayName, profilePic, verified
     pinBtn.addEventListener('click', async () => {
       if (!isOwner) return;
       const willUnpin = isPinned;
-      if (!confirm(`${willUnpin ? 'Unpin' : 'Pin'} this post?`)) return;
+      if (!confirm(willUnpin ? strings.unpinConfirm : strings.pinConfirm)) return;
       try {
         if (willUnpin) {
           await db.collection('posts').doc(postId).update({ pinnedByOwner: firebase.firestore.FieldValue.delete() });
-          pinBtn.textContent = 'Pin';
+          pinBtn.textContent = strings.pinPost;
           isPinned = false;
         } else {
           await db.collection('posts').doc(postId).update({ pinnedByOwner: true });
-          pinBtn.textContent = 'Unpin';
+          pinBtn.textContent = strings.unpinPost;
           isPinned = true;
         }
-        alert(`Post ${willUnpin ? 'unpinned' : 'pinned'}.`);
+        alert(willUnpin ? strings.unpinSuccess : strings.pinSuccess);
       } catch (err) {
         console.error('pin post', err);
-        alert('Failed to update pin state.');
+        alert(strings.pinFailed);
       }
     });
   }
@@ -458,14 +729,14 @@ function createPostCard({ postId, editorEmail, displayName, profilePic, verified
   if (removeWallBtn) {
     removeWallBtn.addEventListener('click', async () => {
       if (!canRemoveFromWall) return;
-      if (!confirm('Remove this post from your wall?')) return;
+      if (!confirm(strings.removeWallConfirm)) return;
       try {
         await db.collection('posts').doc(postId).update({ towall: firebase.firestore.FieldValue.delete() });
-        alert('Removed from your wall.');
+        alert(strings.removeWallSuccess);
         removeWallBtn.disabled = true;
       } catch (err) {
         console.error('remove from wall', err);
-        alert('Failed to remove from wall.');
+        alert(strings.removeWallFailed);
       }
     });
   }
@@ -484,11 +755,22 @@ const postsListEl = document.getElementById('postsList');
 auth.onAuthStateChanged(async user => {
   postsListEl.innerHTML = ''; // clear
   const currentUserEmail = user?.email?.toLowerCase?.() || null;
+  let locale = getBrowserLocale();
+  let strings = getStrings(locale);
 
   try{
+    const userDoc = currentUserEmail ? await getUserDoc(currentUserEmail) : null;
+    locale = getPreferredLocale(userDoc?.data || {});
+    strings = getStrings(locale);
+
+    const composeLink = document.getElementById('composeLink');
+    const fabCompose = document.getElementById('fabCompose');
+    if (composeLink) composeLink.textContent = strings.createNewPost;
+    if (fabCompose) fabCompose.setAttribute('aria-label', strings.createNewPost);
+    document.documentElement.lang = locale;
     const snapshot = await db.collection('posts').orderBy('timestamp','desc').get();
     if(snapshot.empty){
-      postsListEl.innerHTML = `<div class="muted" style="padding:18px; text-align:center">No posts yet.</div>`;
+      postsListEl.innerHTML = `<div class="muted" style="padding:18px; text-align:center">${escapeHtml(strings.noPostsYet)}</div>`;
       return;
     }
 
@@ -544,14 +826,18 @@ auth.onAuthStateChanged(async user => {
       const pinnedByOwner = postData.pinnedByOwner || postData.pinned_by_owner || postData.pinned || false;
 
       // create card
-      const card = createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy, createdAt, towall }, currentUserEmail);
+      const canLike = Boolean(userDocSnapshot && userDocSnapshot.exists);
+      const card = createPostCard({ postId, editorEmail, displayName, profilePic, verified, text, images, likedBy, createdAt, towall, pinnedByOwner, canLike }, currentUserEmail, strings);
       postsListEl.appendChild(card);
 
-      // Ensure rich-markdown child receives raw textContent (avoids innerHTML/upgrade timing issues)
-      try{
-        const rm = card.querySelector('rich-markdown');
-        if(rm){ rm.setAttribute('mode','markdown'); rm.setAttribute('chat-components',''); rm.textContent = text || ''; }
-      }catch(e){/* ignore */}
+      // BUGFIX (rich text not rendering): the previous code re-set
+      // rich-markdown's textContent *after* the element was already
+      // attached to the document. By that point the component had already
+      // upgraded/rendered from its initial content, so forcing textContent
+      // again wiped out the rendered rich content and left raw markdown
+      // text on screen instead. The markup above already gives the
+      // component its raw markdown source at creation time, so no further
+      // action is needed here - we simply don't touch it again.
 
       // wire video preview behavior: ensure videos cannot be played here and overlay handles clicks
       const videoPreviews = card.querySelectorAll('.video-preview');
@@ -569,13 +855,17 @@ auth.onAuthStateChanged(async user => {
         vp.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); ev.stopPropagation(); if(video){ try{ video.pause(); }catch(e){} } } });
       });
 
-      // frame overlay if provided
+      // frame overlay if provided. BUGFIX: previously this hardcoded a
+      // fixed 56px size inline, which didn't match the avatar's actual
+      // size on mobile breakpoints (40/48/52px), causing a misaligned
+      // frame. Now it only sets the background image and lets the
+      // `.profile-pic-frame { inset:0 }` CSS rule track the avatar's real
+      // size automatically at every breakpoint.
       if(frameUrl){
         const avatarEl = card.querySelector('.avatar');
         const frameEl = document.createElement('div');
         frameEl.className = 'profile-pic-frame';
-        frameEl.style.cssText = `position:absolute; left:0; top:0; width:56px; height:56px; border-radius:50%; background-image:url('${encodeURI(frameUrl)}'); background-size:cover; background-position:center; pointer-events:none;`;
-        avatarEl.style.position = 'relative';
+        frameEl.style.backgroundImage = `url('${encodeURI(frameUrl)}')`;
         avatarEl.appendChild(frameEl);
       }
 
@@ -583,12 +873,11 @@ auth.onAuthStateChanged(async user => {
       const likeBtn = card.querySelector('.like-btn');
       const likeCountEl = card.querySelector('.like-count');
       const reportBtn = card.querySelector('.report-btn');
-      const openBtn = card.querySelector('.open-btn');
 
       // Like handler (atomic update)
       likeBtn.addEventListener('click', async ()=>{
         if(!currentUserEmail){
-          alert('You must sign in to like posts.');
+          alert(strings.signInToLike);
           return;
         }
         likeBtn.disabled = true;
@@ -611,21 +900,17 @@ auth.onAuthStateChanged(async user => {
           }
         }catch(err){
           console.error('like failed', err);
-          alert('Could not update like. Try again.');
+          alert(strings.likeFailed);
         }finally{
           likeBtn.disabled = false;
         }
       });
 
       // Report handler
-      reportBtn.addEventListener('click', ()=>{
+      reportBtn.addEventListener('click', (event)=>{
+        event.stopPropagation();
         // navigate to report page with reporting param
         window.location.href = `/reportabuse?reporting=${encodeURIComponent(editorEmail)}`;
-      });
-
-      // Open handler
-      openBtn.addEventListener('click', ()=>{
-        window.location.href = `/posts?post=${encodeURIComponent(postId)}`;
       });
 
     } // end for each post

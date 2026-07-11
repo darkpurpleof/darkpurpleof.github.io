@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Регистрация</title>
+  <title>Register</title>
 
   <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
@@ -13,25 +13,31 @@
   <!-- reCAPTCHA -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
       --bg: #171717;
       --card: #1f1f1f;
+      --card-2: #262626;
       --muted: #a8a8a8;
       --accent: #6b21a8;
       --accent-strong: #5b21b6;
+      --accent-soft: rgba(107,33,168,0.14);
       --text: #eaeaea;
-      --border: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
     }
     body.light {
       --bg: #f6f8fb;
       --card:#fff;
+      --card-2:#f1f3f8;
       --muted:#475569;
       --text:#0f172a;
-      --border: rgba(0,0,0,0.06);
+      --border: rgba(0,0,0,0.08);
+      --accent-soft: rgba(107,33,168,0.08);
     }
+
+    *{ box-sizing:border-box; }
 
     html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background-color: var(--bg); color:var(--text); transition: background .25s, color .25s; }
     body { display:flex; flex-direction:column; min-height:100vh; }
@@ -39,65 +45,154 @@
     /* dp-topbar */
     dp-topbar { display:block; position:sticky; top:0; z-index:100; }
 
-    /* main wrapper centers content */
     main.wrapper {
       flex:1;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:24px;
-      box-sizing:border-box;
+      padding:32px 20px;
     }
 
     .card {
-      background:var(--card);
-      border-radius:12px;
-      padding:24px;
+      background: linear-gradient(180deg, var(--card), var(--card) 60%, var(--card-2));
+      border-radius:18px;
+      padding:36px;
       border:1px solid var(--border);
       color:var(--text);
-      box-shadow:0 6px 18px rgba(2,6,23,0.45);
-      max-width:640px;
+      box-shadow:0 20px 50px rgba(2,6,23,0.5), 0 2px 0 rgba(255,255,255,0.02) inset;
+      max-width:440px;
       width:100%;
     }
 
-    .grid {
-      display:grid;
-      grid-template-columns: 1fr 320px;
-      gap:20px;
-    }
-    @media (max-width:920px){
-      .grid { grid-template-columns: 1fr; }
+    .badge {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      color:var(--accent);
+      background:var(--accent-soft);
+      border:1px solid rgba(107,33,168,0.25);
+      padding:5px 10px;
+      border-radius:999px;
+      margin-bottom:16px;
     }
 
-    h1 { margin:0 0 6px 0; font-size:20px; font-weight:700; }
-    p.lead { margin:0 0 16px 0; color:var(--muted); font-size:14px; }
+    h1 { margin:0 0 6px 0; font-size:24px; font-weight:800; letter-spacing:-0.01em; }
+    p.lead { margin:0 0 28px 0; color:var(--muted); font-size:14px; line-height:1.5; }
 
-    .info-chart {
-      background: var(--card);
-      border-radius:10px;
-      padding:12px;
+    form { display:flex; flex-direction:column; gap:18px; }
+
+    .field { display:flex; flex-direction:column; gap:7px; }
+    label { font-size:13px; font-weight:600; color:var(--muted); }
+
+    /* username + fixed domain suffix combo */
+    .username-combo {
+      display:flex;
+      align-items:stretch;
       border:1px solid var(--border);
+      border-radius:10px;
+      background:rgba(0,0,0,0.18);
+      overflow:hidden;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    body.light .username-combo { background:rgba(0,0,0,0.02); }
+    .username-combo:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .username-combo input {
+      flex:1;
+      min-width:0;
+      padding:12px 4px 12px 14px;
+      border:none;
+      background:transparent;
+      color:var(--text);
+      font-size:14px;
+      outline:none;
+    }
+    .username-combo .domain-suffix {
+      display:flex;
+      align-items:center;
+      padding:0 12px;
+      font-size:13px;
+      color:var(--muted);
+      background:rgba(255,255,255,0.03);
+      border-left:1px solid var(--border);
+      white-space:nowrap;
+      user-select:none;
+    }
+    body.light .username-combo .domain-suffix { background:rgba(0,0,0,0.03); }
+
+    .input {
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,0.18);
+      color:var(--text);
+      font-size:14px;
+      outline:none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    body.light .input { background:rgba(0,0,0,0.02); }
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
-    form { display:flex; flex-direction:column; gap:12px; }
-    .input { width:100%; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing:border-box; }
-    label { font-size:13px; color:var(--muted); display:block; margin-bottom:6px; }
+    .hint { font-size:12px; color:var(--muted); }
 
-    .row { display:flex; gap:12px; }
-    .row .col { flex:1; }
+    .recaptcha-wrap {
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      padding-top:4px;
+    }
+    .recaptcha-wrap .label-row { font-size:13px; color:var(--muted); font-weight:600; }
 
     .register-button {
-      background:var(--accent);
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
       color:#fff;
       border:none;
-      padding:12px;
-      border-radius:8px;
+      padding:13px;
+      border-radius:10px;
       font-weight:700;
+      font-size:15px;
       cursor:pointer;
+      transition: transform .12s ease, filter .15s ease;
+      box-shadow: 0 8px 20px rgba(107,33,168,0.35);
     }
-    .register-button:hover { opacity:0.95; }
+    .register-button:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    .register-button:active { transform:translateY(0); }
 
-    .small-note { font-size:13px; color:var(--muted); }
+    .small-note { font-size:12.5px; color:var(--muted); line-height:1.5; }
+    .small-note a { color:var(--accent); text-decoration:none; font-weight:600; }
+    .small-note a:hover { text-decoration:underline; }
+
+    .divider {
+      height:1px;
+      background:var(--border);
+      margin:6px 0 2px;
+      border:none;
+    }
+
+    .footer-row {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .login-link {
+      font-size:13.5px;
+      color:var(--muted);
+    }
+    .login-link a { color:var(--accent); text-decoration:none; font-weight:700; }
+    .login-link a:hover { text-decoration:underline; }
 
     /* toast (matches /home) */
     #toast {
@@ -117,13 +212,33 @@
     #toast.yellow { background: #e6b800; color:#222; }
     #toast.red { background: #c00; color:#fff; }
 
-    /* subtle helper */
     .muted { color:var(--muted); }
 
+    /* Inline error banner */
+    .error-banner {
+      display:none;
+      align-items:flex-start;
+      gap:10px;
+      padding:12px 14px;
+      border-radius:10px;
+      background: rgba(185,28,28,0.1);
+      border:1px solid rgba(185,28,28,0.25);
+      font-size:13px;
+      color:#ef4444;
+      line-height:1.5;
+      animation: banner-in .18s ease-out;
+    }
+    body.light .error-banner { background:rgba(185,28,28,0.07); }
+    .error-banner.visible { display:flex; }
+    .error-banner svg { flex:0 0 16px; width:16px; height:16px; margin-top:1px; }
+    @keyframes banner-in {
+      from { opacity:0; transform:translateY(-4px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
     @media (max-width:600px){
-      main.wrapper { padding:16px; }
-      .card { padding:16px; }
-      .grid { grid-template-columns: 1fr; }
+      main.wrapper { padding:20px 14px; }
+      .card { padding:24px 20px; }
     }
   </style>
 
@@ -133,220 +248,624 @@
 <body>
   <dp-topbar></dp-topbar>
 
-  <main class="wrapper" role="main" aria-label="Зона регистрации">
-    <div class="card" role="region" aria-label="Форма регистрации">
-      <div class="grid">
-        <!-- LEFT: form -->
-        <div>
-          <h1>Создать аккаунт</h1>
-          <p class="lead">Присоединяйтесь к платформе. Администраторские аккаунты зарезервированы и здесь не регистрируются.</p>
+  <main class="wrapper" role="main" aria-label="Register area">
+    <div class="card" role="region" aria-label="Register form">
+      <span class="badge">Create account</span>
+      <h1>Join the platform</h1>
+      <p class="lead">Pick a username below — admin and reserved addresses can't be registered here.</p>
 
-          <form id="registerForm" autocomplete="on" novalidate>
-            <div>
-              <label for="email">Электронная почта</label>
-              <input id="email" class="input" type="email" inputmode="email" placeholder="you@example.com" required>
-            </div>
-
-            <div>
-              <label for="password">Пароль</label>
-              <input id="password" class="input" type="password" placeholder="Введите надёжный пароль" required>
-            </div>
-
-            <!-- reCAPTCHA widget (user must complete) -->
-            <div style="margin-top:6px;">
-              <div class="muted" style="margin-bottom:6px; font-size:13px;">reCAPTCHA を完了してください</div>
-              <div class="g-recaptcha" data-sitekey="6Lddwd8qAAAAAC0OUZ7iOrKFGEeu--_-1XvjU0et"></div>
-            </div>
-
-            <div>
-              <button type="submit" class="register-button">Зарегистрироваться</button>
-            </div>
-
-            <div class="small-note" style="margin-top:8px;">
-              Регистрируясь, вы принимаете <a href="/terms.md" style="color:var(--accent); text-decoration:none;">Условия использования</a>.
-            </div>
-
-            <div class="small-note" style="margin-top:6px;">
-              Адреса @darkpurpleof.github.io нельзя регистрировать здесь.
-            </div>
-          </form>
+      <form id="registerForm" autocomplete="on" novalidate>
+        <div class="field">
+          <label for="username">Username</label>
+          <div class="username-combo">
+            <input id="username" type="text" placeholder="yourname" required autocomplete="username" inputmode="email" spellcheck="false">
+            <span class="domain-suffix">@users.darkpurpleof.github.io</span>
+          </div>
+          <span class="hint">Letters, numbers, dots and underscores only.</span>
         </div>
 
-        <!-- RIGHT: info / hints -->
-        <aside class="info-chart" aria-hidden="false">
-          <h3 style="margin:0 0 8px 0">Зачем проверка?</h3>
-          <p class="muted" style="margin:0 0 12px 0;">Для поддержания безопасного сообщества мы проверяем заблокированные IP и адреса электронной почты, регион и reCAPTCHA.</p>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" class="input" type="password" placeholder="Choose a strong password" required autocomplete="new-password">
+        </div>
 
-          <div style="display:flex; gap:8px; flex-direction:column;">
-              <div class="muted">Проверка регистрации:</div>
-            <ul class="muted" style="margin:6px 0 0 18px; padding:0;">
-              <li>Завершение reCAPTCHA</li>
-              <li>Запрет регистрации с адресов @darkpurpleof.github.io</li>
-              <li>Проверка IP и электронной почты</li>
-              <li>Определение региона и VPN</li>
-            </ul>
+        <div class="recaptcha-wrap">
+          <div class="label-row">Verify you're human</div>
+          <div class="g-recaptcha" data-sitekey="6Lddwd8qAAAAAC0OUZ7iOrKFGEeu--_-1XvjU0et"></div>
+        </div>
+
+        <div class="error-banner" id="errorBanner" role="alert" aria-live="assertive">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4M12 15.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span id="errorBannerText"></span>
+        </div>
+
+        <button type="submit" class="register-button">Register</button>
+
+        <hr class="divider">
+
+        <div class="footer-row">
+          <div class="small-note">
+            By registering you agree to our <a href="/terms.md">Terms of Service</a>.
           </div>
+        </div>
 
-          <div style="height:12px;"></div>
-          <div><a href="./login.html" style="color:var(--accent); text-decoration:none;">Уже есть аккаунт? Войти</a></div>
-        </aside>
-      </div>
+        <div class="login-link">Already have an account? <a href="/login.html">Log in</a></div>
+      </form>
     </div>
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
 
-  <script>
-    // ensure firebase compat is initialized
-    const firebaseConfig = {
-      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-      authDomain: "darkpurpleof-s-website.firebaseapp.com",
-      projectId: "darkpurpleof-s-website",
-      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-      messagingSenderId: "520651082420",
-      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
-    };
-    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+<script>
+  // ensure firebase compat is initialized
+  const firebaseConfig = {
+    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+    authDomain: "darkpurpleof-s-website.firebaseapp.com",
+    projectId: "darkpurpleof-s-website",
+    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+    messagingSenderId: "520651082420",
+    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+  };
+  if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-    // Get ?returnto= param safely
-function getReturnToUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const returnTo = params.get("returnto");
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-  if (!returnTo) return "/";
+  const ALLOWED_DOMAIN = "@users.darkpurpleof.github.io";
+  const ADMIN_DOMAIN   = "@darkpurpleof.github.io";
+  const USERNAME_REGEX = /^[a-zA-Z0-9._]{3,30}$/;
+  const SUPPORTED_LANGS = new Set(["en", "de", "es", "ru", "ja"]);
+  const LANG_FALLBACK = "en";
 
-  try {
-    const url = new URL(returnTo, window.location.origin);
-
-    // Optional safety: only allow same-origin redirects
-    if (url.origin === window.location.origin) {
-      return url.pathname + url.search + url.hash;
+  const I18N = {
+    en: {
+      title: "Register",
+      badge: "Create account",
+      heading: "Join the platform",
+      lead: "Pick a username below — admin and reserved addresses can't be registered here.",
+      usernameLabel: "Username",
+      usernamePlaceholder: "yourname",
+      usernameHint: "Letters, numbers, dots and underscores only.",
+      passwordLabel: "Password",
+      passwordPlaceholder: "Choose a strong password",
+      humanCheck: "Verify you're human",
+      registerButton: "Register",
+      termsNotePrefix: "By registering you agree to our",
+      termsOfService: "Terms of Service",
+      loginPrefix: "Already have an account?",
+      logIn: "Log in",
+      stepEnterCode: "Enter code",
+      stepConfirm: "Confirm",
+      stepDone: "Done",
+      likeThis: "Like this one: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+      yourAccount: "your account",
+      checkingDetails: "Checking registration details...",
+      checkingAvailability: "Checking username availability...",
+      bannerRequired: "Username and password are required.",
+      invalidUsername: "Username must be 3–30 characters and contain only letters, numbers, dots, or underscores.",
+      recaptchaRequired: "Please complete the reCAPTCHA before registering.",
+      recaptchaUnavailable: "reCAPTCHA is unavailable. Please refresh and try again.",
+      networkError: "Could not verify your network. Please try again.",
+      regionBlocked: "Registration from your region is not currently available.",
+      vpnDetected: "VPN detected. Please disable your VPN and try again.",
+      accountRestricted: "Your account or network has been restricted.",
+      usernameCheckFailed: "Could not verify username availability. Please try again.",
+      usernameTaken: "That username is already taken. Please choose a different one.",
+      successRedirecting: "Registration successful — redirecting...",
+      disabledTitle: "Oops!, you can't register right now",
+      disabledBodyPrefix: "The ability to register a new account from your device has been temporarily disabled due to a violation in our",
+      disabledBodyLink: "Terms of Service",
+      disabledBodySuffix: ".",
+      authErrors: {
+        "auth/email-already-in-use": "That username is already taken. Try a different one.",
+        "auth/weak-password": "Your password is too short. Use at least 6 characters.",
+        "auth/invalid-email": "The generated email address is invalid. Please contact support.",
+        "auth/operation-not-allowed": "New registrations are temporarily disabled. Try again later.",
+        "auth/network-request-failed": "Network error. Check your connection and try again.",
+        "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
+        "auth/internal-error": "An internal error occurred. Please try again."
+      }
+    },
+    de: {
+      title: "Registrieren",
+      badge: "Konto erstellen",
+      heading: "Treten Sie der Plattform bei",
+      lead: "Wählen Sie unten einen Benutzernamen — Admin- und reservierte Adressen können hier nicht registriert werden.",
+      usernameLabel: "Benutzername",
+      usernamePlaceholder: "deinname",
+      usernameHint: "Nur Buchstaben, Zahlen, Punkte und Unterstriche.",
+      passwordLabel: "Passwort",
+      passwordPlaceholder: "Wählen Sie ein starkes Passwort",
+      humanCheck: "Bestätigen Sie, dass Sie ein Mensch sind",
+      registerButton: "Registrieren",
+      termsNotePrefix: "Mit der Registrierung stimmen Sie unseren",
+      termsOfService: "Nutzungsbedingungen",
+      loginPrefix: "Sie haben bereits ein Konto?",
+      logIn: "Anmelden",
+      stepEnterCode: "Code eingeben",
+      stepConfirm: "Bestätigen",
+      stepDone: "Fertig",
+      likeThis: "Zum Beispiel so: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+      yourAccount: "Ihr Konto",
+      checkingDetails: "Registrierungsdaten werden geprüft...",
+      checkingAvailability: "Verfügbarkeit des Benutzernamens wird geprüft...",
+      bannerRequired: "Benutzername und Passwort sind erforderlich.",
+      invalidUsername: "Der Benutzername muss 3–30 Zeichen lang sein und darf nur Buchstaben, Zahlen, Punkte oder Unterstriche enthalten.",
+      recaptchaRequired: "Bitte schließen Sie das reCAPTCHA ab, bevor Sie sich registrieren.",
+      recaptchaUnavailable: "reCAPTCHA ist nicht verfügbar. Bitte aktualisieren Sie die Seite und versuchen Sie es erneut.",
+      networkError: "Ihr Netzwerk konnte nicht überprüft werden. Bitte versuchen Sie es erneut.",
+      regionBlocked: "Registrierungen aus Ihrer Region sind derzeit nicht verfügbar.",
+      vpnDetected: "VPN erkannt. Bitte deaktivieren Sie Ihr VPN und versuchen Sie es erneut.",
+      accountRestricted: "Ihr Konto oder Netzwerk wurde eingeschränkt.",
+      usernameCheckFailed: "Die Verfügbarkeit des Benutzernamens konnte nicht überprüft werden. Bitte versuchen Sie es erneut.",
+      usernameTaken: "Dieser Benutzername ist bereits vergeben. Bitte wählen Sie einen anderen.",
+      successRedirecting: "Registrierung erfolgreich — Weiterleitung...",
+      disabledTitle: "Ups, Sie können sich gerade nicht registrieren",
+      disabledBodyPrefix: "Die Möglichkeit, mit Ihrem Gerät ein neues Konto zu registrieren, wurde vorübergehend deaktiviert, wegen eines Verstoßes gegen unsere",
+      disabledBodyLink: "Nutzungsbedingungen",
+      disabledBodySuffix: ".",
+      authErrors: {
+        "auth/email-already-in-use": "Dieser Benutzername ist bereits vergeben. Bitte wählen Sie einen anderen.",
+        "auth/weak-password": "Ihr Passwort ist zu kurz. Verwenden Sie mindestens 6 Zeichen.",
+        "auth/invalid-email": "Die erzeugte E-Mail-Adresse ist ungültig. Bitte wenden Sie sich an den Support.",
+        "auth/operation-not-allowed": "Neue Registrierungen sind vorübergehend deaktiviert. Bitte später erneut versuchen.",
+        "auth/network-request-failed": "Netzwerkfehler. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+        "auth/too-many-requests": "Zu viele Versuche. Bitte warten Sie kurz und versuchen Sie es erneut.",
+        "auth/internal-error": "Ein interner Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      }
+    },
+    es: {
+      title: "Registro",
+      badge: "Crear cuenta",
+      heading: "Únete a la plataforma",
+      lead: "Elige un nombre de usuario abajo — las cuentas de admin y las reservadas no se pueden registrar aquí.",
+      usernameLabel: "Nombre de usuario",
+      usernamePlaceholder: "tunombre",
+      usernameHint: "Solo letras, números, puntos y guiones bajos.",
+      passwordLabel: "Contraseña",
+      passwordPlaceholder: "Elige una contraseña segura",
+      humanCheck: "Verifica que eres humano",
+      registerButton: "Registrar",
+      termsNotePrefix: "Al registrarte aceptas nuestros",
+      termsOfService: "Términos del servicio",
+      loginPrefix: "¿Ya tienes una cuenta?",
+      logIn: "Inicia sesión",
+      stepEnterCode: "Introducir código",
+      stepConfirm: "Confirmar",
+      stepDone: "Listo",
+      likeThis: "Ejemplo: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+      yourAccount: "tu cuenta",
+      checkingDetails: "Comprobando los datos de registro...",
+      checkingAvailability: "Comprobando la disponibilidad del nombre de usuario...",
+      bannerRequired: "El nombre de usuario y la contraseña son obligatorios.",
+      invalidUsername: "El nombre de usuario debe tener entre 3 y 30 caracteres y solo puede contener letras, números, puntos o guiones bajos.",
+      recaptchaRequired: "Completa el reCAPTCHA antes de registrarte.",
+      recaptchaUnavailable: "reCAPTCHA no está disponible. Actualiza la página e inténtalo de nuevo.",
+      networkError: "No se pudo verificar tu red. Inténtalo de nuevo.",
+      regionBlocked: "El registro desde tu región no está disponible por ahora.",
+      vpnDetected: "Se detectó VPN. Desactívala e inténtalo de nuevo.",
+      accountRestricted: "Tu cuenta o red ha sido restringida.",
+      usernameCheckFailed: "No se pudo comprobar la disponibilidad del nombre de usuario. Inténtalo de nuevo.",
+      usernameTaken: "Ese nombre de usuario ya está en uso. Elige otro.",
+      successRedirecting: "Registro correcto — redirigiendo...",
+      disabledTitle: "Ups, ahora mismo no puedes registrarte",
+      disabledBodyPrefix: "La capacidad de registrar una nueva cuenta desde tu dispositivo se ha desactivado temporalmente por una infracción de nuestros",
+      disabledBodyLink: "Términos del servicio",
+      disabledBodySuffix: ".",
+      authErrors: {
+        "auth/email-already-in-use": "Ese nombre de usuario ya está en uso. Elige otro.",
+        "auth/weak-password": "Tu contraseña es demasiado corta. Usa al menos 6 caracteres.",
+        "auth/invalid-email": "La dirección de correo generada no es válida. Contacta con soporte.",
+        "auth/operation-not-allowed": "Las nuevas registraciones están desactivadas temporalmente. Inténtalo más tarde.",
+        "auth/network-request-failed": "Error de red. Revisa tu conexión e inténtalo otra vez.",
+        "auth/too-many-requests": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
+        "auth/internal-error": "Ocurrió un error interno. Inténtalo otra vez."
+      }
+    },
+    ru: {
+      title: "Регистрация",
+      badge: "Создать аккаунт",
+      heading: "Присоединяйтесь к платформе",
+      lead: "Выберите имя пользователя ниже — админские и зарезервированные адреса здесь зарегистрировать нельзя.",
+      usernameLabel: "Имя пользователя",
+      usernamePlaceholder: "vashimya",
+      usernameHint: "Только буквы, цифры, точки и подчёркивания.",
+      passwordLabel: "Пароль",
+      passwordPlaceholder: "Придумайте надёжный пароль",
+      humanCheck: "Подтвердите, что вы человек",
+      registerButton: "Регистрация",
+      termsNotePrefix: "Регистрируясь, вы соглашаетесь с нашими",
+      termsOfService: "Условиями использования",
+      loginPrefix: "Уже есть аккаунт?",
+      logIn: "Войти",
+      stepEnterCode: "Введите код",
+      stepConfirm: "Подтвердить",
+      stepDone: "Готово",
+      likeThis: "Например: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+      yourAccount: "ваш аккаунт",
+      checkingDetails: "Проверяем данные регистрации...",
+      checkingAvailability: "Проверяем доступность имени пользователя...",
+      bannerRequired: "Имя пользователя и пароль обязательны.",
+      invalidUsername: "Имя пользователя должно быть длиной 3–30 символов и содержать только буквы, цифры, точки или подчёркивания.",
+      recaptchaRequired: "Пожалуйста, завершите reCAPTCHA перед регистрацией.",
+      recaptchaUnavailable: "reCAPTCHA недоступна. Обновите страницу и попробуйте снова.",
+      networkError: "Не удалось проверить ваше соединение. Попробуйте снова.",
+      regionBlocked: "Регистрация из вашего региона сейчас недоступна.",
+      vpnDetected: "Обнаружен VPN. Пожалуйста, отключите его и попробуйте снова.",
+      accountRestricted: "Ваш аккаунт или сеть ограничены.",
+      usernameCheckFailed: "Не удалось проверить доступность имени пользователя. Попробуйте снова.",
+      usernameTaken: "Это имя пользователя уже занято. Выберите другое.",
+      successRedirecting: "Регистрация успешна — перенаправление...",
+      disabledTitle: "Упс, сейчас вы не можете зарегистрироваться",
+      disabledBodyPrefix: "Возможность зарегистрировать новый аккаунт с вашего устройства временно отключена из-за нарушения наших",
+      disabledBodyLink: "Условий использования",
+      disabledBodySuffix: ".",
+      authErrors: {
+        "auth/email-already-in-use": "Это имя пользователя уже занято. Выберите другое.",
+        "auth/weak-password": "Пароль слишком короткий. Используйте минимум 6 символов.",
+        "auth/invalid-email": "Сгенерированный адрес электронной почты недействителен. Обратитесь в поддержку.",
+        "auth/operation-not-allowed": "Новые регистрации временно отключены. Попробуйте позже.",
+        "auth/network-request-failed": "Ошибка сети. Проверьте соединение и попробуйте снова.",
+        "auth/too-many-requests": "Слишком много попыток. Подождите немного и попробуйте снова.",
+        "auth/internal-error": "Произошла внутренняя ошибка. Попробуйте ещё раз."
+      }
+    },
+    ja: {
+      title: "登録",
+      badge: "アカウント作成",
+      heading: "プラットフォームに参加する",
+      lead: "下からユーザー名を選んでください。管理者用や予約済みのアドレスはここでは登録できません。",
+      usernameLabel: "ユーザー名",
+      usernamePlaceholder: "yourname",
+      usernameHint: "英字、数字、ドット、アンダースコアのみ使用できます。",
+      passwordLabel: "パスワード",
+      passwordPlaceholder: "強いパスワードを設定",
+      humanCheck: "本人確認",
+      registerButton: "登録",
+      termsNotePrefix: "登録することで、次に同意したことになります:",
+      termsOfService: "利用規約",
+      loginPrefix: "すでにアカウントをお持ちですか？",
+      logIn: "ログイン",
+      stepEnterCode: "コード入力",
+      stepConfirm: "確認",
+      stepDone: "完了",
+      likeThis: "例: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+      yourAccount: "あなたのアカウント",
+      checkingDetails: "登録内容を確認しています...",
+      checkingAvailability: "ユーザー名の空き状況を確認しています...",
+      bannerRequired: "ユーザー名とパスワードは必須です。",
+      invalidUsername: "ユーザー名は3〜30文字で、英字・数字・ドット・アンダースコアのみ使用できます。",
+      recaptchaRequired: "登録する前に reCAPTCHA を完了してください。",
+      recaptchaUnavailable: "reCAPTCHA を利用できません。ページを更新してもう一度お試しください。",
+      networkError: "ネットワークを確認できませんでした。もう一度お試しください。",
+      regionBlocked: "お住まいの地域からの登録は現在できません。",
+      vpnDetected: "VPN が検出されました。VPN を無効にしてから再試行してください。",
+      accountRestricted: "アカウントまたはネットワークが制限されています。",
+      usernameCheckFailed: "ユーザー名の空き状況を確認できませんでした。もう一度お試しください。",
+      usernameTaken: "そのユーザー名はすでに使用されています。別の名前を選んでください。",
+      successRedirecting: "登録が完了しました — リダイレクトしています...",
+      disabledTitle: "申し訳ありません。今は登録できません",
+      disabledBodyPrefix: "お使いの端末から新しいアカウントを登録する機能は、一時的に無効になっています。これは次の規約違反によるものです:",
+      disabledBodyLink: "利用規約",
+      disabledBodySuffix: "。",
+      authErrors: {
+        "auth/email-already-in-use": "そのユーザー名はすでに使用されています。別の名前を選んでください。",
+        "auth/weak-password": "パスワードが短すぎます。6文字以上にしてください。",
+        "auth/invalid-email": "生成されたメールアドレスが無効です。サポートにお問い合わせください。",
+        "auth/operation-not-allowed": "新規登録は一時的に無効になっています。後でもう一度お試しください。",
+        "auth/network-request-failed": "ネットワークエラーです。接続を確認して再試行してください。",
+        "auth/too-many-requests": "試行回数が多すぎます。少し待ってからもう一度お試しください。",
+        "auth/internal-error": "内部エラーが発生しました。もう一度お試しください。"
+      }
     }
+  };
 
-    return "/";
-  } catch {
-    return "/";
+  let currentLang = LANG_FALLBACK;
+
+  function normalizeLang(value) {
+    if (!value) return null;
+    const code = String(value).trim().toLowerCase().slice(0, 2);
+    return SUPPORTED_LANGS.has(code) ? code : null;
   }
-}
 
-    // Toast helper (consistent with /home)
-    function showToast(message, color = "purple", duration = 3500) {
-      const toast = document.getElementById("toast");
-      toast.textContent = message;
-      toast.className = color + " show";
-      toast.style.display = "block";
-      setTimeout(() => {
-        toast.className = color + " hide";
-        setTimeout(() => {
-          toast.style.display = "none";
-          toast.className = "";
-        }, 400);
-      }, duration);
+  function getBrowserLang() {
+    const candidates = [];
+    if (Array.isArray(navigator.languages)) candidates.push(...navigator.languages);
+    if (navigator.language) candidates.push(navigator.language);
+    for (const cand of candidates) {
+      const code = normalizeLang(cand);
+      if (code) return code;
+    }
+    return LANG_FALLBACK;
+  }
+
+  function getT(lang) {
+    return I18N[lang] || I18N[LANG_FALLBACK];
+  }
+
+  function t(key) {
+    return getT(currentLang)[key] ?? I18N[LANG_FALLBACK][key] ?? key;
+  }
+
+  function fmt(template, vars = {}) {
+    return String(template).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+  }
+
+  function setPageLanguage(lang) {
+    currentLang = normalizeLang(lang) || LANG_FALLBACK;
+    document.documentElement.lang = currentLang;
+    document.title = t('title');
+
+    const badge = document.querySelector('.badge');
+    if (badge) badge.textContent = t('badge');
+
+    const h1 = document.querySelector('.card h1');
+    if (h1) h1.textContent = t('heading');
+
+    const lead = document.querySelector('p.lead');
+    if (lead) lead.textContent = t('lead');
+
+    const labels = document.querySelectorAll('.field > label');
+    if (labels[0]) labels[0].textContent = t('usernameLabel');
+    if (labels[1]) labels[1].textContent = t('passwordLabel');
+
+    const username = document.getElementById('username');
+    if (username) username.placeholder = t('usernamePlaceholder');
+
+    const hint = document.querySelector('.field .hint');
+    if (hint) hint.textContent = t('usernameHint');
+
+    const password = document.getElementById('password');
+    if (password) password.placeholder = t('passwordPlaceholder');
+
+    const recaptchaLabel = document.querySelector('.recaptcha-wrap .label-row');
+    if (recaptchaLabel) recaptchaLabel.textContent = t('humanCheck');
+
+    const registerButton = document.querySelector('.register-button');
+    if (registerButton) registerButton.textContent = t('registerButton');
+
+    const smallNote = document.querySelector('.small-note');
+    if (smallNote) {
+      smallNote.innerHTML = `${t('termsNotePrefix')} <a href="/terms.md">${t('termsOfService')}</a>.`;
     }
 
-    // onAuthStateChanged: if already signed in redirect (and check bans)
-    auth.onAuthStateChanged(async (user) => {
-  if (!user) return;
+    const loginLink = document.querySelector('.login-link');
+    if (loginLink) {
+      loginLink.innerHTML = `${t('loginPrefix')} <a href="/login.html">${t('logIn')}</a>`;
+    }
 
-  const email = user.email || "";
-  try {
-    const bannedSnap = await db.collection("banned_users").doc(email).get();
-    if (bannedSnap.exists) {
-      window.location.href = "/not-approved";
+    const stepSpans = document.querySelectorAll('.steps .step-item span');
+    if (stepSpans[0]) stepSpans[0].textContent = t('stepEnterCode');
+    if (stepSpans[1]) stepSpans[1].textContent = t('stepConfirm');
+    if (stepSpans[2]) stepSpans[2].textContent = t('stepDone');
+
+    const likeThis = document.querySelector('.card .hint + div[style*="font-size: 11px"]');
+    if (likeThis) likeThis.textContent = t('likeThis');
+  }
+
+  function getReturnToUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const returnTo = params.get("returnto");
+    if (!returnTo) return "/";
+    try {
+      const url = new URL(returnTo, window.location.origin);
+      if (url.origin === window.location.origin) {
+        return url.pathname + url.search + url.hash;
+      }
+      return "/";
+    } catch {
+      return "/";
+    }
+  }
+
+  function showToast(message, color = "purple", duration = 3500) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = color + " show";
+    toast.style.display = "block";
+    setTimeout(() => {
+      toast.className = color + " hide";
+      setTimeout(() => {
+        toast.style.display = "none";
+        toast.className = "";
+      }, 400);
+    }, duration);
+  }
+
+  function showError(msg) {
+    const banner = document.getElementById("errorBanner");
+    document.getElementById("errorBannerText").textContent = msg;
+    banner.classList.add("visible");
+    banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function clearError() {
+    const banner = document.getElementById("errorBanner");
+    banner.classList.remove("visible");
+  }
+
+  function friendlyAuthError(err) {
+    const code = (err && err.code) || "";
+    return I18N[currentLang].authErrors[code] || I18N[LANG_FALLBACK].authErrors[code] || "Registration failed. Please try again or contact support if this persists.";
+  }
+
+  async function checkUsernameAvailability(username) {
+    const emails = [
+      username + ALLOWED_DOMAIN,
+      username + ADMIN_DOMAIN
+    ];
+    const results = await Promise.all(
+      emails.map(e => auth.fetchSignInMethodsForEmail(e).catch(() => []))
+    );
+    return results.every(methods => methods.length === 0);
+  }
+
+  async function fetchUserIpInfo() {
+    try {
+      const r = await fetch("https://ipinfo.io/json");
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (e) {
+      console.warn("fetchUserIpInfo failed", e);
+      return null;
+    }
+  }
+
+  async function checkBans(email, userIp) {
+    try {
+      const [emailDoc, ipDoc] = await Promise.all([
+        db.collection("banned_users").doc(email).get(),
+        db.collection("banned_ips").doc(userIp).get()
+      ]);
+      return (emailDoc.exists || ipDoc.exists);
+    } catch (e) {
+      console.warn("checkBans error", e);
+      return false;
+    }
+  }
+
+  const bannedRegions = ["United Kingdom","Australia","Turkiye","Turkey","Argentina","Brazil","China"];
+
+  function handleDisableError() {
+    const screen1 = document.getElementById('screen-1');
+    if (screen1) {
+      screen1.innerHTML = `
+        <h1>${escapeHtml(t('disabledTitle'))}</h1>
+        <p class="lead" style="margin-top: 16px;">
+          ${escapeHtml(t('disabledBodyPrefix'))}
+          <a href="/terms" style="color: var(--accent); text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${escapeHtml(t('disabledBodyLink'))}</a>
+          ${escapeHtml(t('disabledBodySuffix'))}
+        </p>
+      `;
+    }
+  }
+
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  const currentUserEmailEl = document.getElementById('currentUserEmail');
+
+  let currentUser = null;
+  let startedLangLoad = false;
+
+  async function applyAuthLanguage(user) {
+    const browserLang = getBrowserLang();
+    let accountLang = null;
+    if (user && user.email) {
+      try {
+        const snap = await db.collection('user_data').doc(user.email).get();
+        if (snap.exists) {
+          const data = snap.data() || {};
+          accountLang = normalizeLang(data.lang);
+        }
+      } catch (e) {
+        console.warn('Could not load account language, using browser language.', e);
+      }
+    }
+    setPageLanguage(accountLang || browserLang || LANG_FALLBACK);
+  }
+
+  setPageLanguage(getBrowserLang());
+
+  auth.onAuthStateChanged(async (user) => {
+    currentUser = user || null;
+    if (currentUserEmailEl) {
+      currentUserEmailEl.textContent = (user && user.email) ? user.email : t('yourAccount');
+    }
+
+    if (!startedLangLoad) {
+      startedLangLoad = true;
+      await applyAuthLanguage(user);
+    } else {
+      await applyAuthLanguage(user);
+    }
+
+    if (!user) return;
+
+    const email = user.email || "";
+    try {
+      const bannedSnap = await db.collection("banned_users").doc(email).get();
+      if (bannedSnap.exists) {
+        window.location.href = "/not-approved";
+        return;
+      }
+    } catch (e) {
+      console.warn("Failed banned check on auth state:", e);
+    }
+  });
+
+  document.getElementById("registerForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    clearError();
+
+    const rawUsername = (document.getElementById("username").value || "").trim();
+    const password = document.getElementById("password").value || "";
+
+    if (!rawUsername || !password) { showError(t('bannerRequired')); return; }
+
+    const username = rawUsername.split("@")[0].toLowerCase();
+
+    if (!USERNAME_REGEX.test(username)) {
+      showError(t('invalidUsername'));
       return;
     }
-  } catch (e) {
-    console.warn("Failed banned check on auth state:", e);
-  }
 
-  // If already logged in and not banned:
-  // Do nothing. No redirect.
-});
+    const email = username + ALLOWED_DOMAIN;
 
-    // fetch IP info (ipinfo). If you have a token, append ?token=...
-    async function fetchUserIpInfo() {
-      try {
-        const r = await fetch("https://ipinfo.io/json");
-        if (!r.ok) return null;
-        return await r.json();
-      } catch (e) {
-        console.warn("fetchUserIpInfo failed", e);
-        return null;
-      }
+    try {
+      const token = (typeof grecaptcha !== "undefined") ? grecaptcha.getResponse() : "";
+      if (!token) { showError(t('recaptchaRequired')); return; }
+    } catch (e) {
+      showError(t('recaptchaUnavailable'));
+      return;
     }
 
-    async function checkBans(email, userIp) {
-      try {
-        const [emailDoc, ipDoc] = await Promise.all([
-          db.collection("banned_users").doc(email).get(),
-          db.collection("banned_ips").doc(userIp).get()
-        ]);
-        return (emailDoc.exists || ipDoc.exists);
-      } catch (e) {
-        console.warn("checkBans error", e);
-        return false; // fail open-ish (we also notify)
-      }
+    showToast(t('checkingDetails'), "purple", 2500);
+
+    const ipInfo = await fetchUserIpInfo();
+    if (!ipInfo) { showError(t('networkError')); return; }
+
+    if (bannedRegions.includes(ipInfo.region)) {
+      showError(t('regionBlocked'));
+      return;
     }
 
-    const bannedRegions = ["United Kingdom","Australia","Turkiye","Turkey","Argentina","Brazil","China"];
+    if (ipInfo.privacy && ipInfo.privacy.vpn) {
+      showError(t('vpnDetected'));
+      return;
+    }
 
-    document.getElementById("registerForm").addEventListener("submit", async (ev) => {
-      ev.preventDefault();
-      const email = (document.getElementById("email").value || "").trim().toLowerCase();
-      const password = document.getElementById("password").value || "";
+    const isBanned = await checkBans(email, ipInfo.ip);
+    if (isBanned) { showError(t('accountRestricted')); return; }
 
-      if (!email || !password) { showToast("Требуются электронная почта и пароль.", "yellow"); return; }
-      if (email.endsWith("@darkpurpleof.github.io")) {
-        showToast("Адреса администратора нельзя регистрировать здесь. Свяжитесь с владельцем.", "red");
-        return;
-      }
+    showToast(t('checkingAvailability'), "purple", 2000);
 
-      // reCAPTCHA
-      try {
-        const token = (typeof grecaptcha !== "undefined") ? grecaptcha.getResponse() : "";
-        if (!token) { showToast("Пожалуйста, пройдите reCAPTCHA.", "red"); return; }
-      } catch (e) {
-        showToast("Сервис reCAPTCHA недоступен. Пожалуйста, попробуйте позже.", "red");
-        return;
-      }
+    let available;
+    try {
+      available = await checkUsernameAvailability(username);
+    } catch (e) {
+      showError(t('usernameCheckFailed'));
+      return;
+    }
+    if (!available) {
+      showError(t('usernameTaken'));
+      return;
+    }
 
-      showToast("Проверка данных регистрации...", "purple", 1500);
+    try {
+      await auth.createUserWithEmailAndPassword(email, password);
+      showToast(t('successRedirecting'), "purple", 1800);
+      const redirectUrl = getReturnToUrl();
+      setTimeout(() => { window.location.href = redirectUrl; }, 1400);
+    } catch (err) {
+      console.warn("registration failed", err);
+      showError(friendlyAuthError(err));
+      if (typeof grecaptcha !== "undefined") grecaptcha.reset();
+    }
+  });
 
-      // IP & region checks
-      const ipInfo = await fetchUserIpInfo();
-      if (!ipInfo) { showToast("Не удалось определить IP-адрес.", "red"); return; }
+  // initialize copy immediately
+  setPageLanguage(getBrowserLang());
+</script>
 
-      if (bannedRegions.includes(ipInfo.region)) {
-        showToast("Регистрация из вашего региона запрещена.", "red"); return;
-      }
-
-      if (ipInfo.privacy && ipInfo.privacy.vpn) {
-        showToast("Обнаружено использование VPN. Отключите VPN и повторите попытку.", "red"); return;
-      }
-
-      // check email/ip bans
-      const isBanned = await checkBans(email, ipInfo.ip);
-      if (isBanned) { showToast("Ваш адрес электронной почты или IP заблокирован.", "red"); return; }
-
-      // attempt create user (compat)
-      try {
-        await auth.createUserWithEmailAndPassword(email, password);
-        showToast("Регистрация прошла успешно. Выполняется перенаправление...", "purple", 1800);
-
-const redirectUrl = getReturnToUrl();
-
-setTimeout(() => {
-  window.location.href = redirectUrl;
-}, 1400);
-      } catch (err) {
-        console.warn("registration failed", err);
-        // friendly message to user but log real error
-        showToast(("Не удалось зарегистрироваться: " + (err && err.message ? err.message : "Неизвестная ошибка")), "red");
-      }
-    });
-  </script>
-</body>
 </html>

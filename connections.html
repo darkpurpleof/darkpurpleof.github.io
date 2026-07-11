@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connections</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    img { max-width: 100%; display: block; }
+
+    :root{
+      --bg: #171717;
+      --panel: #1b1b1b;
+      --card: #1f1f1f;
+      --card-2: #232323;
+      --muted: #a8a8a8;
+      --text: #eaeaea;
+      --accent: #6b21a8;
+      --accent-strong: #5b21b6;
+      --accent-soft: rgba(107,33,168,0.14);
+      --border: rgba(255,255,255,0.06);
+      --border-strong: rgba(255,255,255,0.1);
+      --soft: rgba(255,255,255,0.03);
+
+      --friend-row-height: 116px;
+      --friend-row-height-mobile: 90px;
+      --radius: 16px;
+    }
+
+    body.light {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --card: #ffffff;
+      --card-2: #f8fafc;
+      --muted: #475569;
+      --text: #0f172a;
+      --accent-soft: rgba(107,33,168,0.08);
+      --border: rgba(0,0,0,0.07);
+      --border-strong: rgba(0,0,0,0.12);
+      --soft: rgba(0,0,0,0.025);
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background .25s ease, color .25s ease;
+    }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+
+    main.container {
+      max-width: 920px;
+      width: 100%;
+      margin: 28px auto;
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--card), var(--card) 60%, var(--card-2));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      color: var(--text);
+      box-shadow: 0 14px 32px rgba(0,0,0,0.22), 0 2px 0 rgba(255,255,255,0.02) inset;
+      min-width: 0;
+    }
+
+    /* ---- Hero ---- */
+    .hero { display:grid; gap:6px; }
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(107,33,168,0.25);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .hero h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+    .hero-subtitle { margin: 4px 0 0 0; color: var(--muted); font-size: 13.5px; }
+
+    /* ---- Tabs ---- */
+    .tabs { display:flex; flex-wrap:wrap; gap:8px; }
+    .tab {
+      border: 1px solid var(--border);
+      background: var(--soft);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 15px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease, color .15s ease;
+    }
+    .tab:hover { border-color: var(--border-strong); }
+    .tab.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(107,33,168,0.3);
+    }
+
+    /* ---- List shell ---- */
+    .list-card { padding-bottom: 18px; }
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .list-title { margin:0; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+    .list-count {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      background: var(--soft);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    /* ---- Grid of people ---- */
+    .friends-container {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-auto-rows: var(--friend-row-height);
+    }
+    @media (min-width: 601px) {
+      .friends-container { max-height: calc((var(--friend-row-height) * 3) + (10px * 2)); overflow-y: auto; padding-right: 2px; }
+    }
+    @media (max-width: 600px) {
+      .friends-container {
+        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-auto-rows: var(--friend-row-height-mobile);
+        max-height: calc((var(--friend-row-height-mobile) * 3) + (8px * 2));
+        overflow-y: auto;
+      }
+    }
+    .friends-container::-webkit-scrollbar { width: 8px; }
+    .friends-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+    body.light .friends-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.14); }
+
+    .friend-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      text-align: center;
+      cursor: pointer;
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 10px;
+      overflow: hidden;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+    .friend-card:hover { transform: translateY(-2px); border-color: var(--accent); background: var(--accent-soft); }
+
+    .friend-pfp {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      margin: 0 auto 8px auto;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--border-strong);
+      background-color: var(--card-2);
+      object-fit: cover;
+    }
+
+    .friend-name {
+      font-size: 12.5px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+      font-weight: 600;
+    }
+    .friend-name img { width: 12px; height: 12px; flex-shrink: 0; }
+
+    /* ---- Requests ---- */
+    .request-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+    }
+    .request-row + .request-row { margin-top: 8px; }
+    .request-link {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      flex: 1;
+      min-width: 0;
+    }
+    .request-pfp {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--border-strong);
+      background: var(--card-2);
+      flex-shrink: 0;
+    }
+    .request-name {
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .request-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .request-name img { width: 13px; height: 13px; flex-shrink: 0; }
+
+    .request-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-accept, .btn-reject {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter .15s ease;
+    }
+    .btn-accept {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #fff;
+    }
+    .btn-accept:hover { filter: brightness(1.08); }
+    .btn-reject {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-reject:hover { color: var(--text); border-color: var(--border-strong); }
+
+    /* ---- States ---- */
+    .empty-state {
+      padding: 28px 16px;
+      border-radius: 14px;
+      border: 1px dashed var(--border-strong);
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top: 2px solid var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 10px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #toast {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 14px;
+      border-radius: 11px;
+      font-weight: 700;
+      display: none;
+      z-index: 99999;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+      color: #fff;
+    }
+    #toast.purple { background: var(--accent-strong); }
+    #toast.yellow { background: #e6b800; color: #222; }
+    #toast.red { background: #c00; }
+
+    @media (max-width: 600px) {
+      main.container { padding: 14px; margin: 16px auto; }
+      .card { padding: 16px; }
+      .hero h1 { font-size: 21px; }
+    }
+  </style>
+
+  <script type="module" src="/dp-topbar.js"></script>
+</head>
+<body>
+  <dp-topbar></dp-topbar>
+
+  <main class="container">
+    <div class="card hero">
+      <div class="hero-kicker" id="heroKicker">Connections</div>
+      <h1 id="pageTitle">Connections</h1>
+      <p class="hero-subtitle" id="pageSubtitle">Loading...</p>
+    </div>
+
+    <div class="card">
+      <div class="tabs" id="tabs"></div>
+    </div>
+
+    <div class="card list-card">
+      <div class="list-header">
+        <h2 class="list-title" id="listTitle">List</h2>
+        <div class="list-count" id="listCount">0</div>
+      </div>
+      <div id="content"></div>
+    </div>
+  </main>
+
+  <div id="toast"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
+    };
+
+    if (window.firebase && !firebase.apps?.length) {
+      try { firebase.initializeApp(firebaseConfig); } catch (e) { console.warn('Firebase init error:', e); }
+    }
+
+    const DEFAULT_PFP = '/org-owner.jpg';
+    const VERIFIED_ICON = '/assets/verified.png';
+
+    const qs = new URLSearchParams(location.search);
+    const initialEmail = qs.get('email') || qs.get('profile') || '';
+
+    const els = {
+      heroKicker: document.getElementById('heroKicker'),
+      pageTitle: document.getElementById('pageTitle'),
+      pageSubtitle: document.getElementById('pageSubtitle'),
+      tabs: document.getElementById('tabs'),
+      content: document.getElementById('content'),
+      listTitle: document.getElementById('listTitle'),
+      listCount: document.getElementById('listCount'),
+      toast: document.getElementById('toast'),
+    };
+
+    const state = {
+      auth: null,
+      db: null,
+      currentEmail: '',
+      effectiveEmail: '',
+      viewingOwnData: true,
+      viewedDisplayName: 'User',
+      tabs: [],
+      selectedTab: 0,
+      users: [],
+      requests: [],
+    };
+
+    function showToast(text, kind = 'purple') {
+      els.toast.className = kind;
+      els.toast.textContent = text;
+      els.toast.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => { els.toast.style.display = 'none'; }, 1800);
+    }
+
+    function esc(text) {
+      return String(text ?? '').replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[m]));
+    }
+
+    function fallbackName(email) {
+      return String(email || '').split('@')[0] || 'User';
+    }
+
+    function profileUrl(email) {
+      return `/viewprofile?profile=${encodeURIComponent(email)}`;
+    }
+
+    function renderTabs() {
+      const tabDefs = state.viewingOwnData
+        ? [
+            { key: 'friends', label: 'Friends' },
+            { key: 'followers', label: 'Followers' },
+            { key: 'following', label: 'Following' },
+            { key: 'requests', label: 'Requests' },
+          ]
+        : [
+            { key: 'friends', label: 'Friends' },
+            { key: 'followers', label: 'Followers' },
+            { key: 'following', label: 'Following' },
+          ];
+
+      state.tabs = tabDefs;
+      if (state.selectedTab >= tabDefs.length) state.selectedTab = 0;
+
+      els.tabs.innerHTML = tabDefs.map((tab, i) => `
+        <button class="tab ${i === state.selectedTab ? 'active' : ''}" data-tab="${i}" type="button">${esc(tab.label)}</button>
+      `).join('');
+
+      els.tabs.querySelectorAll('.tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedTab = Number(btn.dataset.tab || 0);
+          renderTabs();
+          loadSelectedTab();
+        });
+      });
+    }
+
+    function updateHeader() {
+      els.heroKicker.textContent = state.viewingOwnData ? 'Connections' : 'Profile';
+      els.pageTitle.textContent = state.viewingOwnData
+        ? 'Connections'
+        : `${state.viewedDisplayName || fallbackName(state.effectiveEmail)}'s connections`;
+      els.pageSubtitle.textContent = state.viewingOwnData
+        ? 'Friends, followers, and people you follow.'
+        : `Browsing ${state.viewedDisplayName || fallbackName(state.effectiveEmail)}'s connections.`;
+    }
+
+    function renderLoading() {
+      els.content.innerHTML = '<div class="empty-state"><div class="spinner"></div>Loading...</div>';
+      els.listCount.textContent = '0';
+    }
+
+    function renderEmpty(message = 'Nothing here yet.') {
+      els.content.innerHTML = `<div class="empty-state">${esc(message)}</div>`;
+      els.listCount.textContent = '0';
+    }
+
+    function renderUsers(list) {
+      if (!list.length) { renderEmpty('No connections found.'); return; }
+
+      els.content.innerHTML = `
+        <div class="friends-container">
+          ${list.map(user => `
+            <a class="friend-card" href="${profileUrl(user.email)}" title="${esc(user.displayName || user.email)}">
+              <img class="friend-pfp" src="${esc(user.profilePicture || DEFAULT_PFP)}" alt="">
+              <div class="friend-name">
+                <span>${esc(user.displayName || fallbackName(user.email))}</span>
+                ${user.isVerified ? `<img src="${VERIFIED_ICON}" alt="Verified">` : ''}
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      `;
+
+      list.forEach((user, i) => {
+        const img = els.content.querySelectorAll('.friend-pfp')[i];
+        if (img) img.onerror = () => { img.src = DEFAULT_PFP; };
+      });
+
+      els.listCount.textContent = String(list.length);
+    }
+
+    function renderRequests(list) {
+      if (!list.length) { renderEmpty('No pending requests.'); return; }
+
+      els.content.innerHTML = list.map(user => `
+        <div class="request-row">
+          <a class="request-link" href="${profileUrl(user.email)}">
+            <img class="request-pfp" src="${esc(user.profilePicture || DEFAULT_PFP)}" alt="">
+            <div class="request-name">
+              <span>${esc(user.displayName || fallbackName(user.email))}</span>
+              ${user.isVerified ? `<img src="${VERIFIED_ICON}" alt="Verified">` : ''}
+            </div>
+          </a>
+          <div class="request-actions">
+            <button class="btn-accept" data-email="${esc(user.email)}" type="button">Accept</button>
+            <button class="btn-reject" data-email="${esc(user.email)}" type="button">Decline</button>
+          </div>
+        </div>
+      `).join('');
+
+      els.content.querySelectorAll('.request-pfp').forEach(img => { img.onerror = () => { img.src = DEFAULT_PFP; }; });
+
+      els.content.querySelectorAll('.btn-accept').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const requester = btn.dataset.email;
+          await acceptFriendRequest(state.db, state.effectiveEmail, requester);
+          showToast('Request accepted');
+          await loadSelectedTab();
+        });
+      });
+
+      els.content.querySelectorAll('.btn-reject').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const requester = btn.dataset.email;
+          await rejectFriendRequest(state.db, state.effectiveEmail, requester);
+          showToast('Request declined', 'yellow');
+          await loadSelectedTab();
+        });
+      });
+
+      els.listCount.textContent = String(list.length);
+    }
+
+    async function loadSimpleEmailList(db, rootCollection, docEmail, subCollection) {
+      const snapshot = await db.collection(rootCollection).doc(docEmail).collection(subCollection).get();
+      return snapshot.docs.map(doc => doc.id).filter(Boolean);
+    }
+
+    function buildUser(snapshot, email) {
+      const data = snapshot.exists ? snapshot.data() || {} : {};
+      return {
+        email,
+        displayName: data['display name'] || data.display_name || data.name || '',
+        profilePicture: data.profile_picture || DEFAULT_PFP,
+        isVerified: Boolean(data.is_verified),
+      };
+    }
+
+    async function loadProfiles(db, emails) {
+      const unique = [...new Set(emails)];
+      const snaps = await Promise.all(unique.map(email => db.collection('user_data').doc(email).get()));
+      return snaps.map(snap => buildUser(snap, snap.id))
+        .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', undefined, { sensitivity: 'base' }));
+    }
+
+    async function acceptFriendRequest(db, me, requester) {
+      const batch = db.batch();
+      batch.set(db.collection('friends').doc(me).collection('friendlist').doc(requester), {
+        email: requester, since: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      batch.set(db.collection('friends').doc(requester).collection('friendlist').doc(me), {
+        email: me, since: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      batch.delete(db.collection('friends').doc(me).collection('requests').doc(requester));
+      await batch.commit();
+    }
+
+    async function rejectFriendRequest(db, me, requester) {
+      await db.collection('friends').doc(me).collection('requests').doc(requester).delete();
+    }
+
+    async function loadSelectedTab() {
+      if (!state.db || !state.effectiveEmail) return;
+      renderLoading();
+
+      try {
+        const tabName = state.tabs[state.selectedTab]?.key || 'friends';
+
+        if (tabName === 'friends') {
+          els.listTitle.textContent = 'Friends';
+          const emails = await loadSimpleEmailList(state.db, 'friends', state.effectiveEmail, 'friendlist');
+          state.users = await loadProfiles(state.db, emails);
+          renderUsers(state.users);
+        } else if (tabName === 'followers') {
+          els.listTitle.textContent = 'Followers';
+          const emails = await loadSimpleEmailList(state.db, 'followers', state.effectiveEmail, 'usersWhoFollowMe');
+          state.users = await loadProfiles(state.db, emails);
+          renderUsers(state.users);
+        } else if (tabName === 'following') {
+          els.listTitle.textContent = 'Following';
+          const emails = await loadSimpleEmailList(state.db, 'following', state.effectiveEmail, 'usersIFollow');
+          state.users = await loadProfiles(state.db, emails);
+          renderUsers(state.users);
+        } else {
+          els.listTitle.textContent = 'Requests';
+          const emails = await loadSimpleEmailList(state.db, 'friends', state.effectiveEmail, 'requests');
+          state.requests = await loadProfiles(state.db, emails);
+          renderRequests(state.requests);
+        }
+      } catch (err) {
+        console.error(err);
+        els.listTitle.textContent = 'Error';
+        renderEmpty(err?.message || 'Something went wrong.');
+      }
+    }
+
+    async function init() {
+      if (!window.firebase) { renderEmpty('Firebase failed to load.'); return; }
+
+      state.auth = firebase.auth();
+      state.db = firebase.firestore();
+
+      state.auth.onAuthStateChanged(async (user) => {
+        state.currentEmail = user?.email || '';
+        state.viewingOwnData = !initialEmail || initialEmail === state.currentEmail;
+        state.effectiveEmail = state.viewingOwnData ? state.currentEmail : initialEmail;
+
+        renderTabs();
+        updateHeader();
+
+        if (!state.effectiveEmail) {
+          els.pageSubtitle.textContent = 'No account email available.';
+          renderEmpty('No account email available.');
+          return;
+        }
+
+        try {
+          const snap = await state.db.collection('user_data').doc(state.effectiveEmail).get();
+          const data = snap.exists ? snap.data() || {} : {};
+          state.viewedDisplayName = data['display name'] || data.display_name || data.name || fallbackName(state.effectiveEmail);
+        } catch {
+          state.viewedDisplayName = fallbackName(state.effectiveEmail);
+        }
+
+        updateHeader();
+        await loadSelectedTab();
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

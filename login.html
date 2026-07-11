@@ -10,29 +10,35 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
       --bg: #171717;
       --card: #1f1f1f;
+      --card-2: #262626;
       --muted: #a8a8a8;
       --accent: #6b21a8;
       --accent-strong: #5b21b6;
+      --accent-soft: rgba(107,33,168,0.14);
       --text: #eaeaea;
-      --border: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
       --warning-bg: rgba(107,33,168,0.06);
       --warning-border: rgba(107,33,168,0.14);
     }
     body.light {
       --bg: #f6f8fb;
       --card:#fff;
+      --card-2:#f1f3f8;
       --muted:#475569;
       --text:#0f172a;
-      --border: rgba(0,0,0,0.06);
+      --border: rgba(0,0,0,0.08);
+      --accent-soft: rgba(107,33,168,0.08);
       --warning-bg: rgba(107,33,168,0.04);
       --warning-border: rgba(107,33,168,0.08);
     }
+
+    *{ box-sizing:border-box; }
 
     html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background-color: var(--bg); color:var(--text); transition: background .25s, color .25s; }
     body { display:flex; flex-direction:column; min-height:100vh; }
@@ -44,56 +50,139 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:24px;
-      box-sizing:border-box;
+      padding:32px 20px;
     }
 
     .card {
-      background:var(--card);
-      border-radius:12px;
-      padding:24px;
+      background: linear-gradient(180deg, var(--card), var(--card) 60%, var(--card-2));
+      border-radius:18px;
+      padding:36px;
       border:1px solid var(--border);
       color:var(--text);
-      box-shadow:0 6px 18px rgba(2,6,23,0.45);
+      box-shadow:0 20px 50px rgba(2,6,23,0.5), 0 2px 0 rgba(255,255,255,0.02) inset;
       max-width:420px;
       width:100%;
       box-sizing:border-box;
+      margin-bottom:14px;
     }
 
-    h1 { margin:0 0 18px 0; font-size:22px; font-weight:700; }
+    .badge {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      color:var(--accent);
+      background:var(--accent-soft);
+      border:1px solid rgba(107,33,168,0.25);
+      padding:5px 10px;
+      border-radius:999px;
+      margin-bottom:16px;
+    }
 
-    .input-group { margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
-    label { font-size:13px; color:var(--muted); }
-    input {
-      padding:12px;
-      border-radius:8px;
+    h1 { margin:0 0 6px 0; font-size:24px; font-weight:800; letter-spacing:-0.01em; }
+    p.lead { margin:0 0 24px 0; color:var(--muted); font-size:14px; line-height:1.5; }
+
+    form { display:flex; flex-direction:column; gap:18px; }
+
+    .field { display:flex; flex-direction:column; gap:7px; }
+    label { font-size:13px; font-weight:600; color:var(--muted); }
+
+    .input,
+    #identifier {
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
       border:1px solid var(--border);
-      background:var(--card);
+      background:rgba(0,0,0,0.18);
       color:var(--text);
       font-size:14px;
-      box-sizing:border-box;
+      font-family: inherit;
+      outline:none;
+      transition: border-color .15s, box-shadow .15s;
     }
-    .actions { display:flex; gap:12px; flex-direction:column; margin-top:8px; }
+    body.light .input,
+    body.light #identifier { background:rgba(0,0,0,0.02); }
+    .input:focus,
+    #identifier:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    #identifier::placeholder,
+    .input::placeholder { color: var(--muted); opacity:0.7; }
+
+    .hint { font-size:12px; color:var(--muted); }
+
+    /* small icon-led header strip to fill empty top area */
+    .login-icon {
+      width:46px;
+      height:46px;
+      border-radius:12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:14px;
+      box-shadow: 0 6px 16px rgba(107,33,168,0.35);
+    }
+    .login-icon svg { width:22px; height:22px; color:#fff; }
 
     button[type="submit"] {
       width:100%;
-      padding:12px;
-      background:var(--accent);
+      padding:13px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
       color:#fff;
       border:none;
-      border-radius:8px;
+      border-radius:10px;
+      font-weight:700;
+      font-size:15px;
+      cursor:pointer;
+      transition: transform .12s ease, filter .15s ease;
+      box-shadow: 0 8px 20px rgba(107,33,168,0.35);
+    }
+    button[type="submit"]:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    button[type="submit"]:active { transform:translateY(0); }
+
+    .divider {
+      height:1px;
+      background:var(--border);
+      margin:6px 0 2px;
+      border:none;
+    }
+
+    .footer-row {
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top:4px;
+    }
+    .footer-row a { color:var(--accent); text-decoration:none; font-weight:600; font-size:13.5px; }
+    .footer-row a:hover { text-decoration:underline; }
+    .footer-row .muted-link { color:var(--muted); font-size:13.5px; }
+
+    .legacy-toggle {
+      background:transparent;
+      border:1px dashed var(--border);
+      color:var(--muted);
+      padding:10px 12px;
+      border-radius:10px;
+      font-size:13px;
       font-weight:600;
       cursor:pointer;
-      transition:opacity .15s;
+      text-align:center;
+      transition: border-color .15s, color .15s, background .15s;
+      width:100%;
     }
-    button[type="submit"]:hover { opacity:.9; }
-
-    .forgot-password { margin-top:8px; font-size:13px; text-align:left; color:var(--muted); }
-    .forgot-password a { color:var(--accent); text-decoration:none; }
-    .forgot-password a:hover { text-decoration:underline; }
+    .legacy-toggle:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: var(--accent-soft);
+    }
 
     /* OAuth card specifics */
-    .oauth-card { margin-bottom:14px; display:flex; gap:12px; align-items:center; }
+    .oauth-card { display:flex; gap:12px; align-items:center; }
     .oauth-image {
       width:64px; height:64px; border-radius:10px; object-fit:cover; flex:0 0 64px; background:#111;
       border:1px solid var(--border);
@@ -106,12 +195,9 @@
 
     .oauth-actions { display:flex; gap:8px; margin-top:6px; }
 
-    /* Verified icon */
     .verified-icon { width:16px; height:16px; display:inline-block; vertical-align:middle; margin-left:4px; }
 
-    /* Session overwrite warning */
     .session-warning {
-      margin-top:12px;
       padding:10px 12px;
       border-radius:10px;
       background: var(--warning-bg);
@@ -136,6 +222,30 @@
     }
     .small-btn.ghost { background:transparent; }
 
+    /* account picker list */
+    .account-list { display:flex; flex-direction:column; gap:8px; }
+    .account-option {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:12px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,0.18);
+      cursor:pointer;
+      transition: border-color .15s, background .15s;
+      text-align:left;
+    }
+    body.light .account-option { background:rgba(0,0,0,0.02); }
+    .account-option:hover { border-color:var(--accent); background:var(--accent-soft); }
+    .account-avatar {
+      width:34px; height:34px; border-radius:50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:700; font-size:14px; flex:0 0 34px;
+    }
+    .account-email { font-size:13.5px; color:var(--text); font-weight:600; word-break:break-all; }
+
     #toast {
       position: fixed;
       top: 18px;
@@ -153,10 +263,280 @@
     #toast.yellow { background: #e6b800; color:#222; }
     #toast.red { background: #c00; color:#fff; }
 
+    /* Migration required sheet */
+    .sheet-overlay {
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.55);
+      backdrop-filter: blur(2px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:10000;
+      padding:20px;
+    }
+    .sheet-overlay.visible { display:flex; }
+    .sheet {
+      background: linear-gradient(180deg, var(--card), var(--card) 60%, var(--card-2));
+      border:1px solid var(--border);
+      border-radius:18px;
+      max-width:400px;
+      width:100%;
+      padding:28px;
+      box-shadow:0 24px 60px rgba(0,0,0,0.5);
+      text-align:center;
+      animation: sheet-in .18s ease-out;
+    }
+    @keyframes sheet-in {
+      from { opacity:0; transform:translateY(10px) scale(0.98); }
+      to { opacity:1; transform:translateY(0) scale(1); }
+    }
+    .sheet-icon {
+      width:52px; height:52px;
+      border-radius:14px;
+      background: var(--warning-bg);
+      border:1px solid var(--warning-border);
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 16px;
+    }
+    .sheet-icon svg { width:24px; height:24px; color:var(--accent); }
+    .sheet h2 { margin:0 0 8px 0; font-size:18px; font-weight:800; }
+    .sheet p { margin:0 0 22px 0; color:var(--muted); font-size:13.5px; line-height:1.55; }
+    .sheet-actions { display:flex; flex-direction:column; gap:10px; }
+    .sheet-actions .primary-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color:#fff;
+      border:none;
+      padding:12px;
+      border-radius:10px;
+      font-weight:700;
+      font-size:14px;
+      cursor:pointer;
+      transition: filter .15s ease, transform .12s ease;
+    }
+    .sheet-actions .primary-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    .sheet-actions .ghost-btn {
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--muted);
+      padding:11px;
+      border-radius:10px;
+      font-weight:600;
+      font-size:13.5px;
+      cursor:pointer;
+    }
+    .sheet-actions .ghost-btn:hover { color:var(--text); border-color:var(--accent); }
+
+    /* Authorize (OAuth consent) screen — GitHub/Microsoft style */
+    .authorize-card {
+      text-align:center;
+    }
+    .authorize-avatars {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:16px;
+      margin-bottom:18px;
+    }
+    .authorize-avatar {
+      width:64px; height:64px;
+      border-radius:14px;
+      object-fit:cover;
+      background:#111;
+      border:1px solid var(--border);
+      box-shadow:0 6px 16px rgba(0,0,0,0.3);
+    }
+    .authorize-avatar.user-avatar {
+      border-radius:50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:700; font-size:22px;
+    }
+    .authorize-link-icon {
+      width:28px; height:28px;
+      margin:0;
+      color:var(--muted);
+      flex:0 0 auto;
+      z-index:1;
+    }
+    .authorize-title { font-size:17px; font-weight:700; margin:0 0 2px 0; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
+    .authorize-title-inner { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+    .authorize-title .client-name { color:var(--accent); }
+    .authorize-subtitle { font-size:13.5px; color:var(--muted); margin:0 0 4px 0; display:flex; align-items:center; justify-content:center; gap:5px; flex-wrap:wrap; }
+    .authorize-wants { font-size:13px; color:var(--muted); margin:0 0 20px 0; }
+
+    .authorize-disclaimer {
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      text-align:left;
+      padding:11px 13px;
+      border-radius:10px;
+      background: var(--warning-bg);
+      border:1px solid var(--warning-border);
+      margin-bottom:20px;
+      font-size:12.5px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+    .authorize-disclaimer svg { width:16px; height:16px; color:var(--accent); flex:0 0 16px; margin-top:1px; }
+    .authorize-disclaimer b { color:var(--text); }
+
+    .authorize-account-pill {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,0.18);
+      margin-bottom:10px;
+      text-align:left;
+    }
+    body.light .authorize-account-pill { background:rgba(0,0,0,0.02); }
+    .authorize-account-pill .account-avatar { flex:0 0 32px; width:32px; height:32px; font-size:13px; }
+    .authorize-account-pill img.account-avatar { object-fit:cover; }
+    .authorize-account-email { font-size:13px; font-weight:600; color:var(--text); word-break:break-all; display:flex; align-items:center; gap:5px; }
+    .authorize-account-sub { font-size:11.5px; color:var(--muted); }
+    .authorize-switch-btn {
+      width:100%;
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--accent);
+      padding:9px 12px;
+      border-radius:10px;
+      font-size:13px;
+      font-weight:600;
+      cursor:pointer;
+      text-align:center;
+      margin-bottom:14px;
+      transition: border-color .15s, background .15s;
+    }
+    .authorize-switch-btn:hover { border-color:var(--accent); background:var(--accent-soft); }
+
+    .verified-badge {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:16px; height:16px;
+      flex:0 0 16px;
+    }
+    .verified-badge img { width:16px; height:16px; display:block; }
+
+    .authorize-permissions {
+      text-align:left;
+      margin-bottom:22px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .authorize-permissions-label {
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:0.04em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:2px;
+    }
+    .authorize-permission-item {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:13.5px;
+      color:var(--text);
+      line-height:1.45;
+    }
+    .authorize-permission-item svg {
+      width:16px; height:16px;
+      color:var(--accent);
+      flex:0 0 16px;
+      margin-top:0;
+    }
+    .authorize-permission-item .perm-label { flex:1; }
+    .risk-pill {
+      font-size:10.5px;
+      font-weight:700;
+      letter-spacing:0.05em;
+      text-transform:uppercase;
+      padding:2px 7px;
+      border-radius:999px;
+      flex:0 0 auto;
+      white-space:nowrap;
+    }
+    .risk-pill.low  { background:rgba(107,33,168,0.14); color:var(--accent); border:1px solid rgba(107,33,168,0.25); }
+    .risk-pill.moderate { background:rgba(202,138,4,0.14); color:#b45309; border:1px solid rgba(202,138,4,0.3); }
+    body.light .risk-pill.moderate { color:#92400e; }
+    .risk-pill.high { background:rgba(185,28,28,0.12); color:#dc2626; border:1px solid rgba(185,28,28,0.25); }
+
+    .authorize-actions { display:flex; flex-direction:column; gap:10px; }
+    .authorize-actions .primary-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color:#fff;
+      border:none;
+      padding:13px;
+      border-radius:10px;
+      font-weight:700;
+      font-size:14.5px;
+      cursor:pointer;
+      transition: filter .15s ease, transform .12s ease;
+      box-shadow: 0 8px 20px rgba(107,33,168,0.35);
+    }
+    .authorize-actions .primary-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    .authorize-actions .ghost-btn {
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--muted);
+      padding:12px;
+      border-radius:10px;
+      font-weight:600;
+      font-size:13.5px;
+      cursor:pointer;
+    }
+    .authorize-actions .ghost-btn:hover { color:var(--text); border-color:var(--accent); }
+
+    .authorize-footnote {
+      margin-top:18px;
+      font-size:11.5px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+    .authorize-footnote a { color:var(--accent); text-decoration:none; }
+    .authorize-footnote a:hover { text-decoration:underline; }
+
+    /* OAuth cancelled screen */
+    .oauth-cancelled-card {
+      text-align:center;
+    }
+    .oauth-cancelled-icon {
+      width:54px; height:54px;
+      border-radius:16px;
+      background: var(--warning-bg);
+      border:1px solid var(--warning-border);
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 18px;
+    }
+    .oauth-cancelled-icon svg { width:26px; height:26px; color:var(--muted); }
+    .oauth-cancelled-title { font-size:18px; font-weight:800; margin:0 0 8px 0; }
+    .oauth-cancelled-sub { font-size:13.5px; color:var(--muted); margin:0 0 24px 0; line-height:1.55; }
+    .oauth-cancelled-home {
+      display:inline-block;
+      width:100%;
+      padding:13px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color:#fff;
+      border:none;
+      border-radius:10px;
+      font-weight:700;
+      font-size:14.5px;
+      cursor:pointer;
+      transition: filter .15s ease, transform .12s ease;
+      box-shadow: 0 8px 20px rgba(107,33,168,0.35);
+    }
+    .oauth-cancelled-home:hover { filter:brightness(1.08); transform:translateY(-1px); }
+
     @media (max-width:600px){
-      main.wrapper { padding:16px; }
-      .card { padding:16px; }
-      input, button[type="submit"] { padding:10px; font-size:14px; }
+      main.wrapper { padding:20px 14px; }
+      .card { padding:24px 20px; }
       .oauth-image { width:56px; height:56px; flex:0 0 56px; }
     }
   </style>
@@ -168,34 +548,140 @@
   <dp-topbar></dp-topbar>
 
   <main class="wrapper" role="main" aria-label="Login area">
-    <div id="cardsContainer" style="width:100%; max-width:420px;">
+    <div id="cardsContainer" style="width:100%; max-width:420px; display:flex; flex-direction:column;">
       <div class="card" role="region" aria-label="Login form" id="loginCard">
-        <h1>Login</h1>
+        <div class="login-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 12c2.5 0 4.5-2 4.5-4.5S14.5 3 12 3 7.5 5 7.5 7.5 9.5 12 12 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 20c0-3.5 3.5-6 8-6s8 2.5 8 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="badge">Welcome back</span>
+        <h1>Log in</h1>
+        <p class="lead" id="leadText">Enter your username to continue.</p>
 
         <form id="loginForm" autocomplete="on" novalidate>
-          <div class="input-group">
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" inputmode="email" placeholder="you@provider.com" required>
+          <div class="field" id="identifierField">
+            <label for="identifier" id="identifierLabel">Username</label>
+            <input id="identifier" name="identifier" type="text" inputmode="email" placeholder="yourname" required autocomplete="username">
+            <span class="hint" id="identifierHint">We'll check both your account types automatically.</span>
           </div>
 
-          <div class="input-group">
+          <div class="field">
             <label for="password">Password</label>
-            <input id="password" name="password" type="password" placeholder="Your password" required>
+            <input id="password" class="input" name="password" type="password" placeholder="Your password" required autocomplete="current-password">
           </div>
 
-          <div class="actions">
-            <button type="submit" id="loginBtn">Login</button>
-            <div class="forgot-password"><a href="/forgot.html">Forgot password?</a></div>
-            <div class="forgot-password"><a href="/registration.html">Don't have an account?</a></div>
+          <button type="submit" id="loginBtn">Log in</button>
+
+          <hr class="divider">
+
+          <div class="footer-row">
+            <a href="/forgot.html">Forgot password?</a>
+            <span class="muted-link">Don't have an account? <a href="/registration.html">Register</a></span>
           </div>
+
+          <button type="button" class="legacy-toggle" id="legacyToggle">
+            Log in with a legacy account? (available until Dec 31 2026)
+          </button>
         </form>
 
         <div id="sessionWarningContainer" aria-live="polite"></div>
+      </div>
+
+      <div class="card" id="accountPickerCard" style="display:none;">
+        <span class="badge">Multiple accounts found</span>
+        <h1 style="font-size:18px;">Choose an account</h1>
+        <p class="lead" style="margin-bottom:16px;">This username matches more than one account. Pick the one you want to log in to.</p>
+        <div class="account-list" id="accountList"></div>
+      </div>
+
+      <div class="card authorize-card" id="authorizeCard" style="display:none;">
+        <div class="authorize-avatars">
+          <img class="authorize-avatar" id="authorizeClientImg" alt="App logo" src="/assets/default_client.png">
+          <svg class="authorize-link-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="authorize-avatar user-avatar" id="authorizeUserAvatar">?</div>
+        </div>
+
+        <p class="authorize-title">
+          Authorize
+          <span class="authorize-title-inner">
+            <span class="client-name" id="authorizeClientName">this app</span>
+            <span class="verified-badge" id="authorizeClientVerifiedBadge" style="display:none;" title="Verified">
+              <img src="/assets/verified.png" alt="verified">
+            </span>
+          </span>
+        </p>
+        <p class="authorize-subtitle" id="authorizeClientBy">by Unknown</p>
+        <p class="authorize-wants">Wants to access your account</p>
+
+        <div class="authorize-disclaimer" id="authorizeOfficialDisclaimer" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 16.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span><b>This is an official app.</b> Make sure you downloaded it from a trusted source before authorizing — official apps will never ask you to enter your password anywhere except this page.</span>
+        </div>
+
+        <div class="authorize-account-pill">
+          <img class="account-avatar" id="authorizeAccountAvatar" alt="" style="display:none;">
+          <div class="account-avatar" id="authorizeAccountAvatarFallback">?</div>
+          <div>
+            <div class="authorize-account-email" id="authorizeAccountEmail">
+              <span id="authorizeAccountName">—</span>
+              <span class="verified-badge" id="authorizeUserVerifiedBadge" style="display:none;" title="Verified account">
+                <img src="/assets/verified.png" alt="verified">
+              </span>
+            </div>
+            <div class="authorize-account-sub" id="authorizeAccountSub">Signed in</div>
+          </div>
+        </div>
+        <button type="button" class="authorize-switch-btn" id="authorizeSwitchAccount">Switch account</button>
+
+        <div class="authorize-permissions">
+          <div class="authorize-permissions-label">This will allow the app to</div>
+          <div id="authorizePermissionsList"></div>
+        </div>
+
+        <div class="authorize-actions">
+          <button type="button" class="primary-btn" id="authorizeConfirmBtn">Authorize</button>
+          <button type="button" class="ghost-btn" id="authorizeCancelBtn">Cancel</button>
+        </div>
+
+        <p class="authorize-footnote" id="authorizeFootnote">By continuing, you allow this app to use your information in accordance with its own terms and privacy policy. You can revoke access at any time from <a href="/settings.html">Settings</a>.</p>
+      </div>
+
+      <div class="card oauth-cancelled-card" id="oauthCancelledCard" style="display:none;">
+        <div class="oauth-cancelled-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h1 class="oauth-cancelled-title">Authorization cancelled</h1>
+        <p class="oauth-cancelled-sub">You chose not to authorize this app. You can safely close this window, or go back home.</p>
+        <button type="button" class="oauth-cancelled-home" onclick="window.location.href='/'">Go home</button>
       </div>
     </div>
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
+
+  <div class="sheet-overlay" id="migrationOverlay" role="dialog" aria-modal="true" aria-labelledby="migrationTitle">
+    <div class="sheet">
+      <div class="sheet-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9v4M12 16.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10.3 3.9 2.7 17a1.8 1.8 0 0 0 1.55 2.7h15.5A1.8 1.8 0 0 0 21.3 17L13.7 3.9a1.8 1.8 0 0 0-3.4 0z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 id="migrationTitle">This account needs to be migrated</h2>
+      <p>Legacy email accounts can no longer sign in to connected apps. Go to <b>Settings</b> while logged in with your legacy email to migrate to a username, then try again.</p>
+      <div class="sheet-actions">
+        <button type="button" class="primary-btn" id="migrationLoginAnyway">Continue without app login</button>
+        <button type="button" class="ghost-btn" id="migrationDismiss">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     // ensure firebase compat has been initialized
@@ -208,9 +694,38 @@
       appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
     };
     if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
- 
+
     const auth = firebase.auth();
     const db = firebase.firestore();
+
+    const ADMIN_DOMAIN = "@darkpurpleof.github.io";
+    const USER_DOMAIN = "@users.darkpurpleof.github.io";
+    const LEGACY_CUTOFF = new Date("2026-12-31T23:59:59Z");
+
+    let legacyMode = false;
+    let pendingPassword = ""; // held only in-memory while user picks an account
+    let lastLoginWasLegacy = false; // tracks whether the most recent successful sign-in used a legacy (non-migrated) email
+
+    // ---------- Migration sheet ----------
+    const migrationOverlay = document.getElementById("migrationOverlay");
+    const migrationLoginAnyway = document.getElementById("migrationLoginAnyway");
+    const migrationDismiss = document.getElementById("migrationDismiss");
+
+    function showMigrationSheet() {
+      migrationOverlay.classList.add("visible");
+    }
+    function hideMigrationSheet() {
+      migrationOverlay.classList.remove("visible");
+    }
+    migrationDismiss.addEventListener("click", () => {
+      hideMigrationSheet();
+      // sign the user back out since we can't proceed with the intended OAuth flow
+      auth.signOut().catch(() => {});
+    });
+    migrationLoginAnyway.addEventListener("click", () => {
+      hideMigrationSheet();
+      cancelOauth();
+    });
 
     // Toast utility
     function showToast(message, color = "purple", duration = 3500) {
@@ -250,13 +765,8 @@
     let oauthClientValidRedirect = false;
     let triedLoadingOauthClient = false;
     let sessionExists = false;
-
-    // NEW FLAG:
-    // This flag marks that the user pressed the Login button on this page.
-    // We use it to ensure OAuth redirection only happens as a result of that explicit action.
     let loginPressed = false;
 
-    // Wait for oauth loader to finish (small polling loop)
     function waitForOauthLoad(maxMs = 3000) {
       return new Promise((resolve) => {
         const start = Date.now();
@@ -310,7 +820,6 @@
       const container = document.getElementById("cardsContainer");
       if (!container) return;
 
-      // remove existing oauth card if any
       const old = document.querySelector(".oauth-card");
       if (old && old.parentNode) old.parentNode.removeChild(old);
 
@@ -369,7 +878,6 @@
       noteRow.className = "oauth-note";
       noteRow.innerHTML = '<div>Only log in if you trust this app</div>';
 
-      // actions: Cancel OAuth button
       const actions = document.createElement("div");
       actions.className = "oauth-actions";
 
@@ -395,21 +903,25 @@
       container.insertBefore(card, container.firstChild);
     }
 
-    // Cancel OAuth (remove ?auth, hide oauth card)
     function cancelOauth() {
       oauthClient = null;
       oauthClientId = null;
       oauthClientValidRedirect = false;
       triedLoadingOauthClient = true;
       removeQueryParam("auth");
-      const c = document.getElementById("oauthCard");
-      if (c && c.parentNode) c.parentNode.removeChild(c);
-      showToast("OAuth canceled", "yellow", 2000);
-      // also ensure session warning is shown if session exists
-      if (sessionExists) showSessionOverwriteWarning();
+
+      // Hide all other cards
+      const oauthCardEl = document.getElementById("oauthCard");
+      if (oauthCardEl) oauthCardEl.style.display = "none";
+      if (typeof hideAuthorizeCard === "function") authorizeCard.style.display = "none";
+      if (loginCard) loginCard.style.display = "none";
+      if (accountPickerCard) accountPickerCard.style.display = "none";
+
+      // Show the cancelled card
+      const cancelledCard = document.getElementById("oauthCancelledCard");
+      if (cancelledCard) cancelledCard.style.display = "block";
     }
 
-    // Show session overwrite warning (with Use current session button)
     function showSessionOverwriteWarning() {
       if (oauthClient && oauthClientValidRedirect) return;
 
@@ -420,6 +932,7 @@
       const warn = document.createElement("div");
       warn.id = "sessionWarning";
       warn.className = "session-warning";
+      warn.style.marginTop = "12px";
 
       const left = document.createElement("div");
       left.innerHTML = '<div style="display:flex;gap:10px;align-items:flex-start;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden><path d="M12 2v12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.2a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -436,7 +949,6 @@
       useBtn.type = "button";
       useBtn.textContent = "Use current session";
       useBtn.onclick = () => {
-        // skip logging in, go to home
         window.location.href = "/";
       };
 
@@ -453,8 +965,6 @@
     }
 
     // AUTH STATE CHANGED
-    // NOTE: OAuth redirection is intentionally NOT performed here on auth change.
-    // This prevents the page from redirecting as soon as it opens when a session already exists.
     auth.onAuthStateChanged(async (user) => {
       if (!user) {
         sessionExists = false;
@@ -464,13 +974,12 @@
 
       sessionExists = true;
 
-      // Check banned status
+      const email = user.email || "";
+
       try {
-        const email = user.email;
         if (email) {
           const bannedSnap = await db.collection("banned_users").doc(email).get();
           if (bannedSnap.exists) {
-            // If a banned user somehow is authenticated, protect the site by sending to the not-approved page
             window.location.href = "/not-approved";
             return;
           }
@@ -479,30 +988,377 @@
         console.warn("Failed checking banned_users on auth change:", e);
       }
 
-      // Wait for oauth loader to finish (if auth param present) so we can decide UI — but
-      // do NOT auto-redirect to OAuth here. The redirect should only happen as the direct
-      // result of the user pressing Login (handled in the submit flow).
       await waitForOauthLoad(3000);
+
+      if (oauthClient && oauthClientValidRedirect) {
+        const userIsLegacy = !(email && (email.endsWith(ADMIN_DOMAIN) || email.endsWith(USER_DOMAIN)));
+        if (userIsLegacy) {
+          showMigrationSheet();
+        } else {
+          showAuthorizeCard(user, oauthClient);
+        }
+        return;
+      }
 
       // Show session overwrite UI (user decides what to do)
       showSessionOverwriteWarning();
       return;
     });
 
-    // Login form handler
-    document.getElementById("loginForm").addEventListener("submit", async (ev) => {
-      ev.preventDefault();
+    // ---------- Legacy mode toggle ----------
+    const legacyToggle = document.getElementById("legacyToggle");
+    const identifierField = document.getElementById("identifierField");
+    const identifierInput = document.getElementById("identifier");
+    const identifierLabel = document.getElementById("identifierLabel");
+    const identifierHint = document.getElementById("identifierHint");
+    const leadText = document.getElementById("leadText");
 
-      // mark that login was explicitly initiated by the user pressing the button
-      loginPressed = true;
+    function applyLegacyAvailability() {
+      const now = new Date();
+      if (now > LEGACY_CUTOFF) {
+        legacyToggle.style.display = "none";
+      }
+    }
+    applyLegacyAvailability();
 
-      const email = (document.getElementById("email").value || "").trim().toLowerCase();
-      const password = document.getElementById("password").value || "";
+    legacyToggle.addEventListener("click", () => {
+      if (!legacyMode && oauthClient && oauthClientValidRedirect) {
+        showToast("Legacy accounts can't be used to log in to apps. Migrate from Settings first.", "yellow", 4500);
+      }
+      legacyMode = !legacyMode;
+      if (legacyMode) {
+        identifierInput.type = "email";
+        identifierInput.placeholder = "you@provider.com";
+        identifierLabel.textContent = "Email";
+        identifierHint.textContent = "Sign in with the email address tied to your legacy account.";
+        leadText.textContent = "Legacy login is available until Dec 31, 2026.";
+        legacyToggle.textContent = "Use username instead";
+      } else {
+        identifierInput.type = "text";
+        identifierInput.placeholder = "yourname";
+        identifierLabel.textContent = "Username";
+        identifierHint.textContent = "Checking might take a few seconds.";
+        leadText.textContent = "Enter your username to continue.";
+        legacyToggle.textContent = "Log in with a legacy account? (available until Dec 31 2026)";
+      }
+      identifierInput.value = "";
+      identifierInput.focus();
+    });
 
-      if (!email || !password) { showToast("Email and password are required.", "yellow"); return; }
+    // ---------- Authorize (OAuth consent) screen ----------
+    const authorizeCard = document.getElementById("authorizeCard");
+    const authorizeClientImg = document.getElementById("authorizeClientImg");
+    const authorizeClientName = document.getElementById("authorizeClientName");
+    const authorizeClientVerifiedBadge = document.getElementById("authorizeClientVerifiedBadge");
+    const authorizeClientBy = document.getElementById("authorizeClientBy");
+    const authorizeAccountAvatar = document.getElementById("authorizeAccountAvatar");
+    const authorizeAccountAvatarFallback = document.getElementById("authorizeAccountAvatarFallback");
+    const authorizeAccountName = document.getElementById("authorizeAccountName");
+    const authorizeUserVerifiedBadge = document.getElementById("authorizeUserVerifiedBadge");
+    const authorizeAccountSub = document.getElementById("authorizeAccountSub");
+    const authorizeUserAvatar = document.getElementById("authorizeUserAvatar");
+    const authorizePermissionsList = document.getElementById("authorizePermissionsList");
+    const authorizeConfirmBtn = document.getElementById("authorizeConfirmBtn");
+    const authorizeCancelBtn = document.getElementById("authorizeCancelBtn");
+    const authorizeSwitchAccount = document.getElementById("authorizeSwitchAccount");
+
+    // ====================================================================
+    // SCOPE DESCRIPTIONS — easy to edit. Each oauth client doc may have a
+    // `scopes` array (e.g. ["profile:read", "email:read"]). Map each scope
+    // id here to a short, human-readable description shown on the
+    // authorize screen. Unknown scopes fall back to showing the raw id.
+    // ====================================================================
+    const SCOPE_DESCRIPTIONS = {
+  // Profile
+  "profile:read":          { description: "View your public profile information", risk: "Low" },
+  "profile:write":         { description: "Edit your public profile", risk: "Moderate" },
+  "profile:badge":         { description: "View your badges and verification status", risk: "Low" },
+  "profile:bio":           { description: "View and edit your biography", risk: "Moderate" },
+
+  // Account
+  "email:read":            { description: "View your email address", risk: "Moderate" },
+  "username:read":         { description: "View your username", risk: "Low" },
+  "avatar:read":           { description: "View your profile picture", risk: "Low" },
+  "avatar:write":          { description: "Change your profile picture", risk: "Moderate" },
+
+  // Friends / Connections
+  "connections:read":      { description: "View your connections list", risk: "Low" },
+  "connections:write":     { description: "Manage your connections", risk: "High" },
+  "connections:request":   { description: "Send connection requests", risk: "Moderate" },
+  "connections:block":     { description: "Block or unblock users", risk: "High" },
+
+  // Chats
+  "messages:read":         { description: "Read your private messages", risk: "High" },
+  "messages:write":        { description: "Send messages on your behalf", risk: "High" },
+  "messages:history":      { description: "Access your message history", risk: "High" },
+  "typing:write":          { description: "Send typing indicators", risk: "Low" },
+
+  // admin
+  "admin:run":         { description: "Run actions with admin permissions", risk: "High" },
+  "admin:status":         { description: "Check whether you're an admin", risk: "Low" },
+  "admin:actionsexecutor":         { description: "Act as a client to run administrative actions", risk: "Moderate" },
+
+
+
+  // Notifications
+  "notifications:read":    { description: "View your notifications", risk: "Low" },
+
+  // Settings
+  "settings:read":         { description: "View your account settings", risk: "Moderate" },
+  "settings:write":        { description: "Modify your account settings", risk: "High" },
+
+  // Post Wall
+  "posts:read":            { description: "View your posts", risk: "Low" },
+  "posts:write":           { description: "Create posts on your behalf", risk: "High" },
+  "posts:delete":          { description: "Delete your posts", risk: "High" },
+  "comments:read":         { description: "View comments on your posts", risk: "Low" },
+  "comments:write":        { description: "Post comments on your behalf", risk: "Moderate" },
+  "reactions:write":       { description: "React to posts and comments", risk: "Low" },
+
+  // Gifts
+  "gifts:read":            { description: "View your gifts", risk: "Low" },
+  "gifts:send":            { description: "Send gifts on your behalf", risk: "High" },
+  "gifts:claim":           { description: "Claim gifts for your account", risk: "Moderate" },
+
+  // Inventory
+  "inventory:read":        { description: "View your inventory", risk: "Moderate" },
+
+  // Marketplace
+  "marketplace:read":      { description: "Browse marketplace listings", risk: "Low" },
+  "marketplace:purchase":  { description: "Purchase items on your behalf", risk: "High" },
+
+  // Sessions & Security
+  "sessions:read":         { description: "View your active sessions", risk: "Moderate" },
+  "security:read":         { description: "View your security settings", risk: "Moderate" },
+
+  // Files (future-proof)
+  "files:read":            { description: "Access your uploaded files", risk: "Moderate" },
+  // OAuth
+  "offline_access":        { description: "Maintain access when you are offline", risk: "High" },
+  "token:create":        { description: "Create a token to log in without your password, only once", risk: "Moderate" }
+};
+
+    function describeScope(scope) {
+      const entry = SCOPE_DESCRIPTIONS[scope];
+      if (!entry) return { description: scope, risk: null };
+      return entry;
+    }
+
+    function renderAuthorizeClient(clientData) {
+      authorizeClientImg.src = (clientData && clientData.image) || "/assets/default_client.png";
+      authorizeClientImg.onerror = function () { this.src = "/assets/default_client.png"; };
+      authorizeClientName.textContent = (clientData && clientData.CN) || "this app";
+
+      // Show verified badge next to name if clientverified OR official
+      const isVerified = !!(clientData && (clientData.clientverified || clientData.official === true));
+      authorizeClientVerifiedBadge.style.display = isVerified ? "inline-flex" : "none";
+
+      const authorLabel = (clientData && clientData.author) || "Unknown";
+      const authorVerified = !!(clientData && clientData.author_verified);
+      authorizeClientBy.innerHTML = "";
+      const byText = document.createElement("span");
+      byText.textContent = "by " + authorLabel;
+      authorizeClientBy.appendChild(byText);
+      if (authorVerified) {
+        const badge = document.createElement("span");
+        badge.className = "verified-badge";
+        badge.title = "Verified developer";
+        badge.innerHTML = '<img src="/assets/verified.png" alt="verified">';
+        authorizeClientBy.appendChild(badge);
+      }
+
+      const isOfficial = !!(clientData && clientData.official === true);
+      document.getElementById("authorizeOfficialDisclaimer").style.display = isOfficial ? "flex" : "none";
+      document.getElementById("authorizeFootnote").style.display = isOfficial ? "none" : "block";
+
+      // Permissions / scopes list
+      authorizePermissionsList.innerHTML = "";
+      const scopes = (clientData && Array.isArray(clientData.scopes)) ? clientData.scopes : [];
+      const effectiveScopes = scopes.length ? scopes : ["profile:read", "email:read"]; // sensible default if none declared
+
+      effectiveScopes.forEach((scope) => {
+        const { description, risk } = describeScope(scope);
+        const item = document.createElement("div");
+        item.className = "authorize-permission-item";
+        item.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        const label = document.createElement("span");
+        label.className = "perm-label";
+        label.textContent = description;
+        item.appendChild(label);
+        if (risk) {
+          const pill = document.createElement("span");
+          pill.className = "risk-pill " + risk.toLowerCase();
+          pill.textContent = risk;
+          item.appendChild(pill);
+        }
+        authorizePermissionsList.appendChild(item);
+      });
+    }
+
+    async function renderAuthorizeUser(user) {
+      const email = (user && user.email) || "";
+      const initial = (email[0] || "?").toUpperCase();
+
+      // sensible defaults while the profile doc loads
+      authorizeAccountName.textContent = email || "—";
+      authorizeAccountSub.textContent = "Signed in";
+      authorizeUserVerifiedBadge.style.display = "none";
+      authorizeUserAvatar.textContent = initial;
+      authorizeAccountAvatar.style.display = "none";
+      authorizeAccountAvatarFallback.style.display = "flex";
+      authorizeAccountAvatarFallback.textContent = initial;
+
+      if (!email) return;
 
       try {
-        // Check banned_users doc for this email first
+        const profileSnap = await db.collection("user_data").doc(email).get();
+        const profile = profileSnap.exists ? (profileSnap.data() || {}) : {};
+
+        const displayName = profile["display name"] || email;
+        authorizeAccountName.textContent = displayName;
+        authorizeAccountSub.textContent = displayName === email ? "Signed in" : email;
+
+        if (profile.is_verified === true) {
+          authorizeUserVerifiedBadge.style.display = "inline-flex";
+        }
+
+        if (profile.profile_picture) {
+          authorizeAccountAvatar.src = profile.profile_picture;
+          authorizeAccountAvatar.onload = () => {
+            authorizeAccountAvatar.style.display = "block";
+            authorizeAccountAvatarFallback.style.display = "none";
+          };
+          authorizeAccountAvatar.onerror = () => {
+            authorizeAccountAvatar.style.display = "none";
+            authorizeAccountAvatarFallback.style.display = "flex";
+          };
+          // also update the larger avatar in the header row
+          authorizeUserAvatar.style.backgroundImage = `url("${profile.profile_picture}")`;
+          authorizeUserAvatar.style.backgroundSize = "cover";
+          authorizeUserAvatar.style.backgroundPosition = "center";
+          authorizeUserAvatar.textContent = "";
+        }
+      } catch (e) {
+        console.warn("Failed to load user_data profile for authorize screen:", e);
+      }
+    }
+
+    function showAuthorizeCard(user, clientData) {
+      const oauthCardEl = document.getElementById("oauthCard");
+      if (oauthCardEl) oauthCardEl.style.display = "none";
+
+      loginCard.style.display = "none";
+      accountPickerCard.style.display = "none";
+      authorizeCard.style.display = "block";
+
+      renderAuthorizeClient(clientData);
+      renderAuthorizeUser(user);
+    }
+
+    function hideAuthorizeCard() {
+      authorizeCard.style.display = "none";
+      const oauthCardEl = document.getElementById("oauthCard");
+      if (oauthCardEl) oauthCardEl.style.display = "flex";
+    }
+
+    async function doOauthRedirect() {
+      try {
+        const token = await auth.currentUser.getIdToken(true);
+        const redirectUrl = String(oauthClient.redirectUrl).replace("__", encodeURIComponent(token));
+        if (isValidRedirectUrl(redirectUrl) || redirectUrl.startsWith(oauthClient.redirectUrl.split("__")[0])) {
+          showToast("Redirecting...", "purple", 1500);
+          setTimeout(() => { window.location.assign(redirectUrl); }, 500);
+        } else {
+          console.warn("OAuth redirect invalid after token insertion:", redirectUrl);
+          showToast("This app's redirect is misconfigured.", "red");
+        }
+      } catch (tokErr) {
+        console.error("Failed to get ID token for oauth redirect:", tokErr);
+        showToast("Couldn't complete authorization. Try again.", "red");
+      }
+    }
+
+    authorizeConfirmBtn.addEventListener("click", () => {
+      doOauthRedirect();
+    });
+
+    authorizeCancelBtn.addEventListener("click", () => {
+      cancelOauth();
+    });
+
+    authorizeSwitchAccount.addEventListener("click", async () => {
+      hideAuthorizeCard();
+      try {
+        await auth.signOut();
+      } catch (e) { /* ignore */ }
+      loginCard.style.display = "block";
+    });
+    const loginCard = document.getElementById("loginCard");
+    const accountPickerCard = document.getElementById("accountPickerCard");
+    const accountList = document.getElementById("accountList");
+
+    function showAccountPicker(emails) {
+      accountList.innerHTML = "";
+      emails.forEach((email) => {
+        const opt = document.createElement("button");
+        opt.type = "button";
+        opt.className = "account-option";
+
+        const avatar = document.createElement("div");
+        avatar.className = "account-avatar";
+        avatar.textContent = (email[0] || "?").toUpperCase();
+
+        const text = document.createElement("div");
+        text.className = "account-email";
+        text.textContent = email;
+
+        opt.appendChild(avatar);
+        opt.appendChild(text);
+
+        opt.addEventListener("click", () => {
+          const isLegacy = !(email.endsWith(ADMIN_DOMAIN) || email.endsWith(USER_DOMAIN));
+          attemptSignIn(email, pendingPassword, isLegacy);
+        });
+
+        accountList.appendChild(opt);
+      });
+
+      loginCard.style.display = "none";
+      accountPickerCard.style.display = "block";
+    }
+
+    function hideAccountPicker() {
+      accountPickerCard.style.display = "none";
+      loginCard.style.display = "block";
+      pendingPassword = "";
+    }
+
+    // ---------- Resolve username -> candidate emails ----------
+    // We don't have a direct "lookup by username" auth API, so we check Firestore
+    // user-profile records first; if that's not available we fall back to probing
+    // both domain variants directly against Firebase Auth.
+    async function resolveUsernameToEmails(username) {
+      const candidates = [username + ADMIN_DOMAIN, username + USER_DOMAIN];
+      const existing = [];
+
+      for (const email of candidates) {
+        try {
+          const methods = await auth.fetchSignInMethodsForEmail(email);
+          if (methods && methods.length > 0) {
+            existing.push(email);
+          }
+        } catch (e) {
+          // ignore lookup errors per-candidate, just skip it
+          console.warn("Lookup failed for", email, e);
+        }
+      }
+
+      return existing;
+    }
+
+    async function attemptSignIn(email, password, isLegacy) {
+      try {
+        // banned check
         const bannedSnap = await db.collection("banned_users").doc(email).get();
         if (bannedSnap.exists) {
           try {
@@ -517,39 +1373,86 @@
           }
         }
 
-        // Not banned: sign in
         await auth.signInWithEmailAndPassword(email, password);
+        lastLoginWasLegacy = !!isLegacy;
         showToast("Login successful!", "purple");
+        hideAccountPicker();
 
-        // Wait for oauth loader to finish (so we don't fallback to / before client loads)
         await waitForOauthLoad(3000);
 
-        // Only perform OAuth redirect here and only because the user pressed Login (loginPressed)
-        if (loginPressed && oauthClient && oauthClientValidRedirect) {
-          try {
-            const token = await auth.currentUser.getIdToken(true);
-            const redirectUrl = String(oauthClient.redirectUrl).replace("__", encodeURIComponent(token));
-            if (isValidRedirectUrl(redirectUrl) || redirectUrl.startsWith(oauthClient.redirectUrl.split("__")[0])) {
-              // do the redirect - assign so custom schemes are attempted
-              setTimeout(() => { window.location.assign(redirectUrl); }, 700);
-              return;
-            } else {
-              console.warn("OAuth redirect invalid after token insertion:", redirectUrl);
-            }
-          } catch (tokErr) {
-            console.error("Failed to get ID token for oauth redirect:", tokErr);
-          }
+        // Legacy (non-migrated) accounts can never complete an OAuth app login.
+        if (lastLoginWasLegacy && oauthClient && oauthClientValidRedirect) {
+          showMigrationSheet();
+          return;
         }
 
-        // fallback: go to home
+        if (loginPressed && oauthClient && oauthClientValidRedirect) {
+          showAuthorizeCard(auth.currentUser, oauthClient);
+          return;
+        }
+
         setTimeout(() => window.location.href = "/", 900);
       } catch (err) {
         console.warn("login error", err);
         showToast("Login failed: " + (err && err.message ? err.message : "unknown"), "red");
       } finally {
-        // reset the press flag after attempt to avoid accidental future redirects
         loginPressed = false;
       }
+    }
+
+    // Login form handler
+    document.getElementById("loginForm").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+
+      loginPressed = true;
+
+      const rawIdentifier = (document.getElementById("identifier").value || "").trim().toLowerCase();
+      const password = document.getElementById("password").value || "";
+
+      if (!rawIdentifier || !password) { showToast("Please fill in all fields.", "yellow"); loginPressed = false; return; }
+
+      if (legacyMode) {
+        // Legacy: identifier IS the email, used as-is, any domain allowed
+        if (!rawIdentifier.includes("@")) {
+          showToast("Enter a valid email address.", "yellow");
+          loginPressed = false;
+          return;
+        }
+        await attemptSignIn(rawIdentifier, password, true);
+        return;
+      }
+
+      // Username mode: identifier is a username, strip any accidental domain
+      const username = rawIdentifier.split("@")[0];
+      if (!username) { showToast("Enter a valid username.", "yellow"); loginPressed = false; return; }
+
+      showToast("Looking up your account...", "purple", 1500);
+
+      let matches;
+      try {
+        matches = await resolveUsernameToEmails(username);
+      } catch (e) {
+        console.error("Username resolution failed:", e);
+        showToast("Couldn't verify that username. Try again.", "red");
+        loginPressed = false;
+        return;
+      }
+
+      if (matches.length === 0) {
+        showToast("No account found with that username.", "red");
+        loginPressed = false;
+        return;
+      }
+
+      if (matches.length === 1) {
+        await attemptSignIn(matches[0], password, false);
+        return;
+      }
+
+      // multiple matches: ask the user to pick
+      pendingPassword = password;
+      showAccountPicker(matches);
+      loginPressed = false;
     });
   </script>
 </body>

@@ -5,152 +5,177 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>投稿を作成</title>
 
-<!-- Firebase -->
+<!-- Firebase (kept as in your original) -->
 <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
- 
+
 <script type="module" src="/dp-topbar.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Rich markdown component, used here so the live "Preview" tab renders
+     posts exactly the same way they'll look in the feed -->
+<script type="module" src="/dp-rich-components.js"></script>
+<script src="/uploader.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --bg:#0f0f10; --card:#141417; --text:#e9e6ef; --muted:#9aa0a6;
+  --bg:#171717; --card:#141417; --text:#e9e6ef; --muted:#9aa0a6;
   --accent:#7c2bd6; --accent-strong:#5820b0; --border:rgba(255,255,255,0.06);
-  --radius:14px; --max-width:920px; --glass: rgba(255,255,255,0.03);
+  --radius:14px; --max-width:600px; --glass: rgba(255,255,255,0.03);
   --focus-shadow: 0 8px 30px rgba(88,33,182,0.18);
+  --danger:#ff6b6b;
 }
 body.light{
   --bg:#f6f8fb; --card:#ffffff; --text:#0b1220; --muted:#475569; --border:rgba(0,0,0,0.06); --glass: rgba(0,0,0,0.02);
-}
+} 
 
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 body{display:flex;flex-direction:column;min-height:100vh;}
 dp-topbar{display:block;position:sticky;top:0;z-index:100;}
 
-main.container{ width:100%; max-width:var(--max-width); margin:20px auto; padding:18px; box-sizing:border-box; }
-.card{ background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent), var(--card); border-radius:var(--radius); padding:18px; border:1px solid var(--border); box-shadow:0 8px 30px rgba(2,6,23,0.55); }
-h1{ margin:0 0 10px 0; font-size:20px; font-weight:700; color:var(--text); letter-spacing:0.2px; }
-.muted{ color:var(--muted); font-size:13px; }
+main.container{ width:100%; max-width:none; margin:0 auto; padding:0; box-sizing:border-box; border-left:none; border-right:none; min-height:calc(100vh - 53px); }
 
-.top-row{ display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap; margin-bottom:10px; }
-.input-wrap{ position:relative; width:100%; }
+/* ===== top bar inside the compose page (X-style: Cancel · Drafts/Title) ===== */
+.compose-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); }
+.compose-top h1{ margin:0; font-size:17px; font-weight:800; }
+.compose-top-actions{ display:flex; align-items:center; gap:8px; }
+.compose-top .btn.small{ padding:8px 12px; font-size:13px; }
+.compose-top .muted{ color:var(--muted); font-size:13px; }
+body.drag-active .compose-pane{ outline:2px dashed var(--accent); outline-offset:6px; border-radius:14px; }
 
-.editor {
-  position:relative;
-  background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
-  border-radius:12px;
-  border:1px solid var(--border);
-  padding:12px;
-  transition: box-shadow .18s ease, border-color .18s ease, transform .12s ease;
-  overflow:hidden;
-  min-height:110px;
+/* ===== tabs: Write / Preview ===== */
+.tabs{ display:flex; gap:4px; padding:8px 12px 0 12px; }
+.tab-btn{
+  flex:1; text-align:center; padding:10px 8px; background:transparent; border:none; color:var(--muted);
+  font-weight:700; font-size:14px; cursor:pointer; border-bottom:2px solid transparent; transition: color .12s ease, border-color .12s ease;
 }
-.editor:focus-within{ box-shadow:var(--focus-shadow); border-color:var(--accent); transform:translateY(-1px); }
+.tab-btn.active{ color:var(--text); border-bottom-color:var(--accent); }
+.tab-btn:hover{ color:var(--text); }
 
+.wall-card-wrap{ padding:12px 16px 0 16px; }
+
+/* wall card */
+.wall-card{ display:flex; align-items:center; gap:12px; border:1px solid var(--border); padding:10px; border-radius:10px; margin-bottom:4px; background:rgba(255,255,255,0.01);}
+.wall-card img{ width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid var(--border);}
+.wall-card .meta{ display:flex; flex-direction:column; min-width:0; }
+.wall-card .meta .name{ display:flex; align-items:center; gap:6px; font-weight:700; font-size:14px; }
+.wall-card .meta .verified{ width:15px; height:15px; background-image:url(/assets/verified.png); background-size:contain; background-repeat:no-repeat; display:inline-block; margin-left:2px; flex:0 0 auto; }
+.wall-card .meta .desc{ font-size:13px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ===== X-style compose row: avatar on the left, borderless growing
+   textarea on the right, no boxed editor ===== */
+.compose-pane{ padding:14px 16px 4px 16px; }
+.compose-row{ display:flex; gap:12px; align-items:flex-start; }
+.compose-avatar{
+  width:44px; height:44px; min-width:44px; aspect-ratio:1 / 1; border-radius:50%; overflow:hidden;
+  background-size:cover; background-position:center; background-repeat:no-repeat; background-color:rgba(255,255,255,0.04);
+  border:2px solid var(--border); flex:0 0 auto; display:block;
+  object-fit:cover;
+}
+.input-wrap{ flex:1 1 auto; min-width:0; }
+
+.editor{ position:relative; }
 .editor textarea{
   width:100%;
-  min-height:90px;
-  max-height:420px;
-  resize:vertical;
+  min-height:80px;
+  max-height:480px;
+  resize:none;
+  overflow:hidden;
   background:transparent;
   color:var(--text);
   border:0;
   outline:0;
-  font-size:15px;
-  line-height:1.45;
+  font-size:19px;
+  line-height:1.4;
   font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-  padding:6px 0 8px 0;
+  padding:8px 0;
 }
+.editor textarea::placeholder{ color:var(--muted); }
 
-.flabel{
-  position:absolute;
-  left:14px;
-  top:12px;
-  font-size:13px;
-  color:var(--muted);
-  pointer-events:none;
-  transition: transform .16s ease, font-size .16s ease, top .16s ease, opacity .12s ease;
-  transform-origin:left top;
-}
-.editor.has-content .flabel, .editor:focus-within .flabel{
-  transform:translateY(-18px) scale(.92);
-  font-size:12px;
-  top:8px;
-  opacity:0.92;
-  color:var(--accent);
-}
+/* image thumbnails (shared between write + preview) */
+.image-banner{ display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-top:10px; border-radius:14px; overflow:hidden; }
+.image-banner:empty{ display:none; }
+.image-banner:has(> :only-child){ grid-template-columns:1fr; }
+.img-wrapper{ position:relative; width:100%; height:140px; overflow:hidden; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); animation:thumb-in .22s ease; }
+.img-wrapper img{ width:100%; height:100%; object-fit:cover; display:block; }
+.remove-btn{ position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.55); border:none; color:#fff; border-radius:50%; width:26px; height:26px; font-size:15px; cursor:pointer; line-height:1; display:flex; align-items:center; justify-content:center; transition: background .12s ease; }
+.remove-btn:hover{ background:rgba(0,0,0,0.8); }
 
-.toolbar{
-  display:flex; gap:8px; align-items:center; margin-bottom:8px;
+/* ===== bottom action bar (X-style): format/image icons left, audience +
+   char ring + Post pill on the right ===== */
+.compose-divider{ height:1px; background:var(--border); margin:10px 16px 0 16px; }
+.compose-toolbar{ display:flex; align-items:center; gap:4px; padding:10px 12px 12px 12px; flex-wrap:wrap; }
+.icon-btn{
+  width:36px; height:36px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+  background:transparent; border:none; color:rgba(255,255,255,0.96); cursor:pointer; font-weight:700; font-size:14px;
+  transition: background .12s ease, transform .08s ease;
 }
-.tool-btn{
-  background:transparent; border:1px solid transparent; color:var(--muted); padding:6px 8px; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px;
-  transition: background .12s ease, transform .08s ease, color .12s ease;
-}
-.tool-btn:hover{ background:var(--glass); color:var(--text); transform:translateY(-1px); }
-.tool-btn:active{ transform:translateY(0); }
+.icon-btn:hover{ background:rgba(176, 166, 187, 0.12); }
+.icon-btn:active{ transform:scale(.94); }
+.icon-btn svg{ width:19px; height:19px; fill:none; stroke:rgba(255,255,255,0.96); stroke-width:1.7; }
+.toolbar-spacer{ flex:1 1 auto; }
 
-.controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
 .select{
   appearance:none; -webkit-appearance:none;
-  padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); font-weight:600; min-width:170px;
-  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:transparent; color:var(--accent); font-weight:700; font-size:13px;
+  display:inline-flex; align-items:center; gap:6px; cursor:pointer; max-width:150px;
 }
-.btn{ padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700; background:var(--accent); color:#fff; margin-top:8px; display:inline-flex; align-items:center; gap:8px; }
+
+.char-ring{
+  --pct: 0;
+  width:30px; height:30px; border-radius:50%; position:relative; flex:0 0 auto;
+  background: conic-gradient(var(--accent) calc(var(--pct)*1%), var(--border) 0);
+  display:flex; align-items:center; justify-content:center;
+}
+.char-ring.danger{ background: conic-gradient(var(--danger) calc(var(--pct)*1%), var(--border) 0); }
+.char-ring span{ font-size:10px; color:var(--muted); font-weight:700; }
+.char-ring.danger span{ color:var(--danger); }
+
+.v-divider{ width:1px; height:24px; background:var(--border); margin:0 4px; }
+
+.btn{ padding:9px 18px; border-radius:999px; border:none; cursor:pointer; font-weight:800; background:var(--accent); color:#fff; display:inline-flex; align-items:center; gap:8px; font-size:14px; transition: background .12s ease, opacity .12s ease, transform .08s ease; }
+.btn:hover{ background:var(--accent-strong); }
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+.btn:active:not(:disabled){ transform:scale(.97); }
 .btn.ghost{ background:transparent; border:1px solid var(--border); color:var(--text); }
-.btn:active{ transform:translateY(1px); }
 
 .btn .spinner{
-  width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,0.18); border-top-color:#fff; animation:spin .9s linear infinite; display:inline-block; visibility:hidden;
+  width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,0.35); border-top-color:#fff; animation:spin .9s linear infinite; display:inline-block; visibility:hidden;
 }
-.btn.loading .spinner{ visibility:visible; margin-left:4px; }
+.btn.loading .spinner{ visibility:visible; }
 
-.image-banner{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:flex-start; }
-.img-wrapper{ position:relative; width:120px; height:80px; border-radius:10px; overflow:hidden; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border:1px solid var(--border); box-shadow:0 6px 18px rgba(2,6,23,0.45); transform-origin:center; animation:thumb-in .22s ease; }
-.img-wrapper img{ width:100%; height:100%; object-fit:cover; display:block; }
-.remove-btn{ position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.45); border:none; color:#fff; border-radius:8px; padding:4px 8px; font-size:13px; cursor:pointer; opacity:0.95; transition: transform .12s ease, opacity .12s ease; }
-.img-wrapper:hover{ transform:translateY(-6px) scale(1.02); }
-.img-wrapper:hover .remove-btn{ transform:translateY(-2px); }
+/* ===== Preview tab: a real, faithful render of the future post card,
+   matching the feed's look (avatar/name/handle/time + rich markdown +
+   image grid) so there are no surprises after publishing ===== */
+.preview-pane{ padding:14px 16px 4px 16px; }
+.preview-card{ border:1px solid var(--border); border-radius:14px; padding:12px 14px; }
+.preview-empty{ color:var(--muted); font-size:14px; text-align:center; padding:30px 10px; }
+.preview-row{ display:flex; gap:12px; align-items:flex-start; }
+.preview-header{ display:flex; align-items:center; gap:4px; flex-wrap:wrap; min-width:0; }
+.preview-header .pname{ font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px; }
+.preview-header .phandle{ color:var(--muted); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px; }
+.preview-header .pdot{ color:var(--muted); }
+.preview-header .pdate{ color:var(--muted); font-size:14px; }
+.preview-verified{ width:15px; height:15px; background-image:url(/assets/verified.png); background-size:contain; background-repeat:no-repeat; flex:0 0 auto; }
+.preview-text{ margin-top:2px; font-size:15px; line-height:1.45; word-wrap:break-word; }
+.preview-towall{ margin-top:8px; font-size:13px; color:var(--accent); }
 
-.wall-card{ display:flex; align-items:center; gap:12px; border:1px solid var(--border); padding:10px; border-radius:10px; margin-bottom:12px; background:rgba(255,255,255,0.01);}
-.wall-card img{ width:48px; height:48px; border-radius:50%; object-fit:cover; border:1px solid var(--border);}
-.wall-card .meta{ display:flex; flex-direction:column; }
-.wall-card .meta .name{ display:flex; align-items:center; gap:6px; font-weight:700; font-size:15px; }
-.wall-card .meta .verified{ width:16px; height:16px; background-image:url(/assets/verified.png); background-size:contain; background-repeat:no-repeat; display:inline-block; margin-left:2px; }
-.wall-card .meta .desc{ font-size:13px; color:var(--muted);}
+.msg{ padding:0 16px 14px 16px; font-size:13px; color:var(--muted); min-height:18px; }
 
-.modal{
-  position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:220;
-  pointer-events:none; opacity:0; transition:opacity .18s ease; backdrop-filter: blur(4px);
-}
-.modal.visible{ pointer-events:auto; opacity:1; }
-.modal .overlay{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.7)); }
-.modal .dialog{
-  position:relative; z-index:10; width:92%; max-width:480px; border-radius:12px; padding:18px; background:linear-gradient(180deg, var(--card), rgba(255,255,255,0.01)); border:1px solid var(--border);
-  transform: translateY(14px) scale(.98); opacity:0; transition: transform .26s cubic-bezier(.2,.9,.2,1), opacity .22s ease;
-  box-shadow:0 12px 40px rgba(2,6,23,0.6);
-}
-.modal.visible .dialog{ transform:translateY(0) scale(1); opacity:1; }
-
-.dialog h3{ margin:0 0 8px 0; font-size:16px; font-weight:700; }
-.modal .modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-
-.counter{ font-size:12px; color:var(--muted); margin-left:6px; }
-.msg{ margin-top:8px; font-size:13px; color:var(--muted); }
-
+/* animations */
 @keyframes spin{ to{ transform:rotate(360deg); } }
 @keyframes thumb-in{ from{ opacity:0; transform:translateY(6px) scale(.98);} to{ opacity:1; transform:none;} }
 
 @media (prefers-reduced-motion: reduce){
   .btn .spinner{ animation:none }
-  .img-wrapper, .modal .dialog, .editor{ transition:none; animation:none; }
+  .img-wrapper{ transition:none; animation:none; }
 }
 
 @media (max-width:520px){
-  .controls{ flex-direction:column; align-items:stretch; }
-  .img-wrapper{ width:44%; height:84px; }
+  main.container{ border-left:none; border-right:none; }
+  .compose-avatar{ width:40px; height:40px; min-width:40px; }
+  .img-wrapper{ height:110px; }
 }
 </style>
 </head>
@@ -158,58 +183,85 @@ h1{ margin:0 0 10px 0; font-size:20px; font-weight:700; color:var(--text); lette
 <dp-topbar></dp-topbar>
 
 <main class="container">
-  <div id="wallCardContainer"></div>
 
-  <div class="card">
-    <div class="top-row">
-      <div>
-        <h1>新しい投稿を作成</h1>
-        <div class="muted">何か面白いことを書いてみましょう。親切に、簡潔に。</div>
-      </div>
-      <div class="muted" id="userHint">ログインしていません</div>
+  <div class="compose-top">
+    <h1>新しい投稿を作成</h1>
+    <div class="compose-top-actions">
+      <button id="cancelWallBtn" class="btn ghost small" type="button" style="display:none;">キャンセル</button>
     </div>
-
-    <div class="input-wrap">
-      <div class="toolbar" aria-hidden="true">
-        <div style="flex:1"></div>
-        <div class="counter" id="charCounter">700</div>
-      </div>
-
-      <div class="editor" id="editorBox" aria-labelledby="postLabel">
-        <label class="flabel" id="postLabel">タイトルとテキスト（最大700文字）</label>
-        <textarea id="postText" maxlength="700" placeholder="" aria-describedby="charCounter"></textarea>
-      </div>
-    </div>
-
-    <div class="controls">
-      <select id="commentSelect" class="select" aria-label="コメントできる人">
-        <option value="all">コメント：全員</option>
-        <option value="admins">管理者のみ</option>
-        <option value="verified">認証済みのみ</option>
-        <option value="none">なし</option>
-      </select>
-
-      <button id="addImageBtn" class="btn ghost" type="button">画像を追加</button>
-
-      <div style="flex:1"></div>
-
-      <button id="publishBtn" class="btn" type="button">
-        <span id="publishLabel">投稿する</span>
-        <span class="spinner" aria-hidden="true"></span>
-      </button>
-    </div>
-
-    <div class="image-banner" id="imageBanner" aria-live="polite" style="min-height:0;"></div>
-
-    <div id="msg" class="msg muted"></div>
   </div>
+
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab-btn active" id="tabWriteBtn" role="tab" aria-selected="true">書く</button>
+    <button type="button" class="tab-btn" id="tabPreviewBtn" role="tab" aria-selected="false">プレビュー</button>
+  </div>
+
+  <div id="wallCardContainer" class="wall-card-wrap"></div>
+  <input id="imageInput" type="file" accept="image/*" hidden />
+
+  <!-- ===== WRITE PANE ===== -->
+  <section id="writePane" class="compose-pane">
+    <div class="compose-row">
+      <img class="compose-avatar" id="composeAvatar" src="/org-owner.jpg" alt="あなたのプロフィール画像" onerror="this.src='/org-owner.jpg'">
+      <div class="input-wrap">
+        <div class="editor" id="editorBox">
+          <textarea id="postText" maxlength="700" placeholder="いま何が起きていますか？" aria-label="投稿テキスト"></textarea>
+        </div>
+        <div class="image-banner" id="imageBanner" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PREVIEW PANE ===== -->
+  <section id="previewPane" class="preview-pane" style="display:none;">
+    <div class="preview-card" id="previewCard">
+      <div class="preview-empty" id="previewEmpty">まだプレビューはありません — 「書く」タブで何か入力してください。</div>
+    </div>
+  </section>
+
+  <div class="compose-divider"></div>
+
+  <div class="compose-toolbar">
+    <button class="icon-btn" id="boldBtn" type="button" title="太字" data-action="bold">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M272-200v-560h221q65 0 120 40t55 111q0 51-23 78.5T602-491q25 11 55.5 41t30.5 90q0 89-65 124.5T501-200H272Zm121-112h104q48 0 58.5-24.5T566-372q0-11-10.5-35.5T494-432H393v120Zm0-228h93q33 0 48-17t15-38q0-24-17-39t-44-15h-95v109Z"/></svg>
+    </button>
+    <button class="icon-btn" id="italicBtn" type="button" title="斜体" data-action="italic">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-200v-100h160l120-360H320v-100h400v100H580L460-300h140v100H200Z"/></svg>
+    </button>
+    <button class="icon-btn" id="headingBtn" type="button" title="見出し" data-action="h1">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-280v-400h80v160h160v-160h80v400h-80v-160H280v160h-80Zm480 0v-320h-80v-80h160v400h-80Z"/></svg>
+    </button>
+    <button class="icon-btn" id="addImageBtn" type="button" title="画像を追加">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M440-440ZM120-120q-33 0-56.5-23.5T40-200v-480q0-33 23.5-56.5T120-760h126l74-80h240v80H355l-73 80H120v480h640v-360h80v360q0 33-23.5 56.5T760-120H120Zm640-560v-80h-80v-80h80v-80h80v80h80v80h-80v80h-80ZM440-260q75 0 127.5-52.5T620-440q0-75-52.5-127.5T440-620q-75 0-127.5 52.5T260-440q0 75 52.5 127.5T440-260Zm0-80q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29Z"/></svg>
+    </button>
+
+    <div class="toolbar-spacer"></div>
+
+    <select id="commentSelect" class="select" aria-label="コメントできる人" title="コメントできる人">
+      <option value="all">全員</option>
+      <option value="admins">管理者</option>
+      <option value="verified">認証済み</option>
+      <option value="none">なし</option>
+    </select>
+
+    <div class="v-divider"></div>
+
+    <div class="char-ring" id="charRing" title="残り文字数"><span id="charCounter">700</span></div>
+
+    <button id="publishBtn" class="btn" type="button">
+      <span id="publishLabel">投稿する</span>
+      <span class="spinner" aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div id="msg" class="msg muted"></div>
 </main>
 
 <!-- Image Modal -->
 <div class="modal" id="imageModal" role="dialog" aria-modal="true" aria-hidden="true">
   <div class="overlay" tabindex="-1"></div>
   <div class="dialog" role="document">
-    <h3>画像のURLを追加</h3>
+    <h3>画像URLを追加</h3>
     <input type="url" id="imageURLInput" placeholder="https://example.com/image.jpg" style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-size:14px;">
     <div class="modal-actions">
       <button id="cancelImage" class="btn ghost" type="button">キャンセル</button>
@@ -218,8 +270,26 @@ h1{ margin:0 0 10px 0; font-size:20px; font-weight:700; color:var(--text); lette
   </div>
 </div>
 
+<style>
+/* modal (dialog) - kept separate so the styles above stay focused on the compose UI */
+.modal{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:220;
+  pointer-events:none; opacity:0; transition:opacity .18s ease; backdrop-filter: blur(4px);
+}
+.modal.visible{ pointer-events:auto; opacity:1; }
+.modal .overlay{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.7)); }
+.modal .dialog{
+  position:relative; z-index:10; width:92%; max-width:420px; border-radius:14px; padding:18px; background:linear-gradient(180deg, var(--card), rgba(255,255,255,0.01)); border:1px solid var(--border);
+  transform: translateY(14px) scale(.98); opacity:0; transition: transform .26s cubic-bezier(.2,.9,.2,1), opacity .22s ease;
+  box-shadow:0 12px 40px rgba(2,6,23,0.6);
+}
+.modal.visible .dialog{ transform:translateY(0) scale(1); opacity:1; }
+.dialog h3{ margin:0 0 8px 0; font-size:16px; font-weight:700; }
+.modal .modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+</style>
+
 <script>
-/* Firebase init */
+/* Firebase init (unchanged) */
 const firebaseConfig = { apiKey:"AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA", authDomain:"darkpurpleof-s-website.firebaseapp.com", projectId:"darkpurpleof-s-website", storageBucket:"darkpurpleof-s-website.firebasestorage.app", messagingSenderId:"520651082420", appId:"1:520651082420:web:bb05c0c3fd64517952e5e1" };
 if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -227,33 +297,48 @@ const db = firebase.firestore();
 
 /* state */
 let currentUser = null;
+let currentUserProfile = { name:'', pfp:'/org-owner.jpg', verified:false };
 let images = [];
 
-auth.onAuthStateChanged(u=>{
-  currentUser = u || null;
-  document.getElementById('userHint').textContent = currentUser ? currentUser.email : 'ログインしていません';
-});
+function escapeHtml(unsafe){
+  return String(unsafe || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
 
-/* wall card logic */
-const urlParams = new URLSearchParams(window.location.search);
-const wallParam = urlParams.get('wall');
-const wallCardContainer = document.getElementById('wallCardContainer');
-
-async function fetchWallUser(email){
+/* generic profile fetch, reused for both the wall-card owner and the
+   currently signed-in user's own avatar in the compose row + preview */
+async function fetchUserProfile(email){
   if(!email) return null;
   try{
     const snap = await db.collection('user_data').doc(email).get();
     if(!snap.exists) return null;
     const data = snap.data();
     return { name:data['display name']||email, pfp:data.profile_picture||'/org-owner.jpg', verified:!!data.is_verified };
-  } catch(e){ console.warn(e); return {name:email,pfp:'/org-owner.jpg',verified:false}; }
+  } catch(e){ console.warn(e); return { name:email, pfp:'/org-owner.jpg', verified:false }; }
 }
+
+auth.onAuthStateChanged(async u=>{
+  currentUser = u || null;
+  if(currentUser){
+    const profile = await fetchUserProfile(currentUser.email);
+    currentUserProfile = profile || { name: currentUser.email, pfp:'/org-owner.jpg', verified:false };
+    const composeAvatar = document.getElementById('composeAvatar');
+    if (composeAvatar) {
+      composeAvatar.src = currentUserProfile.pfp || '/org-owner.jpg';
+      composeAvatar.alt = currentUserProfile.name || 'プロフィール画像';
+    }
+    renderPreview();
+  }
+});
+
+/* wall card logic (kept, using the shared fetchUserProfile helper) */
+const urlParams = new URLSearchParams(window.location.search);
+const wallParam = urlParams.get('wall');
+let wallUser = null;
 
 async function initWallCard(){
   if(!wallParam) return;
 
-  let wallUser = await fetchWallUser(wallParam);
-
+  wallUser = await fetchUserProfile(wallParam);
   if(!wallUser) wallUser = { name: wallParam, pfp:'/org-owner.jpg', verified:false };
   if(!wallUser.name) wallUser.name = wallParam;
   if(!wallUser.pfp) wallUser.pfp = '/org-owner.jpg';
@@ -261,18 +346,19 @@ async function initWallCard(){
   const card = document.createElement('div');
   card.className = 'wall-card';
   card.innerHTML = `
-    <img src="${wallUser.pfp}" alt="${wallUser.name}" onerror="this.src='/org-owner.jpg'">
+    <img src="${wallUser.pfp}" alt="${escapeHtml(wallUser.name)}" onerror="this.src='/org-owner.jpg'">
     <div class="meta">
       <div class="name">
-        ${wallUser.name}
+        ${escapeHtml(wallUser.name)}
         ${wallUser.verified ? '<span class="verified" title="認証済み"></span>' : ''}
       </div>
-      <div class="desc">${wallUser.name} のウォールに投稿しています</div>
+      <div class="desc">${escapeHtml(wallUser.name)}の壁に投稿しています</div>
     </div>
   `;
 
   const container = document.getElementById('wallCardContainer');
   container.insertBefore(card, container.firstChild);
+  renderPreview();
 }
 initWallCard();
 
@@ -280,40 +366,134 @@ initWallCard();
 const postText = document.getElementById('postText');
 const editorBox = document.getElementById('editorBox');
 const charCounter = document.getElementById('charCounter');
+const charRing = document.getElementById('charRing');
 const commentSelect = document.getElementById('commentSelect');
 const addImageBtn = document.getElementById('addImageBtn');
+const imageInput = document.getElementById('imageInput');
 const imageBanner = document.getElementById('imageBanner');
 const publishBtn = document.getElementById('publishBtn');
 const publishLabel = document.getElementById('publishLabel');
 const msg = document.getElementById('msg');
+const cancelWallBtn = document.getElementById('cancelWallBtn');
+
+if (cancelWallBtn) {
+  cancelWallBtn.style.display = wallParam ? 'inline-flex' : 'none';
+  cancelWallBtn.addEventListener('click', ()=>{
+    if (window.history.length > 1) window.history.back();
+    else window.location.href = '/posts';
+  });
+}
 
 const imageModal = document.getElementById('imageModal');
 const imageURLInput = document.getElementById('imageURLInput');
 const cancelImage = document.getElementById('cancelImage');
 const confirmImage = document.getElementById('confirmImage');
 
+const tabWriteBtn = document.getElementById('tabWriteBtn');
+const tabPreviewBtn = document.getElementById('tabPreviewBtn');
+const writePane = document.getElementById('writePane');
+const previewPane = document.getElementById('previewPane');
+const previewCard = document.getElementById('previewCard');
+
+const MAX_CHARS = 700;
+
 /* utilities */
-function showMsg(txt, color='muted'){ msg.textContent = txt; msg.style.color = (color==='red' ? '#ff6b6b' : 'var(--muted)'); }
+function showMsg(txt, color='muted'){ msg.textContent = txt; msg.style.color = (color==='red' ? 'var(--danger)' : 'var(--muted)'); }
 function setLoading(on){
   if(on){ publishBtn.classList.add('loading'); publishBtn.disabled = true; publishLabel.textContent = '投稿中'; }
   else { publishBtn.classList.remove('loading'); publishBtn.disabled = false; publishLabel.textContent = '投稿する'; }
 }
 
-/* autosize textarea */
+/* autosize textarea, X-style (grows with content, no scrollbar) */
 function autosize(el){
   el.style.height = 'auto';
   el.style.height = (el.scrollHeight) + 'px';
 }
-postText.addEventListener('input', e=>{
-  const val = e.target.value || '';
-  charCounter.textContent = 700 - val.length;
-  if(val.length) editorBox.classList.add('has-content'); else editorBox.classList.remove('has-content');
-  autosize(e.target);
-});
-window.addEventListener('load', ()=>{ autosize(postText); charCounter.textContent = 700 - (postText.value || '').length; });
 
-/* toolbar actions */
-document.querySelectorAll('.tool-btn').forEach(btn=>{
+function updateCharRing(){
+  const len = (postText.value || '').length;
+  const remaining = MAX_CHARS - len;
+  const pct = Math.min(100, (len / MAX_CHARS) * 100);
+  charRing.style.setProperty('--pct', pct.toFixed(2));
+  charCounter.textContent = remaining;
+  charRing.classList.toggle('danger', remaining <= 20);
+}
+
+postText.addEventListener('input', e=>{
+  autosize(e.target);
+  updateCharRing();
+  renderPreview();
+});
+window.addEventListener('load', ()=>{ autosize(postText); updateCharRing(); });
+
+/* ===== Tabs: Write / Preview ===== */
+function setTab(tab){
+  const writing = tab === 'write';
+  tabWriteBtn.classList.toggle('active', writing);
+  tabWriteBtn.setAttribute('aria-selected', String(writing));
+  tabPreviewBtn.classList.toggle('active', !writing);
+  tabPreviewBtn.setAttribute('aria-selected', String(!writing));
+  writePane.style.display = writing ? '' : 'none';
+  previewPane.style.display = writing ? 'none' : '';
+  if(!writing) renderPreview();
+}
+tabWriteBtn.addEventListener('click', ()=> setTab('write'));
+tabPreviewBtn.addEventListener('click', ()=> setTab('preview'));
+
+/* ===== Live preview: rebuilds a real post-card render (avatar, name,
+   handle, time, rich markdown body, image grid) so what you see here is
+   exactly what will show up in the feed. The <rich-markdown> element is
+   re-created from scratch on every render instead of having its
+   textContent mutated in place - that guarantees its connectedCallback
+   fires fresh each time and the markdown is actually re-parsed. ===== */
+function renderPreview(){
+  const text = (postText.value || '').trim();
+  if(!text && images.length === 0){
+    previewCard.innerHTML = `<div class="preview-empty" id="previewEmpty">まだプレビューはありません — 「書く」タブで何か入力してください。</div>`;
+    return;
+  }
+
+  const name = currentUser ? (currentUserProfile.name || currentUser.email) : 'あなた';
+  const handle = currentUser ? currentUser.email : '';
+  const verifiedHtml = (currentUser && currentUserProfile.verified) ? '<span class="preview-verified" title="認証済み"></span>' : '';
+  const avatarUrl = currentUser ? currentUserProfile.pfp : '/org-owner.jpg';
+
+  previewCard.innerHTML = `
+    <div class="preview-row">
+      <img class="compose-avatar" style="width:44px;height:44px;min-width:44px;" src="${encodeURI(avatarUrl)}" alt="${escapeHtml(name)}" onerror="this.src='/org-owner.jpg'">
+      <div style="flex:1; min-width:0;">
+        <div class="preview-header">
+          <span class="pname">${escapeHtml(name)}</span>
+          ${verifiedHtml}
+          <span class="phandle">${escapeHtml(handle)}</span>
+          <span class="pdot">·</span>
+          <span class="pdate">たった今</span>
+        </div>
+        <div class="preview-text" id="previewTextWrap"></div>
+        <div class="image-banner" id="previewImages" aria-live="polite"></div>
+        ${wallUser ? `<div class="preview-towall">${escapeHtml(wallUser.name)}の壁に投稿します</div>` : ''}
+      </div>
+    </div>
+  `;
+
+  const wrap = document.getElementById('previewTextWrap');
+  const rm = document.createElement('rich-markdown');
+  rm.setAttribute('mode','markdown');
+  rm.setAttribute('chat-components','');
+  rm.textContent = text;
+  wrap.appendChild(rm);
+
+  const previewImagesEl = document.getElementById('previewImages');
+  images.forEach((url,i)=>{
+    const div = document.createElement('div');
+    div.className = 'img-wrapper';
+    div.innerHTML = `<img src="${url}" alt="image-${i}" loading="lazy">`;
+    previewImagesEl.appendChild(div);
+  });
+}
+
+/* toolbar actions (markdown insertion) */
+document.querySelectorAll('.compose-toolbar .icon-btn[data-action]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const action = btn.dataset.action;
     const textarea = postText;
@@ -321,8 +501,8 @@ document.querySelectorAll('.tool-btn').forEach(btn=>{
     const selected = textarea.value.slice(start, end);
     let insert = '';
     let newPos = end;
-    if(action === 'bold'){ insert = `**${selected || '太字テキスト'}**`; newPos = start + insert.length; }
-    if(action === 'italic'){ insert = `*${selected || '斜体テキスト'}*`; newPos = start + insert.length; }
+    if(action === 'bold'){ insert = `*${selected || '太字テキスト'}*`; newPos = start + insert.length; }
+    if(action === 'italic'){ insert = `_${selected || '斜体テキスト'}_`; newPos = start + insert.length; }
     if(action === 'h1'){ insert = `# ${selected || '見出し'}`; newPos = start + insert.length; }
     textarea.setRangeText(insert, start, end, 'end');
     textarea.focus();
@@ -331,52 +511,91 @@ document.querySelectorAll('.tool-btn').forEach(btn=>{
   });
 });
 
-/* image modal */
-function openImageModal(){
-  imageURLInput.value = '';
-  imageModal.classList.add('visible');
-  imageModal.setAttribute('aria-hidden', 'false');
-  setTimeout(()=> imageURLInput.focus(), 160);
+async function addImageFromFile(file){
+  if(!file) return;
+  if(images.length >= 9){ showMsg('画像は最大9枚までです', 'red'); return; }
+  if(!window.CatboxUploader || typeof window.CatboxUploader.upload !== 'function'){
+    showMsg('画像アップロードは現在利用できません。', 'red');
+    return;
+  }
+
+  showMsg('画像をアップロードしています…');
+  try{
+    const result = await window.CatboxUploader.upload(file);
+    if(result && result.success){
+      const url = result.url || result.full_url || result.file_url || result.link || result.downloadUrl || null;
+      if(url){
+        images.push(url);
+        renderImages();
+        showMsg('画像を追加しました');
+      } else {
+        showMsg('アップロードから画像URLが返されませんでした', 'red');
+      }
+    } else {
+      showMsg(result?.error || '画像アップロードに失敗しました', 'red');
+    }
+  } catch(err){
+    showMsg(err?.message || '画像アップロードに失敗しました', 'red');
+  }
 }
-function closeImageModal(){
-  imageModal.classList.remove('visible');
-  imageModal.setAttribute('aria-hidden', 'true');
-  imageURLInput.value = '';
-}
+
 addImageBtn.addEventListener('click', ()=> {
   if(images.length >= 9){ showMsg('画像は最大9枚までです', 'red'); return; }
-  openImageModal();
+  imageInput.click();
 });
-cancelImage.addEventListener('click', closeImageModal);
-confirmImage.addEventListener('click', ()=>{
-  const url = (imageURLInput.value || '').trim();
-  if(!url){ showMsg('有効な画像URLを入力してください','red'); return; }
-  try{
-    const u = new URL(url);
-    images.push(u.href);
-    renderImages();
-    closeImageModal();
-    showMsg('画像を追加しました');
-  }catch(e){
-    showMsg('URLが無効です','red');
+imageInput.addEventListener('change', async ()=>{
+  const file = imageInput.files && imageInput.files[0];
+  imageInput.value = '';
+  if(file) await addImageFromFile(file);
+});
+
+['dragenter','dragover'].forEach((eventName)=>{
+  document.addEventListener(eventName, (event)=>{
+    const hasFiles = event.dataTransfer && Array.from(event.dataTransfer.types || []).includes('Files');
+    if (!hasFiles) return;
+    event.preventDefault();
+    event.stopPropagation();
+    document.body.classList.add('drag-active');
+  });
+});
+
+['dragleave','dragend'].forEach((eventName)=>{
+  document.addEventListener(eventName, (event)=>{
+    if (event.target === document || event.target === document.body) {
+      document.body.classList.remove('drag-active');
+    }
+  });
+});
+
+document.addEventListener('drop', async (event)=>{
+  const dt = event.dataTransfer;
+  if (!dt || !dt.files || !dt.files.length) return;
+  event.preventDefault();
+  event.stopPropagation();
+  document.body.classList.remove('drag-active');
+  const imageFiles = Array.from(dt.files).filter(file => file && file.type && file.type.startsWith('image/'));
+  if (!imageFiles.length) {
+    showMsg('ここには画像ファイルのみをドロップできます。', 'red');
+    return;
+  }
+  for (const file of imageFiles) {
+    if (images.length >= 9) break;
+    await addImageFromFile(file);
   }
 });
 
-imageModal.querySelector('.overlay').addEventListener('click', closeImageModal);
-document.addEventListener('keydown', (ev)=>{
-  if(ev.key === 'Escape') closeImageModal();
-});
-
-/* render images */
+/* render images thumbnails with animation (Write tab) */
 function renderImages(){
   imageBanner.innerHTML = '';
   images.forEach((url,i)=>{
     const div = document.createElement('div');
     div.className = 'img-wrapper';
-    div.innerHTML = `<img src="${url}" alt="画像-${i}" loading="lazy"><button class="remove-btn" aria-label="画像${i}を削除" data-i="${i}">×</button>`;
+    div.innerHTML = `<img src="${url}" alt="image-${i}" loading="lazy"><button class="remove-btn" aria-label="画像を削除 ${i}" data-i="${i}">×</button>`;
     imageBanner.appendChild(div);
   });
+  renderPreview();
 }
+/* delegated listener for remove buttons */
 imageBanner.addEventListener('click', (e)=>{
   const btn = e.target.closest('.remove-btn');
   if(!btn) return;
@@ -386,25 +605,26 @@ imageBanner.addEventListener('click', (e)=>{
 
 /* publish */
 publishBtn.addEventListener('click', async ()=>{
-  if(!currentUser){ showMsg('ログインが必要です','red'); return; }
+  if(!currentUser){ showMsg('ログインしてください','red'); return; }
   const text = (postText.value || '').trim();
-  if(!text){ showMsg('投稿内容を入力してください','red'); return; }
+  if(!text){ showMsg('投稿文を入力してください','red'); return; }
   setLoading(true);
-  showMsg('投稿中...');
+  showMsg('投稿しています...');
   try{
     const postRef = db.collection('posts').doc();
     const payload = { comments:commentSelect.value, editor:currentUser.email, images, likedBy:[], text, timestamp:Date.now() };
     if(wallParam) payload.towall = wallParam;
 
     await postRef.set(payload);
-    window.location.href = './posts?post=' + postRef.id;
+    window.location.href = '/posts?post='+postRef.id;
   }catch(e){
     console.error(e);
-    showMsg('投稿できませんでした: ' + (e.message || e),'red');
+    showMsg('投稿に失敗しました: '+(e.message || e),'red');
     setLoading(false);
   }
 });
 
+/* small UX: prevent horizontal scroll from long words/urls */
 document.documentElement.style.wordBreak = 'break-word';
 document.body.style.overflowX = 'hidden';
 </script>

@@ -1,0 +1,1713 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Migrate Account</title>
+
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#171717;
+      --card:#1f1f1f;
+      --text:#eaeaea;
+      --muted:#9ca3af;
+      --accent:#6b21a8;
+      --accent-strong:#5b21b6;
+      --border:rgba(255,255,255,0.06);
+      --radius:12px;
+      --max-width:920px;
+      --ctrl-radius:4px;
+      --card-radius:8px;
+      --ctrl-height:32px;
+      --shadow-2: 0 1px 2px rgba(0,0,0,0.14), 0 0.5px 0 rgba(255,255,255,0.03) inset;
+      --shadow-8: 0 4px 8px rgba(0,0,0,0.28), 0 0px 2px rgba(0,0,0,0.24);
+      --shadow-16: 0 8px 16px rgba(0,0,0,0.32), 0 0px 2px rgba(0,0,0,0.28);
+      --divider: rgba(255,255,255,0.08);
+    }
+    body.light{
+      --bg:#f6f8fb; --card:#fff; --text:#0f172a; --muted:#475569; --border:rgba(0,0,0,0.06);
+      --shadow-2: 0 1px 2px rgba(0,0,0,0.08), 0 0.5px 0 rgba(255,255,255,0.5) inset;
+      --shadow-8: 0 4px 8px rgba(0,0,0,0.10), 0 0px 2px rgba(0,0,0,0.06);
+      --shadow-16: 0 8px 16px rgba(0,0,0,0.12), 0 0px 2px rgba(0,0,0,0.08);
+      --divider: rgba(0,0,0,0.08);
+    }
+
+    html,body{height:100%;margin:0;font-family:"Segoe UI Variable","Segoe UI",Inter,system-ui,-apple-system,Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow-x:hidden;}
+    body{display:flex;flex-direction:column;min-height:100vh;}
+    *{box-sizing:border-box;}
+
+    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+
+    main.container{width:100%;max-width:var(--max-width);margin:40px auto;padding:0 16px;}
+
+    /* ── Step indicator (8 steps — compact, no labels so it fits) ── */
+    .steps{
+      display:flex;
+      align-items:center;
+      gap:0;
+      margin-bottom:32px;
+      user-select:none;
+      max-width:560px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+    .step-item{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      font-weight:500;
+      color:var(--muted);
+      transition:color 200ms;
+    }
+    .step-item.active{ color:var(--text); }
+    .step-item.done{ color:var(--accent); }
+    .step-num{
+      width:20px;height:20px;
+      border-radius:50%;
+      border:1.5px solid var(--muted);
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:600;
+      flex-shrink:0;
+      transition:border-color 200ms, background 200ms, color 200ms;
+    }
+    .step-item.active .step-num{
+      border-color:var(--accent);
+      background:var(--accent);
+      color:#fff;
+    }
+    .step-item.done .step-num{
+      border-color:var(--accent);
+      background:transparent;
+      color:var(--accent);
+    }
+    .step-item.error .step-num {
+      border-color: #ef4444;
+      background: #ef4444;
+      color: #fff;
+    }
+    .step-connector{
+      flex:1;
+      height:1px;
+      background:var(--divider);
+      margin:0 4px;
+      min-width:10px;
+    }
+    .step-connector.active { background: var(--accent); }
+    .step-connector.error { background: #ef4444; }
+    .step-item span{ display:none; } /* labels live in each card's <h1> instead */
+
+    /* ── Card ── */
+    .card{
+      background:var(--card);
+      border-radius:var(--card-radius);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow-8);
+      padding:32px;
+      max-width:560px;
+      margin:0 auto;
+    }
+
+    h1{margin:0 0 6px;font-size:22px;font-weight:600;line-height:1.3;}
+    p.lead{margin:0 0 24px;color:var(--muted);font-size:13px;line-height:1.6;}
+    p.lead code{
+      font-family:Consolas,"Cascadia Code",monospace;
+      background:rgba(255,255,255,0.06);
+      padding:1px 5px;border-radius:3px;font-size:12px;
+    }
+    body.light p.lead code{background:rgba(0,0,0,0.05);}
+
+    .input{
+      width:100%;
+      height:36px;
+      padding:0 12px;
+      border-radius:var(--ctrl-radius);
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.03);
+      color:var(--text);
+      font-size:14px;
+      font-family:inherit;
+      transition:border-color 120ms,box-shadow 120ms;
+    }
+    body.light .input{background:#fff;}
+    .input::placeholder{color:var(--muted);}
+    .input:hover{border-color:rgba(255,255,255,0.18);}
+    body.light .input:hover{border-color:rgba(0,0,0,0.18);}
+    .input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+
+    .field{margin-bottom:6px;}
+    .field-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;display:block;}
+    .input-prefix-row{display:flex;align-items:center;}
+    .input-suffix{font-size:12px;color:var(--muted);margin-left:8px;white-space:nowrap;}
+
+    .hint{font-size:12px;color:var(--muted);margin-top:6px;min-height:16px;}
+
+    .btn-row{display:flex;gap:8px;margin-top:24px;}
+    .btn{
+      height:34px;padding:0 20px;
+      border-radius:var(--ctrl-radius);
+      border:1px solid transparent;
+      cursor:pointer;font-weight:600;font-size:13px;font-family:inherit;
+      background:var(--accent);color:#fff;
+      transition:background-color 100ms,transform 80ms;
+    }
+    .btn:hover{background:var(--accent-strong);}
+    .btn:active{transform:translateY(1px);}
+    .btn:focus-visible{outline:2px solid var(--text);outline-offset:1px;}
+    .btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
+    .btn.ghost{
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--text);
+    }
+    .btn.ghost:hover{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.22);}
+    body.light .btn.ghost:hover{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.22);}
+    .btn.danger{ background:#ef4444; }
+    .btn.danger:hover{ background:#dc2626; }
+
+    .muted{color:var(--muted);font-size:12px;}
+    .error-text{color:#ff4a4a;font-size:12px;}
+    .success-text{color:#22c55e;font-size:12px;}
+
+    .disclaimer{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.5;
+      margin-top:16px;
+      margin-bottom:12px;
+    }
+    .disclaimer a{
+      color:var(--accent);
+      text-decoration:none;
+      font-weight:500;
+    }
+    .disclaimer a:hover{ text-decoration:underline; }
+
+    /* ── Feature list (step 1) ── */
+    .feature-list{list-style:none;margin:0 0 24px;padding:0;display:flex;flex-direction:column;gap:14px;}
+    .feature-list + .status-card{margin-top:20px;}
+    .feature-list li{display:flex;gap:12px;align-items:flex-start;font-size:13px;line-height:1.5;}
+    .status-card{
+      margin-top:8px;
+      padding:18px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:linear-gradient(135deg, rgba(107,33,168,0.16), rgba(107,33,168,0.08));
+      box-shadow:var(--shadow-2);
+    }
+    .status-card .status-title{font-size:18px;font-weight:700;margin:0 0 8px;}
+    .status-card .status-text{font-size:13px;line-height:1.7;color:var(--text);margin:0;}
+    .status-card .status-text strong{color:var(--accent);font-weight:700;}
+    .feature-list li .fi-icon{
+      flex-shrink:0;width:30px;height:30px;border-radius:50%;
+      background:rgba(107,33,168,0.14);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .feature-list li svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+    .feature-list li .fi-title{font-weight:600;margin-bottom:2px;}
+    .feature-list li .fi-desc{color:var(--muted);}
+
+    /* ── Transition / summary row (old email -> new email) ── */
+    .transition-row{
+      display:flex;align-items:stretch;gap:12px;flex-wrap:wrap;
+      padding:16px;border-radius:var(--ctrl-radius);
+      background:rgba(255,255,255,0.025);border:1px solid var(--border);
+      box-shadow:var(--shadow-2);
+      margin-bottom:14px;font-size:13px;
+    }
+    body.light .transition-row{background:#fafbfc;}
+    .transition-card{
+      flex:1;min-width:220px;padding:14px 16px;border-radius:10px;
+      background:rgba(255,255,255,0.045);border:1px solid var(--border);
+    }
+    .transition-card.accent{
+      background:linear-gradient(135deg, rgba(107,33,168,0.16), rgba(107,33,168,0.08));
+      border-color:rgba(107,33,168,0.32);
+    }
+    .transition-label{
+      font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+      font-weight:700;color:var(--muted);margin-bottom:6px;
+    }
+    .transition-value{font-weight:600;word-break:break-all;line-height:1.45;}
+    .transition-arrow{color:var(--accent);font-weight:700;font-size:18px;align-self:center;flex-shrink:0;}
+    .step6-list{display:grid;gap:8px;margin:0 0 16px;}
+    .step6-item{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid var(--border);font-size:12.5px;line-height:1.55;color:var(--text);}
+    body.light .step6-item{background:#fafbfc;}
+    .step6-bullet{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:rgba(107,33,168,0.15);color:var(--accent);font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px;}
+
+    /* ── Confirm row (profile preview) ── */
+    .confirm-row{
+      display:flex;gap:14px;align-items:center;
+      padding:14px;
+      border-radius:var(--ctrl-radius);
+      background:rgba(255,255,255,0.025);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow-2);
+      margin-bottom:24px;
+    }
+    body.light .confirm-row{background:#fafbfc;}
+    .confirm-row .avatar-preview{
+      width:64px;height:64px;border-radius:50%;
+      object-fit:cover;border:1px solid var(--border);flex-shrink:0;
+      background:var(--accent);
+    }
+    .confirm-meta .c-title{font-weight:600;font-size:15px;}
+    .confirm-meta .c-by{font-size:12px;color:var(--muted);margin-top:3px;word-break:break-all;}
+    .confirm-meta .c-desc{font-size:12px;color:var(--muted);margin-top:6px;}
+
+    /* ── Checkbox row (terms) ── */
+    .check-row{
+      display:flex;gap:10px;align-items:flex-start;
+      padding:14px;border-radius:var(--ctrl-radius);
+      background:rgba(255,255,255,0.025);border:1px solid var(--border);
+      margin-bottom:16px;
+    }
+    body.light .check-row{background:#fafbfc;}
+    .check-row input[type=checkbox]{margin-top:2px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;}
+    .check-row label{font-size:13px;line-height:1.5;color:var(--text);cursor:pointer;}
+
+    .bullet-list{margin:0 0 20px;padding-left:18px;font-size:12px;color:var(--muted);line-height:1.7;}
+
+    /* ── Warning box (irreversible action) ── */
+    .warn-box{
+      border-left:3px solid #f59e0b;
+      background:rgba(245,158,11,0.08);
+      padding:12px 14px;border-radius:4px;
+      font-size:12.5px;line-height:1.6;color:var(--text);
+      margin-bottom:20px;
+    }
+
+    /* ── Progress screen ── */
+    .progress-track{
+      width:100%;height:8px;border-radius:999px;
+      background:rgba(255,255,255,0.08);overflow:hidden;margin-top:8px;
+    }
+    body.light .progress-track{background:rgba(0,0,0,0.08);}
+    .progress-fill{
+      height:100%;border-radius:999px;
+      background:linear-gradient(90deg,var(--accent),var(--accent-strong));
+      width:0%;transition:width 400ms ease;
+    }
+    .progress-percent{font-size:12px;color:var(--muted);margin-top:8px;text-align:right;}
+    .progress-message{font-size:13px;color:var(--text);margin-top:18px;display:flex;align-items:center;gap:10px;}
+    .mini-spinner{
+      width:16px;height:16px;flex-shrink:0;
+      border:2px solid rgba(255,255,255,0.2);border-top-color:var(--accent);
+      border-radius:50%;animation:spin 0.8s linear infinite;
+    }
+    body.light .mini-spinner{border:2px solid rgba(0,0,0,0.1);border-top-color:var(--accent);}
+
+    /* ── Success / done ── */
+    .success-icon{
+      width:56px;height:56px;border-radius:50%;
+      background:var(--accent);
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:20px;
+    }
+    .success-icon svg{width:28px;height:28px;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+    .success-icon.error { background: #ef4444; }
+    .success-detail{
+      padding:14px;border-radius:var(--ctrl-radius);
+      background:rgba(255,255,255,0.025);border:1px solid var(--border);
+      font-size:13px;line-height:1.6;
+      margin-bottom:24px;
+    }
+    body.light .success-detail{background:#fafbfc;}
+
+    /* ── Screens ── */
+    .screen{display:none;}
+    .screen.active{display:block;}
+
+    /* ── Spinner overlay ── */
+    #spinnerOverlay {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.6); z-index: 10000; animation: fadeIn 200ms ease;
+    }
+    #spinnerOverlay.active { display: flex; }
+    .spinner {
+      width: 48px; height: 48px; border: 3px solid rgba(255,255,255,0.2);
+      border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* responsive */
+    @media(max-width:600px){
+      .card{padding:22px;}
+      .steps{gap:0;}
+    }
+  </style>
+</head>
+<body>
+  <script type="module" src="/dp-topbar.js"></script>
+  <dp-topbar></dp-topbar>
+
+  <main class="container">
+
+    <!-- Step indicator -->
+    <div class="steps" id="stepIndicator">
+      <div class="step-item active" id="si-1"><div class="step-num">1</div><span>Ready</span></div>
+      <div class="step-connector" id="sc-1"></div>
+      <div class="step-item" id="si-2"><div class="step-num">2</div><span>Username</span></div>
+      <div class="step-connector" id="sc-2"></div>
+      <div class="step-item" id="si-3"><div class="step-num">3</div><span>Password</span></div>
+      <div class="step-connector" id="sc-3"></div>
+      <div class="step-item" id="si-4"><div class="step-num">4</div><span>Preview</span></div>
+      <div class="step-connector" id="sc-4"></div>
+      <div class="step-item" id="si-5"><div class="step-num">5</div><span>Terms</span></div>
+      <div class="step-connector" id="sc-5"></div>
+      <div class="step-item" id="si-6"><div class="step-num">6</div><span>Confirm</span></div>
+      <div class="step-connector" id="sc-6"></div>
+      <div class="step-item" id="si-7"><div class="step-num">7</div><span>Migrating</span></div>
+      <div class="step-connector" id="sc-7"></div>
+      <div class="step-item" id="si-8"><div class="step-num">8</div><span>Done</span></div>
+    </div>
+
+    <!-- ── Step 1: Ready to migrate ── -->
+    <div class="card screen active" id="screen-1">
+      <h1 id="screen1Title">Move to a more private, more secure account</h1>
+      <p class="lead" id="screen1Lead">
+        We're rolling out a new account system built around usernames instead of email addresses.
+        Migrating takes a couple of minutes and everything you own — coins, transactions, gifts, UGC,
+        friends, chats — comes with you automatically.
+      </p>
+
+      <ul class="feature-list" id="screen1FeatureList">
+        <li>
+          <div class="fi-icon"><svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6l8-4z"/></svg></div>
+          <div>
+            <div class="fi-title">Your real email stays private</div>
+            <div class="fi-desc">Your profile and public activity will no longer be tied to the email address you signed up with.</div>
+          </div>
+        </li>
+        <li>
+          <div class="fi-icon"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></div>
+          <div>
+            <div class="fi-title">Stronger account security</div>
+            <div class="fi-desc">Separating your login identity from your real email reduces your exposure to phishing and credential-stuffing attacks.</div>
+          </div>
+        </li>
+        <li>
+          <div class="fi-icon"><svg viewBox="0 0 24 24"><path d="M20 7L9 18l-5-5"/></svg></div>
+          <div>
+            <div class="fi-title">Nothing gets left behind</div>
+            <div class="fi-desc">Coins, purchases, notes, friends, followers, chats and posts are all carried over to your new account for you.</div>
+          </div>
+        </li>
+        <li>
+          <div class="fi-icon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z"/></svg></div>
+          <div>
+            <div class="fi-title">Ready for what's next</div>
+            <div class="fi-desc">Newer features are being built around the username-based system going forward.</div>
+          </div>
+        </li>
+      </ul>
+
+      <div class="status-card" id="screen1SpecialCard" style="display:none;"></div>
+
+      <div class="hint" id="eligibilityMessage"></div>
+
+      <div class="btn-row" id="screen1Actions">
+        <button id="startBtn" class="btn">Get started</button>
+        <button id="laterBtn" class="btn ghost">Maybe later</button>
+      </div>
+    </div>
+
+    <!-- ── Step 2: Choose a username ── -->
+    <div class="card screen" id="screen-2">
+      <h1>Choose a username</h1>
+      <p class="lead">This becomes your new sign-in identity. You can share it publicly without exposing your real email.</p>
+
+      <div class="field">
+        <label class="field-label" for="usernameInput">Username</label>
+        <div class="input-prefix-row">
+          <input id="usernameInput" class="input" placeholder="username" autocomplete="off" maxlength="32" spellcheck="false" />
+        </div>
+        <div class="hint" id="usernameStatus"></div>
+        <div class="hint" style="margin-top:2px;">3–32 characters: lowercase letters, numbers, <code>.</code> <code>_</code> <code>-</code></div>
+      </div>
+
+      <div class="btn-row">
+        <button id="usernameNextBtn" class="btn" disabled>Next</button>
+        <button id="usernameBackBtn" class="btn ghost">Back</button>
+      </div>
+    </div>
+
+    <!-- ── Step 3: Reauthenticate ── -->
+    <div class="card screen" id="screen-3">
+      <h1>Confirm it's you</h1>
+      <p class="lead">For your security, enter your current password to continue with the migration.</p>
+
+      <div class="field">
+        <label class="field-label" for="passwordInput">Password</label>
+        <input id="passwordInput" class="input" type="password" placeholder="Your current password" autocomplete="current-password" />
+        <div class="hint error-text" id="passwordError"></div>
+      </div>
+
+      <div class="btn-row">
+        <button id="passwordNextBtn" class="btn">Continue</button>
+        <button id="passwordBackBtn" class="btn ghost">Back</button>
+      </div>
+    </div>
+
+    <!-- ── Step 4: Profile preview ── -->
+    <div class="card screen" id="screen-4">
+      <h1>Here's your account after migrating</h1>
+      <p class="lead">Double-check this looks right before continuing.</p>
+
+      <div class="confirm-row" id="previewRow">
+        <!-- filled dynamically -->
+      </div>
+
+      <div class="btn-row">
+        <button id="previewNextBtn" class="btn">Next</button>
+        <button id="previewBackBtn" class="btn ghost">Back</button>
+      </div>
+    </div>
+
+    <!-- ── Step 5: Accept terms ── -->
+    <div class="card screen" id="screen-5">
+      <h1>Before you continue</h1>
+      <p class="lead">A quick summary of what migration means for your account:</p>
+
+      <ul class="bullet-list">
+        <li>Your new sign-in email will be your username <code>@users.darkpurpleof.github.io</code> — your old email will no longer work to sign in.</li>
+        <li>All of your data (coins, transactions, gifts, UGC, friends, followers, chats and posts) is copied to the new account automatically.</li>
+        <li>This process cannot be undone once it starts.</li>
+        <li>You'll be signed out and asked to sign back in with your new username when it's finished.</li>
+      </ul>
+
+      <div class="check-row">
+        <input type="checkbox" id="termsCheckbox" />
+        <label for="termsCheckbox">
+          I have read and agree to the <a href="/terms" target="_blank" style="color:var(--accent);font-weight:500;">Terms and Conditions</a>,
+          and I understand this migration is permanent and cannot be reversed.
+        </label>
+      </div>
+
+      <div class="btn-row">
+        <button id="termsNextBtn" class="btn" disabled>Next</button>
+        <button id="termsBackBtn" class="btn ghost">Back</button>
+      </div>
+    </div>
+
+    <!-- ── Step 6: Ready to migrate? ── -->
+    <div class="card screen" id="screen-6">
+      <h1>Ready to migrate?</h1>
+      <p class="lead">This is your last chance to double-check everything before we start.</p>
+
+      <div class="transition-row" id="finalTransitionRow">
+        <!-- filled dynamically -->
+      </div>
+
+      <div class="step6-list">
+        <div class="step6-item"><div class="step6-bullet">✓</div><div>Your existing data, coins, gifts, UGC, chats and friends will be copied over automatically.</div></div>
+        <div class="step6-item"><div class="step6-bullet">✓</div><div>Your old email address will stop working for sign-in once the migration completes.</div></div>
+        <div class="step6-item"><div class="step6-bullet">✓</div><div>You will be signed out and asked to sign in again with your new username when everything is done.</div></div>
+      </div>
+
+      <div class="warn-box">
+        Once you select <strong>Start migration</strong>, the process cannot be paused, cancelled, or reversed.
+        Keep this tab open until it finishes.
+      </div>
+
+      <div class="btn-row">
+        <button id="migrateNowBtn" class="btn">Start migration</button>
+        <button id="finalBackBtn" class="btn ghost">Back</button>
+      </div>
+    </div>
+
+    <!-- ── Step 7: Progress ── -->
+    <div class="card screen" id="screen-7">
+      <h1>Migrating your account</h1>
+      <p class="lead">Please keep this tab open — this usually takes less than a minute.</p>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-percent" id="progressPercent">0%</div>
+
+      <div class="progress-message" id="progressMessage">
+        <div class="mini-spinner"></div>
+        <span id="progressMessageText">Queued...</span>
+      </div>
+
+      <div class="hint error-text" id="progressError" style="margin-top:16px;"></div>
+      <div class="btn-row" id="progressRetryRow" style="display:none;">
+        <button id="progressRetryBtn" class="btn">Try again</button>
+      </div>
+    </div>
+
+    <!-- ── Step 8: Done ── -->
+    <div class="card screen" id="screen-8">
+      <div class="success-icon" id="doneIcon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h1 id="doneTitle">You're all set!</h1>
+      <p class="lead" id="doneLead">Your account has been migrated to your new username.</p>
+      <div class="success-detail" id="doneDetail"></div>
+      <div class="btn-row">
+        <button id="loginAgainBtn" class="btn">Log in again</button>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="spinnerOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <div id="toast" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);display:none;padding:10px 14px;border-radius:4px;color:#fff;z-index:99999;box-shadow:0 4px 8px rgba(0,0,0,0.28);font-size:13px;font-family:'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;"></div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+    authDomain: "darkpurpleof-s-website.firebaseapp.com",
+    projectId: "darkpurpleof-s-website",
+    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+    messagingSenderId: "520651082420",
+    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+  };
+  if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const API_BASE = "https://darkpurpleofswebsitetooling.netlify.app";
+
+  // ── DOM refs ─────────────────────────────────────────────
+  const spinnerOverlay = document.getElementById('spinnerOverlay');
+  const toast = document.getElementById('toast');
+
+  const screen1Title = document.getElementById('screen1Title');
+  const screen1Lead = document.getElementById('screen1Lead');
+  const screen1FeatureList = document.getElementById('screen1FeatureList');
+  const screen1Actions = document.getElementById('screen1Actions');
+  const screen1SpecialCard = document.getElementById('screen1SpecialCard');
+  const eligibilityMessage = document.getElementById('eligibilityMessage');
+  const startBtn = document.getElementById('startBtn');
+  const laterBtn = document.getElementById('laterBtn');
+
+  const usernameInput = document.getElementById('usernameInput');
+  const usernameStatus = document.getElementById('usernameStatus');
+  const usernameNextBtn = document.getElementById('usernameNextBtn');
+  const usernameBackBtn = document.getElementById('usernameBackBtn');
+
+  const passwordInput = document.getElementById('passwordInput');
+  const passwordError = document.getElementById('passwordError');
+  const passwordNextBtn = document.getElementById('passwordNextBtn');
+  const passwordBackBtn = document.getElementById('passwordBackBtn');
+
+  const previewRow = document.getElementById('previewRow');
+  const previewNextBtn = document.getElementById('previewNextBtn');
+  const previewBackBtn = document.getElementById('previewBackBtn');
+
+  const termsCheckbox = document.getElementById('termsCheckbox');
+  const termsNextBtn = document.getElementById('termsNextBtn');
+  const termsBackBtn = document.getElementById('termsBackBtn');
+
+  const finalTransitionRow = document.getElementById('finalTransitionRow');
+  const migrateNowBtn = document.getElementById('migrateNowBtn');
+  const finalBackBtn = document.getElementById('finalBackBtn');
+
+  const progressFill = document.getElementById('progressFill');
+  const progressPercent = document.getElementById('progressPercent');
+  const progressMessageText = document.getElementById('progressMessageText');
+  const progressError = document.getElementById('progressError');
+  const progressRetryRow = document.getElementById('progressRetryRow');
+  const progressRetryBtn = document.getElementById('progressRetryBtn');
+
+  const doneIcon = document.getElementById('doneIcon');
+  const doneTitle = document.getElementById('doneTitle');
+  const doneLead = document.getElementById('doneLead');
+  const doneDetail = document.getElementById('doneDetail');
+  const loginAgainBtn = document.getElementById('loginAgainBtn');
+
+  // ── State ────────────────────────────────────────────────
+  let currentUser = null;
+  let chosenUsername = '';
+  let newEmail = '';
+  let usernameAvailable = false;
+  let usernameCheckTimer = null;
+  let jobId = null;
+  let pollTimer = null;
+
+  const SUPPORTED_LANGS = ["en", "de", "es", "ru", "ja"];
+  const I18N = {
+  "en": {
+    "pageTitle": "Migrate Account",
+    "steps": [
+      "Ready",
+      "Username",
+      "Password",
+      "Preview",
+      "Terms",
+      "Confirm",
+      "Migrating",
+      "Done"
+    ],
+    "alreadyHeader": "You're already enjoying:",
+    "alreadyLead": "These are the benefits your account already gets with the new username-based experience.",
+    "screen1Title": "Move to a more private, more secure account",
+    "screen1Lead": "We're rolling out a new account system built around usernames instead of email addresses. Migrating takes a couple of minutes and everything you own — coins, transactions, gifts, UGC, friends, chats — comes with you automatically.",
+    "features": [
+      {
+        "title": "Your real email stays private",
+        "desc": "Your profile and public activity will no longer be tied to the email address you signed up with."
+      },
+      {
+        "title": "Stronger account security",
+        "desc": "Separating your login identity from your real email reduces your exposure to phishing and credential-stuffing attacks."
+      },
+      {
+        "title": "Nothing gets left behind",
+        "desc": "Coins, purchases, notes, friends, followers, chats and posts are all carried over to your new account for you."
+      },
+      {
+        "title": "Ready for what's next",
+        "desc": "Newer features are being built around the username-based system going forward."
+      }
+    ],
+    "statusMigratedTitle": "Your migration is done!",
+    "statusMigratedText": "Your account was succesfully migrated to <strong>{email}</strong> from <strong>{oldEmail}</strong>, you can now enjoy all features again, and in December 31, 2026 you may claim a special reward!!",
+    "adminNeedsTitle": "This account does not need to be migrated",
+    "adminDoesNotNeedSuffix": "does not need to be migrated",
+    "adminNeedsText": "This is an admin account, and it will forever remain a <strong>{email}</strong> account, it does no need to be migrated",
+    "alreadyDoesNotNeedTitle": "This account does not need to be migrated",
+    "alreadyDoesNotNeedText": "Your account is already using our latest innovations, you don't need to migrate it",
+    "screen2Title": "Choose a username",
+    "screen2Lead": "This becomes your new sign-in identity. You can share it publicly without exposing your real email.",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "username",
+    "usernameCharsHint": "3–32 characters: lowercase letters, numbers, . _ -",
+    "screen3Title": "Confirm it's you",
+    "screen3Lead": "For your security, enter your current password to continue with the migration.",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Your current password",
+    "screen4Title": "Here's your account after migrating",
+    "screen4Lead": "Double-check this looks right before continuing.",
+    "previewDesc": "Everything currently on your account will transfer here automatically.",
+    "screen5Title": "Before you continue",
+    "screen5Lead": "A quick summary of what migration means for your account:",
+    "screen5Bullets": [
+      "Your new sign-in email will be your username <code>@users.darkpurpleof.github.io</code> — your old email will no longer work to sign in.",
+      "All of your data (coins, transactions, gifts, UGC, friends, followers, chats and posts) is copied to the new account automatically.",
+      "This process cannot be undone once it starts.",
+      "You'll be signed out and asked to sign back in with your new username when it's finished."
+    ],
+    "termsLabelHtml": "I have read and agree to the <a href=\"/terms\" target=\"_blank\" style=\"color:var(--accent);font-weight:500;\">Terms and Conditions</a>, and I understand this migration is permanent and cannot be reversed.",
+    "screen6Title": "Ready to migrate?",
+    "screen6Lead": "This is your last chance to double-check everything before we start.",
+    "screen6Bullets": [
+      "Your existing data, coins, gifts, UGC, chats and friends will be copied over automatically.",
+      "Your old email address will stop working for sign-in once the migration completes.",
+      "You will be signed out and asked to sign in again with your new username when everything is done."
+    ],
+    "screen6Warning": "Once you select <strong>Start migration</strong>, the process cannot be paused, cancelled, or reversed. Keep this tab open until it finishes.",
+    "screen7Title": "Migrating your account",
+    "screen7Lead": "Please keep this tab open — this usually takes less than a minute.",
+    "queued": "Queued...",
+    "screen8Title": "You're all set!",
+    "screen8Lead": "Your account has been migrated to your new username.",
+    "doneDetail": "Your new sign-in email is <strong>{newEmail}</strong>.<br>You'll need to sign back in to continue.",
+    "buttonStart": "Get started",
+    "buttonLater": "Maybe later",
+    "buttonNext": "Next",
+    "buttonBack": "Back",
+    "buttonContinue": "Continue",
+    "buttonTryAgain": "Try again",
+    "buttonLoginAgain": "Log in again",
+    "buttonStartMigration": "Start migration",
+    "usernameInvalid": "Username must be 3–32 characters (letters, numbers, . _ -)",
+    "usernameChecking": "Checking availability...",
+    "usernameAvailable": "Username is available",
+    "usernameTaken": "That username is already taken",
+    "usernameCheckFailed": "Could not check availability, try again",
+    "passwordMissing": "Please enter your password.",
+    "passwordIncorrect": "That password is incorrect.",
+    "passwordTooMany": "Too many attempts. Try again later.",
+    "passwordVerifyFailed": "Could not verify your password. Try again.",
+    "startMigrationFailed": "Could not start migration.",
+    "startMigrationFailedNet": "Could not start migration. Check your connection and try again.",
+    "notFoundJob": "Job not found",
+    "somethingWentWrong": "Something went wrong during migration.",
+    "newUsernameAccount": "New username account",
+    "currentAccount": "Current account",
+    "currentProfileLoading": "Could not load user profile data"
+  },
+  "de": {
+    "pageTitle": "Konto migrieren",
+    "steps": [
+      "Bereit",
+      "Benutzername",
+      "Passwort",
+      "Vorschau",
+      "Bedingungen",
+      "Bestätigen",
+      "Migrieren",
+      "Fertig"
+    ],
+    "alreadyHeader": "Sie profitieren bereits von:",
+    "alreadyLead": "Dies sind die Vorteile, die Ihr Konto mit der neuen nutzernamebasierten Erfahrung bereits hat.",
+    "screen1Title": "Zu einem privateren, sichereren Konto wechseln",
+    "screen1Lead": "Wir führen ein neues Kontosystem ein, das auf Benutzernamen statt E-Mail-Adressen basiert. Die Migration dauert nur ein paar Minuten und alles, was Ihnen gehört — Coins, Transaktionen, Geschenke, UGC, Freunde, Chats — wird automatisch mitgenommen.",
+    "features": [
+      {
+        "title": "Ihre echte E-Mail bleibt privat",
+        "desc": "Ihr Profil und Ihre öffentlichen Aktivitäten sind nicht mehr mit der E-Mail-Adresse verknüpft, mit der Sie sich registriert haben."
+      },
+      {
+        "title": "Stärkere Kontosicherheit",
+        "desc": "Wenn Ihre Login-Identität von Ihrer echten E-Mail getrennt wird, sinkt das Risiko durch Phishing und Credential-Stuffing-Angriffe."
+      },
+      {
+        "title": "Nichts bleibt zurück",
+        "desc": "Coins, Käufe, Notizen, Freunde, Follower, Chats und Beiträge werden vollständig in Ihr neues Konto übernommen."
+      },
+      {
+        "title": "Bereit für das, was kommt",
+        "desc": "Neue Funktionen werden künftig rund um das benutzernamenbasierte System entwickelt."
+      }
+    ],
+    "statusMigratedTitle": "Ihre Migration ist abgeschlossen!",
+    "statusMigratedText": "Ihr Konto wurde erfolgreich von <strong>{oldEmail}</strong> zu <strong>{email}</strong> migriert. Sie können jetzt wieder alle Funktionen nutzen, und am 31. Dezember 2026 können Sie eine besondere Belohnung einlösen!!",
+    "adminNeedsTitle": "Dieses Konto muss nicht migriert werden",
+    "adminDoesNotNeedSuffix": "muss nicht migriert werden",
+    "adminNeedsText": "Dies ist ein Administratorkonto und bleibt für immer ein <strong>{email}</strong>-Konto; es muss nicht migriert werden",
+    "alreadyDoesNotNeedTitle": "Dieses Konto muss nicht migriert werden",
+    "alreadyDoesNotNeedText": "Ihr Konto verwendet bereits unsere neuesten Verbesserungen; Sie müssen es nicht migrieren",
+    "screen2Title": "Wählen Sie einen Benutzernamen",
+    "screen2Lead": "Dies wird Ihre neue Anmeldekennung. Sie können ihn öffentlich teilen, ohne Ihre echte E-Mail preiszugeben.",
+    "usernameLabel": "Benutzername",
+    "usernamePlaceholder": "benutzername",
+    "usernameCharsHint": "3–32 Zeichen: Kleinbuchstaben, Zahlen, . _ -",
+    "screen3Title": "Bestätigen Sie Ihre Identität",
+    "screen3Lead": "Geben Sie aus Sicherheitsgründen Ihr aktuelles Passwort ein, um mit der Migration fortzufahren.",
+    "passwordLabel": "Passwort",
+    "passwordPlaceholder": "Ihr aktuelles Passwort",
+    "screen4Title": "So sieht Ihr Konto nach der Migration aus",
+    "screen4Lead": "Prüfen Sie noch einmal, ob alles stimmt, bevor Sie fortfahren.",
+    "previewDesc": "Alles, was sich derzeit in Ihrem Konto befindet, wird automatisch hierher übertragen.",
+    "screen5Title": "Bevor Sie fortfahren",
+    "screen5Lead": "Eine kurze Zusammenfassung, was die Migration für Ihr Konto bedeutet:",
+    "screen5Bullets": [
+      "Ihre neue Anmelde-E-Mail wird Ihr Benutzername <code>@users.darkpurpleof.github.io</code> sein — Ihre alte E-Mail funktioniert danach nicht mehr zur Anmeldung.",
+      "Alle Ihre Daten (Coins, Transaktionen, Geschenke, UGC, Freunde, Follower, Chats und Beiträge) werden automatisch in das neue Konto kopiert.",
+      "Dieser Vorgang kann nach dem Start nicht rückgängig gemacht werden.",
+      "Sie werden abgemeldet und müssen sich nach Abschluss mit Ihrem neuen Benutzernamen erneut anmelden."
+    ],
+    "termsLabelHtml": "Ich habe die <a href=\"/terms\" target=\"_blank\" style=\"color:var(--accent);font-weight:500;\">Nutzungsbedingungen</a> gelesen und akzeptiere sie, und ich verstehe, dass diese Migration dauerhaft und nicht rückgängig zu machen ist.",
+    "screen6Title": "Bereit zur Migration?",
+    "screen6Lead": "Dies ist Ihre letzte Gelegenheit, alles noch einmal zu prüfen, bevor wir beginnen.",
+    "screen6Bullets": [
+      "Ihre vorhandenen Daten, Coins, Geschenke, UGC, Chats und Freunde werden automatisch übernommen.",
+      "Ihre alte E-Mail-Adresse funktioniert nach Abschluss der Migration nicht mehr zur Anmeldung.",
+      "Sie werden abgemeldet und müssen sich am Ende mit Ihrem neuen Benutzernamen erneut anmelden."
+    ],
+    "screen6Warning": "Sobald Sie <strong>Migration starten</strong> auswählen, kann der Vorgang nicht pausiert, abgebrochen oder rückgängig gemacht werden. Lassen Sie diesen Tab geöffnet, bis er abgeschlossen ist.",
+    "screen7Title": "Ihr Konto wird migriert",
+    "screen7Lead": "Bitte lassen Sie diesen Tab geöffnet — das dauert normalerweise weniger als eine Minute.",
+    "queued": "In Warteschlange...",
+    "screen8Title": "Alles erledigt!",
+    "screen8Lead": "Ihr Konto wurde zu Ihrem neuen Benutzernamen migriert.",
+    "doneDetail": "Ihre neue Anmelde-E-Mail ist <strong>{newEmail}</strong>.<br>Sie müssen sich erneut anmelden, um fortzufahren.",
+    "buttonStart": "Los geht's",
+    "buttonLater": "Vielleicht später",
+    "buttonNext": "Weiter",
+    "buttonBack": "Zurück",
+    "buttonContinue": "Fortfahren",
+    "buttonTryAgain": "Erneut versuchen",
+    "buttonLoginAgain": "Erneut anmelden",
+    "buttonStartMigration": "Migration starten",
+    "usernameInvalid": "Der Benutzername muss 3–32 Zeichen lang sein (Buchstaben, Zahlen, . _ -)",
+    "usernameChecking": "Verfügbarkeit wird geprüft...",
+    "usernameAvailable": "Benutzername ist verfügbar",
+    "usernameTaken": "Dieser Benutzername ist bereits vergeben",
+    "usernameCheckFailed": "Verfügbarkeit konnte nicht geprüft werden, bitte erneut versuchen",
+    "passwordMissing": "Bitte geben Sie Ihr Passwort ein.",
+    "passwordIncorrect": "Das Passwort ist falsch.",
+    "passwordTooMany": "Zu viele Versuche. Bitte später erneut versuchen.",
+    "passwordVerifyFailed": "Das Passwort konnte nicht überprüft werden. Bitte erneut versuchen.",
+    "startMigrationFailed": "Die Migration konnte nicht gestartet werden.",
+    "startMigrationFailedNet": "Die Migration konnte nicht gestartet werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "notFoundJob": "Auftrag nicht gefunden",
+    "somethingWentWrong": "Bei der Migration ist etwas schiefgelaufen.",
+    "newUsernameAccount": "Neues Konto mit Benutzernamen",
+    "currentAccount": "Aktuelles Konto",
+    "currentProfileLoading": "Benutzerprofil konnte nicht geladen werden"
+  },
+  "es": {
+    "pageTitle": "Migrar cuenta",
+    "steps": [
+      "Listo",
+      "Usuario",
+      "Contraseña",
+      "Vista previa",
+      "Términos",
+      "Confirmar",
+      "Migrando",
+      "Hecho"
+    ],
+    "alreadyHeader": "Ya disfrutas de:",
+    "alreadyLead": "Estas son las ventajas que tu cuenta ya tiene con la nueva experiencia basada en nombres de usuario.",
+    "screen1Title": "Pasa a una cuenta más privada y más segura",
+    "screen1Lead": "Estamos lanzando un nuevo sistema de cuentas basado en nombres de usuario en lugar de correos electrónicos. La migración tarda un par de minutos y todo lo que es tuyo — monedas, transacciones, regalos, UGC, amigos, chats — se transfiere automáticamente.",
+    "features": [
+      {
+        "title": "Tu correo real sigue siendo privado",
+        "desc": "Tu perfil y tu actividad pública dejarán de estar vinculados a la dirección de correo con la que te registraste."
+      },
+      {
+        "title": "Mayor seguridad de la cuenta",
+        "desc": "Separar tu identidad de inicio de sesión de tu correo real reduce la exposición al phishing y a ataques de credential stuffing."
+      },
+      {
+        "title": "Nada se queda atrás",
+        "desc": "Monedas, compras, notas, amigos, seguidores, chats y publicaciones se trasladan a tu nueva cuenta automáticamente."
+      },
+      {
+        "title": "Listo para lo que viene",
+        "desc": "Las funciones más nuevas se están construyendo en torno al sistema basado en nombres de usuario."
+      }
+    ],
+    "statusMigratedTitle": "¡Tu migración está completa!",
+    "statusMigratedText": "Tu cuenta se migró correctamente de <strong>{oldEmail}</strong> a <strong>{email}</strong>. Ya puedes volver a usar todas las funciones, y el 31 de diciembre de 2026 podrás reclamar una recompensa especial!!",
+    "adminNeedsTitle": "Esta cuenta no necesita migrarse",
+    "adminDoesNotNeedSuffix": "no necesita migrarse",
+    "adminNeedsText": "Esta es una cuenta de administrador y seguirá siendo para siempre una cuenta <strong>{email}</strong>; no necesita migrarse",
+    "alreadyDoesNotNeedTitle": "Esta cuenta no necesita migrarse",
+    "alreadyDoesNotNeedText": "Tu cuenta ya usa nuestras últimas mejoras; no necesitas migrarla",
+    "screen2Title": "Elige un nombre de usuario",
+    "screen2Lead": "Esto será tu nueva identidad de acceso. Puedes compartirlo públicamente sin exponer tu correo real.",
+    "usernameLabel": "Nombre de usuario",
+    "usernamePlaceholder": "nombredeusuario",
+    "usernameCharsHint": "3–32 caracteres: letras minúsculas, números, . _ -",
+    "screen3Title": "Confirma que eres tú",
+    "screen3Lead": "Por seguridad, introduce tu contraseña actual para continuar con la migración.",
+    "passwordLabel": "Contraseña",
+    "passwordPlaceholder": "Tu contraseña actual",
+    "screen4Title": "Así quedará tu cuenta después de migrar",
+    "screen4Lead": "Revisa que todo se vea bien antes de continuar.",
+    "previewDesc": "Todo lo que tienes actualmente en tu cuenta se transferirá aquí automáticamente.",
+    "screen5Title": "Antes de continuar",
+    "screen5Lead": "Un resumen rápido de lo que significa la migración para tu cuenta:",
+    "screen5Bullets": [
+      "Tu nuevo correo de inicio de sesión será tu nombre de usuario <code>@users.darkpurpleof.github.io</code> — tu correo antiguo dejará de funcionar para entrar.",
+      "Todos tus datos (monedas, transacciones, regalos, UGC, amigos, seguidores, chats y publicaciones) se copiarán automáticamente a la nueva cuenta.",
+      "Este proceso no se puede deshacer una vez que comienza.",
+      "Se cerrará tu sesión y tendrás que iniciar de nuevo con tu nuevo nombre de usuario cuando termine."
+    ],
+    "termsLabelHtml": "He leído y acepto los <a href=\"/terms\" target=\"_blank\" style=\"color:var(--accent);font-weight:500;\">Términos y condiciones</a>, y entiendo que esta migración es permanente y no se puede revertir.",
+    "screen6Title": "¿Listo para migrar?",
+    "screen6Lead": "Esta es tu última oportunidad de revisar todo antes de empezar.",
+    "screen6Bullets": [
+      "Tus datos existentes, monedas, regalos, UGC, chats y amigos se copiarán automáticamente.",
+      "Tu correo antiguo dejará de funcionar para iniciar sesión cuando termine la migración.",
+      "Se cerrará tu sesión y tendrás que iniciar sesión otra vez con tu nuevo nombre de usuario cuando todo esté listo."
+    ],
+    "screen6Warning": "Una vez que selecciones <strong>Iniciar migración</strong>, el proceso no se puede pausar, cancelar ni revertir. Deja esta pestaña abierta hasta que termine.",
+    "screen7Title": "Migrando tu cuenta",
+    "screen7Lead": "Mantén esta pestaña abierta — normalmente tarda menos de un minuto.",
+    "queued": "En cola...",
+    "screen8Title": "¡Todo listo!",
+    "screen8Lead": "Tu cuenta se migró a tu nuevo nombre de usuario.",
+    "doneDetail": "Tu nuevo correo de inicio de sesión es <strong>{newEmail}</strong>.<br>Deberás iniciar sesión de nuevo para continuar.",
+    "buttonStart": "Empezar",
+    "buttonLater": "Quizá más tarde",
+    "buttonNext": "Siguiente",
+    "buttonBack": "Atrás",
+    "buttonContinue": "Continuar",
+    "buttonTryAgain": "Intentarlo de nuevo",
+    "buttonLoginAgain": "Iniciar sesión otra vez",
+    "buttonStartMigration": "Iniciar migración",
+    "usernameInvalid": "El nombre de usuario debe tener entre 3 y 32 caracteres (letras, números, . _ -)",
+    "usernameChecking": "Comprobando disponibilidad...",
+    "usernameAvailable": "El nombre de usuario está disponible",
+    "usernameTaken": "Ese nombre de usuario ya está en uso",
+    "usernameCheckFailed": "No se pudo comprobar la disponibilidad, inténtalo de nuevo",
+    "passwordMissing": "Introduce tu contraseña.",
+    "passwordIncorrect": "La contraseña es incorrecta.",
+    "passwordTooMany": "Demasiados intentos. Inténtalo más tarde.",
+    "passwordVerifyFailed": "No se pudo verificar tu contraseña. Inténtalo de nuevo.",
+    "startMigrationFailed": "No se pudo iniciar la migración.",
+    "startMigrationFailedNet": "No se pudo iniciar la migración. Comprueba tu conexión e inténtalo de nuevo.",
+    "notFoundJob": "Trabajo no encontrado",
+    "somethingWentWrong": "Algo salió mal durante la migración.",
+    "newUsernameAccount": "Nueva cuenta con nombre de usuario",
+    "currentAccount": "Cuenta actual",
+    "currentProfileLoading": "No se pudo cargar el perfil del usuario"
+  },
+  "ru": {
+    "pageTitle": "Миграция аккаунта",
+    "steps": [
+      "Готово",
+      "Имя",
+      "Пароль",
+      "Просмотр",
+      "Условия",
+      "Подтвердить",
+      "Миграция",
+      "Готово"
+    ],
+    "alreadyHeader": "Вы уже пользуетесь:",
+    "alreadyLead": "Вот преимущества, которые ваш аккаунт уже получает в новой системе на основе имени пользователя.",
+    "screen1Title": "Перейдите на более приватный и безопасный аккаунт",
+    "screen1Lead": "Мы внедряем новую систему аккаунтов, основанную на именах пользователя, а не на адресах электронной почты. Миграция занимает пару минут, и всё, что вам принадлежит — монеты, транзакции, подарки, UGC, друзья, чаты — переносится автоматически.",
+    "features": [
+      {
+        "title": "Ваш настоящий email остаётся приватным",
+        "desc": "Ваш профиль и публичная активность больше не будут привязаны к адресу, с которым вы зарегистрировались."
+      },
+      {
+        "title": "Более высокая безопасность аккаунта",
+        "desc": "Разделение логина и реального email снижает риск фишинга и атак подбора учётных данных."
+      },
+      {
+        "title": "Ничего не теряется",
+        "desc": "Монеты, покупки, заметки, друзья, подписчики, чаты и публикации будут перенесены в новый аккаунт автоматически."
+      },
+      {
+        "title": "Готово к будущему",
+        "desc": "Новые функции создаются вокруг системы на основе имени пользователя."
+      }
+    ],
+    "statusMigratedTitle": "Ваша миграция завершена!",
+    "statusMigratedText": "Ваш аккаунт был успешно перенесён с <strong>{oldEmail}</strong> на <strong>{email}</strong>. Теперь вы снова можете пользоваться всеми функциями, а 31 декабря 2026 года сможете получить особую награду!!",
+    "adminNeedsTitle": "Этот аккаунт не нужно мигрировать",
+    "adminDoesNotNeedSuffix": "не нужно мигрировать",
+    "adminNeedsText": "Это аккаунт администратора, и он навсегда останется аккаунтом <strong>{email}</strong>; миграция ему не требуется",
+    "alreadyDoesNotNeedTitle": "Этот аккаунт не нужно мигрировать",
+    "alreadyDoesNotNeedText": "Ваш аккаунт уже использует наши последние улучшения; миграция не нужна",
+    "screen2Title": "Выберите имя пользователя",
+    "screen2Lead": "Это станет вашим новым логином. Его можно показывать публично, не раскрывая настоящий email.",
+    "usernameLabel": "Имя пользователя",
+    "usernamePlaceholder": "имяпользователя",
+    "usernameCharsHint": "3–32 символа: строчные буквы, цифры, . _ -",
+    "screen3Title": "Подтвердите, что это вы",
+    "screen3Lead": "Для безопасности введите текущий пароль, чтобы продолжить миграцию.",
+    "passwordLabel": "Пароль",
+    "passwordPlaceholder": "Ваш текущий пароль",
+    "screen4Title": "Вот как будет выглядеть ваш аккаунт после миграции",
+    "screen4Lead": "Перед продолжением ещё раз проверьте, всё ли верно.",
+    "previewDesc": "Всё, что сейчас есть в вашем аккаунте, будет автоматически перенесено сюда.",
+    "screen5Title": "Перед продолжением",
+    "screen5Lead": "Кратко о том, что означает миграция для вашего аккаунта:",
+    "screen5Bullets": [
+      "Ваш новый email для входа станет вашим именем пользователя <code>@users.darkpurpleof.github.io</code> — старый email больше не подойдёт для входа.",
+      "Все ваши данные (монеты, транзакции, подарки, UGC, друзья, подписчики, чаты и публикации) автоматически копируются в новый аккаунт.",
+      "Этот процесс нельзя отменить после запуска.",
+      "После завершения вас выйдет из системы, и вам нужно будет войти снова с новым именем пользователя."
+    ],
+    "termsLabelHtml": "Я прочитал(а) и принимаю <a href=\"/terms\" target=\"_blank\" style=\"color:var(--accent);font-weight:500;\">Условия использования</a>, и понимаю, что эта миграция необратима и постоянна.",
+    "screen6Title": "Готовы к миграции?",
+    "screen6Lead": "Это ваш последний шанс ещё раз всё проверить перед началом.",
+    "screen6Bullets": [
+      "Ваши существующие данные, монеты, подарки, UGC, чаты и друзья будут автоматически скопированы.",
+      "Ваш старый email перестанет работать для входа после завершения миграции.",
+      "Вас выйдет из системы, и после завершения нужно будет войти снова с новым именем пользователя."
+    ],
+    "screen6Warning": "После выбора <strong>Начать миграцию</strong> процесс нельзя будет приостановить, отменить или вернуть назад. Оставьте эту вкладку открытой до завершения.",
+    "screen7Title": "Миграция вашего аккаунта",
+    "screen7Lead": "Пожалуйста, не закрывайте эту вкладку — обычно это занимает меньше минуты.",
+    "queued": "В очереди...",
+    "screen8Title": "Всё готово!",
+    "screen8Lead": "Ваш аккаунт был перенесён на новое имя пользователя.",
+    "doneDetail": "Ваш новый email для входа: <strong>{newEmail}</strong>.<br>Чтобы продолжить, вам нужно войти снова.",
+    "buttonStart": "Начать",
+    "buttonLater": "Возможно, позже",
+    "buttonNext": "Далее",
+    "buttonBack": "Назад",
+    "buttonContinue": "Продолжить",
+    "buttonTryAgain": "Попробовать снова",
+    "buttonLoginAgain": "Войти снова",
+    "buttonStartMigration": "Начать миграцию",
+    "usernameInvalid": "Имя пользователя должно быть длиной 3–32 символа (буквы, цифры, . _ -)",
+    "usernameChecking": "Проверяем доступность...",
+    "usernameAvailable": "Имя пользователя доступно",
+    "usernameTaken": "Это имя пользователя уже занято",
+    "usernameCheckFailed": "Не удалось проверить доступность, попробуйте ещё раз",
+    "passwordMissing": "Введите пароль.",
+    "passwordIncorrect": "Неверный пароль.",
+    "passwordTooMany": "Слишком много попыток. Попробуйте позже.",
+    "passwordVerifyFailed": "Не удалось проверить пароль. Попробуйте ещё раз.",
+    "startMigrationFailed": "Не удалось начать миграцию.",
+    "startMigrationFailedNet": "Не удалось начать миграцию. Проверьте подключение и попробуйте ещё раз.",
+    "notFoundJob": "Задача не найдена",
+    "somethingWentWrong": "Во время миграции что-то пошло не так.",
+    "newUsernameAccount": "Новый аккаунт с именем пользователя",
+    "currentAccount": "Текущий аккаунт",
+    "currentProfileLoading": "Не удалось загрузить профиль пользователя"
+  },
+  "ja": {
+    "pageTitle": "アカウント移行",
+    "steps": [
+      "準備",
+      "ユーザー名",
+      "パスワード",
+      "確認",
+      "利用規約",
+      "確認",
+      "移行中",
+      "完了"
+    ],
+    "alreadyHeader": "すでに次の内容をご利用中です:",
+    "alreadyLead": "これらは、ユーザー名ベースの新しい仕組みで、すでにアカウントに適用されている特典です。",
+    "screen1Title": "もっとプライベートで安全なアカウントへ",
+    "screen1Lead": "メールアドレスではなくユーザー名を使う新しいアカウント制度を導入しています。移行は数分で完了し、コイン、取引、ギフト、UGC、友だち、チャットなど、あなたのデータは自動的に引き継がれます。",
+    "features": [
+      {
+        "title": "本当のメールアドレスは非公開のまま",
+        "desc": "プロフィールや公開アクティビティは、登録時のメールアドレスに紐づかなくなります。"
+      },
+      {
+        "title": "アカウントの安全性が向上",
+        "desc": "ログイン情報と実際のメールを分けることで、フィッシングや認証情報の使い回し攻撃のリスクを下げられます。"
+      },
+      {
+        "title": "何も置き去りにしません",
+        "desc": "コイン、購入履歴、メモ、友だち、フォロワー、チャット、投稿はすべて新しいアカウントへ引き継がれます。"
+      },
+      {
+        "title": "これからの機能にも対応",
+        "desc": "今後の新機能は、ユーザー名ベースの仕組みを前提に作られています。"
+      }
+    ],
+    "statusMigratedTitle": "移行が完了しました！",
+    "statusMigratedText": "アカウントは <strong>{oldEmail}</strong> から <strong>{email}</strong> へ正常に移行されました。これで再びすべての機能をご利用いただけます。2026年12月31日には特別報酬も受け取れます!!",
+    "adminNeedsTitle": "このアカウントは移行する必要がありません",
+    "adminDoesNotNeedSuffix": "は移行する必要がありません",
+    "adminNeedsText": "これは管理者アカウントで、今後も永続的に <strong>{email}</strong> アカウントのままです。移行は不要です",
+    "alreadyDoesNotNeedTitle": "このアカウントは移行する必要がありません",
+    "alreadyDoesNotNeedText": "このアカウントはすでに最新の仕組みを使っています。移行は不要です",
+    "screen2Title": "ユーザー名を選択",
+    "screen2Lead": "これが新しいサインインIDになります。実際のメールアドレスを公開せずに共有できます。",
+    "usernameLabel": "ユーザー名",
+    "usernamePlaceholder": "ユーザー名",
+    "usernameCharsHint": "3〜32文字: 小文字、数字、. _ -",
+    "screen3Title": "本人確認",
+    "screen3Lead": "安全のため、移行を続けるには現在のパスワードを入力してください。",
+    "passwordLabel": "パスワード",
+    "passwordPlaceholder": "現在のパスワード",
+    "screen4Title": "移行後のアカウントはこちらです",
+    "screen4Lead": "続行する前に、内容が正しいか確認してください。",
+    "previewDesc": "現在アカウントにある内容は、すべて自動的にここへ移行されます。",
+    "screen5Title": "続行する前に",
+    "screen5Lead": "移行がアカウントに与える影響を簡単にまとめました:",
+    "screen5Bullets": [
+      "新しいログイン用メールアドレスは、ユーザー名 <code>@users.darkpurpleof.github.io</code> になります。古いメールアドレスではログインできなくなります。",
+      "現在のデータ（コイン、取引、ギフト、UGC、友だち、フォロワー、チャット、投稿）はすべて自動的に新しいアカウントへコピーされます。",
+      "この処理は開始後に元へ戻せません。",
+      "完了するとログアウトされ、新しいユーザー名で再度ログインするよう求められます。"
+    ],
+    "termsLabelHtml": "<a href=\"/terms\" target=\"_blank\" style=\"color:var(--accent);font-weight:500;\">利用規約</a>を読み、同意しました。また、この移行が恒久的で元に戻せないことを理解しています。",
+    "screen6Title": "移行の準備はできましたか？",
+    "screen6Lead": "開始する前に、これが最後の確認です。",
+    "screen6Bullets": [
+      "既存のデータ、コイン、ギフト、UGC、チャット、友だちは自動的にコピーされます。",
+      "移行完了後は、古いメールアドレスではログインできなくなります。",
+      "完了後はログアウトされ、新しいユーザー名で再度ログインする必要があります。"
+    ],
+    "screen6Warning": "<strong>移行を開始</strong>すると、処理は一時停止・キャンセル・元に戻すことはできません。完了するまでこのタブを開いたままにしてください。",
+    "screen7Title": "アカウントを移行しています",
+    "screen7Lead": "このタブは閉じないでください — 通常は1分もかかりません。",
+    "queued": "待機中...",
+    "screen8Title": "準備完了です！",
+    "screen8Lead": "アカウントは新しいユーザー名に移行されました。",
+    "doneDetail": "新しいログイン用メールアドレスは <strong>{newEmail}</strong> です。<br>続行するには、もう一度ログインしてください。",
+    "buttonStart": "開始",
+    "buttonLater": "あとで",
+    "buttonNext": "次へ",
+    "buttonBack": "戻る",
+    "buttonContinue": "続行",
+    "buttonTryAgain": "再試行",
+    "buttonLoginAgain": "再ログイン",
+    "buttonStartMigration": "移行を開始",
+    "usernameInvalid": "ユーザー名は3〜32文字で入力してください（英小文字、数字、. _ -）",
+    "usernameChecking": "空き状況を確認中...",
+    "usernameAvailable": "このユーザー名は利用できます",
+    "usernameTaken": "そのユーザー名はすでに使われています",
+    "usernameCheckFailed": "空き状況を確認できませんでした。もう一度お試しください",
+    "passwordMissing": "パスワードを入力してください。",
+    "passwordIncorrect": "パスワードが正しくありません。",
+    "passwordTooMany": "試行回数が多すぎます。しばらくしてからお試しください。",
+    "passwordVerifyFailed": "パスワードを確認できませんでした。もう一度お試しください。",
+    "startMigrationFailed": "移行を開始できませんでした。",
+    "startMigrationFailedNet": "移行を開始できませんでした。接続を確認してもう一度お試しください。",
+    "notFoundJob": "ジョブが見つかりません",
+    "somethingWentWrong": "移行中に問題が発生しました。",
+    "newUsernameAccount": "新しいユーザー名のアカウント",
+    "currentAccount": "現在のアカウント",
+    "currentProfileLoading": "ユーザープロフィールを読み込めませんでした"
+  }
+};
+
+  let currentLang = "en";
+
+  function normalizeLang(raw) {
+    return String(raw || "").trim().toLowerCase().slice(0, 2);
+  }
+
+  function pickLanguage(accountLang) {
+    const account = normalizeLang(accountLang);
+    const browser = normalizeLang((navigator.language || (navigator.languages && navigator.languages[0]) || "en"));
+    if (SUPPORTED_LANGS.includes(account)) return account;
+    if (SUPPORTED_LANGS.includes(browser)) return browser;
+    return "en";
+  }
+
+  function formatI18n(str, vars = {}) {
+    return String(str || "").replace(/\{(\w+)\}/g, (_, key) =>
+      Object.prototype.hasOwnProperty.call(vars, key) ? String(vars[key]) : ""
+    );
+  }
+
+  function L(key, vars = {}) {
+    const pack = I18N[currentLang] || I18N.en;
+    const fallback = I18N.en || {};
+    const value = (key in pack ? pack[key] : fallback[key]);
+    if (Array.isArray(value) || (value && typeof value === "object")) return value;
+    return formatI18n(value ?? key, vars);
+  }
+
+  function applyTranslations(lang) {
+    currentLang = pickLanguage(lang);
+    document.documentElement.lang = currentLang;
+    document.title = L("pageTitle");
+
+    const stepLabels = L("steps");
+    document.querySelectorAll(".step-item span").forEach((el, idx) => {
+      if (stepLabels && stepLabels[idx]) el.textContent = stepLabels[idx];
+    });
+
+    screen1Title.textContent = L("screen1Title");
+    screen1Lead.textContent = L("screen1Lead");
+    startBtn.textContent = L("buttonStart");
+    laterBtn.textContent = L("buttonLater");
+
+    const featureItems = screen1FeatureList.querySelectorAll("li");
+    const featureTexts = L("features");
+    featureItems.forEach((li, idx) => {
+      const title = li.querySelector(".fi-title");
+      const desc = li.querySelector(".fi-desc");
+      if (featureTexts && featureTexts[idx]) {
+        if (title) title.textContent = featureTexts[idx].title;
+        if (desc) desc.textContent = featureTexts[idx].desc;
+      }
+    });
+
+    document.querySelector("#screen-2 h1").textContent = L("screen2Title");
+    document.querySelector("#screen-2 .lead").textContent = L("screen2Lead");
+    document.querySelector("#screen-2 .field-label").textContent = L("usernameLabel");
+    usernameInput.placeholder = L("usernamePlaceholder");
+    const screen2Hints = document.querySelectorAll("#screen-2 .hint");
+    if (screen2Hints[1]) screen2Hints[1].textContent = L("usernameCharsHint");
+    usernameNextBtn.textContent = L("buttonNext");
+    usernameBackBtn.textContent = L("buttonBack");
+
+    document.querySelector("#screen-3 h1").textContent = L("screen3Title");
+    document.querySelector("#screen-3 .lead").textContent = L("screen3Lead");
+    document.querySelector('label[for="passwordInput"]').textContent = L("passwordLabel");
+    passwordInput.placeholder = L("passwordPlaceholder");
+    passwordNextBtn.textContent = L("buttonContinue");
+    passwordBackBtn.textContent = L("buttonBack");
+
+    document.querySelector("#screen-4 h1").textContent = L("screen4Title");
+    document.querySelector("#screen-4 .lead").textContent = L("screen4Lead");
+    previewNextBtn.textContent = L("buttonNext");
+    previewBackBtn.textContent = L("buttonBack");
+
+    document.querySelector("#screen-5 h1").textContent = L("screen5Title");
+    document.querySelector("#screen-5 .lead").textContent = L("screen5Lead");
+    const bulletItems = document.querySelectorAll("#screen-5 .bullet-list li");
+    const bulletTexts = L("screen5Bullets");
+    bulletItems.forEach((li, idx) => {
+      if (bulletTexts && bulletTexts[idx]) li.innerHTML = bulletTexts[idx];
+    });
+    const termsLabel = document.querySelector("#screen-5 .check-row label");
+    if (termsLabel) termsLabel.innerHTML = L("termsLabelHtml");
+    termsNextBtn.textContent = L("buttonNext");
+    termsBackBtn.textContent = L("buttonBack");
+
+    document.querySelector("#screen-6 h1").textContent = L("screen6Title");
+    document.querySelector("#screen-6 .lead").textContent = L("screen6Lead");
+    const step6Text = document.querySelectorAll("#screen-6 .step6-item div:last-child");
+    const step6Bullets = L("screen6Bullets");
+    step6Text.forEach((el, idx) => {
+      if (step6Bullets && step6Bullets[idx]) el.textContent = step6Bullets[idx];
+    });
+    const warnBox = document.querySelector("#screen-6 .warn-box");
+    if (warnBox) warnBox.innerHTML = L("screen6Warning");
+    migrateNowBtn.textContent = L("buttonStartMigration");
+    finalBackBtn.textContent = L("buttonBack");
+
+    document.querySelector("#screen-7 h1").textContent = L("screen7Title");
+    document.querySelector("#screen-7 .lead").textContent = L("screen7Lead");
+    progressMessageText.textContent = L("queued");
+    progressRetryBtn.textContent = L("buttonTryAgain");
+
+    doneTitle.textContent = L("screen8Title");
+    doneLead.textContent = L("screen8Lead");
+    loginAgainBtn.textContent = L("buttonLoginAgain");
+
+    const currentLabel = L("currentAccount");
+    const newLabel = L("newUsernameAccount");
+    const transitionLabels = document.querySelectorAll(".transition-label");
+    if (transitionLabels[0]) transitionLabels[0].textContent = currentLabel;
+    if (transitionLabels[1]) transitionLabels[1].textContent = newLabel;
+
+  }
+
+  applyTranslations(pickLanguage(""));
+
+  const NEW_DOMAIN = 'users.darkpurpleof.github.io';
+  const ADMIN_DOMAIN = 'darkpurpleof.github.io';
+
+  function isAlreadyMigratedEmail(email){
+    return (email || '').toLowerCase().endsWith('@' + NEW_DOMAIN);
+  }
+  function isAdminEmail(email){
+    return (email || '').toLowerCase().endsWith('@' + ADMIN_DOMAIN) && !isAlreadyMigratedEmail(email);
+  }
+
+  // ── Auth guard ───────────────────────────────────────────
+  auth.onAuthStateChanged(async (u) => {
+    if (!u) {
+      window.location.href = '/login';
+      return;
+    }
+    currentUser = u;
+
+    const email = (u.email || '').toLowerCase();
+    let userData = {};
+    try {
+      const snap = await db.collection('user_data').doc(u.email).get();
+      if (snap.exists) userData = snap.data() || {};
+    } catch (e) {
+      console.warn(L('currentProfileLoading'), e);
+    }
+
+    const oldEmail = String(userData.oldEmail || '').trim();
+    const displayName = String(userData['display name'] || u.displayName || (u.email || '').split('@')[0] || '').trim();
+    applyTranslations(pickLanguage(userData.lang || userData.language || ''));
+
+    resetScreen1Content();
+    if (isAlreadyMigratedEmail(email) && oldEmail) {
+      showScreen1Status(
+        L('statusMigratedTitle'),
+        formatI18n(L('statusMigratedText'), { email: escapeHtml(email), oldEmail: escapeHtml(oldEmail) }),
+        { showFeatures: true }
+      );
+      markAllStepsCompleted();
+      goStep(8, false, false);
+      startBtn.disabled = true;
+      laterBtn.disabled = true;
+      return;
+    }
+
+    if (isAdminEmail(email)) {
+      const adminTitle = displayName ? `${displayName} ${L('adminDoesNotNeedSuffix')}` : L('adminNeedsTitle');
+      showScreen1Status(
+        adminTitle,
+        formatI18n(L('adminNeedsText'), { email: escapeHtml(email) })
+      );
+      markAllStepsCompleted();
+      goStep(8, false, false);
+      startBtn.disabled = true;
+      laterBtn.disabled = true;
+      return;
+    }
+
+    if (isAlreadyMigratedEmail(email)) {
+      showScreen1Status(
+        L('alreadyDoesNotNeedTitle'),
+        L('alreadyDoesNotNeedText'),
+        { showFeatures: true }
+      );
+      markAllStepsCompleted();
+      goStep(8, false, false);
+      startBtn.disabled = true;
+      laterBtn.disabled = true;
+      return;
+    }
+
+    eligibilityMessage.textContent = '';
+    eligibilityMessage.className = 'hint';
+    startBtn.disabled = false;
+    laterBtn.disabled = false;
+
+    chosenUsername = email.split('@')[0] || '';
+    usernameInput.value = chosenUsername.toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 32);
+  });
+
+  // ── Helpers ──────────────────────────────────────────────
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function showToast(text, color='purple', t=3000){
+    toast.textContent = text;
+    toast.style.display = 'block';
+    toast.style.background = color==='red' ? '#c00' : color==='yellow' ? '#e6b800' : 'linear-gradient(180deg,var(--accent-strong),var(--accent))';
+    setTimeout(()=> toast.style.display='none', t);
+  }
+
+  const SCREEN_IDS = Array.from({length:8}, (_,i)=>`screen-${i+1}`);
+  const STEP_IDS = Array.from({length:8}, (_,i)=>`si-${i+1}`);
+  const CONNECTOR_IDS = Array.from({length:7}, (_,i)=>`sc-${i+1}`);
+
+  function resetScreen1Content(){
+    screen1Title.textContent = L('alreadyHeader');
+    screen1Lead.textContent = L('alreadyLead');
+    screen1FeatureList.style.display = 'flex';
+    screen1Actions.style.display = 'flex';
+    screen1SpecialCard.style.display = 'none';
+    screen1SpecialCard.innerHTML = '';
+    eligibilityMessage.style.display = 'block';
+    eligibilityMessage.textContent = '';
+    eligibilityMessage.className = 'hint';
+  }
+
+  function showScreen1Status(title, text, options = {}){
+    const { showFeatures = false, showActions = false } = options;
+    screen1Title.textContent = showFeatures ? L('alreadyHeader') : title;
+    screen1Lead.textContent = showFeatures
+      ? L('alreadyLead')
+      : '';
+    screen1FeatureList.style.display = showFeatures ? 'flex' : 'none';
+    screen1Actions.style.display = showActions ? 'flex' : 'none';
+    eligibilityMessage.style.display = 'none';
+    screen1SpecialCard.style.display = 'block';
+    screen1SpecialCard.innerHTML = `
+      <h2 class="status-title">${escapeHtml(title)}</h2>
+      <p class="status-text">${text}</p>
+    `;
+  }
+
+  function markAllStepsCompleted(){
+    STEP_IDS.forEach((id,i)=>{
+      const el = document.getElementById(id);
+      el.classList.remove('active','done','error');
+      el.classList.add('done');
+    });
+    CONNECTOR_IDS.forEach((id)=>{
+      document.getElementById(id).classList.remove('active','error');
+      document.getElementById(id).classList.add('active');
+    });
+    document.querySelectorAll('.step-item.done .step-num').forEach(el=>{
+      if(!el.dataset.orig) el.dataset.orig = el.textContent;
+      el.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    });
+  }
+
+  function goStep(n, isError = false, updateScreen = true){
+    if (updateScreen) {
+      SCREEN_IDS.forEach((id,i)=>{
+        document.getElementById(id).classList.toggle('active', i+1===n);
+      });
+    }
+    if (n === 2) {
+      setTimeout(() => {
+        if (document.getElementById('screen-2').classList.contains('active')) {
+          triggerUsernameCheck();
+        }
+      }, 0);
+    }
+    STEP_IDS.forEach((id,i)=>{
+      const el = document.getElementById(id);
+      el.classList.remove('active','done','error');
+      if(i+1 === n) {
+        el.classList.add(isError ? 'error' : 'active');
+      } else if(i+1 < n) {
+        el.classList.add('done');
+      }
+    });
+    CONNECTOR_IDS.forEach((id,i)=>{
+      const el = document.getElementById(id);
+      el.classList.remove('active','error');
+      if (i+2 <= n) {
+        el.classList.add((isError && i+2===n) ? 'error' : 'active');
+      }
+    });
+
+    document.querySelectorAll('.step-item.done .step-num').forEach(el=>{
+      if(!el.dataset.orig) el.dataset.orig = el.textContent;
+      el.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    });
+    document.querySelectorAll('.step-item.error .step-num').forEach(el=>{
+      if(!el.dataset.orig) el.dataset.orig = el.textContent;
+      el.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+    });
+    document.querySelectorAll('.step-item:not(.done):not(.error) .step-num').forEach(el=>{
+      if(el.dataset.orig) el.textContent = el.dataset.orig;
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Step 1: Ready to migrate ────────────────────────────
+  startBtn.addEventListener('click', () => goStep(2));
+  laterBtn.addEventListener('click', () => { window.location.href = '/'; });
+
+  // ── Step 2: Choose username ─────────────────────────────
+  function updateStep2NextState(){
+    usernameNextBtn.disabled = !usernameAvailable;
+  }
+
+  usernameInput.addEventListener('input', () => {
+    let v = usernameInput.value.toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 32);
+    usernameInput.value = v;
+    usernameAvailable = false;
+    updateStep2NextState();
+    clearTimeout(usernameCheckTimer);
+
+    if (!/^[a-z0-9._-]{3,32}$/.test(v)) {
+      usernameStatus.textContent = v ? L('usernameInvalid') : '';
+      usernameStatus.className = 'hint';
+      return;
+    }
+
+    usernameStatus.textContent = L('usernameChecking');
+    usernameStatus.className = 'hint';
+
+    usernameCheckTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/migration/check-username?username=${encodeURIComponent(v)}`);
+        const data = await res.json();
+        if (data.ok && data.available) {
+          usernameAvailable = true;
+          usernameStatus.textContent = L('usernameAvailable');
+          usernameStatus.className = 'success-text';
+        } else {
+          usernameAvailable = false;
+          usernameStatus.textContent = data.error || L('usernameTaken');
+          usernameStatus.className = 'error-text';
+        }
+      } catch (e) {
+        usernameAvailable = false;
+        usernameStatus.textContent = L('usernameCheckFailed');
+        usernameStatus.className = 'error-text';
+      }
+      updateStep2NextState();
+    }, 450);
+  });
+
+  function triggerUsernameCheck(){
+    const value = usernameInput.value.trim();
+    if (value) {
+      usernameInput.value = value.toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 32);
+    }
+    usernameInput.dispatchEvent(new Event('input'));
+  }
+
+  usernameBackBtn.addEventListener('click', () => goStep(1));
+  usernameNextBtn.addEventListener('click', () => {
+    if (!usernameAvailable) return;
+    chosenUsername = usernameInput.value.toLowerCase();
+    newEmail = `${chosenUsername}@${NEW_DOMAIN}`;
+    passwordInput.value = '';
+    passwordError.textContent = '';
+    goStep(3);
+  });
+
+  // ── Step 3: Reauthenticate ──────────────────────────────
+  passwordBackBtn.addEventListener('click', () => goStep(2));
+  passwordNextBtn.addEventListener('click', async () => {
+    passwordError.textContent = '';
+    const password = passwordInput.value;
+    if (!password) { passwordError.textContent = L('passwordMissing'); return; }
+
+    passwordNextBtn.disabled = true;
+    spinnerOverlay.classList.add('active');
+    try {
+      const cred = firebase.auth.EmailAuthProvider.credential(currentUser.email, password);
+      await currentUser.reauthenticateWithCredential(cred);
+      await loadPreview();
+      goStep(4);
+    } catch (err) {
+      console.error(err);
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        passwordError.textContent = L('passwordIncorrect');
+      } else if (err.code === 'auth/too-many-requests') {
+        passwordError.textContent = L('passwordTooMany');
+      } else {
+        passwordError.textContent = L('passwordVerifyFailed');
+      }
+    } finally {
+      spinnerOverlay.classList.remove('active');
+      passwordNextBtn.disabled = false;
+    }
+  });
+
+  // ── Step 4: Profile preview ─────────────────────────────
+  async function loadPreview(){
+    let displayName = chosenUsername;
+    let avatarUrl = '';
+    try {
+      const snap = await db.collection('user_data').doc(currentUser.email).get();
+      if (snap.exists) {
+        const data = snap.data() || {};
+        displayName = data['display name'] || displayName;
+        avatarUrl = data.profile_picture || data.avatar || data.photoURL || data.image || '';
+      }
+    } catch (e) {
+      console.warn('Could not load profile preview', e);
+    }
+
+    const previewImageUrl = String(avatarUrl || '').trim();
+    const initials = escapeHtml((displayName || chosenUsername).slice(0, 2).toUpperCase());
+    const avatarHtml = previewImageUrl
+      ? `<img class="avatar-preview" src="${escapeHtml(previewImageUrl)}" alt="${escapeHtml(displayName || chosenUsername)}">`
+      : `<div class="avatar-preview" style="display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;">${initials}</div>`;
+
+    previewRow.innerHTML = `
+      ${avatarHtml}
+      <div class="confirm-meta">
+        <div class="c-title">${escapeHtml(displayName)}</div>
+        <div class="c-by">${escapeHtml(newEmail)}</div>
+        <div class="c-desc">${escapeHtml(L('previewDesc'))}</div>
+      </div>
+    `;
+  }
+
+  previewBackBtn.addEventListener('click', () => goStep(3));
+  previewNextBtn.addEventListener('click', () => goStep(5));
+
+  // ── Step 5: Accept terms ────────────────────────────────
+  termsCheckbox.addEventListener('change', () => {
+    termsNextBtn.disabled = !termsCheckbox.checked;
+  });
+  termsBackBtn.addEventListener('click', () => goStep(4));
+  termsNextBtn.addEventListener('click', () => {
+    if (!termsCheckbox.checked) return;
+    finalTransitionRow.innerHTML = `
+      <div class="transition-card">
+        <div class="transition-label">${escapeHtml(L('currentAccount'))}</div>
+        <div class="transition-value">${escapeHtml(currentUser.email)}</div>
+      </div>
+      <div class="transition-arrow">→</div>
+      <div class="transition-card accent">
+        <div class="transition-label">${escapeHtml(L('newUsernameAccount'))}</div>
+        <div class="transition-value">${escapeHtml(newEmail)}</div>
+      </div>
+    `;
+    goStep(6);
+  });
+
+  // ── Step 6: Ready to migrate? ───────────────────────────
+  finalBackBtn.addEventListener('click', () => goStep(5));
+  migrateNowBtn.addEventListener('click', async () => {
+    migrateNowBtn.disabled = true;
+    finalBackBtn.disabled = true;
+    spinnerOverlay.classList.add('active');
+
+    try {
+      const idToken = await currentUser.getIdToken(true);
+      const res = await fetch(`${API_BASE}/migration/start`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ username: chosenUsername, currentEmail: currentUser.email }),
+      });
+      const data = await res.json();
+      spinnerOverlay.classList.remove('active');
+
+      if (!data.ok || !data.jobId) {
+        showToast(data.error || L('startMigrationFailed'), 'red');
+        migrateNowBtn.disabled = false;
+        finalBackBtn.disabled = false;
+        return;
+      }
+
+      jobId = data.jobId;
+      resetProgressScreen();
+      goStep(7);
+      startPolling();
+    } catch (err) {
+      console.error(err);
+      spinnerOverlay.classList.remove('active');
+      showToast(L('startMigrationFailedNet'), 'red');
+      migrateNowBtn.disabled = false;
+      finalBackBtn.disabled = false;
+    }
+  });
+
+  // ── Step 7: Progress ────────────────────────────────────
+  function resetProgressScreen(){
+    progressFill.style.width = '0%';
+    progressPercent.textContent = '0%';
+    progressMessageText.textContent = L('queued');
+    progressError.textContent = '';
+    progressRetryRow.style.display = 'none';
+  }
+
+  function startPolling(){
+    clearInterval(pollTimer);
+    pollTimer = setInterval(pollStatus, 1500);
+    pollStatus();
+  }
+
+  async function pollStatus(){
+    if (!jobId) return;
+    try {
+      const res = await fetch(`${API_BASE}/migration/status/${jobId}`);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || L('notFoundJob'));
+
+      const pct = Math.max(0, Math.min(100, Number(data.percent) || 0));
+      progressFill.style.width = pct + '%';
+      progressPercent.textContent = pct + '%';
+      if (data.message) progressMessageText.textContent = data.message;
+
+      if (data.state === 'done') {
+        clearInterval(pollTimer);
+        showDoneScreen(true);
+      } else if (data.state === 'failed') {
+        clearInterval(pollTimer);
+        showDoneScreen(false, data.error || data.message);
+      }
+    } catch (err) {
+      console.error('poll error', err);
+      // transient network hiccup — keep polling, don't fail the whole migration over one bad request
+    }
+  }
+
+  progressRetryBtn.addEventListener('click', () => {
+    progressRetryRow.style.display = 'none';
+    progressError.textContent = '';
+    goStep(6);
+  });
+
+  // ── Step 8: Done ─────────────────────────────────────────
+  function showDoneScreen(success, errorMessage){
+    if (success) {
+      doneIcon.classList.remove('error');
+      doneIcon.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
+      doneTitle.textContent = L('screen8Title');
+      doneLead.textContent = L('screen8Lead');
+      doneDetail.innerHTML = formatI18n(L('doneDetail'), { newEmail: escapeHtml(newEmail) });
+      loginAgainBtn.style.display = 'inline-block';
+      goStep(8, false);
+    } else {
+      progressError.textContent = errorMessage || L('somethingWentWrong');
+      progressRetryRow.style.display = 'flex';
+      goStep(7, true);
+    }
+  }
+
+  loginAgainBtn.addEventListener('click', async () => {
+    try {
+      await auth.signOut();
+    } catch (e) {
+      console.warn(e);
+    } finally {
+      window.location.href = '/login';
+    }
+  });
+</script>
+</body>
+</html>

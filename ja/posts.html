@@ -1,700 +1,1172 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>投稿 — DarkPurpleOFサイト</title>
+  <title>Post</title>
 
-  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
- 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-      authDomain: "darkpurpleof-s-website.firebaseapp.com",
-      projectId: "darkpurpleof-s-website",
-      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
-      messagingSenderId: "520651082420",
-      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
-    };
-
-    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  </script>
-
-  <!-- Rich markdown component -->
   <script type="module" src="/dp-rich-components.js"></script>
-
-  <!-- Topbar clásico -->
-  <script src="/dp-topbar.js"></script>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    :root{
+    :root {
       --bg: #171717;
-      --card:#1f1f1f;
-      --text:#e9e9e9;
-      --muted:#9ca3af;
-      --accent:#6b21a8;
-      --accent-strong:#5b21b6;
-      --border: rgba(255,255,255,0.04);
-      --card-radius:12px;
-      --max-width:920px;
+      --card: #1f1f1f;
+      --text: #e9e9e9;
+      --text2: #9ca3af;
+      --muted: #6b7280;
+      --accent: #6b21a8;
+      --accent-s: #5b21b6;
+      --accent-h: rgba(107,33,168,0.12);
+      --border: rgba(255,255,255,0.08);
+      --div: rgba(255,255,255,0.06);
+      --hover: rgba(255,255,255,0.03);
+      --like: #f91880;
     }
-    body.light{
-      --bg:#f6f8fb; --card:#fff; --text:#0f172a; --muted:#475569; --border: rgba(0,0,0,0.06);
-    }
-
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased; box-sizing:border-box; overflow-x:hidden;}
-    body{display:flex;flex-direction:column;min-height:100vh;}
-
-    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
-
-    main.wrapper { width:100%; max-width:var(--max-width); margin:22px auto; padding:0 16px; box-sizing:border-box; }
-    .post-wrap { display:flex; gap:20px; align-items:flex-start; flex-direction:column; }
-
-    .card {
-      background: var(--card);
-      border-radius: var(--card-radius);
-      padding:16px;
-      border:1px solid var(--border);
-      box-shadow: 0 6px 18px rgba(2,6,23,0.45);
-      width:100%;
-      box-sizing:border-box;
+    body.light {
+      --bg:#f6f8fb; --card:#fff; --text:#0f172a; --text2:#475569;
+      --muted:#94a3b8; --border:rgba(0,0,0,0.08); --hover:rgba(0,0,0,0.02); --div:rgba(0,0,0,0.06);
     }
 
-    .author {
-      display:flex; gap:12px; align-items:center;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      min-height: 100vh;
     }
-    .author .pfp, .comment .pfp {
+
+    body {
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    dp-topbar {
+      display: block;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+    }
+
+    /* ── Shell: flex centering so feed sits in the middle on PC ── */
+    .shell {
+      padding-top: 56px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* ── Feed column ── */
+    .feed {
+      width: 100%;
+      /* 700px on PC feels roomier than 600px */
+      max-width: 700px;
+      border-left: 1px solid var(--div);
+      border-right: 1px solid var(--div);
+      min-height: calc(100vh - 56px);
+    }
+
+    /* ── Col header ── */
+    .col-head {
+      position: sticky;
+      top: 56px;
+      z-index: 100;
+      background: rgba(23,23,23,0.9);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--div);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    body.light .col-head { background: rgba(246,248,251,0.9); }
+
+    .back-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: none; background: transparent; color: var(--text);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .12s;
+    }
+    .back-btn:hover { background: var(--hover); }
+    .col-title { font-size: 17px; font-weight: 700; color: var(--text); }
+
+    /* ── Post article ──
+       NO overflow:hidden — it clips the dropdown menu! */
+    .post-art {
+      padding: 14px 16px 0;
+      border-bottom: 1px solid var(--div);
+    }
+
+    /* pinned */
+    .pinned-label {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    /* author row */
+    .author-row {
+      display: flex;
+      align-items: flex-start;   /* top-align so long names don't push avatar */
+      gap: 10px;
+    }
+
+    .pfp {
+      /* hard fixed size that cannot flex-shrink */
+      width: 44px; height: 44px;
+      min-width: 44px; min-height: 44px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
       background-repeat: no-repeat;
-      position:relative;
-      width:52px;
-      height:52px;
-      border-radius:10px;
-      background-size:cover;
-      background-position:center;
-      border:1px solid var(--border);
-      flex-shrink:0;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
     }
-    .comment .pfp {
+    .pfp-frame {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      background-size: cover;
+      pointer-events: none;
+    }
+
+    /* author text: min-width:0 is the key — lets it shrink inside flex */
+    .author-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .author-name-row {
+      display: flex; align-items: center; gap: 4px;
+      min-width: 0;
+    }
+    .author-name {
+      font-weight: 700; font-size: 15px; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .author-handle {
+      font-size: 14px; color: var(--text2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+    .vbadge {
+      width: 16px; height: 16px; flex-shrink: 0;
+      display: inline-block;
+      background-image: url('/assets/verified.png');
+      background-size: contain; background-repeat: no-repeat;
+    }
+
+    /* menu — NO overflow:hidden on parent so dropdown shows */
+    .menu-wrap { position: relative; flex-shrink: 0; margin-left: auto; }
+    .more-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: none; background: transparent; color: var(--muted);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .12s, color .12s;
+    }
+    .more-btn:hover { background: var(--accent-h); color: var(--accent); }
+
+    .pmenu {
+      position: absolute; top: 38px; right: 0;
+      min-width: 200px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+      display: none; flex-direction: column; padding: 4px 0; z-index: 400;
+    }
+    .pmenu.open { display: flex; }
+    .pmenu button {
+      width: 100%; padding: 12px 16px; text-align: left;
+      border: none; background: transparent; color: var(--text);
+      cursor: pointer; font-size: 15px; font-weight: 500; font-family: inherit;
+      transition: background .1s;
+    }
+    .pmenu button:hover:not([disabled]) { background: var(--hover); }
+    .pmenu button[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Post body ──
+       KEY FIX: no flex/gap here. Use plain margin-top on the media child.
+       This avoids ghost space when rich-markdown element is empty/upgrading. */
+    .post-body {
+      margin-top: 10px;
+    }
+
+    .post-text {
+      font-size: 17px; line-height: 1.6; color: var(--text);
+      word-break: break-word; overflow-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    /* rich-markdown fills its container, inherits wrapping */
+    .post-text rich-markdown {
+      display: block;
+      word-break: break-word; overflow-wrap: break-word;
+    }
+
+    /* Media: only margin-top when it actually has content.
+       We add the margin via JS only when images exist,
+       OR use the :not(:empty) trick below. */
+    .media-grid {
+      border-radius: 14px; overflow: hidden;
+    }
+    /* Only show margin when the grid has children */
+    .media-grid:not(:empty) { margin-top: 10px; }
+
+    .media-grid.single { display: block; }
+    .media-grid.multi {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2px;
+    }
+    .media-grid img,
+    .media-grid video {
+      width: 100%; display: block;
+      object-fit: cover;
+      transition: filter .12s;
+    }
+    .media-grid.single img,
+    .media-grid.single video {
+      max-height: 480px; object-fit: contain;
+      background: rgba(0,0,0,0.15);
+    }
+    .media-grid.multi img,
+    .media-grid.multi video { height: 210px; }
+    .media-grid img:hover { filter: brightness(0.88); }
+
+    /* padding below media / text before the divider */
+    .post-body-end { padding-bottom: 12px; }
+
+    /* ── Timestamp ── */
+    .ts-row {
+      padding: 12px 0;
+      border-top: 1px solid var(--div);
+      border-bottom: 1px solid var(--div);
+    }
+    .ts-text { font-size: 14px; color: var(--text2); }
+
+    /* ── Stats ── */
+    .stats-row {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--div);
+    }
+    .stat { font-size: 14px; }
+    .stat b { font-weight: 700; color: var(--text); }
+    .stat span { color: var(--text2); margin-left: 3px; }
+
+    /* ── Action bar ── */
+    .act-bar {
+      display: flex; align-items: center;
+      justify-content: space-around;
+      padding: 2px 0;
+      border-bottom: 1px solid var(--div);
+    }
+    .act {
+      display: flex; align-items: center; gap: 6px;
+      background: transparent; border: none; cursor: pointer;
+      color: var(--muted); padding: 10px 14px;
+      border-radius: 50px; font-size: 13px; font-weight: 500;
+      font-family: inherit; line-height: 1;
+      transition: color .12s, background .12s;
+      flex-shrink: 1; min-width: 0;
+    }
+    .act svg { flex-shrink: 0; }
+    .act:hover { color: var(--accent); background: var(--accent-h); }
+    .act.liked,
+    .act.liked:hover { color: var(--like); background: rgba(249,24,128,0.10); }
+    .act.reposted,
+    .act.reposted:hover { color: var(--accent); background: var(--accent-h); }
+    .act-n { font-size: 13px; }
+
+    /* ── Comments ── */
+    .cmt-item {
+      display: flex; gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--div);
+      transition: background .1s;
+    }
+    .cmt-item:hover { background: var(--hover); }
+
+    .cmt-pfp {
+      width: 38px; height: 38px;
+      min-width: 38px; min-height: 38px;
+      border-radius: 50%;
+      background-size: cover; background-position: center;
       background-repeat: no-repeat;
-      width:38px;
-      height:38px;
-      border-radius:8px;
+      border: 1px solid var(--border);
+      flex-shrink: 0; position: relative;
     }
-    .author .meta { display:flex; flex-direction:column; min-width:0; }
-    .author .name { font-weight:700; font-size:15px; display:flex; gap:8px; align-items:center; color:var(--text); }
-    .author .sub { font-size:13px; color:var(--muted); word-break:break-word; }
-
-    .post-meta{ display:flex; align-items:center; gap:8px; justify-content:flex-end; }
-    .post-date{ font-size:12px; color:var(--muted); }
-    .menu-btn{ width:28px; height:28px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .menu-btn:hover{ background: rgba(255,255,255,0.04); }
-    .post-menu{ position:absolute; top:60px; right:16px; min-width:170px; background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:0 14px 40px rgba(0,0,0,0.35); display:none; flex-direction:column; padding:6px 0; z-index:50; }
-    .post-menu.open{ display:flex; }
-    .post-menu button{ width:100%; padding:10px 12px; text-align:left; border:none; background:transparent; color:var(--text); cursor:pointer; font-size:14px; }
-    .post-menu button:hover:not([disabled]){ background: rgba(255,255,255,0.08); }
-    .post-menu button[disabled]{ opacity:0.45; cursor:not-allowed; }
-
-    .verified { width:16px; height:16px; display:inline-block; background-image:url('/assets/verified.png'); background-size:contain; background-repeat:no-repeat; }
-
-    .post-text { margin-top:12px; white-space:pre-wrap; line-height:1.45; color:var(--text); font-size:15px; }
-    .post-media { margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
-    .post-media img { max-width:100%; width:calc(50% - 6px); max-height:360px; object-fit:cover; border-radius:10px; border:1px solid var(--border); }
-    .post-media video.post-video { width:100%; border-radius:10px; border:1px solid var(--border); max-height:480px; background:#000; }
-
-    .actions { display:flex; gap:8px; align-items:center; margin-top:12px; flex-wrap:wrap; }
-    .icon-btn {
-      --size:44px;
-      width:var(--size); height:var(--size);
-      border-radius:10px;
-      display:inline-flex;
-      align-items:center; justify-content:center;
-      background:transparent;
-      border:none;
-      cursor:pointer;
-      color:var(--muted);
-      transition:background .12s, color .12s, transform .08s;
-      padding:6px;
+    .cmt-pfp-frame {
+      position: absolute; inset: 0; border-radius: 50%;
+      background-size: cover; pointer-events: none;
     }
-    .icon-btn:hover { background: rgba(255,255,255,0.02); color:var(--text); transform:translateY(-1px); }
-    .icon-btn[aria-pressed="true"] { color:var(--accent); background: rgba(107,33,168,0.06); }
+    .cmt-body { flex: 1; min-width: 0; }
+    .cmt-who {
+      display: flex; align-items: center; gap: 4px;
+      flex-wrap: wrap; margin-bottom: 3px;
+    }
+    .cmt-name { font-weight: 700; font-size: 14px; color: var(--text); }
+    .cmt-handle { font-size: 13px; color: var(--text2); }
+    .cmt-text {
+      font-size: 14px; color: var(--text); line-height: 1.5;
+      white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;
+    }
+    .cmt-text rich-markdown {
+      display: block;
+      word-break: break-word; overflow-wrap: break-word;
+    }
 
-    .icon-label { font-size:13px; color:var(--muted); margin-left:6px; user-select:none; }
+    .no-cmt {
+      padding: 36px 16px; text-align: center;
+      color: var(--text2); font-size: 15px;
+    }
+    /* state-msg: constrained so it doesn't overflow on narrow screens */
+    .state-msg {
+      padding: 40px 16px; text-align: center;
+      color: var(--text2); font-size: 15px;
+      width: 100%; max-width: 100%;
+    }
 
-    .comments { margin-top:18px; }
-    .comment { display:flex; gap:10px; margin-bottom:12px; align-items:flex-start; }
-    .comment .body { background: rgba(255,255,255,0.01); padding:10px; border-radius:8px; border:1px solid var(--border); flex:1; }
-    .comment .who { font-weight:700; font-size:13px; color:var(--text); display:flex; gap:8px; align-items:center; }
-    .comment .text { margin-top:6px; color:var(--text); white-space:pre-wrap; line-height:1.35; }
+    /* ── Compose ── */
+    .compose {
+      display: none;
+      align-items: center; gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--div);
+      position: sticky; bottom: 0;
+      background: rgba(23,23,23,0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    body.light .compose { background: rgba(246,248,251,0.96); }
 
-    .comment-form { display:flex; gap:8px; margin-top:12px; align-items:center; }
-    .comment-input { flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); box-sizing:border-box; min-width:0; }
-    .send-icon { width:40px; height:40px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; background:transparent; border:none; cursor:pointer; color:var(--accent); }
-    .send-icon[disabled] { opacity:0.4; cursor:not-allowed; color:var(--muted); }
+    .compose-pfp {
+      width: 36px; height: 36px;
+      min-width: 36px; min-height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--border);
+      background-size: cover; background-position: center;
+      border: 1px solid var(--border);
+    }
+    .compose-wrap {
+      flex: 1; min-width: 0;
+      display: flex; align-items: center;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 50px; padding: 8px 14px;
+      transition: border-color .15s;
+    }
+    .compose-wrap:focus-within { border-color: var(--accent); }
+    .compose-input {
+      flex: 1; min-width: 0; border: none; background: transparent;
+      color: var(--text); font-size: 15px; font-family: inherit; outline: none;
+    }
+    .compose-input::placeholder { color: var(--muted); }
+    .compose-send {
+      flex-shrink: 0;
+      background: var(--accent); border: none; color: #fff;
+      border-radius: 50px; padding: 7px 18px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      font-family: inherit; white-space: nowrap;
+      transition: background .12s, opacity .12s;
+    }
+    .compose-send:hover { background: var(--accent-s); }
+    .compose-send:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    .towall-label { margin-bottom:12px; display:flex; gap:10px; align-items:center; justify-content:space-between; background: rgba(255,255,255,0.02); padding:8px 10px; border-radius:8px; border:1px solid var(--border); color:var(--muted); }
+    /* ── Towall ── */
+    .towall-banner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px;
+      background: rgba(107,33,168,0.07);
+      border-bottom: 1px solid var(--div);
+      font-size: 13px; color: var(--text2); gap: 12px;
+    }
+    .towall-rm {
+      flex-shrink: 0;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text2); border-radius: 50px; padding: 4px 12px;
+      font-size: 12px; cursor: pointer; font-family: inherit;
+      transition: border-color .12s, color .12s;
+    }
+    .towall-rm:hover { border-color: var(--accent); color: var(--accent); }
 
-    @media (max-width:720px) {
-      .post-media img { width:100%; }
-      .author .name { font-size:14px; }
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%);
+      display: none; padding: 10px 20px; border-radius: 50px;
+      color: #fff; z-index: 99999; font-size: 14px; font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4); white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 740px) {
+      .shell { padding-top: 52px; }
+      .col-head { top: 52px; }
+      /* full-bleed on mobile — no side borders, no margin */
+      .feed {
+        max-width: 100%;
+        border-left: none; border-right: none;
+      }
+    }
+    @media (max-width: 480px) {
+      .post-art { padding: 12px 12px 0; }
+      .post-text { font-size: 16px; }
+      .pfp { width: 40px; height: 40px; min-width: 40px; min-height: 40px; }
+      .media-grid.multi img,
+      .media-grid.multi video { height: 150px; }
+      .act { padding: 8px 8px; gap: 4px; font-size: 12px; }
+      .cmt-item { padding: 10px 12px; }
+      .compose { padding: 8px 12px; }
+      .compose-send { padding: 6px 14px; font-size: 13px; }
+      .stats-row { gap: 14px; }
+    }
+    @media (max-width: 360px) {
+      .act-n { display: none; }
+      .act { padding: 8px 6px; }
     }
   </style>
 </head>
 <body>
+  <script type="module" src="/dp-topbar.js"></script>
   <dp-topbar></dp-topbar>
 
-  <main class="wrapper" role="main" aria-label="投稿">
-    <div class="post-wrap">
-      <div id="postCard" class="card" aria-live="polite">
-        <div style="text-align:center;" class="muted">投稿を読み込み中…</div>
+  <div class="shell">
+    <div class="feed" role="main">
+      <div class="col-head">
+        <button class="back-btn" onclick="history.length>1?history.back():window.location.href='/ugc/posts'" aria-label="Back">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <span class="col-title">Post</span>
       </div>
+      <div id="postRoot"></div>
     </div>
-  </main>
+  </div>
 
-  <div id="toast" role="status" aria-live="polite" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);display:none;padding:10px 14px;border-radius:10px;color:#fff;z-index:99999;"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+    authDomain: "darkpurpleof-s-website.firebaseapp.com",
+    projectId: "darkpurpleof-s-website",
+    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+    messagingSenderId: "520651082420",
+    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+  };
+  if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
   const auth = firebase.auth();
 
+const SUPPORTED_LANGS = ['en', 'de', 'es', 'ru', 'ja'];
+const TRANSLATIONS = {
+  en: {
+    post: 'Post',
+    back: 'Back',
+    loadingPost: 'Loading post…',
+    noPostId: 'No post ID provided.',
+    postNotFound: 'Post not found.',
+    authorMissing: 'Author missing.',
+    noPermission: "You don't have permission to view this post.",
+    pinned: 'Pinned',
+    deletePost: 'Delete post',
+    pinToProfile: 'Pin to profile',
+    unpinPost: 'Unpin post',
+    removeFromMyWall: 'Remove from my wall',
+    reposts: 'Reposts',
+    likes: 'Likes',
+    reply: 'Reply',
+    failedLoadPost: 'Failed to load post.',
+    thisPostIsInYourWall: 'This post is in your wall',
+    remove: 'Remove',
+    noRepliesYet: 'No replies yet. Be the first!',
+    failedLoadReplies: 'Failed to load replies.',
+    deleteConfirm: 'Delete this post? This cannot be undone.',
+    pinConfirm: 'Pin this post?',
+    unpinConfirm: 'Unpin this post?',
+    removeWallConfirm: 'Remove from your wall?',
+    signInToLike: 'Sign in to like',
+    signInToRepost: 'Sign in to repost',
+    signInToReply: 'Sign in to reply',
+    failedUpdateLike: 'Failed to update like.',
+    failedUpdateRepost: 'Failed to update repost.',
+    failedDeletePost: 'Failed to delete post.',
+    failedUpdatePin: 'Failed to update pin.',
+    shared: 'Shared!',
+    linkCopied: 'Link copied!',
+    postPinned: 'Post pinned.',
+    postUnpinned: 'Post unpinned.',
+    removedFromYourWall: 'Removed from your wall.',
+    failedGeneric: 'Failed.',
+    replyPosted: 'Reply posted!',
+    failedPostReply: 'Failed to post reply.',
+    postYourReply: 'Post your reply'
+  },
+  de: {
+    post: 'Beitrag',
+    back: 'Zurück',
+    loadingPost: 'Beitrag wird geladen…',
+    noPostId: 'Keine Beitrags-ID angegeben.',
+    postNotFound: 'Beitrag nicht gefunden.',
+    authorMissing: 'Autor fehlt.',
+    noPermission: 'Sie haben keine Berechtigung, diesen Beitrag anzusehen.',
+    pinned: 'Angepinnt',
+    deletePost: 'Beitrag löschen',
+    pinToProfile: 'Im Profil anheften',
+    unpinPost: 'Anheftung aufheben',
+    removeFromMyWall: 'Von meiner Pinnwand entfernen',
+    reposts: 'Reposts',
+    likes: 'Gefällt mir',
+    reply: 'Antworten',
+    failedLoadPost: 'Beitrag konnte nicht geladen werden.',
+    thisPostIsInYourWall: 'Dieser Beitrag ist in Ihrer Pinnwand',
+    remove: 'Entfernen',
+    noRepliesYet: 'Noch keine Antworten. Seien Sie der Erste!',
+    failedLoadReplies: 'Antworten konnten nicht geladen werden.',
+    deleteConfirm: 'Diesen Beitrag löschen? Das kann nicht rückgängig gemacht werden.',
+    pinConfirm: 'Diesen Beitrag anheften?',
+    unpinConfirm: 'Anheftung dieses Beitrags aufheben?',
+    removeWallConfirm: 'Von Ihrer Pinnwand entfernen?',
+    signInToLike: 'Zum Liken anmelden',
+    signInToRepost: 'Zum Reposten anmelden',
+    signInToReply: 'Zum Antworten anmelden',
+    failedUpdateLike: 'Gefällt-mir-Aktion konnte nicht aktualisiert werden.',
+    failedUpdateRepost: 'Repost konnte nicht aktualisiert werden.',
+    failedDeletePost: 'Beitrag konnte nicht gelöscht werden.',
+    failedUpdatePin: 'Anheftung konnte nicht aktualisiert werden.',
+    shared: 'Geteilt!',
+    linkCopied: 'Link kopiert!',
+    postPinned: 'Beitrag angeheftet.',
+    postUnpinned: 'Anheftung aufgehoben.',
+    removedFromYourWall: 'Von Ihrer Pinnwand entfernt.',
+    failedGeneric: 'Fehlgeschlagen.',
+    replyPosted: 'Antwort wurde gepostet!',
+    failedPostReply: 'Antwort konnte nicht gepostet werden.',
+    postYourReply: 'Antwort schreiben'
+  },
+  es: {
+    post: 'Publicación',
+    back: 'Volver',
+    loadingPost: 'Cargando publicación…',
+    noPostId: 'No se proporcionó ningún ID de publicación.',
+    postNotFound: 'No se encontró la publicación.',
+    authorMissing: 'Falta el autor.',
+    noPermission: 'No tienes permiso para ver esta publicación.',
+    pinned: 'Fijado',
+    deletePost: 'Eliminar publicación',
+    pinToProfile: 'Fijar al perfil',
+    unpinPost: 'Desfijar publicación',
+    removeFromMyWall: 'Quitar de mi muro',
+    reposts: 'Reposts',
+    likes: 'Me gusta',
+    reply: 'Responder',
+    failedLoadPost: 'No se pudo cargar la publicación.',
+    thisPostIsInYourWall: 'Esta publicación está en tu muro',
+    remove: 'Quitar',
+    noRepliesYet: 'Todavía no hay respuestas. ¡Sé el primero!',
+    failedLoadReplies: 'No se pudieron cargar las respuestas.',
+    deleteConfirm: '¿Eliminar esta publicación? Esto no se puede deshacer.',
+    pinConfirm: '¿Fijar esta publicación?',
+    unpinConfirm: '¿Desfijar esta publicación?',
+    removeWallConfirm: '¿Quitar de tu muro?',
+    signInToLike: 'Inicia sesión para dar me gusta',
+    signInToRepost: 'Inicia sesión para repostear',
+    signInToReply: 'Inicia sesión para responder',
+    failedUpdateLike: 'No se pudo actualizar el me gusta.',
+    failedUpdateRepost: 'No se pudo actualizar el repost.',
+    failedDeletePost: 'No se pudo eliminar la publicación.',
+    failedUpdatePin: 'No se pudo actualizar el fijado.',
+    shared: '¡Compartido!',
+    linkCopied: '¡Enlace copiado!',
+    postPinned: 'Publicación fijada.',
+    postUnpinned: 'Publicación desfijada.',
+    removedFromYourWall: 'Quitado de tu muro.',
+    failedGeneric: 'Error.',
+    replyPosted: '¡Respuesta publicada!',
+    failedPostReply: 'No se pudo publicar la respuesta.',
+    postYourReply: 'Publica tu respuesta'
+  },
+  ru: {
+    post: 'Пост',
+    back: 'Назад',
+    loadingPost: 'Загрузка поста…',
+    noPostId: 'Не указан ID поста.',
+    postNotFound: 'Пост не найден.',
+    authorMissing: 'Автор отсутствует.',
+    noPermission: 'У вас нет доступа к этому посту.',
+    pinned: 'Закреплено',
+    deletePost: 'Удалить пост',
+    pinToProfile: 'Закрепить в профиле',
+    unpinPost: 'Открепить пост',
+    removeFromMyWall: 'Убрать с моей стены',
+    reposts: 'Репосты',
+    likes: 'Лайки',
+    reply: 'Ответить',
+    failedLoadPost: 'Не удалось загрузить пост.',
+    thisPostIsInYourWall: 'Этот пост находится на вашей стене',
+    remove: 'Убрать',
+    noRepliesYet: 'Пока нет ответов. Будьте первым!',
+    failedLoadReplies: 'Не удалось загрузить ответы.',
+    deleteConfirm: 'Удалить этот пост? Это действие нельзя отменить.',
+    pinConfirm: 'Закрепить этот пост?',
+    unpinConfirm: 'Открепить этот пост?',
+    removeWallConfirm: 'Убрать с вашей стены?',
+    signInToLike: 'Войдите, чтобы поставить лайк',
+    signInToRepost: 'Войдите, чтобы сделать репост',
+    signInToReply: 'Войдите, чтобы ответить',
+    failedUpdateLike: 'Не удалось обновить лайк.',
+    failedUpdateRepost: 'Не удалось обновить репост.',
+    failedDeletePost: 'Не удалось удалить пост.',
+    failedUpdatePin: 'Не удалось обновить закрепление.',
+    shared: 'Поделено!',
+    linkCopied: 'Ссылка скопирована!',
+    postPinned: 'Пост закреплён.',
+    postUnpinned: 'Пост откреплён.',
+    removedFromYourWall: 'Убрано с вашей стены.',
+    failedGeneric: 'Ошибка.',
+    replyPosted: 'Ответ опубликован!',
+    failedPostReply: 'Не удалось опубликовать ответ.',
+    postYourReply: 'Напишите ответ'
+  },
+  ja: {
+    post: '投稿',
+    back: '戻る',
+    loadingPost: '投稿を読み込み中…',
+    noPostId: '投稿IDが指定されていません。',
+    postNotFound: '投稿が見つかりません。',
+    authorMissing: '投稿者が見つかりません。',
+    noPermission: 'この投稿を表示する権限がありません。',
+    pinned: '固定済み',
+    deletePost: '投稿を削除',
+    pinToProfile: 'プロフィールに固定',
+    unpinPost: '固定を解除',
+    removeFromMyWall: '自分のウォールから削除',
+    reposts: 'リポスト',
+    likes: 'いいね',
+    reply: '返信',
+    failedLoadPost: '投稿の読み込みに失敗しました。',
+    thisPostIsInYourWall: 'この投稿はあなたのウォールにあります',
+    remove: '削除',
+    noRepliesYet: 'まだ返信はありません。最初の返信をしましょう！',
+    failedLoadReplies: '返信の読み込みに失敗しました。',
+    deleteConfirm: 'この投稿を削除しますか？元に戻せません。',
+    pinConfirm: 'この投稿を固定しますか？',
+    unpinConfirm: 'この投稿の固定を解除しますか？',
+    removeWallConfirm: '自分のウォールから削除しますか？',
+    signInToLike: 'いいねするにはサインインしてください',
+    signInToRepost: 'リポストするにはサインインしてください',
+    signInToReply: '返信するにはサインインしてください',
+    failedUpdateLike: 'いいねの更新に失敗しました。',
+    failedUpdateRepost: 'リポストの更新に失敗しました。',
+    failedDeletePost: '投稿の削除に失敗しました。',
+    failedUpdatePin: '固定の更新に失敗しました。',
+    shared: '共有しました！',
+    linkCopied: 'リンクをコピーしました！',
+    postPinned: '投稿を固定しました。',
+    postUnpinned: '投稿の固定を解除しました。',
+    removedFromYourWall: '自分のウォールから削除しました。',
+    failedGeneric: '失敗しました。',
+    replyPosted: '返信を投稿しました！',
+    failedPostReply: '返信を投稿できませんでした。',
+    postYourReply: '返信を投稿'
+  }
+};
+
+let currentLang = 'en';
+
+function supportedLang(raw) {
+  const v = String(raw || '').trim().toLowerCase().slice(0, 2);
+  return SUPPORTED_LANGS.includes(v) ? v : null;
+}
+
+function detectBrowserLang() {
+  return supportedLang(navigator.language || navigator.userLanguage || '') || 'en';
+}
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.en[key] || key;
+}
+
+function setLang(lang) {
+  currentLang = supportedLang(lang) || 'en';
+  document.documentElement.lang = currentLang;
+  syncStaticUi();
+}
+
+function syncStaticUi() {
+  document.documentElement.lang = currentLang;
+  document.title = t('post');
+  const colTitle = document.querySelector('.col-title');
+  if (colTitle) colTitle.textContent = t('post');
+  const backBtn = document.querySelector('.back-btn');
+  if (backBtn) backBtn.setAttribute('aria-label', t('back'));
+}
+
+function setRootMessage(key, color = 'default') {
+  postRoot.innerHTML = `<div class="state-msg"${color === 'red' ? ' style="color:#f66"' : ''}>${esc(t(key))}</div>`;
+}
+
+function applyPostLabels(opts = {}) {
+  const pinnedLabel = postRoot.querySelector('.pinned-label');
+  if (pinnedLabel) pinnedLabel.innerHTML = `${pinnedLabel.querySelector('svg') ? pinnedLabel.querySelector('svg').outerHTML : ''}${esc(t('pinned'))}`;
+
+  const delBtn = postRoot.querySelector('#delBtn');
+  if (delBtn) delBtn.textContent = t('deletePost');
+
+  const pinBtn = postRoot.querySelector('#pinBtn');
+  if (pinBtn) pinBtn.textContent = opts.pinnedLocal ? t('unpinPost') : t('pinToProfile');
+
+  const rmWallBtn = postRoot.querySelector('#rmWallBtn');
+  if (rmWallBtn) rmWallBtn.textContent = t('removeFromMyWall');
+
+  const statLabels = postRoot.querySelectorAll('.stat span');
+  if (statLabels[0]) statLabels[0].textContent = t('reposts');
+  if (statLabels[1]) statLabels[1].textContent = t('likes');
+
+  const cToggle = postRoot.querySelector('#cToggle');
+  if (cToggle) cToggle.setAttribute('aria-label', t('reply'));
+
+  const cSend = postRoot.querySelector('#cSend');
+  if (cSend) cSend.textContent = t('reply');
+
+  const cInput = postRoot.querySelector('#cInput');
+  if (cInput) cInput.placeholder = t('postYourReply');
+
+  const twBanner = postRoot.querySelector('#twBanner');
+  if (twBanner && opts.showTowall) {
+    twBanner.innerHTML = `<div class="towall-banner"><span>${esc(t('thisPostIsInYourWall'))}</span><button class="towall-rm" id="twRm">${esc(t('remove'))}</button></div>`;
+  }
+}
+
   const params = new URLSearchParams(window.location.search);
   const postId = (params.get('post') || '').trim();
-  const postCard = document.getElementById('postCard');
+  const postRoot = document.getElementById('postRoot');
 
-  function showToast(msg, color='purple', t=2500){
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.style.display = 'block';
-    el.style.background = (color === 'red') ? '#C00' : (color === 'yellow' ? '#E6B800' : 'linear-gradient(180deg,var(--accent-strong),var(--accent))');
-    setTimeout(()=> el.style.display = 'none', t);
+  setLang(detectBrowserLang());
+  if (postId) {
+    // show localized loading text immediately
+    setRootMessage('loadingPost');
+  }
+
+  function esc(s) {
+    return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function toMs(v) {
+    if (v==null) return null;
+    if (typeof v==='number') return v;
+    if (v instanceof Date) return v.getTime();
+    if (v?.toDate) return v.toDate().getTime();
+    if (typeof v==='object' && typeof v.seconds==='number')
+      return v.seconds*1000 + Math.floor((v.nanoseconds||0)/1e6);
+    return null;
+  }
+  function fmtDate(v) {
+    const ms = toMs(v); if (!ms) return '';
+    try {
+      return new Intl.DateTimeFormat(currentLang, {
+        dateStyle: 'long',
+        timeStyle: 'short'
+      }).format(new Date(ms));
+    } catch {
+      return new Date(ms).toLocaleString();
+    }
+  }
+  function toast(msg, color='purple', t=2800) {
+    const el=document.getElementById('toast');
+    el.textContent=msg; el.style.display='block';
+    if (color==='red') el.style.background='#b91c1c';
+    else if (color==='yellow') el.style.background='#d97706';
+    else if (color==='green') el.style.background='#059669';
+    else el.style.background='linear-gradient(135deg,#5b21b6,#6b21a8)';
+    clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none',t);
+  }
+
+  /* Build media HTML — returns '' when no images so no empty div is injected */
+  function mediaHtml(images) {
+    if (!images||!images.length) return '';
+    const cls=images.length===1?'single':'multi';
+    const items=images.map(u=>{
+      const url=String(u||'');
+      if (url.match(/\.mp4(\?.*)?$/i))
+        return `<video controls src="${esc(url)}" preload="metadata" playsinline></video>`;
+      return `<img src="${esc(url)}" alt="post image" loading="lazy">`;
+    }).join('');
+    return `<div class="media-grid ${cls}">${items}</div>`;
+  }
+
+  /* Rich-markdown: try every known method, retry async in case CE upgrades late */
+  function setRM(el, text) {
+    if (!el) return;
+    const txt=String(text||'');
+    function attempt() {
+      if (typeof el.setMarkdown==='function') { try{el.setMarkdown(txt);}catch(e){} }
+      ['text','content','value','src'].forEach(a=>{ try{el.setAttribute(a,txt);}catch(e){} });
+      /* Only fall back to textContent if shadow DOM is empty */
+      if (!el.shadowRoot||!el.shadowRoot.textContent.trim()) el.textContent=txt;
+    }
+    attempt();
+    Promise.resolve().then(attempt);
+    requestAnimationFrame(attempt);
+    setTimeout(attempt, 300);
   }
 
   if (!postId) {
-    postCard.innerHTML = `<div class="muted" style="color:#f66">投稿IDが指定されていません。</div>`;
+    setRootMessage('noPostId', 'red');
   } else {
-    let currentUserEmail = null;
-    let currentUserData = null;
-    let userLiked = false;
-    let userReposted = false;
-    let postData = null;
-    let unsubscribeComments = null;
+    let curEmail=null, curUD=null, postData=null, unsubCmt=null;
+    let userLiked=false, userReposted=false;
 
-    auth.onAuthStateChanged(async user => {
-      currentUserEmail = user?.email?.toLowerCase() || null;
-      currentUserData = null;
-
-      if (currentUserEmail) {
+    auth.onAuthStateChanged(async user=>{
+      curEmail=user?.email?.toLowerCase()||null;
+      curUD=null;
+      let resolvedLang = detectBrowserLang();
+      if (curEmail) {
         try {
-          const udoc = await db.collection('user_data').doc(currentUserEmail).get();
-          if (udoc.exists) currentUserData = udoc.data();
-        } catch (err) {
-          console.error('現在の user_data の取得に失敗しました', err);
+          const d=await db.collection('user_data').doc(curEmail).get();
+          if(d.exists) {
+            curUD=d.data() || {};
+            const accountLang = supportedLang(curUD.lang);
+            if (accountLang) resolvedLang = accountLang;
+          }
         }
+        catch(e){console.error(e);}
       }
-
+      setLang(resolvedLang);
       await loadPost();
     });
 
-    async function loadPost(){
+    async function loadPost() {
       try {
-        const docRef = db.collection('posts').doc(postId);
-        const snap = await docRef.get();
+        const ref=db.collection('posts').doc(postId);
+        const snap=await ref.get();
+        if (!snap.exists) { setRootMessage('postNotFound', 'red'); return; }
+        postData=snap.data();
 
-        if (!snap.exists) {
-          postCard.innerHTML = `<div class="muted" style="color:#f66">投稿が見つかりません。</div>`;
-          return;
+        const editor=(postData.editor||'').toLowerCase();
+        if (!editor) { setRootMessage('authorMissing', 'red'); return; }
+
+        const aSnap=await db.collection('user_data').doc(editor).get();
+        const aData=aSnap.exists?aSnap.data():{};
+        const blocked=Array.isArray(aData.blockedUsers)?aData.blockedUsers.map(s=>s.toLowerCase()):[];
+        if (curEmail&&blocked.includes(curEmail)) {
+          setRootMessage('noPermission', 'red'); return;
         }
 
-        postData = snap.data();
+        const name     =aData['display name']||editor;
+        const pfpUrl   =aData.profile_picture||'/org-owner.jpg';
+        const frame    =aData.profile_picture_frame||'';
+        const verified =!!aData.is_verified;
+        const isPinned =!!(postData.pinnedByOwner||postData.pinned_by_owner||postData.pinned);
+        const text     =postData.text||'';
+        const images   =Array.isArray(postData.images)?postData.images:[];
+        const dateLabel=fmtDate(postData.timestamp||postData.createdAt||postData.created||postData.created_at);
+        const isOwner  =!!(curEmail&&curEmail===editor);
+        const canRmWall=!!(curEmail&&postData.towall&&curEmail===String(postData.towall).toLowerCase());
+        const cSetting =(postData.comments||'everyone').toLowerCase();
 
-        const editor = (postData.editor || '').toLowerCase();
-        if (!editor) {
-          postCard.innerHTML = `<div class="muted" style="color:#f66">投稿者が見つかりません。</div>`;
-          return;
-        }
+        const likedBy   =Array.isArray(postData.likedBy)?postData.likedBy.map(s=>s.toLowerCase()):[];
+        const repostedBy=Array.isArray(postData.repostedBy)?postData.repostedBy.map(s=>s.toLowerCase()):[];
+        userLiked   =curEmail?likedBy.includes(curEmail):false;
+        userReposted=curEmail?repostedBy.includes(curEmail):false;
 
-        const authorSnap = await db.collection('user_data').doc(editor).get();
-        const author = authorSnap.exists ? authorSnap.data() : {};
-        const displayName = author['display name'] || editor;
-        const pfp = author.profile_picture || '/org-owner.jpg';
-        const isVerified = !!author.is_verified;
-        const frame = author.profile_picture_frame || '';
+        let pinnedLocal=isPinned;
+        const med=mediaHtml(images);
 
-        const blockedUsers = Array.isArray(author.blockedUsers) ? author.blockedUsers.map(s=>s.toLowerCase()) : [];
-        const viewer = currentUserEmail;
-        if (viewer && blockedUsers.includes(viewer)) {
-          postCard.innerHTML = `<div class="muted" style="color:#f66">この投稿を見る権限がありません。</div>`;
-          return;
-        }
+        postRoot.innerHTML=`
+<article class="post-art">
+  ${isPinned?`<div class="pinned-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--muted)"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>Pinned</div>`:''}
+  <div class="author-row">
+    <div class="pfp" style="background-image:url('${esc(pfpUrl)}')" title="${esc(name)}">
+      ${frame?`<div class="pfp-frame" style="background-image:url('${esc(frame)}')"></div>`:''}
+    </div>
+    <div class="author-info">
+      <div class="author-name-row">
+        <span class="author-name">${esc(name)}</span>
+        ${verified?'<span class="vbadge" title="Verified"></span>':''}
+      </div>
+      <div class="author-handle">@${esc(editor)}</div>
+    </div>
+    <div class="menu-wrap">
+      <button class="more-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-label="More">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+      </button>
+      <div class="pmenu" id="postMenu" role="menu">
+        <button id="delBtn" ${isOwner?'':'disabled'}>Delete post</button>
+        <button id="pinBtn" ${isOwner?'':'disabled'}>${isPinned?'Unpin post':'Pin to profile'}</button>
+        <button id="rmWallBtn" ${canRmWall?'':'disabled'}>Remove from my wall</button>
+      </div>
+    </div>
+  </div>
 
-        const text = postData.text || '';
-        const images = Array.isArray(postData.images) ? postData.images : [];
-        const createdAt = postData.timestamp || postData.createdAt || postData.created || postData.created_at;
-        const dateLabel = formatPostDate(createdAt);
-        const isOwner = viewer && editor && viewer === editor.toLowerCase();
-        const canRemoveFromWall = viewer && postData.towall && viewer === String(postData.towall).toLowerCase();
-        const isPinned = Boolean(postData.pinnedByOwner || postData.pinned_by_owner || postData.pinned);
+  <div class="post-body">
+    <div class="post-text"><rich-markdown id="postRich" mode="markdown" chat-components></rich-markdown></div>
+    ${med}
+    <div class="post-body-end"></div>
+  </div>
 
-        const likedBy = Array.isArray(postData.likedBy) ? postData.likedBy.map(s=>s.toLowerCase()) : [];
-        const repostedBy = Array.isArray(postData.repostedBy) ? postData.repostedBy.map(s=>s.toLowerCase()) : [];
-        userLiked = viewer ? likedBy.includes(viewer) : false;
-        userReposted = viewer ? repostedBy.includes(viewer) : false;
+  ${dateLabel?`<div class="ts-row"><span class="ts-text">${esc(dateLabel)}</span></div>`:''}
 
-        const commentsSetting = (postData.comments || 'everyone').toLowerCase();
-        const imagesHtml = renderMediaItemsPlayable(images);
+  <div class="stats-row">
+    <div class="stat"><b id="rcnt">${repostedBy.length||0}</b><span>Reposts</span></div>
+    <div class="stat"><b id="lcnt">${likedBy.length||0}</b><span>Likes</span></div>
+  </div>
 
-        postCard.innerHTML = `
-          <div class="author">
-            <div class="pfp" id="authorPfp" style="background-image:url('${escapeHtml(pfp)}')">
-              ${frame ? `<div style="position:absolute;inset:0;background-image:url('${escapeHtml(frame)}');background-size:cover;border-radius:10px;pointer-events:none"></div>` : ''}
-            </div>
-            <div class="meta">
-              <div class="name">${escapeHtml(displayName)} ${isVerified ? '<span class="verified" title="認証済み"></span>' : ''}</div>
-              <div class="sub">${escapeHtml(editor)}</div>
-            </div>
+  <div class="act-bar" role="toolbar">
+    <button id="cToggle" class="act" aria-label="Reply">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="act-n" id="ccnt">0</span>
+    </button>
+    <button id="rpBtn" class="act ${userReposted?'reposted':''}" aria-label="Repost" aria-pressed="${userReposted}">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M280-80 120-240l160-160 56 58-62 62h406v-160h80v240H274l62 62-56 58Zm-80-440v-240h486l-62-62 56-58 160 160-160 160-56-58 62-62H280v160h-80Z"/></svg>
+      <span class="act-n" id="rcntb">${repostedBy.length||0}</span>
+    </button>
+    <button id="lkBtn" class="act ${userLiked?'liked':''}" aria-label="Like" aria-pressed="${userLiked}">
+      <svg id="lkSvg" width="18" height="18" viewBox="0 0 24 24" fill="${userLiked?'currentColor':'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span class="act-n" id="lcntb">${likedBy.length||0}</span>
+    </button>
+    <button id="shBtn" class="act" aria-label="Share">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>
+    </button>
+    <button id="rprtBtn" class="act" aria-label="Report">
+      <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="currentColor"><path d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80v-240h-80v240ZM330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm34-80h232l164-164v-232L596-760H364L200-596v232l164 164Zm116-280Z"/></svg>
+    </button>
+  </div>
+</article>
 
-            <div class="post-meta">
-              ${dateLabel ? `<div class="post-date">${escapeHtml(dateLabel)}</div>` : ''}
-              <button class="menu-btn" type="button" aria-haspopup="true" aria-expanded="false" title="投稿の操作">⋮</button>
-              <div class="post-menu" role="menu" aria-label="投稿の操作">
-                <button type="button" class="menu-item delete-post" ${isOwner ? '' : 'disabled'}>投稿を削除</button>
-                <button type="button" class="menu-item pin-post" ${isOwner ? '' : 'disabled'}>${isPinned ? '固定解除' : '固定'}</button>
-                <button type="button" class="menu-item remove-wall" ${canRemoveFromWall ? '' : 'disabled'}>自分のウォールから外す</button>
-              </div>
-            </div>
-          </div>
+<section class="cmt-section" id="cmtSection">
+  <div id="twBanner"></div>
+  <div id="cmtList"></div>
+  <div class="compose" id="compose">
+    <div class="compose-pfp" id="cPfp"></div>
+    <div class="compose-wrap">
+      <input id="cInput" class="compose-input" placeholder="Post your reply" maxlength="500" autocomplete="off">
+    </div>
+    <button id="cSend" class="compose-send" disabled>Reply</button>
+  </div>
+</section>`;
 
-          <div class="post-text" id="postText"><rich-markdown mode="markdown" chat-components></rich-markdown></div>
+        setRM(document.getElementById('postRich'), text);
+        applyPostLabels({ pinnedLocal, showTowall: !!canRmWall });
 
-          ${imagesHtml}
-
-          <div class="actions" role="toolbar" aria-label="投稿の操作">
-            <button id="likeBtn" class="icon-btn" aria-pressed="${userLiked ? 'true' : 'false'}" aria-label="いいね">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            </button>
-            <div id="likeCount" class="icon-label">${likedBy.length || 0}</div>
-
-            <button id="commentToggle" class="icon-btn" aria-label="コメントを表示/非表示">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            </button>
-            <div id="commentCount" class="icon-label">0</div>
-
-            <button id="repostBtn" class="icon-btn" aria-pressed="${userReposted ? 'true' : 'false'}" aria-label="再投稿" title="再投稿">
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666"><path d="M280-80 120-240l160-160 56 58-62 62h406v-160h80v240H274l62 62-56 58Zm-80-440v-240h486l-62-62 56-58 160 160-160 160-56-58 62-62H280v160h-80Z"/></svg>
-            </button>
-            <div id="repostCount" class="icon-label">${repostedBy.length || 0}</div>
-
-            <button id="shareBtn" class="icon-btn" aria-label="投稿を共有">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v13"></path></svg>
-            </button>
-
-            <button id="reportBtn" class="icon-btn" aria-label="投稿を報告">
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666"><path d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80v-240h-80v240ZM330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm34-80h232l164-164v-232L596-760H364L200-596v232l164 164Zm116-280Z"/></svg>
-            </button>
-          </div>
-
-          <div id="commentsRoot" class="comments" style="display:none;">
-            <div id="commentsList"></div>
-
-            <div class="comment-form" id="commentForm" style="display:none;">
-              <input id="commentInput" class="comment-input" placeholder="コメントを入力..." maxlength="500" />
-              <button id="sendComment" class="send-icon" aria-label="コメントを送信" disabled>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><path d="M22 2l-7 20  -3-9-9-3 19-8z"></path></svg>
-              </button>
-            </div>
-          </div>
-        `;
-
-        try{
-          const rm = postCard.querySelector('rich-markdown');
-          if(rm){
-            rm.setAttribute('mode','markdown');
-            rm.setAttribute('chat-components','');
-            rm.textContent = text || '';
-          }
-        }catch(e){}
-
-        const menuBtn = postCard.querySelector('.menu-btn');
-        const menu = postCard.querySelector('.post-menu');
-        const deleteBtn = postCard.querySelector('.delete-post');
-        const pinBtn = postCard.querySelector('.pin-post');
-        const removeWallBtn = postCard.querySelector('.remove-wall');
-        let isPinnedLocal = isPinned;
-
-        function closeMenu() {
-          if (menu) menu.classList.remove('open');
-          if (menuBtn) menuBtn.setAttribute('aria-expanded','false');
-          document.removeEventListener('click', onDocumentClick);
-        }
-        function onDocumentClick(e){ if (!postCard.contains(e.target)) closeMenu(); }
-
-        if (menuBtn && menu) {
-          menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const open = menu.classList.toggle('open');
-            menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            if (open) document.addEventListener('click', onDocumentClick);
-            else document.removeEventListener('click', onDocumentClick);
-          });
-        }
-
-        if (deleteBtn) {
-          deleteBtn.addEventListener('click', async () => {
-            if (!isOwner) return;
-            if (!confirm('この投稿を削除しますか？この操作は元に戻せません。')) return;
-            try {
-              await db.collection('posts').doc(postId).delete();
-              window.location.href = './ugc/posts';
-            } catch (err) {
-              console.error('投稿の削除', err);
-              showToast('投稿を削除できませんでした。', 'red');
-            }
-          });
-        }
-
-        if (pinBtn) {
-          pinBtn.addEventListener('click', async () => {
-            if (!isOwner) return;
-            const willUnpin = isPinnedLocal;
-            if (!confirm(`${willUnpin ? '固定解除' : '固定'}しますか？`)) return;
-            try {
-              if (willUnpin) {
-                await db.collection('posts').doc(postId).update({ pinnedByOwner: firebase.firestore.FieldValue.delete() });
-                pinBtn.textContent = '固定';
-                isPinnedLocal = false;
-              } else {
-                await db.collection('posts').doc(postId).update({ pinnedByOwner: true });
-                pinBtn.textContent = '固定解除';
-                isPinnedLocal = true;
-              }
-              showToast(`投稿を${willUnpin ? '固定解除' : '固定'}しました。`, 'purple');
-            } catch (err) {
-              console.error('投稿の固定', err);
-              showToast('固定状態を更新できませんでした。', 'red');
-            }
-          });
-        }
-
-        if (removeWallBtn) {
-          removeWallBtn.addEventListener('click', async () => {
-            if (!canRemoveFromWall) return;
-            if (!confirm('この投稿を自分のウォールから外しますか？')) return;
-            try {
-              await db.collection('posts').doc(postId).update({ towall: firebase.firestore.FieldValue.delete() });
-              showToast('自分のウォールから外しました。', 'purple');
-              removeWallBtn.disabled = true;
-            } catch (err) {
-              console.error('ウォールから削除', err);
-              showToast('ウォールから外せませんでした。', 'red');
-            }
-          });
-        }
-
-        wireActions(editor, db.collection('posts').doc(postId), postData, commentsSetting, currentUserData);
-      } catch (e) {
-        console.error(e);
-        postCard.innerHTML = `<div class="muted" style="color:#f66">投稿を読み込めませんでした。</div>`;
-      }
-    }
-
-    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-    function toMillis(value){
-      if (value == null) return null;
-      if (typeof value === 'number') return value;
-      if (value instanceof Date) return value.getTime();
-      if (value?.toDate) return value.toDate().getTime();
-      if (typeof value === 'object' && typeof value.seconds === 'number') {
-        const seconds = Number(value.seconds || 0);
-        const nanos = Number(value.nanoseconds || 0);
-        return seconds * 1000 + Math.floor(nanos / 1e6);
-      }
-      return null;
-    }
-
-    function formatPostDate(value){
-      const ms = toMillis(value);
-      if (!ms) return '';
-      const d = new Date(ms);
-      const pad = v => String(v).padStart(2,'0');
-      const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-      const hours = pad(d.getHours());
-      const mins = pad(d.getMinutes());
-      const day = pad(d.getDate());
-      const month = monthNames[d.getMonth()] || '';
-      const year = String(d.getFullYear()).slice(-2);
-      return `${hours}:${mins} - ${day} ${month}, ${year}`;
-    }
-
-    function renderMediaItemsPlayable(images){
-      if(!images || !images.length) return '';
-      return `<div class="post-media">${images.map(u => {
-        try{
-          const url = String(u||'');
-          if(url.match(/\.(mp4)(\?.*)?$/i)){
-            return `<video class="post-video" controls src="${escapeHtml(url)}" preload="metadata" playsinline style="max-width:100%;border-radius:10px;border:1px solid var(--border);max-height:480px;object-fit:cover;"></video>`;
-          }
-        }catch(e){}
-        return `<img src="${escapeHtml(u)}" alt="投稿の画像" loading="lazy">`;
-      }).join('')}</div>`;
-    }
-
-    function wireActions(authorEmail, docRef, postData, commentsSetting, currentUserData){
-      const likeBtn = document.getElementById('likeBtn');
-      const likeCountEl = document.getElementById('likeCount');
-      const commentToggle = document.getElementById('commentToggle');
-      const commentCountEl = document.getElementById('commentCount');
-      const shareBtn = document.getElementById('shareBtn');
-      const reportBtn = document.getElementById('reportBtn');
-      const repostBtn = document.getElementById('repostBtn');
-      const repostCountEl = document.getElementById('repostCount');
-
-      let localLiked = userLiked;
-      let localReposted = userReposted;
-      const viewer = currentUserEmail;
-
-      likeCountEl.textContent = (postData.likedBy && postData.likedBy.length) || 0;
-      repostCountEl.textContent = (postData.repostedBy && postData.repostedBy.length) || 0;
-
-      likeBtn.addEventListener('click', async () => {
-        if (!viewer) { showToast('投稿にいいねするにはログインしてください', 'yellow'); return; }
-        try {
-          likeBtn.disabled = true;
-          if (localLiked) {
-            await docRef.update({ likedBy: firebase.firestore.FieldValue.arrayRemove(viewer) });
-            localLiked = false;
-            likeBtn.setAttribute('aria-pressed','false');
-            likeCountEl.textContent = Math.max(0, Number(likeCountEl.textContent || 0) - 1);
-          } else {
-            await docRef.update({ likedBy: firebase.firestore.FieldValue.arrayUnion(viewer) });
-            localLiked = true;
-            likeBtn.setAttribute('aria-pressed','true');
-            likeCountEl.textContent = Number(likeCountEl.textContent || 0) + 1;
-          }
-        } catch (err) {
-          console.error('like err', err);
-          showToast('いいねを更新できませんでした', 'red');
-        } finally { likeBtn.disabled = false; }
-      });
-
-      repostBtn.addEventListener('click', async () => {
-        if (!viewer) { showToast('再投稿するにはログインしてください', 'yellow'); return; }
-        try {
-          repostBtn.disabled = true;
-          if (localReposted) {
-            await docRef.update({ repostedBy: firebase.firestore.FieldValue.arrayRemove(viewer) });
-            localReposted = false;
-            repostBtn.setAttribute('aria-pressed','false');
-            repostCountEl.textContent = Math.max(0, Number(repostCountEl.textContent || 0) - 1);
-          } else {
-            await docRef.update({ repostedBy: firebase.firestore.FieldValue.arrayUnion(viewer) });
-            localReposted = true;
-            repostBtn.setAttribute('aria-pressed','true');
-            repostCountEl.textContent = Number(repostCountEl.textContent || 0) + 1;
-          }
-        } catch (err) {
-          console.error('repost err', err);
-          showToast('再投稿を更新できませんでした', 'red');
-        } finally { repostBtn.disabled = false; }
-      });
-
-      let commentsVisible = false;
-      const commentsRoot = document.getElementById('commentsRoot');
-      const commentsList = document.getElementById('commentsList');
-      const commentForm = document.getElementById('commentForm');
-      const commentInput = document.getElementById('commentInput');
-      const sendComment = document.getElementById('sendComment');
-
-      commentsRoot.style.display = 'block';
-      commentForm.style.display = 'none';
-
-      (function maybeInsertTowallLabel(){
-        try {
-          if (!viewer) return;
-          const tw = postData?.towall;
-          if (typeof tw === 'string' && tw.toLowerCase() === viewer.toLowerCase()) {
-            const label = document.createElement('div');
-            label.className = 'towall-label';
-            label.id = 'towallLabel';
-            label.innerHTML = `<div>この投稿はあなたのウォールにあります</div><div><button id="removeFromWall" class="icon-btn" style="--size:36px;border-radius:8px;padding:6px;">自分のウォールから外す</button></div>`;
-            commentsRoot.insertBefore(label, commentsList);
-            document.getElementById('removeFromWall').addEventListener('click', async () => {
-              try {
-                await docRef.update({ towall: firebase.firestore.FieldValue.delete() });
-                location.reload();
-              } catch (err) {
-                console.error('remove towall err', err);
-                showToast('ウォールから外せませんでした', 'red');
-              }
-            });
-          }
-        } catch (err) {
-          console.error('towall label err', err);
-        }
-      })();
-
-      function canViewerComment() {
-        const v = (viewer || '').toLowerCase();
-        if (!v) return false;
-        const cs = (commentsSetting || 'everyone').toLowerCase();
-        switch (cs) {
-          case 'none':
-            return v === (authorEmail || '').toLowerCase();
-          case 'admins':
-            return v.endsWith('@darkpurpleof.github.io');
-          case 'verified':
-            return Boolean(currentUserData && currentUserData.is_verified === true);
-          default:
-            return true;
-        }
-      }
-
-      commentToggle.addEventListener('click', () => {
-        commentsVisible = !commentsVisible;
-        commentsRoot.style.display = commentsVisible ? 'block' : 'none';
-        if (commentsVisible) {
-          const allowed = canViewerComment();
-          commentForm.style.display = allowed ? 'flex' : 'none';
-          if (commentInput) { commentInput.value = ''; sendComment.disabled = true; }
-          loadComments();
-        } else {
-          if (unsubscribeComments) { unsubscribeComments(); unsubscribeComments = null; }
-        }
-      });
-
-      loadComments();
-      const initialAllowed = canViewerComment();
-      commentForm.style.display = initialAllowed ? 'flex' : 'none';
-
-      if (commentInput) {
-        commentInput.addEventListener('input', () => {
-          sendComment.disabled = commentInput.value.trim().length === 0;
+        /* Menu */
+        const menuBtn=document.getElementById('menuBtn');
+        const postMenu=document.getElementById('postMenu');
+        function closeMenu(){postMenu.classList.remove('open');menuBtn.setAttribute('aria-expanded','false');}
+        menuBtn.addEventListener('click',e=>{
+          e.stopPropagation();
+          const open=postMenu.classList.toggle('open');
+          menuBtn.setAttribute('aria-expanded',String(open));
+          if (open) setTimeout(()=>document.addEventListener('click',closeMenu,{once:true}),0);
         });
-      }
 
-      if (sendComment) {
-        sendComment.addEventListener('click', async () => {
-          const text = commentInput.value.trim();
-          if (!text) {
-            showToast('コメントは空にできません', 'yellow');
-            return;
-          }
-          if (!viewer) {
-            showToast('コメントするにはログインしてください', 'yellow');
-            return;
-          }
-          if (!canViewerComment()) {
-            showToast('コメントする権限がありません', 'red');
-            return;
-          }
-
-          sendComment.disabled = true;
+        document.getElementById('delBtn').addEventListener('click',async()=>{
+          if (!isOwner) return;
+          if (!confirm(t('deleteConfirm'))) return;
+          try { await db.collection('posts').doc(postId).delete(); window.location.href='/ugc/posts'; }
+          catch(e){console.error(e);toast(t('failedDeletePost'),'red');}
+        });
+        document.getElementById('pinBtn').addEventListener('click',async()=>{
+          if (!isOwner) return;
+          const pb=document.getElementById('pinBtn');
+          if (!confirm(pinnedLocal ? t('unpinConfirm') : t('pinConfirm'))) return;
           try {
-            await docRef.collection('comments').add({
-              author: viewer,
-              text,
-              timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            commentInput.value = '';
-            sendComment.disabled = true;
-            showToast('コメントを投稿しました', 'purple');
-          } catch (err) {
-            console.error('comment err', err);
-            showToast('コメントを投稿できませんでした', 'red');
-          } finally {
-            sendComment.disabled = false;
-          }
-        });
-      }
-
-      shareBtn.addEventListener('click', async () => {
-        const url = location.href;
-        try {
-          if (navigator.share) {
-            await navigator.share({ title: document.title, url });
-            showToast('共有しました！', 'green');
-          } else if (navigator.clipboard) {
-            await navigator.clipboard.writeText(url);
-            showToast('リンクをコピーしました', 'purple');
-          } else {
-            prompt('このリンクをコピーしてください:', url);
-          }
-        } catch (e) {
-          console.error(e);
-          showToast('共有できませんでした', 'red');
-        }
-      });
-
-      reportBtn.addEventListener('click', () => {
-        window.location.href = `./reportabuse?email=${encodeURIComponent(authorEmail)}`;
-      });
-
-      function loadComments(){
-        if (unsubscribeComments) unsubscribeComments();
-        unsubscribeComments = docRef.collection('comments').orderBy('timestamp','asc').onSnapshot(async snap => {
-          commentsList.innerHTML = '';
-          commentCountEl.textContent = `${snap.size}`;
-          if (snap.empty) {
-            commentsList.innerHTML = '<div class="muted">まだコメントはありません</div>';
-            return;
-          }
-
-          const rawAuthors = snap.docs.map(d => (d.data().author||'').toLowerCase()).filter(a => !!a);
-          const authors = Array.from(new Set(rawAuthors));
-          let authorMap = {};
-          if (authors.length) {
-            try {
-              const authorDocs = await Promise.all(authors.map(a => db.collection('user_data').doc(a).get()));
-              authorDocs.forEach(d => { if (d.exists) authorMap[d.id.toLowerCase()] = d.data(); });
-            } catch (err) {
-              console.error('author fetch err', err);
+            if (pinnedLocal){
+              await db.collection('posts').doc(postId).update({pinnedByOwner:firebase.firestore.FieldValue.delete()});
+              pb.textContent='Pin to profile'; pinnedLocal=false;
+            } else {
+              await db.collection('posts').doc(postId).update({pinnedByOwner:true});
+              pb.textContent='Unpin post'; pinnedLocal=true;
             }
-          }
+            toast(`Post ${pinnedLocal?'pinned':'unpinned'}.`);
+          } catch(e){console.error(e);toast(t('failedUpdatePin'),'red');}
+        });
+        document.getElementById('rmWallBtn').addEventListener('click',async()=>{
+          if (!canRmWall) return;
+          if (!confirm(t('removeWallConfirm'))) return;
+          try {
+            await db.collection('posts').doc(postId).update({towall:firebase.firestore.FieldValue.delete()});
+            toast(t('removedFromYourWall'));
+            document.getElementById('twBanner').innerHTML='';
+          } catch(e){console.error(e);toast(t('failedGeneric'),'red');}
+        });
 
-          for (const doc of snap.docs) {
-            const c = doc.data();
-            const authorEmail = (c.author || '').toLowerCase();
-            const authorData = authorMap[authorEmail] || {};
-            if (authorData.blockedUsers && currentUserEmail && authorData.blockedUsers.map(x=>x.toLowerCase()).includes(currentUserEmail)) continue;
+        wireActions(editor, ref, cSetting);
 
-            const who = authorData['display name'] || authorEmail || '不明';
-            const pfp = authorData.profile_picture || '/org-owner.jpg';
-            const verified = authorData.is_verified ? '<span class="verified" style="width:14px;height:14px;background-image:url(/assets/verified.png);background-size:contain;background-repeat:no-repeat;display:inline-block"></span>' : '';
-            const frame = authorData.profile_picture_frame || '';
+      } catch(e) {
+        console.error(e);
+        setRootMessage('failedLoadPost', 'red');
+      }
+    }
 
-            const commentHtml = document.createElement('div');
-            commentHtml.className = 'comment';
-            commentHtml.innerHTML = `
-              <div class="pfp" style="background-image:url('${escapeHtml(pfp)}')">
-                ${frame ? `<div style="position:absolute;inset:0;background-image:url('${escapeHtml(frame)}');background-size:cover;border-radius:8px;pointer-events:none"></div>` : ''}
-              </div>
-              <div class="body">
-                <div class="who">${escapeHtml(who)} ${verified}</div>
-                <div class="text"><rich-markdown mode="markdown" chat-components></rich-markdown></div>
-              </div>
-            `;
-            commentsList.appendChild(commentHtml);
+    function canComment(cs,authorEmail){
+      if (!curEmail) return false;
+      switch((cs||'everyone').toLowerCase()){
+        case 'none':     return curEmail===(authorEmail||'').toLowerCase();
+        case 'admins':   return curEmail.endsWith('@darkpurpleof.github.io');
+        case 'verified': return !!(curUD&&curUD.is_verified===true);
+        default:         return true;
+      }
+    }
 
-            try{
-              const rm = commentHtml.querySelector('rich-markdown');
-              if(rm) {
-                rm.setAttribute('mode','markdown');
-                rm.setAttribute('chat-components','');
-                rm.textContent = c.text || '';
-              }
-            }catch(e){}
-          }
-        }, err => {
-          console.error('comments onSnapshot err', err);
-          commentsList.innerHTML = '<div class="muted" style="color:#f66">コメントを読み込めませんでした。</div>';
+    function wireActions(authorEmail,docRef,cs){
+      const lkBtn  =document.getElementById('lkBtn');
+      const lkSvg  =document.getElementById('lkSvg');
+      const lcnt   =document.getElementById('lcnt');
+      const lcntb  =document.getElementById('lcntb');
+      const rpBtn  =document.getElementById('rpBtn');
+      const rcnt   =document.getElementById('rcnt');
+      const rcntb  =document.getElementById('rcntb');
+      const ccnt   =document.getElementById('ccnt');
+      const shBtn  =document.getElementById('shBtn');
+      const rprtBtn=document.getElementById('rprtBtn');
+      const compose=document.getElementById('compose');
+      const cInput =document.getElementById('cInput');
+      const cSend  =document.getElementById('cSend');
+      const cmtList=document.getElementById('cmtList');
+      const twBanner=document.getElementById('twBanner');
+      const cPfp   =document.getElementById('cPfp');
+      let localLiked=userLiked, localReposted=userReposted;
+
+      /* Towall */
+      if (curEmail&&postData.towall&&String(postData.towall).toLowerCase()===curEmail){
+        twBanner.innerHTML=`<div class="towall-banner"><span>${esc(t('thisPostIsInYourWall'))}</span><button class="towall-rm" id="twRm">${esc(t('remove'))}</button></div>`;
+        document.getElementById('twRm').addEventListener('click',async()=>{
+          try{await docRef.update({towall:firebase.firestore.FieldValue.delete()});twBanner.innerHTML='';toast(t('removedFromYourWall'));}
+          catch(e){console.error(e);toast(t('failedGeneric'),'red');}
         });
       }
 
-      window.addEventListener('beforeunload', () => { if (unsubscribeComments) unsubscribeComments(); });
+      /* Compose pfp */
+      if (cPfp){
+        if (curUD?.profile_picture) cPfp.style.backgroundImage=`url('${esc(curUD.profile_picture)}')`;
+        cPfp.style.cssText+=';background-size:cover;background-position:center;';
+      }
+      if (canComment(cs,authorEmail)) compose.style.display='flex';
+
+      /* Like */
+      lkBtn.addEventListener('click',async()=>{
+        if (!curEmail){toast(t('signInToLike'),'yellow');return;}
+        lkBtn.disabled=true;
+        try {
+          if (localLiked){
+            await docRef.update({likedBy:firebase.firestore.FieldValue.arrayRemove(curEmail)});
+            localLiked=false;lkBtn.classList.remove('liked');lkBtn.setAttribute('aria-pressed','false');
+            lkSvg.setAttribute('fill','none');
+            const c=Math.max(0,+lcnt.textContent-1);lcnt.textContent=c;lcntb.textContent=c;
+          } else {
+            await docRef.update({likedBy:firebase.firestore.FieldValue.arrayUnion(curEmail)});
+            localLiked=true;lkBtn.classList.add('liked');lkBtn.setAttribute('aria-pressed','true');
+            lkSvg.setAttribute('fill','currentColor');
+            const c=+lcnt.textContent+1;lcnt.textContent=c;lcntb.textContent=c;
+          }
+        } catch(e){console.error(e);toast(t('failedUpdateLike'),'red');}
+        finally{lkBtn.disabled=false;}
+      });
+
+      /* Repost */
+      rpBtn.addEventListener('click',async()=>{
+        if (!curEmail){toast(t('signInToRepost'),'yellow');return;}
+        rpBtn.disabled=true;
+        try {
+          if (localReposted){
+            await docRef.update({repostedBy:firebase.firestore.FieldValue.arrayRemove(curEmail)});
+            localReposted=false;rpBtn.classList.remove('reposted');rpBtn.setAttribute('aria-pressed','false');
+            const c=Math.max(0,+rcnt.textContent-1);rcnt.textContent=c;rcntb.textContent=c;
+          } else {
+            await docRef.update({repostedBy:firebase.firestore.FieldValue.arrayUnion(curEmail)});
+            localReposted=true;rpBtn.classList.add('reposted');rpBtn.setAttribute('aria-pressed','true');
+            const c=+rcnt.textContent+1;rcnt.textContent=c;rcntb.textContent=c;
+          }
+        } catch(e){console.error(e);toast(t('failedUpdateRepost'),'red');}
+        finally{rpBtn.disabled=false;}
+      });
+
+      /* Share */
+      shBtn.addEventListener('click',async()=>{
+        try{
+          if (navigator.share){await navigator.share({title:document.title,url:location.href});toast(t('shared'),'green');}
+          else if (navigator.clipboard){await navigator.clipboard.writeText(location.href);toast(t('linkCopied'));}
+          else prompt('Copy this link:',location.href);
+        }catch(e){console.error(e);}
+      });
+
+      rprtBtn.addEventListener('click',()=>{window.location.href=`/reportabuse?email=${encodeURIComponent(authorEmail)}`;});
+
+      cInput.addEventListener('input',()=>{cSend.disabled=!cInput.value.trim();});
+      cSend.addEventListener('click',async()=>{
+        const txt=cInput.value.trim();
+        if (!txt){toast('Reply cannot be empty.','yellow');return;}
+        if (!curEmail){toast(t('signInToReply'),'yellow');return;}
+        if (!canComment(cs,authorEmail)){toast(t('noPermission'),'red');return;}
+        cSend.disabled=true;
+        try {
+          await docRef.collection('comments').add({author:curEmail,text:txt,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+          cInput.value='';cSend.disabled=true;toast(t('replyPosted'));
+        } catch(e){console.error(e);toast(t('failedPostReply'),'red');cSend.disabled=false;}
+      });
+
+      loadComments(docRef,ccnt,cmtList);
+      window.addEventListener('beforeunload',()=>{if(unsubCmt)unsubCmt();});
+    }
+
+    function loadComments(docRef,countEl,listEl){
+      if (unsubCmt) unsubCmt();
+      unsubCmt=docRef.collection('comments').orderBy('timestamp','asc').onSnapshot(async snap=>{
+        countEl.textContent=snap.size;
+        if (snap.empty){listEl.innerHTML=`<div class="no-cmt">${esc(t('noRepliesYet'))}</div>`;return;}
+
+        const emails=Array.from(new Set(snap.docs.map(d=>(d.data().author||'').toLowerCase()).filter(Boolean)));
+        let aMap={};
+        if (emails.length){
+          try{
+            const docs=await Promise.all(emails.map(e=>db.collection('user_data').doc(e).get()));
+            docs.forEach(d=>{if(d.exists)aMap[d.id.toLowerCase()]=d.data();});
+          }catch(e){console.error(e);}
+        }
+
+        listEl.innerHTML='';
+        for (const doc of snap.docs){
+          const c =doc.data();
+          const ae=(c.author||'').toLowerCase();
+          const ad=aMap[ae]||{};
+          if (ad.blockedUsers&&curEmail&&ad.blockedUsers.map(x=>x.toLowerCase()).includes(curEmail)) continue;
+
+          const nm =ad['display name']||ae||'Unknown';
+          const pfp=ad.profile_picture||'/org-owner.jpg';
+          const fr =ad.profile_picture_frame||'';
+          const vrf=ad.is_verified?`<span class="vbadge" style="width:14px;height:14px"></span>`:'';
+
+          const el=document.createElement('div');
+          el.className='cmt-item';
+          el.innerHTML=`
+<div class="cmt-pfp" style="background-image:url('${esc(pfp)}')">
+  ${fr?`<div class="cmt-pfp-frame" style="background-image:url('${esc(fr)}')"></div>`:''}
+</div>
+<div class="cmt-body">
+  <div class="cmt-who">
+    <span class="cmt-name">${esc(nm)}</span>${vrf}
+    <span class="cmt-handle">@${esc(ae)}</span>
+  </div>
+  <div class="cmt-text"><rich-markdown mode="markdown" chat-components></rich-markdown></div>
+</div>`;
+          listEl.appendChild(el);
+          setRM(el.querySelector('rich-markdown'),c.text||'');
+        }
+      },err=>{
+        console.error(err);
+        listEl.innerHTML=`<div class="no-cmt" style="color:#f66">${esc(t('failedLoadReplies'))}</div>`;
+      });
     }
   }
 </script>

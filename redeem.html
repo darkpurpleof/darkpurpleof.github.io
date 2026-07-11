@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Redeem Code</title>
 
-  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
- 
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root{
       --bg:#171717;
@@ -23,45 +22,236 @@
       --border:rgba(255,255,255,0.06);
       --radius:12px;
       --max-width:920px;
+      --ctrl-radius:4px;
+      --card-radius:8px;
+      --ctrl-height:32px;
+      --shadow-2: 0 1px 2px rgba(0,0,0,0.14), 0 0.5px 0 rgba(255,255,255,0.03) inset;
+      --shadow-8: 0 4px 8px rgba(0,0,0,0.28), 0 0px 2px rgba(0,0,0,0.24);
+      --shadow-16: 0 8px 16px rgba(0,0,0,0.32), 0 0px 2px rgba(0,0,0,0.28);
+      --divider: rgba(255,255,255,0.08);
     }
-    body.light{ --bg:#f6f8fb; --card:#fff; --text:#0f172a; --muted:#475569; --border:rgba(0,0,0,0.06); }
+    body.light{
+      --bg:#f6f8fb; --card:#fff; --text:#0f172a; --muted:#475569; --border:rgba(0,0,0,0.06);
+      --shadow-2: 0 1px 2px rgba(0,0,0,0.08), 0 0.5px 0 rgba(255,255,255,0.5) inset;
+      --shadow-8: 0 4px 8px rgba(0,0,0,0.10), 0 0px 2px rgba(0,0,0,0.06);
+      --shadow-16: 0 8px 16px rgba(0,0,0,0.12), 0 0px 2px rgba(0,0,0,0.08);
+      --divider: rgba(0,0,0,0.08);
+    }
 
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow-x:hidden;}
+    html,body{height:100%;margin:0;font-family:"Segoe UI Variable","Segoe UI",Inter,system-ui,-apple-system,Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow-x:hidden;}
     body{display:flex;flex-direction:column;min-height:100vh;}
+    *{box-sizing:border-box;}
 
-    /* topbar */
     dp-topbar{display:block;position:sticky;top:0;z-index:100;}
 
-    main.container{ width:100%; max-width:var(--max-width); margin:20px auto; padding:16px; box-sizing:border-box; }
-    .card{ background:var(--card); border-radius:var(--radius); padding:16px; border:1px solid var(--border); box-shadow:0 6px 18px rgba(2,6,23,0.45); }
+    main.container{width:100%;max-width:var(--max-width);margin:40px auto;padding:0 16px;}
 
-    h1{ margin:0 0 8px 0; font-size:18px; font-weight:700; color:var(--text); }
-    p.lead{ margin:6px 0 12px 0; color:var(--muted); }
+    /* ── Step indicator ── */
+    .steps{
+      display:flex;
+      align-items:center;
+      gap:0;
+      margin-bottom:32px;
+      user-select:none;
+      max-width:560px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+    .step-item{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      font-weight:500;
+      color:var(--muted);
+      transition:color 200ms;
+    }
+    .step-item.active{ color:var(--text); }
+    .step-item.done{ color:var(--accent); }
+    .step-num{
+      width:24px;height:24px;
+      border-radius:50%;
+      border:1.5px solid var(--muted);
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:600;
+      flex-shrink:0;
+      transition:border-color 200ms, background 200ms, color 200ms;
+    }
+    .step-item.active .step-num{
+      border-color:var(--accent);
+      background:var(--accent);
+      color:#fff;
+    }
+    .step-item.done .step-num{
+      border-color:var(--accent);
+      background:transparent;
+      color:var(--accent);
+    }
+    .step-connector{
+      flex:1;
+      height:1px;
+      background:var(--divider);
+      margin:0 10px;
+      min-width:24px;
+    }
 
-    .form-row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-    .input { flex:1; min-width:160px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); box-sizing:border-box; }
-    .btn { padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700; background:var(--accent); color:#fff; }
-    .btn.ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+    /* ── Card ── */
+    .card{
+      background:var(--card);
+      border-radius:var(--card-radius);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow-8);
+      padding:32px;
+      max-width:560px;
+      margin:0 auto;
+    }
 
-    .muted { color:var(--muted); font-size:13px; }
+    h1{margin:0 0 6px;font-size:22px;font-weight:600;line-height:1.3;}
+    p.lead{margin:0 0 24px;color:var(--muted);font-size:13px;line-height:1.6;}
+    p.lead code{
+      font-family:Consolas,"Cascadia Code",monospace;
+      background:rgba(255,255,255,0.06);
+      padding:1px 5px;border-radius:3px;font-size:12px;
+    }
+    body.light p.lead code{background:rgba(0,0,0,0.05);}
 
-    /* confirm card */
-    .confirm { display:flex; gap:12px; align-items:center; padding:12px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid var(--border); margin-top:12px; }
-    .confirm img { width:72px; height:72px; border-radius:10px; object-fit:cover; border:1px solid var(--border); }
-    .confirm .meta { flex:1; min-width:0; }
-    .confirm .title { font-weight:700; font-size:16px; color:var(--text); display:flex; gap:8px; align-items:center; }
-    .confirm .by { font-size:13px; color:var(--muted); margin-top:6px; }
+    .input{
+      width:100%;
+      height:36px;
+      padding:0 12px;
+      border-radius:var(--ctrl-radius);
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.03);
+      color:var(--text);
+      font-size:14px;
+      font-family:inherit;
+      letter-spacing:0.04em;
+      transition:border-color 120ms,box-shadow 120ms;
+    }
+    body.light .input{background:#fff;}
+    .input::placeholder{color:var(--muted);letter-spacing:0;}
+    .input:hover{border-color:rgba(255,255,255,0.18);}
+    body.light .input:hover{border-color:rgba(0,0,0,0.18);}
+    .input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
 
-    .actions { display:flex; gap:8px; margin-left:auto; }
-    .actions .btn { padding:8px 12px; font-size:14px; }
+    .hint{font-size:12px;color:var(--muted);margin-top:6px;}
 
-    .result { margin-top:12px; padding:12px; border-radius:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); }
+    .btn-row{display:flex;gap:8px;margin-top:24px;}
+    .btn{
+      height:34px;padding:0 20px;
+      border-radius:var(--ctrl-radius);
+      border:1px solid transparent;
+      cursor:pointer;font-weight:600;font-size:13px;font-family:inherit;
+      background:var(--accent);color:#fff;
+      transition:background-color 100ms,transform 80ms;
+    }
+    .btn:hover{background:var(--accent-strong);}
+    .btn:active{transform:translateY(1px);}
+    .btn:focus-visible{outline:2px solid var(--text);outline-offset:1px;}
+    .btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
+    .btn.ghost{
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--text);
+    }
+    .btn.ghost:hover{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.22);}
+    body.light .btn.ghost:hover{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.22);}
+
+    .muted{color:var(--muted);font-size:12px;}
+    .error-text{color:#ff4a4a;font-size:12px;}
+    #message{min-height:16px;margin-top:8px;}
+
+    .disclaimer{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.5;
+      margin-top:16px;
+      margin-bottom:12px;
+    }
+    .disclaimer a{
+      color:var(--accent);
+      text-decoration:none;
+      font-weight:500;
+    }
+    .disclaimer a:hover{
+      text-decoration:underline;
+    }
+
+    .step-item.error .step-num {
+      border-color: #ef4444;
+      background: #ef4444;
+      color: #fff;
+    }
+    .step-item.error span {
+      color: #ef4444;
+    }
+    .step-connector.active {
+      background: var(--accent);
+    }
+    .step-connector.error {
+      background: #ef4444;
+    }
+    .success-icon.error {
+      background: #ef4444;
+    }
+
+    /* ── Confirm row ── */
+    .confirm-row{
+      display:flex;gap:14px;align-items:center;
+      padding:14px;
+      border-radius:var(--ctrl-radius);
+      background:rgba(255,255,255,0.025);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow-2);
+      margin-bottom:24px;
+    }
+    body.light .confirm-row{background:#fafbfc;}
+    .confirm-row > img{
+      width:64px;height:64px;border-radius:var(--ctrl-radius);
+      object-fit:cover;border:1px solid var(--border);flex-shrink:0;
+    }
+    .confirm-meta .c-title{font-weight:600;font-size:15px;}
+    .confirm-meta .c-by{font-size:12px;color:var(--muted);margin-top:3px;}
+    .confirm-meta .c-desc{font-size:12px;color:var(--muted);margin-top:6px;}
+
+    /* ── Success / You're all set ── */
+    .success-icon{
+      width:56px;height:56px;border-radius:50%;
+      background:var(--accent);
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:20px;
+    }
+    .success-icon svg{width:28px;height:28px;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+    .success-detail{
+      padding:14px;border-radius:var(--ctrl-radius);
+      background:rgba(255,255,255,0.025);border:1px solid var(--border);
+      font-size:13px;line-height:1.6;
+      margin-bottom:24px;
+    }
+    body.light .success-detail{background:#fafbfc;}
+
+    /* ── Screens ── */
+    .screen{display:none;}
+    .screen.active{display:block;}
+
+    /* ── Spinner overlay ── */
+    #spinnerOverlay {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.6); z-index: 10000; animation: fadeIn 200ms ease;
+    }
+    #spinnerOverlay.active { display: flex; }
+    .spinner {
+      width: 48px; height: 48px; border: 3px solid rgba(255,255,255,0.2);
+      border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     /* responsive */
-    @media(max-width:720px){
-      .confirm{ flex-direction:row; align-items:center; }
-      .confirm img{ width:64px; height:64px; }
-      .actions{ margin-top:8px; width:100%; justify-content:flex-end; }
+    @media(max-width:600px){
+      .card{padding:22px;}
+      .steps{gap:0;}
+      .step-item span:last-child{display:none;}
     }
   </style>
 </head>
@@ -70,30 +260,92 @@
   <dp-topbar></dp-topbar>
 
   <main class="container">
-    <div class="card" id="ui-root" role="region" aria-label="Redeem code">
-      <h1>Redeem Code</h1>
-      <p class="lead">Enter a redemption code to receive coins or items. New codes look like <code>ABCDE-ABCDE-ABCDE-ABCDE-ABCDE</code>.</p>
 
-      <div id="entry-area" class="form-row">
-        <input id="codeInput" class="input" placeholder="Enter code (legacy or new)" autocomplete="off" />
-        <button id="redeemBtn" class="btn">Redeem</button>
-        <button id="openApp" class="btn ghost">Open App</button>
+    <!-- Step indicator -->
+    <div class="steps" id="stepIndicator">
+      <div class="step-item active" id="si-1">
+        <div class="step-num">1</div>
+        <span>Enter code</span>
+      </div>
+      <div class="step-connector" id="sc-1"></div>
+      <div class="step-item" id="si-2">
+        <div class="step-num">2</div>
+        <span>Confirm</span>
+      </div>
+      <div class="step-connector" id="sc-2"></div>
+      <div class="step-item" id="si-3">
+        <div class="step-num">3</div>
+        <span>Done</span>
+      </div>
+    </div>
+
+    <!-- ── Step 1: Enter code ── -->
+    <div class="card screen active" id="screen-1">
+      <h1>Redeem a code</h1>
+      <p class="lead">
+        Redeem a DarkPurpleOF's Website code to obtain coins, UGC, Plugins, Sticker Packs, to redeem it, enter the 25-character code in the field below
+      </p>
+
+      <div style="margin-bottom: 12px; font-size: 13px; color: var(--muted);">
+        It'll be added to <span id="currentUserEmail" style="color: var(--text); font-weight: 600;">your account</span>
       </div>
 
-      <div id="message" class="muted" style="margin-top:10px;"></div>
+      <input id="codeInput" class="input" placeholder="Enter your code" autocomplete="off" maxlength="29" spellcheck="false" inputmode="text" />
+      
+      <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">
+        Like this one: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
+      </div>
 
-      <!-- confirmation area (hidden until valid code found) -->
-      <div id="confirmArea" style="display:none; margin-top:12px;"></div>
+      <div class="hint" id="message"></div>
 
-      <!-- result area -->
-      <div id="resultArea" style="display:none;margin-top:12px;"></div>
+      <div class="btn-row">
+        <button id="redeemBtn" class="btn">Next</button>
+        <button id="openApp" class="btn ghost" style="display:none;">Open App</button>
+      </div>
     </div>
+
+    <!-- ── Step 2: Confirm ── -->
+    <div class="card screen" id="screen-2">
+      <h1>Confirm redemption</h1>
+      <p class="lead">Review what you're about to receive, then select <strong>Confirm</strong>.</p>
+
+      <div class="confirm-row" id="confirmRow">
+        <!-- filled dynamically -->
+      </div>
+
+      <div class="disclaimer">
+        By selecting Confirm, you agree to the <a href="/terms">DarkPurpleOF's Website Terms and Conditions</a> and that you won't be able to transfer, use this item outside of the platform or otherwise resell it. No Refunds
+      </div>
+
+      <div class="btn-row">
+        <button id="confirmBtn" class="btn">Confirm</button>
+        <button id="cancelBtn" class="btn ghost">Back</button>
+      </div>
+    </div>
+
+    <!-- ── Step 3: You're all set ── -->
+    <div class="card screen" id="screen-3">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h1>You're all set!</h1>
+      <p class="lead" id="successLead"></p>
+      <div class="success-detail" id="successDetail"></div>
+      <div class="btn-row">
+        <button id="redeemAnotherBtn" class="btn ghost">Redeem another</button>
+        <button id="txBtn" class="btn">View transactions</button>
+      </div>
+    </div>
+
   </main>
 
-  <div id="toast" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);display:none;padding:10px 14px;border-radius:10px;color:#fff;z-index:99999;"></div>
+  <div id="spinnerOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <div id="toast" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);display:none;padding:10px 14px;border-radius:4px;color:#fff;z-index:99999;box-shadow:0 4px 8px rgba(0,0,0,0.28);font-size:13px;font-family:'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;"></div>
 
 <script>
-  // config: compat SDK already loaded above
   const firebaseConfig = {
     apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
     authDomain: "darkpurpleof-s-website.firebaseapp.com",
@@ -106,324 +358,540 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  const codeInput = document.getElementById('codeInput');
-  const redeemBtn = document.getElementById('redeemBtn');
-  const openApp = document.getElementById('openApp');
-  const messageEl = document.getElementById('message');
-  const confirmArea = document.getElementById('confirmArea');
-  const resultArea = document.getElementById('resultArea');
-  const toast = document.getElementById('toast');
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('shoulddisable') === 'true') {
+    handleDisableError();
+  }
+
+  const codeInput   = document.getElementById('codeInput');
+  const redeemBtn   = document.getElementById('redeemBtn');
+  const openApp     = document.getElementById('openApp');
+  const messageEl   = document.getElementById('message');
+  const confirmRow  = document.getElementById('confirmRow');
+  const confirmBtn  = document.getElementById('confirmBtn');
+  const cancelBtn   = document.getElementById('cancelBtn');
+  const successLead = document.getElementById('successLead');
+  const successDetail = document.getElementById('successDetail');
+  const redeemAnotherBtn = document.getElementById('redeemAnotherBtn');
+  const txBtn       = document.getElementById('txBtn');
+  const toast       = document.getElementById('toast');
+  const spinnerOverlay = document.getElementById('spinnerOverlay');
+
+  // Auto-format code input: uppercase + auto-dash insertion
+  codeInput.addEventListener('input', (e) => {
+    let val = (e.target.value || '').toUpperCase();
+    // Remove any existing dashes
+    val = val.replace(/-/g, '');
+    // Re-add dashes every 5 characters
+    let formatted = '';
+    for (let i = 0; i < val.length; i++) {
+      if (i > 0 && i % 5 === 0) formatted += '-';
+      formatted += val[i];
+    }
+    e.target.value = formatted;
+    
+    // Show spinner when code is complete (29 chars = 5 segments)
+    if (formatted.length === 29) {
+      clearError();
+      const code = formatted.toUpperCase();
+
+      spinnerOverlay.classList.add('active');
+
+      // Check if the code does not exist in the database (query during the spinner phase)
+      let checkPromise = db.collection('redeemable').doc(code).get()
+        .then(snap => snap.exists)
+        .catch(err => {
+          console.error(err);
+          if (err.code === 'permission-denied' || err.message.indexOf('permission') !== -1 || err.message.indexOf('Permission') !== -1) {
+            handleDisableError();
+          }
+          return false;
+        });
+
+      setTimeout(async () => {
+        spinnerOverlay.classList.remove('active');
+        
+        // Only display the errors after the spinner disappears
+        
+        // 1. COINS error has highest priority
+        if (code.includes('COINS')) {
+          showError("Legacy Redeem codes can't be redeemed anymore");
+          return;
+        }
+
+        // 2. Vocals/forbidden characters error has priority over database existence error
+        const hasForbidden = /[0OAEIULS]/.test(code) || /[^A-Z0-9-]/.test(code);
+        if (hasForbidden) {
+          showError("Codes cannot contain: A, E, I, O, U, L, S, 0 ( !, @, #, $, %, ^, &, *, (, ), _, +, =, {, }, [, ], |, \\, :, ;, \", ', <, >, ?, /, ~, ` )");
+          return;
+        }
+
+        // 3. Database existence check
+        const exists = await checkPromise;
+        if (!exists) {
+          showError("That did not work, try again with another code");
+          return;
+        }
+      }, 3000);
+    }
+  });
+
+  // Also prevent non-alphanumeric characters
+  codeInput.addEventListener('keypress', (e) => {
+    const char = String.fromCharCode(e.which);
+    if (!/[A-Z0-9]/i.test(char)) {
+      e.preventDefault();
+    }
+  });
+
   let currentUser = null;
+  let pendingAction = null; // function to call on confirmBtn click
+  let originalCodeData = null;
+
+  const currentUserEmail = document.getElementById('currentUserEmail');
+  auth.onAuthStateChanged(async u => {
+    currentUser = u || null;
+    if (currentUserEmail) {
+      currentUserEmail.textContent = (u && u.email) ? u.email : 'your account';
+    }
+    if (u) {
+      try {
+        await db.collection('redeemable').doc('_check_permission_').get();
+      } catch (err) {
+        if (err.code === 'permission-denied' || err.message.indexOf('permission') !== -1 || err.message.indexOf('Permission') !== -1) {
+          handleDisableError();
+        }
+      }
+    }
+  });
+
+  // ── Helpers ──────────────────────────────────────────────
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   function showToast(text, color='purple', t=3000){
     toast.textContent = text;
     toast.style.display = 'block';
-    toast.style.background = (color==='red')? '#c00': (color==='yellow'? '#e6b800' : 'linear-gradient(180deg,var(--accent-strong),var(--accent))');
+    toast.style.background = color==='red' ? '#c00' : color==='yellow' ? '#e6b800' : 'linear-gradient(180deg,var(--accent-strong),var(--accent))';
     setTimeout(()=> toast.style.display='none', t);
   }
 
-  auth.onAuthStateChanged(u => {
-    currentUser = u || null;
-  });
+  function showError(txt){ messageEl.textContent=txt; messageEl.className='error-text'; }
+  function clearError(){ messageEl.textContent=''; }
 
-  openApp.addEventListener('click', ()=> location.href = 'darkpurpleof://redeem');
+  function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
 
-  // new code pattern: 5 groups of 5 alnum separated by dashes
-  const NEW_CODE_RE = /^[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}$/i;
-
-  redeemBtn.addEventListener('click', onRedeem);
-
-  async function onRedeem(){
-    clearMessage();
-    confirmArea.style.display='none';
-    resultArea.style.display='none';
-
-    if (!currentUser) { showError('You must be signed in to redeem codes.'); return; }
-    const codeRaw = (codeInput.value||'').trim();
-    if (!codeRaw) { showError('Enter a code.'); return; }
-
-    const code = codeRaw.toUpperCase();
-
-    // check new code pattern
-    const isNew = NEW_CODE_RE.test(code);
-
-    try {
-      const codeRef = db.collection('redeemable').doc(code);
-      const codeSnap = await codeRef.get();
-      if (!codeSnap.exists) {
-        showError('Code not found or already used.');
-        return;
-      }
-
-      const data = codeSnap.data() || {};
-      if (isNew) {
-        // NEW codes have structure: type: "dev"|"shop"|"coins"
-        const type = (data.type || '').toLowerCase();
-        if (!type) { showError('Invalid new code payload.'); return; }
-
-        if (type === 'coins') {
-          // coins: data.amount
-          const amount = Number(data.amount || 0);
-          if (!amount || amount <= 0) { showError('Invalid coin amount.'); return; }
-          // show confirm card for coins
-          showConfirmCoins(code, amount, data, codeRef);
-        } else if (type === 'shop' || type === 'dev') {
-          // expect author and id inside code doc
-          const author = data.author;
-          const itemId = data.id;
-          if (!author || !itemId) { showError('Invalid code payload (missing author/id).'); return; }
-          // fetch item from corresponding path
-          const path = (type === 'dev') ? `ugc/${author}/development-items/${itemId}` : `ugc/${author}/store-items/${itemId}`;
-          const itemSnap = await db.doc(path).get();
-          if (!itemSnap.exists) { showError('Referenced item not found.'); return; }
-          const item = itemSnap.data();
-          showConfirmItem(code, type, data, item, author, itemId, codeRef);
-        } else {
-          showError('Unknown code type.');
-          return;
-        }
-      } else {
-        // Legacy flow: keep current behavior (assume legacy codes contain digits for amount)
-        // For safety use digits extraction
-        const digits = (code.match(/\d+/g) || []).join('');
-        const coins = digits ? parseInt(digits,10) : 0;
-        if (!coins || coins <= 0) {
-          // If legacy can be other behavior, but follow your previous approach: error
-          showError('Legacy code did not contain a coin amount.');
-          return;
-        }
-        // Confirm legacy redemption immediately (small confirm)
-        showConfirmLegacy(code, coins, codeRef);
-      }
-    } catch (err) {
-      console.error(err);
-      showError('Failed to validate code. Try again.');
+  function handleDisableError() {
+    const screen1 = document.getElementById('screen-1');
+    if (screen1) {
+      screen1.innerHTML = `
+        <h1>Oops!, you can't redeem codes right now</h1>
+        <p class="lead" style="margin-top: 16px;">
+          The ability to redeem codes from your account has been temporarily disabled due to a violation in our <a href="/terms" style="color: var(--accent); text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Terms of Service</a>
+        </p>
+      `;
     }
   }
 
-  function clearMessage(){ messageEl.textContent=''; messageEl.className='muted'; }
-  function showError(txt){ messageEl.textContent=txt; messageEl.className='muted'; showToast(txt,'red',3500); }
+  function goStep(n, isError = false){
+    ['screen-1','screen-2','screen-3'].forEach((id,i)=>{
+      document.getElementById(id).classList.toggle('active', i+1===n);
+    });
+    ['si-1','si-2','si-3'].forEach((id,i)=>{
+      const el = document.getElementById(id);
+      el.classList.remove('active','done','error');
+      if(i+1 === n) {
+        el.classList.add(isError ? 'error' : 'active');
+      } else if(i+1 < n) {
+        el.classList.add('done');
+      }
+    });
 
-  // Helper: write transaction per spec
+    const sc1 = document.getElementById('sc-1');
+    const sc2 = document.getElementById('sc-2');
+    if (sc1 && sc2) {
+      sc1.classList.remove('active', 'error');
+      sc2.classList.remove('active', 'error');
+
+      if (n === 2) {
+        sc1.classList.add('active');
+      } else if (n === 3) {
+        sc1.classList.add('active');
+        if (isError) {
+          sc2.classList.add('error');
+        } else {
+          sc2.classList.add('active');
+        }
+      }
+    }
+
+    // replace check number with checkmark svg for done steps
+    document.querySelectorAll('.step-item.done .step-num').forEach(el=>{
+      if(!el.dataset.orig) el.dataset.orig = el.textContent;
+      el.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    });
+    document.querySelectorAll('.step-item.error .step-num').forEach(el=>{
+      if(!el.dataset.orig) el.dataset.orig = el.textContent;
+      el.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+    });
+    document.querySelectorAll('.step-item:not(.done):not(.error) .step-num').forEach(el=>{
+      if(el.dataset.orig) el.textContent = el.dataset.orig;
+    });
+  }
+
   async function writeTransaction(userEmail, docId, payload){
-    // path: transactions/(currentEmail)/records/{docId}
     const txRef = db.collection('transactions').doc(userEmail).collection('records').doc(docId);
     await txRef.set(payload);
   }
 
-  // Helper update coins
- async function addCoinsToUser(userEmail, amount){
-  const userRef = db.collection('user_data').doc(userEmail);
-  const userSnap = await userRef.get();
-  let current = 0;
-
-  if (userSnap.exists){  // correct: no parentheses
-    const c = userSnap.data().coins;
-    // parse string to number safely
-    current = parseInt(c || '0', 10) || 0;
+  async function addCoinsToUser(userEmail, amount){
+    const userRef = db.collection('user_data').doc(userEmail);
+    const snap = await userRef.get();
+    let current = 0;
+    if(snap.exists){
+      current = parseInt(snap.data().coins || '0', 10) || 0;
+    }
+    const newVal = current + Number(amount||0);
+    await userRef.set({ coins: String(newVal) }, { merge: true });
+    return newVal;
   }
 
-  const newVal = current + Number(amount || 0);
-  // save back as string
-  await userRef.set({ coins: String(newVal) }, { merge: true });
+  const NEW_CODE_RE = /^[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}$/i;
 
-  return newVal; // you can return number for UI display
-}
+  const ua = navigator.userAgent.toLowerCase();
+  const isAndroid = /android/i.test(ua);
+  
+  let isWindows = /windows/i.test(ua);
+  if (isWindows) {
+    const winVerMatch = ua.match(/windows nt (\d+\.\d+)/);
+    if (winVerMatch) {
+      const winVer = parseFloat(winVerMatch[1]);
+      if (winVer < 10.0) {
+        isWindows = false;
+      }
+    } else {
+      isWindows = false;
+    }
+  }
 
+  if (isAndroid) {
+    openApp.style.display = 'inline-block';
+    openApp.textContent = 'Open App';
+  }
 
-  // Confirm UI for legacy
-  function showConfirmLegacy(code, coins, codeRef){
-    confirmArea.innerHTML = `
-      <div class="confirm">
-        <img src="https://darkpurpleof.github.io/org-owner.jpg" alt="coins">
-        <div class="meta">
-          <div class="title">${coins} Coins</div>
-          <div class="by">by System</div>
-          <div class="muted" style="margin-top:6px;">After redeeming, the coins will be added to your account immediately.</div>
-        </div>
-        <div class="actions">
-          <button id="cancelBtn" class="btn ghost">Cancel</button>
-          <button id="confirmBtn" class="btn">Continue</button>
-        </div>
+  openApp.addEventListener('click', ()=> location.href='darkpurpleof://redeem');
+
+  // ── Step 1 → Step 2 ──────────────────────────────────────
+  redeemBtn.addEventListener('click', async ()=>{
+    clearError();
+    if(!currentUser){ showError('You must be signed in to redeem codes.'); return; }
+    const codeRaw = (codeInput.value||'').trim();
+    if(!codeRaw){ showError('Please enter a code.'); return; }
+    const code = codeRaw.toUpperCase();
+
+    if (code.includes('COINS')) {
+      showError("Legacy Redeem codes can't be redeemed anymore");
+      return;
+    }
+
+    const hasForbidden = /[0OAEIULS]/.test(code) || /[^A-Z0-9-]/.test(code);
+    if (hasForbidden) {
+      showError("Codes cannot contain: A, E, I, O, U, L, S, 0 ( !, @, #, $, %, ^, &, *, (, ), _, +, =, {, }, [, ], |, \\, :, ;, \", ', <, >, ?, /, ~, ` )");
+      return;
+    }
+
+    const isNew = NEW_CODE_RE.test(code);
+
+    redeemBtn.disabled = true;
+
+    try {
+      const codeRef = db.collection('redeemable').doc(code);
+      const codeSnap = await codeRef.get();
+      if(!codeSnap.exists){ showError('That did not work, try again with another code'); return; }
+
+      const data = codeSnap.data() || {};
+      originalCodeData = data;
+
+      if(isNew){
+        const type = (data.type||'').toLowerCase();
+        if(!type){ showError('Invalid code payload.'); return; }
+
+        if(type === 'coins'){
+          const amount = Number(data.amount||0);
+          if(!amount || amount<=0){ showError('Invalid coin amount.'); return; }
+          await buildConfirmCoins(code, amount, data, codeRef);
+        } else if(type==='shop'||type==='dev'){
+          if(!data.author||!data.id){ showError('Invalid code payload (missing author/id).'); return; }
+          const path = type==='dev'
+            ? `ugc/${data.author}/development-items/${data.id}`
+            : `ugc/${data.author}/store-items/${data.id}`;
+          const itemSnap = await db.doc(path).get();
+          if(!itemSnap.exists){ showError('Referenced item not found.'); return; }
+          await buildConfirmItem(code, type, data, itemSnap.data(), data.author, data.id, codeRef);
+        } else {
+          showError('Unknown code type.'); return;
+        }
+      } else {
+        // Legacy
+        const digits = (code.match(/\d+/g)||[]).join('');
+        const coins = digits ? parseInt(digits,10) : 0;
+        if(!coins||coins<=0){ showError('Legacy code did not contain a coin amount.'); return; }
+        buildConfirmLegacy(code, coins, codeRef);
+      }
+
+      goStep(2);
+    } catch(err){
+      console.error(err);
+      if (err.code === 'permission-denied' || err.message.indexOf('permission') !== -1 || err.message.indexOf('Permission') !== -1) {
+        handleDisableError();
+        return;
+      }
+      showError('Failed to validate code. Try again.');
+    } finally {
+      redeemBtn.disabled = false;
+    }
+  });
+
+  cancelBtn.addEventListener('click', ()=> goStep(1));
+
+  // ── Confirm builders ──────────────────────────────────────
+  function renderConfirmRow(imgSrc, title, byHtml, descText){
+    confirmRow.innerHTML = `
+      <img src="${escapeHtml(imgSrc)}" alt="">
+      <div class="confirm-meta">
+        <div class="c-title">${title}</div>
+        <div class="c-by">${byHtml}</div>
+        <div class="c-desc">${descText}</div>
       </div>
     `;
-    confirmArea.style.display='block';
-    document.getElementById('cancelBtn').onclick = ()=> { confirmArea.style.display='none'; };
-    document.getElementById('confirmBtn').onclick = async ()=>{
-      try {
-        // add coins
-        const newCoins = await addCoinsToUser(currentUser.email, coins);
+  }
 
-        // transaction payload for legacy codes
-        const payload = {
-          amount: Number(coins),
-          date: firebase.firestore.FieldValue.serverTimestamp(),
-          description: "Redeemed Code",
-          image: "https://darkpurpleof.github.io/org-owner.jpg",
-          source: "system@darkpurpleof.github.io",
-          type: "incoming"
-        };
-        await writeTransaction(currentUser.email, code, payload);
-
-        // delete code doc (mark used)
-        await codeRef.delete();
-
-        // show success
-        resultArea.style.display='block';
-        resultArea.innerHTML = `<div class="result"><strong>Success!</strong> ${coins} coins added to your account. You now have ${newCoins} coins. <div style="margin-top:8px;"><button id="backBtn" class="btn ghost">Redeem another</button> <button id="txBtn" class="btn">View transactions</button></div></div>`;
-        document.getElementById('backBtn').onclick = ()=> { resultArea.style.display='none'; confirmArea.style.display='none'; codeInput.value=''; };
-        document.getElementById('txBtn').onclick = ()=> { window.location.href = '/transactions'; };
-      } catch (err) {
-        console.error(err); showError('Failed to finalize redemption.');
-      }
+  function buildConfirmLegacy(code, coins, codeRef){
+    document.querySelector('#screen-2 h1').textContent = "This is what you'll get";
+    renderConfirmRow(
+      'https://darkpurpleof.github.io/org-owner.jpg',
+      `${coins} Coins`,
+      'by System',
+      "Add-on for: DarkPurpleOF's Website"
+    );
+    pendingAction = async ()=>{
+      const newCoins = await addCoinsToUser(currentUser.email, coins);
+      await writeTransaction(currentUser.email, code, {
+        amount: Number(coins),
+        date: firebase.firestore.FieldValue.serverTimestamp(),
+        description: "Redeemed Code",
+        image: "https://darkpurpleof.github.io/org-owner.jpg",
+        source: "system@darkpurpleof.github.io",
+        type: "incoming"
+      });
+      await codeRef.delete();
+      showSuccess(`${coins} coins have been added to your account.`, `You now have <strong>${newCoins} coins</strong>.`);
     };
   }
 
-  // Confirm UI for coins (new codes)
-  async function showConfirmCoins(code, amount, codeData, codeRef){
-  // fetch author display name & verified if author exists
-  let authorDisplay = 'system@darkpurpleof.github.io';
-  let authorVerified = false;
-  if (codeData.author) {
-    try {
-      const aSnap = await db.collection('user_data').doc(codeData.author).get();
-      if (aSnap.exists()) {
-        const a = aSnap.data();
-        authorDisplay = a['display name'] || codeData.author || authorDisplay;
-        authorVerified = !!a.is_verified;
-      }
-    } catch(e){ console.warn(e); }
-  }
-
-  confirmArea.innerHTML = `
-    <div class="confirm">
-      <img src="${escapeHtml(codeData.image || 'https://darkpurpleof.github.io/org-owner.jpg')}" alt="coins">
-      <div class="meta">
-        <div class="title">${amount} Coins <span class="muted" style="font-weight:600">(DF$)</span></div>
-        <div class="by">
-          by ${escapeHtml(authorDisplay)}
-          ${authorVerified ? '<img src="/assets/verified.png" style="width:14px;height:14px;margin-left:6px;vertical-align:middle;">' : ''}
-        </div>
-        <div class="muted" style="margin-top:6px;">After redeeming, the coins will be added to your account immediately.</div>
-      </div>
-      <div class="actions">
-        <button id="cancelBtn" class="btn ghost">Cancel</button>
-        <button id="confirmBtn" class="btn">Continue</button>
-      </div>
-    </div>
-  `;
-  confirmArea.style.display='block';
-  document.getElementById('cancelBtn').onclick = ()=> { confirmArea.style.display='none'; };
-  document.getElementById('confirmBtn').onclick = async ()=>{
-    try {
-      const newCoins = await addCoinsToUser(currentUser.email, amount);
-
-      const payload = {
-        amount: Number(amount),
-        date: firebase.firestore.FieldValue.serverTimestamp(),
-        description: "DF$",
-        image: codeData.image || "https://darkpurpleof.github.io/org-owner.jpg",
-        source: codeData.author || "system@darkpurpleof.github.io",
-        type: "incoming"
-      };
-      await writeTransaction(currentUser.email, code, payload);
-
-      await codeRef.delete();
-
-      resultArea.style.display='block';
-      resultArea.innerHTML = `<div class="result"><strong>Success!</strong> ${amount} coins added. You now have ${newCoins} coins. <div style="margin-top:8px;"><button id="backBtn" class="btn ghost">Redeem another</button> <button id="txBtn" class="btn">View transactions</button></div></div>`;
-      document.getElementById('backBtn').onclick = ()=> { resultArea.style.display='none'; confirmArea.style.display='none'; codeInput.value=''; };
-      document.getElementById('txBtn').onclick = ()=> { window.location.href = '/transactions'; };
-    } catch (err) {
-      console.error(err); showError('Failed to finalize redemption.');
-    }
-  };
-}
-
-  // Confirm UI for item (shop/dev)
-  async function showConfirmItem(code, type, codeData, itemDocData, authorEmail, itemId, codeRef){
-    // fetch author display name & verified
+  async function buildConfirmCoins(code, amount, codeData, codeRef){
+    document.querySelector('#screen-2 h1').textContent = "This is what you'll get";
+    let authorEmail = codeData.author || 'system@darkpurpleof.github.io';
     let authorDisplay = authorEmail;
     let authorVerified = false;
     try {
       const aSnap = await db.collection('user_data').doc(authorEmail).get();
-      if (aSnap.exists){
+      if(aSnap.exists){
         const a = aSnap.data();
         authorDisplay = a['display name'] || authorEmail;
         authorVerified = !!a.is_verified;
       }
-    } catch (e) {
-      console.warn("Failed to fetch author info:", e);
+    } catch(e){ console.warn(e); }
+
+    const authBadge = authorVerified ? `<img src="/assets/verified.png" style="width:16px;height:16px;margin-left:5px;vertical-align:middle;">` : '';
+    const coinBadge = `<img src="/assets/verified.png" style="width:16px;height:16px;margin-left:5px;vertical-align:middle;">`;
+    renderConfirmRow(
+      codeData.image || 'https://darkpurpleof.github.io/org-owner.jpg',
+      `${amount} Coins <span style="color:var(--muted);font-size:13px;font-weight:500">(DF$)</span>${coinBadge}`,
+      `by ${escapeHtml(authorDisplay)}${authBadge}`,
+      "Add-on for: DarkPurpleOF's Website"
+    );
+    confirmRow.querySelector('.c-title').innerHTML = `${amount} Coins <span style="color:var(--muted);font-size:13px;font-weight:500">(DF$)</span>${coinBadge}`;
+    confirmRow.querySelector('.c-by').innerHTML = `by ${escapeHtml(authorDisplay)}${authBadge}`;
+
+    pendingAction = async ()=>{
+      const newCoins = await addCoinsToUser(currentUser.email, amount);
+      await writeTransaction(currentUser.email, code, {
+        amount: Number(amount),
+        date: firebase.firestore.FieldValue.serverTimestamp(),
+        description: "DF$",
+        image: codeData.image||"https://darkpurpleof.github.io/org-owner.jpg",
+        source: codeData.author||"system@darkpurpleof.github.io",
+        type: "incoming"
+      });
+      await codeRef.delete();
+      showSuccess(`${amount} coins (DF$) have been added to your account.`, `You now have <strong>${newCoins} coins</strong>.`);
+    };
+  }
+
+  async function buildConfirmItem(code, type, codeData, itemDocData, authorEmail, itemId, codeRef){
+    let authorDisplay = authorEmail, authorVerified = false;
+    try {
+      const aSnap = await db.collection('user_data').doc(authorEmail).get();
+      if(aSnap.exists){ const a=aSnap.data(); authorDisplay=a['display name']||authorEmail; authorVerified=!!a.is_verified; }
+    } catch(e){ console.warn(e); }
+
+    const itemImage = itemDocData.image||itemDocData.img||"https://darkpurpleof.github.io/org-owner.jpg";
+    const itemName  = itemDocData.name||itemDocData.title||("Item "+itemId);
+    const itemVerified = !!itemDocData.verified;
+    const showBadge = authorVerified || itemVerified;
+    const badge = showBadge ? `<img src="/assets/verified.png" style="width:16px;height:16px;margin-left:5px;vertical-align:middle;">` : '';
+
+    const itemType = (itemDocData.type || '').trim();
+    let stepTitle = 'Confirm redemption';
+    let stepDesc = 'After you redeem this code, the item will be added to your account immediately.';
+
+    if (itemType === 'Sticker Pack') {
+      stepTitle = 'Here is what you get';
+      stepDesc = "Add-on for: DarkPurpleOF's Website";
+    } else if (itemType === 'Plugin') {
+      stepTitle = 'Here is what you get';
+      stepDesc = "You need the DarkPurpleOF's Website app to use this plugin - Incompatible with the web version";
+      if (itemDocData.for) {
+        stepDesc += `<br>Add-on for: ${escapeHtml(itemDocData.for)}`;
+      }
+    } else if (itemType === 'Role' && type === 'dev') {
+      stepTitle = "You'll get this role";
+      stepDesc = 'It will appear publicly on your profile';
+    } else if (itemType === 'Bundle' && type === 'dev') {
+      stepTitle = 'Here is what you get';
+      stepDesc = "Included content for the DarkPurpleOF's Website";
     }
 
-    const itemImage = itemDocData.image || itemDocData.img || "https://darkpurpleof.github.io/org-owner.jpg";
-    const itemName = itemDocData.name || itemDocData.title || ("Item " + itemId);
+    document.querySelector('#screen-2 h1').textContent = stepTitle;
 
-    // Build verified badge html separately
-    const verifiedBadge = authorVerified
-      ? '<img src="/assets/verified.png" style="width:14px;height:14px;margin-left:6px;display:inline-block;vertical-align:middle;">'
-      : '';
+    renderConfirmRow(itemImage, escapeHtml(itemName), '', stepDesc);
+    confirmRow.querySelector('.c-title').innerHTML = `${escapeHtml(itemName)}${badge}`;
+    confirmRow.querySelector('.c-by').innerHTML = `by ${escapeHtml(authorDisplay)}${authorVerified ? `<img src="/assets/verified.png" style="width:16px;height:16px;margin-left:5px;vertical-align:middle;">` : ''}`;
 
-    confirmArea.innerHTML = `
-      <div class="confirm">
-        <img src="${escapeHtml(itemImage)}" alt="${escapeHtml(itemName)}">
-        <div class="meta">
-          <div class="title">${escapeHtml(itemName)}</div>
-          <div class="by">by ${escapeHtml(authorDisplay)} ${verifiedBadge}</div>
-          <div class="muted" style="margin-top:6px;">After you redeem this code, the object will be added to your account immediately.</div>
-        </div>
-        <div class="actions">
-          <button id="cancelBtn" class="btn ghost">Cancel</button>
-          <button id="confirmBtn" class="btn">Continue</button>
-        </div>
+    pendingAction = async ()=>{
+      const userRef = db.collection('user_data').doc(currentUser.email);
+      const updates = {};
+      updates.purchasedIds = firebase.firestore.FieldValue.arrayUnion(itemId);
+
+      if (itemType === 'Role' && type === 'dev') {
+        const rolename = itemDocData.rolename;
+        if (rolename) {
+          updates.roles = firebase.firestore.FieldValue.arrayUnion(rolename);
+        }
+      }
+
+      await userRef.set(updates, { merge:true });
+      
+      await writeTransaction(currentUser.email, itemId, {
+        amount: 0,
+        date: firebase.firestore.FieldValue.serverTimestamp(),
+        description: String(itemName),
+        image: itemImage,
+        source: authorEmail,
+        type: "outgoing"
+      });
+      await codeRef.delete();
+      showSuccess(`${itemName} has been added to your account.`, 'You can find it in your library.');
+    };
+  }
+
+  // ── Step 2 → Step 3 ──────────────────────────────────────
+  confirmBtn.addEventListener('click', async ()=>{
+    if(!pendingAction) return;
+    
+    // Show spinner overlay
+    spinnerOverlay.classList.add('active');
+    
+    try {
+      // Re-check the code
+      const code = codeInput.value.toUpperCase();
+      const codeRef = db.collection('redeemable').doc(code);
+      const codeSnap = await codeRef.get();
+      
+      let isValid = true;
+      if (!codeSnap.exists) {
+        isValid = false;
+      } else {
+        const currentData = codeSnap.data() || {};
+        if (JSON.stringify(originalCodeData) !== JSON.stringify(currentData)) {
+          isValid = false;
+        }
+      }
+
+      if (!isValid) {
+        spinnerOverlay.classList.remove('active');
+        showFailureScreen();
+        return;
+      }
+
+      await pendingAction();
+      spinnerOverlay.classList.remove('active');
+      goStep(3, false);
+    } catch(err){
+      console.error(err);
+      spinnerOverlay.classList.remove('active');
+      if (err.code === 'permission-denied' || err.message.indexOf('permission') !== -1 || err.message.indexOf('Permission') !== -1) {
+        handleDisableError();
+        goStep(1);
+        return;
+      }
+      showFailureScreen();
+    }
+  });
+
+  function showFailureScreen() {
+    const s3H1 = document.querySelector('#screen-3 h1');
+    s3H1.textContent = "The order can't be completed";
+    
+    const successIcon = document.querySelector('#screen-3 .success-icon');
+    successIcon.classList.add('error');
+    successIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+    
+    successLead.textContent = "The order can't be completed due to an error, please try again later, if this issue remains contact us";
+    
+    const userIdVal = currentUser ? currentUser.uid : 'Anonymous';
+    const timestampVal = new Date().toLocaleString();
+    const uuidVal = generateUUID();
+    
+    successDetail.innerHTML = `
+      <div style="font-style: italic; font-size: 11px; color: var(--muted); text-align: left; line-height: 1.6;">
+        UserId: ${userIdVal}<br>
+        Timestamp: ${timestampVal}<br>
+        OneUseUUID: ${uuidVal}
       </div>
     `;
+    
+    txBtn.style.display = 'none';
+    
+    goStep(3, true);
+  }
 
-    confirmArea.style.display='block';
-    document.getElementById('cancelBtn').onclick = ()=> { confirmArea.style.display='none'; };
+  function showSuccess(lead, detail){
+    const s3H1 = document.querySelector('#screen-3 h1');
+    s3H1.textContent = "You're all set!";
+    
+    const successIcon = document.querySelector('#screen-3 .success-icon');
+    successIcon.classList.remove('error');
+    successIcon.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
+    
+    txBtn.style.display = 'inline-block';
+    
+    successLead.textContent = lead;
+    successDetail.innerHTML = detail;
+  }
 
-    document.getElementById('confirmBtn').onclick = async ()=>{
-      try {
-        // Add item to user's purchasedIds
-        const userRef = db.collection('user_data').doc(currentUser.email);
-        await userRef.set({ purchasedIds: firebase.firestore.FieldValue.arrayUnion(itemId) }, { merge: true });
-
-        // create transaction
-        const payload = {
-          amount: 0,
-          date: firebase.firestore.FieldValue.serverTimestamp(),
-          description: String(itemName),
-          image: itemImage,
-          source: authorEmail,
-          type: "outgoing"
-        };
-        await writeTransaction(currentUser.email, itemId, payload);
-
-        // delete code
-        await codeRef.delete();
-
-        // show success
-        resultArea.style.display='block';
-        resultArea.innerHTML = `
-          <div class="result">
-            <strong>Success!</strong> ${escapeHtml(itemName)} has been added to your account.
-            <div style="margin-top:8px;">
-              <button id="backBtn" class="btn ghost">Redeem another</button>
-              <button id="txBtn" class="btn">View transactions</button>
-            </div>
-          </div>
-        `;
-        document.getElementById('backBtn').onclick = ()=> { resultArea.style.display='none'; confirmArea.style.display='none'; codeInput.value=''; };
-        document.getElementById('txBtn').onclick = ()=> { window.location.href = '/transactions'; };
-      } catch (err) {
-        console.error(err); showError('Failed to grant item: ' + (err.message || err));
-      }
-    };
-}
-
-
-  // helper escape
-  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  redeemAnotherBtn.addEventListener('click', ()=>{
+    codeInput.value='';
+    clearError();
+    pendingAction = null;
+    goStep(1);
+  });
+  txBtn.addEventListener('click', ()=> window.location.href='/transactions');
 </script>
 </body>
 </html>

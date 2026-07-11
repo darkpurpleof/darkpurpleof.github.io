@@ -9,29 +9,35 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
- 
+
   <!-- reCAPTCHA -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
       --bg: #171717;
       --card: #1f1f1f;
+      --card-2: #262626;
       --muted: #a8a8a8;
       --accent: #6b21a8;
       --accent-strong: #5b21b6;
+      --accent-soft: rgba(107,33,168,0.14);
       --text: #eaeaea;
-      --border: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
     }
     body.light {
       --bg: #f6f8fb;
       --card:#fff;
+      --card-2:#f1f3f8;
       --muted:#475569;
       --text:#0f172a;
-      --border: rgba(0,0,0,0.06);
+      --border: rgba(0,0,0,0.08);
+      --accent-soft: rgba(107,33,168,0.08);
     }
+
+    *{ box-sizing:border-box; }
 
     html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background-color: var(--bg); color:var(--text); transition: background .25s, color .25s; }
     body { display:flex; flex-direction:column; min-height:100vh; }
@@ -39,65 +45,154 @@
     /* dp-topbar */
     dp-topbar { display:block; position:sticky; top:0; z-index:100; }
 
-    /* main wrapper centers content */
     main.wrapper {
       flex:1;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:24px;
-      box-sizing:border-box;
+      padding:32px 20px;
     }
 
     .card {
-      background:var(--card);
-      border-radius:12px;
-      padding:24px;
+      background: linear-gradient(180deg, var(--card), var(--card) 60%, var(--card-2));
+      border-radius:18px;
+      padding:36px;
       border:1px solid var(--border);
       color:var(--text);
-      box-shadow:0 6px 18px rgba(2,6,23,0.45);
-      max-width:640px;
+      box-shadow:0 20px 50px rgba(2,6,23,0.5), 0 2px 0 rgba(255,255,255,0.02) inset;
+      max-width:440px;
       width:100%;
     }
 
-    .grid {
-      display:grid;
-      grid-template-columns: 1fr 320px;
-      gap:20px;
-    }
-    @media (max-width:920px){
-      .grid { grid-template-columns: 1fr; }
+    .badge {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      color:var(--accent);
+      background:var(--accent-soft);
+      border:1px solid rgba(107,33,168,0.25);
+      padding:5px 10px;
+      border-radius:999px;
+      margin-bottom:16px;
     }
 
-    h1 { margin:0 0 6px 0; font-size:20px; font-weight:700; }
-    p.lead { margin:0 0 16px 0; color:var(--muted); font-size:14px; }
+    h1 { margin:0 0 6px 0; font-size:24px; font-weight:800; letter-spacing:-0.01em; }
+    p.lead { margin:0 0 28px 0; color:var(--muted); font-size:14px; line-height:1.5; }
 
-    .info-chart {
-      background: var(--card);
-      border-radius:10px;
-      padding:12px;
+    form { display:flex; flex-direction:column; gap:18px; }
+
+    .field { display:flex; flex-direction:column; gap:7px; }
+    label { font-size:13px; font-weight:600; color:var(--muted); }
+
+    /* username + fixed domain suffix combo */
+    .username-combo {
+      display:flex;
+      align-items:stretch;
       border:1px solid var(--border);
+      border-radius:10px;
+      background:rgba(0,0,0,0.18);
+      overflow:hidden;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    body.light .username-combo { background:rgba(0,0,0,0.02); }
+    .username-combo:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .username-combo input {
+      flex:1;
+      min-width:0;
+      padding:12px 4px 12px 14px;
+      border:none;
+      background:transparent;
+      color:var(--text);
+      font-size:14px;
+      outline:none;
+    }
+    .username-combo .domain-suffix {
+      display:flex;
+      align-items:center;
+      padding:0 12px;
+      font-size:13px;
+      color:var(--muted);
+      background:rgba(255,255,255,0.03);
+      border-left:1px solid var(--border);
+      white-space:nowrap;
+      user-select:none;
+    }
+    body.light .username-combo .domain-suffix { background:rgba(0,0,0,0.03); }
+
+    .input {
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,0.18);
+      color:var(--text);
+      font-size:14px;
+      outline:none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    body.light .input { background:rgba(0,0,0,0.02); }
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
-    form { display:flex; flex-direction:column; gap:12px; }
-    .input { width:100%; padding:12px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); box-sizing:border-box; }
-    label { font-size:13px; color:var(--muted); display:block; margin-bottom:6px; }
+    .hint { font-size:12px; color:var(--muted); }
 
-    .row { display:flex; gap:12px; }
-    .row .col { flex:1; }
+    .recaptcha-wrap {
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      padding-top:4px;
+    }
+    .recaptcha-wrap .label-row { font-size:13px; color:var(--muted); font-weight:600; }
 
     .register-button {
-      background:var(--accent);
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
       color:#fff;
       border:none;
-      padding:12px;
-      border-radius:8px;
+      padding:13px;
+      border-radius:10px;
       font-weight:700;
+      font-size:15px;
       cursor:pointer;
+      transition: transform .12s ease, filter .15s ease;
+      box-shadow: 0 8px 20px rgba(107,33,168,0.35);
     }
-    .register-button:hover { opacity:0.95; }
+    .register-button:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    .register-button:active { transform:translateY(0); }
 
-    .small-note { font-size:13px; color:var(--muted); }
+    .small-note { font-size:12.5px; color:var(--muted); line-height:1.5; }
+    .small-note a { color:var(--accent); text-decoration:none; font-weight:600; }
+    .small-note a:hover { text-decoration:underline; }
+
+    .divider {
+      height:1px;
+      background:var(--border);
+      margin:6px 0 2px;
+      border:none;
+    }
+
+    .footer-row {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .login-link {
+      font-size:13.5px;
+      color:var(--muted);
+    }
+    .login-link a { color:var(--accent); text-decoration:none; font-weight:700; }
+    .login-link a:hover { text-decoration:underline; }
 
     /* toast (matches /home) */
     #toast {
@@ -117,13 +212,33 @@
     #toast.yellow { background: #e6b800; color:#222; }
     #toast.red { background: #c00; color:#fff; }
 
-    /* subtle helper */
     .muted { color:var(--muted); }
 
+    /* Inline error banner */
+    .error-banner {
+      display:none;
+      align-items:flex-start;
+      gap:10px;
+      padding:12px 14px;
+      border-radius:10px;
+      background: rgba(185,28,28,0.1);
+      border:1px solid rgba(185,28,28,0.25);
+      font-size:13px;
+      color:#ef4444;
+      line-height:1.5;
+      animation: banner-in .18s ease-out;
+    }
+    body.light .error-banner { background:rgba(185,28,28,0.07); }
+    .error-banner.visible { display:flex; }
+    .error-banner svg { flex:0 0 16px; width:16px; height:16px; margin-top:1px; }
+    @keyframes banner-in {
+      from { opacity:0; transform:translateY(-4px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
     @media (max-width:600px){
-      main.wrapper { padding:16px; }
-      .card { padding:16px; }
-      .grid { grid-template-columns: 1fr; }
+      main.wrapper { padding:20px 14px; }
+      .card { padding:24px 20px; }
     }
   </style>
 
@@ -135,62 +250,47 @@
 
   <main class="wrapper" role="main" aria-label="Register area">
     <div class="card" role="region" aria-label="Register form">
-      <div class="grid">
-        <!-- LEFT: form -->
-        <div>
-          <h1>Create an account</h1>
-          <p class="lead">Join the platform. All admin accounts are reserved and cannot be registered here.</p>
+      <span class="badge">Create account</span>
+      <h1>Join the platform</h1>
+      <p class="lead">Pick a username below — admin and reserved addresses can't be registered here.</p>
 
-          <form id="registerForm" autocomplete="on" novalidate>
-            <div>
-              <label for="email">Email</label>
-              <input id="email" class="input" type="email" inputmode="email" placeholder="you@example.com" required>
-            </div>
-
-            <div>
-              <label for="password">Password</label>
-              <input id="password" class="input" type="password" placeholder="Choose a strong password" required>
-            </div>
-
-            <!-- reCAPTCHA widget (user must complete) -->
-            <div style="margin-top:6px;">
-              <div class="muted" style="margin-bottom:6px; font-size:13px;">Please complete the reCAPTCHA</div>
-              <div class="g-recaptcha" data-sitekey="6Lddwd8qAAAAAC0OUZ7iOrKFGEeu--_-1XvjU0et"></div>
-            </div>
-
-            <div>
-              <button type="submit" class="register-button">Register</button>
-            </div>
-
-            <div class="small-note" style="margin-top:8px;">
-              By registering you agree to our <a href="/terms.md" style="color:var(--accent); text-decoration:none;">Terms of Service</a>.
-            </div>
-
-            <div class="small-note" style="margin-top:6px;">
-              <strong>@darkpurpleof.github.io</strong> addresses cannot be registered here.
-            </div>
-          </form>
+      <form id="registerForm" autocomplete="on" novalidate>
+        <div class="field">
+          <label for="username">Username</label>
+          <div class="username-combo">
+            <input id="username" type="text" placeholder="yourname" required autocomplete="username" inputmode="email" spellcheck="false">
+            <span class="domain-suffix">@users.darkpurpleof.github.io</span>
+          </div>
+          <span class="hint">Letters, numbers, dots and underscores only.</span>
         </div>
 
-        <!-- RIGHT: info / hints -->
-        <aside class="info-chart" aria-hidden="false">
-          <h3 style="margin:0 0 8px 0">Why verify?</h3>
-          <p class="muted" style="margin:0 0 12px 0;">We check IP & email bans, region, and reCAPTCHA to keep the community safe.</p>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" class="input" type="password" placeholder="Choose a strong password" required autocomplete="new-password">
+        </div>
 
-          <div style="display:flex; gap:8px; flex-direction:column;">
-            <div class="muted">Registration checks:</div>
-            <ul class="muted" style="margin:6px 0 0 18px; padding:0;">
-              <li>reCAPTCHA completion</li>
-              <li>No reserved @darkpurpleof.github.io signups</li>
-              <li>IP & email ban checks</li>
-              <li>Region & VPN detection</li>
-            </ul>
+        <div class="recaptcha-wrap">
+          <div class="label-row">Verify you're human</div>
+          <div class="g-recaptcha" data-sitekey="6Lddwd8qAAAAAC0OUZ7iOrKFGEeu--_-1XvjU0et"></div>
+        </div>
+
+        <div class="error-banner" id="errorBanner" role="alert" aria-live="assertive">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4M12 15.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span id="errorBannerText"></span>
+        </div>
+
+        <button type="submit" class="register-button">Register</button>
+
+        <hr class="divider">
+
+        <div class="footer-row">
+          <div class="small-note">
+            By registering you agree to our <a href="/terms.md">Terms of Service</a>.
           </div>
+        </div>
 
-          <div style="height:12px;"></div>
-          <div><a href="/login.html" style="color:var(--accent); text-decoration:none;">Already have an account? Login</a></div>
-        </aside>
-      </div>
+        <div class="login-link">Already have an account? <a href="/login.html">Log in</a></div>
+      </form>
     </div>
   </main>
 
@@ -211,26 +311,30 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    const ALLOWED_DOMAIN = "@users.darkpurpleof.github.io";
+    const ADMIN_DOMAIN   = "@darkpurpleof.github.io";
+    const USERNAME_REGEX = /^[a-zA-Z0-9._]{3,30}$/;
+
     // Get ?returnto= param safely
-function getReturnToUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const returnTo = params.get("returnto");
+    function getReturnToUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get("returnto");
 
-  if (!returnTo) return "/";
+      if (!returnTo) return "/";
 
-  try {
-    const url = new URL(returnTo, window.location.origin);
+      try {
+        const url = new URL(returnTo, window.location.origin);
 
-    // Optional safety: only allow same-origin redirects
-    if (url.origin === window.location.origin) {
-      return url.pathname + url.search + url.hash;
+        // Optional safety: only allow same-origin redirects
+        if (url.origin === window.location.origin) {
+          return url.pathname + url.search + url.hash;
+        }
+
+        return "/";
+      } catch {
+        return "/";
+      }
     }
-
-    return "/";
-  } catch {
-    return "/";
-  }
-}
 
     // Toast helper (consistent with /home)
     function showToast(message, color = "purple", duration = 3500) {
@@ -247,24 +351,64 @@ function getReturnToUrl() {
       }, duration);
     }
 
+    // Inline error banner helpers
+    function showError(msg) {
+      const banner = document.getElementById("errorBanner");
+      document.getElementById("errorBannerText").textContent = msg;
+      banner.classList.add("visible");
+      banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    function clearError() {
+      const banner = document.getElementById("errorBanner");
+      banner.classList.remove("visible");
+    }
+
+    // Friendly Firebase error map
+    function friendlyAuthError(err) {
+      const code = (err && err.code) || "";
+      const map = {
+        "auth/email-already-in-use":    "That username is already taken. Try a different one.",
+        "auth/weak-password":           "Your password is too short. Use at least 6 characters.",
+        "auth/invalid-email":           "The generated email address is invalid. Please contact support.",
+        "auth/operation-not-allowed":   "New registrations are temporarily disabled. Try again later.",
+        "auth/network-request-failed":  "Network error. Check your connection and try again.",
+        "auth/too-many-requests":       "Too many attempts. Please wait a moment and try again.",
+        "auth/internal-error":          "An internal error occurred. Please try again.",
+      };
+      return map[code] || "Registration failed. Please try again or contact support if this persists.";
+    }
+
+    // Check if a username is taken on either domain
+    async function checkUsernameAvailability(username) {
+      const emails = [
+        username + ALLOWED_DOMAIN,
+        username + ADMIN_DOMAIN
+      ];
+      const results = await Promise.all(
+        emails.map(e => auth.fetchSignInMethodsForEmail(e).catch(() => []))
+      );
+      // If either email has sign-in methods registered, it's taken
+      return results.every(methods => methods.length === 0);
+    }
+
     // onAuthStateChanged: if already signed in redirect (and check bans)
     auth.onAuthStateChanged(async (user) => {
-  if (!user) return;
+      if (!user) return;
 
-  const email = user.email || "";
-  try {
-    const bannedSnap = await db.collection("banned_users").doc(email).get();
-    if (bannedSnap.exists) {
-      window.location.href = "/not-approved";
-      return;
-    }
-  } catch (e) {
-    console.warn("Failed banned check on auth state:", e);
-  }
+      const email = user.email || "";
+      try {
+        const bannedSnap = await db.collection("banned_users").doc(email).get();
+        if (bannedSnap.exists) {
+          window.location.href = "/not-approved";
+          return;
+        }
+      } catch (e) {
+        console.warn("Failed banned check on auth state:", e);
+      }
 
-  // If already logged in and not banned:
-  // Do nothing. No redirect.
-});
+      // If already logged in and not banned:
+      // Do nothing. No redirect.
+    });
 
     // fetch IP info (ipinfo). If you have a token, append ?token=...
     async function fetchUserIpInfo() {
@@ -295,56 +439,73 @@ function getReturnToUrl() {
 
     document.getElementById("registerForm").addEventListener("submit", async (ev) => {
       ev.preventDefault();
-      const email = (document.getElementById("email").value || "").trim().toLowerCase();
+      clearError();
+      const rawUsername = (document.getElementById("username").value || "").trim();
       const password = document.getElementById("password").value || "";
 
-      if (!email || !password) { showToast("Email and password are required.", "yellow"); return; }
-      if (email.endsWith("@darkpurpleof.github.io")) {
-        showToast("You can't register an admin address here. Ask the owner.", "red");
+      if (!rawUsername || !password) { showError("Username and password are required."); return; }
+
+      // strip the domain if the user pasted a full address, then validate the local part
+      const username = rawUsername.split("@")[0].toLowerCase();
+
+      if (!USERNAME_REGEX.test(username)) {
+        showError("Username must be 3–30 characters and contain only letters, numbers, dots, or underscores.");
         return;
       }
+
+      const email = username + ALLOWED_DOMAIN;
 
       // reCAPTCHA
       try {
         const token = (typeof grecaptcha !== "undefined") ? grecaptcha.getResponse() : "";
-        if (!token) { showToast("Please complete the reCAPTCHA.", "red"); return; }
+        if (!token) { showError("Please complete the reCAPTCHA before registering."); return; }
       } catch (e) {
-        showToast("reCAPTCHA unavailable. Try again later.", "red");
+        showError("reCAPTCHA is unavailable. Please refresh and try again.");
         return;
       }
 
-      showToast("Checking registration details...", "purple", 1500);
+      showToast("Checking registration details...", "purple", 2500);
 
       // IP & region checks
       const ipInfo = await fetchUserIpInfo();
-      if (!ipInfo) { showToast("Could not determine IP address.", "red"); return; }
+      if (!ipInfo) { showError("Could not verify your network. Please try again."); return; }
 
       if (bannedRegions.includes(ipInfo.region)) {
-        showToast("Registration from your region is not allowed.", "red"); return;
+        showError("Registration from your region is not currently available."); return;
       }
 
       if (ipInfo.privacy && ipInfo.privacy.vpn) {
-        showToast("VPN usage detected. Disable VPN to register.", "red"); return;
+        showError("VPN detected. Please disable your VPN and try again."); return;
       }
 
       // check email/ip bans
       const isBanned = await checkBans(email, ipInfo.ip);
-      if (isBanned) { showToast("Your email or IP is banned.", "red"); return; }
+      if (isBanned) { showError("Your account or network has been restricted."); return; }
 
-      // attempt create user (compat)
+      // Check username availability on both domains
+      showToast("Checking username availability...", "purple", 2000);
+      let available;
+      try {
+        available = await checkUsernameAvailability(username);
+      } catch (e) {
+        showError("Could not verify username availability. Please try again.");
+        return;
+      }
+      if (!available) {
+        showError("That username is already taken. Please choose a different one.");
+        return;
+      }
+
+      // attempt create user
       try {
         await auth.createUserWithEmailAndPassword(email, password);
         showToast("Registration successful — redirecting...", "purple", 1800);
-
-const redirectUrl = getReturnToUrl();
-
-setTimeout(() => {
-  window.location.href = redirectUrl;
-}, 1400);
+        const redirectUrl = getReturnToUrl();
+        setTimeout(() => { window.location.href = redirectUrl; }, 1400);
       } catch (err) {
         console.warn("registration failed", err);
-        // friendly message to user but log real error
-        showToast(("Registration failed: " + (err && err.message ? err.message : "unknown")), "red");
+        showError(friendlyAuthError(err));
+        if (typeof grecaptcha !== "undefined") grecaptcha.reset();
       }
     });
   </script>

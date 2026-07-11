@@ -6,7 +6,7 @@
 
 const DEFAULT_EMOJI_MAP = {
   verified: '/assets/verified.png',
-  bughunter: '/assets/bughunt.png',
+  bughunt: '/assets/bughunt.png',
   admin: '/assets/ic_admin.webp',
   panel: '/assets/ic_owner.webp',
   member: '/org-owner.jpg',
@@ -330,24 +330,35 @@ class RichTextElement extends HTMLElement {
     const wrapper = document.createElement('div'); wrapper.className = 'dp-richtext-root';
     const options = {emojiMap: this.emojiMap, primaryColor: this.primaryColor, component: this};
 
-    if (mode === 'markdown') {
-      wrapper.appendChild(parseMarkdownToFragment(text, options));
-    } else {
-      wrapper.appendChild(replaceInlineRich(text, options));
+    try {
+      if (mode === 'markdown') {
+        wrapper.appendChild(parseMarkdownToFragment(text, options));
+      } else {
+        wrapper.appendChild(replaceInlineRich(text, options));
+      }
+    } catch (err) {
+      console.warn('RichText render fallback', err);
+      wrapper.textContent = text || '';
+    }
+
+    if (!wrapper.childNodes.length) {
+      wrapper.textContent = text || '';
     }
 
     // attach styles and content
     const style = document.createElement('style');
     style.textContent = `
-      :host { --dp-primary: ${this.primaryColor}; display:block; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color: var(--dp-on-surface, #ffffff); }
+      :host { --dp-primary: ${this.primaryColor}; display:block; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color: var(--text, var(--dp-on-surface, #ffffff)); }
+      .dp-richtext-root { color: inherit; line-height: 1.5; white-space: pre-wrap; }
+      .dp-richtext-root * { color: inherit; }
       .dp-richtext-root a { color: var(--accent, #6b21a8); text-decoration: underline; cursor: pointer; }
-      .dp-richtext-root code { background:#f3f3f3; padding:0 4px; border-radius:3px; }
+      .dp-richtext-root code { background:#f3f3f3; padding:0 4px; border-radius:3px; color:#111; }
       .md-heading { font-weight:700; margin:6px 0; }
       .md-h1 { font-size:22px; }
       .md-h2 { font-size:18px; }
       .md-h3 { font-size:16px; }
-      .md-blockquote { font-style:italic; color: #555; }
-      .hr-line { color: #888; opacity:0.6; }
+      .md-blockquote { font-style:italic; color: inherit; opacity:0.9; }
+      .hr-line { color: inherit; opacity:0.6; }
       ul, ol { margin:6px 0 6px 20px; }
       p { margin:6px 0; }
       .emoji-inline { display:inline-block; width:1em; height:1em; vertical-align:middle; }
@@ -368,8 +379,17 @@ const TAGS = [
   'dp-richtext',
   'text-element'
 ];
+const registryKey = '__dpRichTextDefinedTags__';
+const definedTags = window[registryKey] || (window[registryKey] = new Set());
 for (const t of TAGS) {
-  if (!customElements.get(t)) customElements.define(t, RichTextElement);
+  if (customElements.get(t) || definedTags.has(t)) continue;
+  const TagClass = class extends RichTextElement {};
+  Object.defineProperty(TagClass, 'name', {
+    configurable: true,
+    value: `RichTextElement_${t.replace(/[^a-z0-9]/gi, '')}`
+  });
+  customElements.define(t, TagClass);
+  definedTags.add(t);
 }
 
 export function createRichTextNode({text='', mode='rich', chatComponents=false}) {
