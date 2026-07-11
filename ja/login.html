@@ -1968,10 +1968,10 @@
     const authorizeSwitchAccount = document.getElementById("authorizeSwitchAccount");
 
     function describeScope(scope) {
-      const table = SCOPE_DESCRIPTIONS[currentLang] || SCOPE_DESCRIPTIONS[FALLBACK_LANG] || {};
-      const entry = table[scope];
-      if (!entry) return { description: scope, risk: null };
-      return entry;
+      const scopeEntry = SCOPE_DESCRIPTIONS[scope];
+      if (!scopeEntry || typeof scopeEntry !== 'object') return { description: scope, risk: null };
+      const description = scopeEntry[currentLang] || scopeEntry[FALLBACK_LANG] || scopeEntry.en || scopeEntry.description || scope;
+      return { description, risk: scopeEntry.risk || null };
     }
 
 
