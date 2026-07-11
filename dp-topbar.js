@@ -475,6 +475,24 @@ template.innerHTML = `
       background-position: center;
       border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.06));
       flex-shrink: 0;
+      position: relative;
+    }
+
+    .pfp .migration-dot {
+      position: absolute;
+      top: -1px;
+      right: -1px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #a855f7;
+      border: 2px solid var(--dropdown-bg, #262626);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+      display: none;
+    }
+
+    .pfp .migration-dot.show {
+      display: block;
     }
 
     .pinfo {
@@ -553,6 +571,21 @@ template.innerHTML = `
     .dropdown a:hover,
     .dropdown button:hover {
       background: var(--nav-hover, rgba(255, 255, 255, 0.03));
+    }
+
+    .dropdown .migration-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .dropdown .migration-link .migrate-badge {
+      color: #f5d0fe;
+      font-weight: 800;
+      font-size: 15px;
+      line-height: 1;
+      margin-left: auto;
     }
 
     .dropdown a.disabled,
@@ -704,7 +737,9 @@ template.innerHTML = `
       </div>
 
       <div class="profile" id="profile-area" tabindex="0" aria-haspopup="true" aria-expanded="false">
-        <div class="pfp" id="top-pfp" style="background-image: url('/org-owner.jpg')"></div>
+        <div class="pfp" id="top-pfp" style="background-image: url('/org-owner.jpg')">
+          <span class="migration-dot" id="migration-dot" aria-hidden="true"></span>
+        </div>
         <div class="pinfo">
           <div class="name" id="top-name">Not signed in</div>
           <div class="small" id="top-email"></div>
@@ -713,6 +748,10 @@ template.innerHTML = `
         <div class="dropdown" id="profile-dropdown" role="menu" aria-hidden="true">
           <a id="login-link" href="/login" style="display:none;">Login</a>
           <a id="settings-link" href="/my/account">Settings</a>
+          <a id="migrate-link" href="/migrate" class="migration-link" style="display:none;">
+            <span class="migrate-label">Migrate Account</span>
+            <span class="migrate-badge">!</span>
+          </a>
           <a id="connections-link" href="/connections">Connections</a>
           <a id="support-link" href="/support-feedback" class="disabled">Support (Coming Soon)</a>
           <a id="manage-blocked" href="/manageblockedusers">Manage Blocked Users</a>
@@ -754,6 +793,7 @@ const LOCALE_STRINGS = {
     navChats: 'Chats',
     login: 'Login',
     settings: 'Settings',
+    migrateAccount: 'Migrate Account',
     connections: 'Connections',
     support: 'Support (Coming Soon)',
     manageBlocked: 'Manage Blocked Users',
@@ -790,6 +830,7 @@ const LOCALE_STRINGS = {
     navChats: 'Chats',
     login: 'Iniciar sesión',
     settings: 'Ajustes',
+    migrateAccount: 'Migrar cuenta',
     connections: 'Conexiones',
     support: 'Soporte (Próximamente)',
     manageBlocked: 'Gestionar usuarios bloqueados',
@@ -826,6 +867,7 @@ const LOCALE_STRINGS = {
     navChats: 'Чаты',
     login: 'Войти',
     settings: 'Настройки',
+    migrateAccount: 'Перенести аккаунт',
     connections: 'Связи',
     support: 'Поддержка (скоро)',
     manageBlocked: 'Управление заблокированными',
@@ -862,6 +904,7 @@ const LOCALE_STRINGS = {
     navChats: 'Chats',
     login: 'Anmelden',
     settings: 'Einstellungen',
+    migrateAccount: 'Konto migrieren',
     connections: 'Verbindungen',
     support: 'Support (demnächst)',
     manageBlocked: 'Blockierte Benutzer verwalten',
@@ -898,6 +941,7 @@ const LOCALE_STRINGS = {
     navChats: 'チャット',
     login: 'ログイン',
     settings: '設定',
+    migrateAccount: 'アカウントを移行',
     connections: 'つながり',
     support: 'サポート（近日公開）',
     manageBlocked: 'ブロックユーザー管理',
@@ -1028,6 +1072,9 @@ class DPTopbar extends HTMLElement {
     this.$coinLabel = s.querySelector('.coin-dropdown-label');
 
     this.$settings = s.getElementById('settings-link');
+    this.$migrateLink = s.getElementById('migrate-link');
+    this.$migrateLabel = s.querySelector('#migrate-link .migrate-label');
+    this.$migrationDot = s.getElementById('migration-dot');
     this.$connections = s.getElementById('connections-link');
     this.$support = s.getElementById('support-link');
     this.$manageBlocked = s.getElementById('manage-blocked');
@@ -1226,6 +1273,11 @@ class DPTopbar extends HTMLElement {
       if (this._pageLocked) return;
       e.preventDefault();
       window.location.href = this._localizePath('/my/account');
+    });
+    if (this.$migrateLink) this.$migrateLink.addEventListener('click', e => {
+      if (this._pageLocked) return;
+      e.preventDefault();
+      window.location.href = this._localizePath('/migrate');
     });
     if (this.$connections) this.$connections.addEventListener('click', e => {
       if (this._pageLocked) return;
@@ -1761,6 +1813,10 @@ class DPTopbar extends HTMLElement {
     if (this.$settings) {
       this.$settings.textContent = strings.settings;
       this.$settings.href = this._localizePath('/my/account');
+    }
+    if (this.$migrateLink && this.$migrateLabel) {
+      this.$migrateLabel.textContent = strings.migrateAccount;
+      this.$migrateLink.href = this._localizePath('/migrate');
     }
     if (this.$connections) {
       this.$connections.textContent = strings.connections;
@@ -2306,6 +2362,8 @@ class DPTopbar extends HTMLElement {
     }
 
     if (this.$support) this.$support.classList.add('disabled');
+
+    this._updateMigrationNotice(this._currentUserEmail);
   }
 
   _showSignedOutDropdownOptions() {
@@ -2314,6 +2372,22 @@ class DPTopbar extends HTMLElement {
     if (this.$logout) this.$logout.style.display = 'none';
 
     if (this.$redeem) this.$redeem.style.display = 'none';
+
+    this._updateMigrationNotice(null);
+  }
+
+  _updateMigrationNotice(email) {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const isOfficialDomain = normalizedEmail.endsWith('@darkpurpleof.github.io') || normalizedEmail.endsWith('@users.darkpurpleof.github.io');
+    const shouldShow = Boolean(this._currentUser && normalizedEmail && !isOfficialDomain);
+
+    if (this.$migrationDot) {
+      this.$migrationDot.classList.toggle('show', shouldShow);
+    }
+
+    if (this.$migrateLink) {
+      this.$migrateLink.style.display = shouldShow ? '' : 'none';
+    }
   }
 
   _renderSignedOut() {
@@ -2340,6 +2414,7 @@ class DPTopbar extends HTMLElement {
     if (this.$logout) this.$logout.style.display = '';
     if (this.$edit) this.$edit.style.display = '';
     if (this.$login) this.$login.style.display = 'none';
+    this._updateMigrationNotice(user?.email || null);
   }
 
   _compact(n) {

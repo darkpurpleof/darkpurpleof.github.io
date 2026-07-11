@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Profile</title>
+<script type="module" src="/dp-topbar.js"></script>
 
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
@@ -27,7 +28,7 @@
         color: var(--text-color);
         font-family: 'Orbitron', sans-serif;
         margin: 0;
-        padding: 1rem;
+        padding: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -36,6 +37,15 @@
         transition: background 0.4s, color 0.4s;
         box-sizing: border-box;
         position: relative;
+    }
+
+    dp-topbar {
+        width: 100%;
+        display: block;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: var(--bg-color);
     }
 
     h1 {
@@ -491,6 +501,7 @@
 </style>
 </head>
 <body>
+<dp-topbar></dp-topbar>
 
 <h1>Profile</h1>
 
