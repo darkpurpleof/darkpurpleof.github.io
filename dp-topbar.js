@@ -756,7 +756,7 @@ template.innerHTML = `
           <a id="support-link" href="/support-feedback" class="disabled">Support (Coming Soon)</a>
           <a id="manage-blocked" href="/manageblockedusers">Manage Blocked Users</a>
           <a id="beta-link" href="/creator/beta-features">Beta Program</a>
-          <div class="separator"></div>
+          <div id="profile-separator" class="separator" style="display:none;"></div>
           <a id="edit-profile" href="/profile" style="display:none;">Edit Profile</a>
           <button id="logout-btn" style="display:none;">Logout</button>
         </div>
@@ -1075,6 +1075,7 @@ class DPTopbar extends HTMLElement {
     this.$migrateLink = s.getElementById('migrate-link');
     this.$migrateLabel = s.querySelector('#migrate-link .migrate-label');
     this.$migrationDot = s.getElementById('migration-dot');
+    this.$profileSeparator = s.getElementById('profile-separator');
     this.$connections = s.getElementById('connections-link');
     this.$support = s.getElementById('support-link');
     this.$manageBlocked = s.getElementById('manage-blocked');
@@ -2353,6 +2354,7 @@ class DPTopbar extends HTMLElement {
     if (this.$login) this.$login.style.display = 'none';
     if (this.$edit) this.$edit.style.display = '';
     if (this.$logout) this.$logout.style.display = '';
+    if (this.$profileSeparator) this.$profileSeparator.style.display = '';
 
     if (this.$redeem) this.$redeem.style.display = '';
 
@@ -2370,6 +2372,7 @@ class DPTopbar extends HTMLElement {
     if (this.$login) this.$login.style.display = '';
     if (this.$edit) this.$edit.style.display = 'none';
     if (this.$logout) this.$logout.style.display = 'none';
+    if (this.$profileSeparator) this.$profileSeparator.style.display = 'none';
 
     if (this.$redeem) this.$redeem.style.display = 'none';
 
