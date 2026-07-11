@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="es">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Посты</title>
+<title>Publicaciones</title>
 
 <!-- Topbar component (your site has this) -->
 <script type="module" src="/dp-topbar.js"></script>
@@ -301,13 +301,13 @@ dp-topbar {
     <div class="header"></div>
 
     <div class="post-card compose-card">
-      <a id="composeLink" href="/createpost">Создать новый пост</a>
+      <a id="composeLink" href="/createpost">Crear nueva publicación</a>
     </div>
 
     <div id="postsList" class="posts-list" aria-live="polite"></div>
   </div>
 
-  <a id="fabCompose" href="/createpost" class="fab-compose" aria-label="Создать новый пост">+</a>
+  <a id="fabCompose" href="/createpost" class="fab-compose" aria-label="Crear nueva publicación">+</a>
 
 <script>
 /* Firebase init */
@@ -327,54 +327,54 @@ const SUPPORTED_LOCALES = ['en','es','ru','de','ja'];
 const LOCALE_FALLBACK = 'en';
 const POST_TRANSLATIONS = {
   en: {
-    createNewPost: 'Создать новый пост',
-    noPostsYet: 'Постов пока нет.',
-    report: 'Пожаловаться',
-    postActions: 'Действия с постом',
-    deletePost: 'Удалить пост',
-    pinPost: 'Закрепить',
-    unpinPost: 'Открепить',
-    removeFromWall: 'Убрать с моей стены',
-    like: 'Нравится',
-    unlike: 'Убрать лайк',
-    likeUnavailable: 'Лайк недоступен',
-    deleteConfirm: 'Удалить этот пост? Это действие нельзя отменить.',
-    deleteFailed: 'Не удалось удалить пост.',
-    pinConfirm: 'Закрепить этот пост?',
-    unpinConfirm: 'Открепить этот пост?',
-    pinSuccess: 'Пост закреплён.',
-    unpinSuccess: 'Пост откреплён.',
-    pinFailed: 'Не удалось обновить состояние закрепления.',
-    removeWallConfirm: 'Убрать этот пост с вашей стены?',
-    removeWallSuccess: 'Удалено со стены.',
-    removeWallFailed: 'Не удалось удалить со стены.',
-    signInToLike: 'Чтобы ставить лайки, нужно войти в систему.',
-    likeFailed: 'Не удалось обновить лайк. Попробуйте ещё раз.'
+    createNewPost: 'Create new post',
+    noPostsYet: 'No posts yet.',
+    report: 'Report',
+    postActions: 'Post actions',
+    deletePost: 'Delete post',
+    pinPost: 'Pin',
+    unpinPost: 'Unpin',
+    removeFromWall: 'Remove from my wall',
+    like: 'Like',
+    unlike: 'Unlike',
+    likeUnavailable: 'Likes unavailable',
+    deleteConfirm: 'Delete this post? This action cannot be undone.',
+    deleteFailed: 'Failed to delete post.',
+    pinConfirm: 'Pin this post?',
+    unpinConfirm: 'Unpin this post?',
+    pinSuccess: 'Post pinned.',
+    unpinSuccess: 'Post unpinned.',
+    pinFailed: 'Failed to update pin state.',
+    removeWallConfirm: 'Remove this post from your wall?',
+    removeWallSuccess: 'Removed from wall.',
+    removeWallFailed: 'Failed to remove from wall.',
+    signInToLike: 'Please sign in to like posts.',
+    likeFailed: 'Failed to update like. Please try again.'
   },
   es: {
-    createNewPost: 'Создать новую публикацию',
-    noPostsYet: 'Публикаций пока нет.',
-    report: 'Пожаловаться',
-    postActions: 'Действия с публикацией',
-    deletePost: 'Удалить публикацию',
-    pinPost: 'Закрепить',
-    unpinPost: 'Открепить',
-    removeFromWall: 'Убрать с моей стены',
-    like: 'Нравится',
-    unlike: 'Убрать лайк',
-    likeUnavailable: 'Лайк недоступен',
-    deleteConfirm: 'Удалить эту публикацию? Это действие нельзя отменить.',
-    deleteFailed: 'Не удалось удалить публикацию.',
-    pinConfirm: 'Закрепить эту публикацию?',
-    unpinConfirm: 'Открепить эту публикацию?',
-    pinSuccess: 'Публикация закреплена.',
-    unpinSuccess: 'Публикация откреплена.',
-    pinFailed: 'Не удалось обновить состояние закрепления.',
-    removeWallConfirm: 'Убрать эту публикацию с вашей стены?',
-    removeWallSuccess: 'Удалено со стены.',
-    removeWallFailed: 'Не удалось удалить со стены.',
-    signInToLike: 'Чтобы ставить лайки, нужно войти в систему.',
-    likeFailed: 'Не удалось обновить лайк. Попробуйте ещё раз.'
+    createNewPost: 'Crear nueva publicación',
+    noPostsYet: 'No hay publicaciones aún.',
+    report: 'Reportar',
+    postActions: 'Acciones de la publicación',
+    deletePost: 'Eliminar publicación',
+    pinPost: 'Fijar',
+    unpinPost: 'Desfijar',
+    removeFromWall: 'Quitar de mi muro',
+    like: 'Me gusta',
+    unlike: 'Quitar me gusta',
+    likeUnavailable: 'Me gusta no disponible',
+    deleteConfirm: '¿Eliminar esta publicación? Esta acción no se puede deshacer.',
+    deleteFailed: 'No se pudo eliminar la publicación.',
+    pinConfirm: '¿Fijar esta publicación?',
+    unpinConfirm: '¿Desfijar esta publicación?',
+    pinSuccess: 'Publicación fijada.',
+    unpinSuccess: 'Publicación desfijada.',
+    pinFailed: 'No se pudo actualizar el estado de fijado.',
+    removeWallConfirm: '¿Quitar esta publicación de tu muro?',
+    removeWallSuccess: 'Se quitó del muro.',
+    removeWallFailed: 'No se pudo quitar del muro.',
+    signInToLike: 'Inicia sesión para dar me gusta.',
+    likeFailed: 'No se pudo actualizar el me gusta. Inténtalo de nuevo.'
   },
   ru: {
     createNewPost: 'Создать новый пост',
@@ -469,7 +469,14 @@ function getBrowserLocale() {
   return normalizeLocale(source) || LOCALE_FALLBACK;
 }
 
+function getPathLocale() {
+  const match = window.location.pathname.match(/^\/([a-z]{2})(\/|$)/);
+  return normalizeLocale(match && match[1]);
+}
+
 function getPreferredLocale(userDocData) {
+  const pathLocale = getPathLocale();
+  if (pathLocale) return pathLocale;
   const accountLang = normalizeLocale(userDocData && (userDocData.lang || userDocData.language));
   return accountLang || getBrowserLocale();
 }
@@ -588,7 +595,7 @@ function createPostCard({ postId, editorEmail, displayName, profilePic, verified
   // header
   const avatarUrl = profilePic || '/org-owner.jpg';
   const safeDisplayName = escapeHtml(displayName);
-  const verifiedHtml = verified ? `<span class="verified-badge" title="Подтверждён"></span>` : '';
+      const verifiedHtml = verified ? `<span class="verified-badge" title="Verificado"></span>` : '';
   const dateLabel = formatPostDate(createdAt);
   const isOwner = currentUserEmail && editorEmail && currentUserEmail === String(editorEmail).toLowerCase();
   const canRemoveFromWall = currentUserEmail && towall && currentUserEmail === String(towall).toLowerCase();
@@ -755,7 +762,7 @@ const postsListEl = document.getElementById('postsList');
 auth.onAuthStateChanged(async user => {
   postsListEl.innerHTML = ''; // clear
   const currentUserEmail = user?.email?.toLowerCase?.() || null;
-  let locale = getBrowserLocale();
+  let locale = getPathLocale() || getBrowserLocale();
   let strings = getStrings(locale);
 
   try{
@@ -917,7 +924,7 @@ auth.onAuthStateChanged(async user => {
 
   }catch(err){
     console.error('load posts failed', err);
-    postsListEl.innerHTML = `<div class="muted" style="padding:18px; text-align:center; color:#ff6b6b">Не удалось загрузить посты.</div>`;
+    postsListEl.innerHTML = `<div class="muted" style="padding:18px; text-align:center; color:#ff6b6b">No se pudieron cargar las publicaciones.</div>`;
   }
 });
 </script>

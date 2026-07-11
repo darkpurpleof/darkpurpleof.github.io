@@ -713,6 +713,7 @@ template.innerHTML = `
         <div class="dropdown" id="profile-dropdown" role="menu" aria-hidden="true">
           <a id="login-link" href="/login" style="display:none;">Login</a>
           <a id="settings-link" href="/my/account">Settings</a>
+          <a id="connections-link" href="/connections">Connections</a>
           <a id="support-link" href="/support-feedback" class="disabled">Support (Coming Soon)</a>
           <a id="manage-blocked" href="/manageblockedusers">Manage Blocked Users</a>
           <a id="beta-link" href="/creator/beta-features">Beta Program</a>
@@ -753,6 +754,7 @@ const LOCALE_STRINGS = {
     navChats: 'Chats',
     login: 'Login',
     settings: 'Settings',
+    connections: 'Connections',
     support: 'Support (Coming Soon)',
     manageBlocked: 'Manage Blocked Users',
     beta: 'Beta Program',
@@ -788,6 +790,7 @@ const LOCALE_STRINGS = {
     navChats: 'Chats',
     login: 'Iniciar sesión',
     settings: 'Ajustes',
+    connections: 'Conexiones',
     support: 'Soporte (Próximamente)',
     manageBlocked: 'Gestionar usuarios bloqueados',
     beta: 'Programa beta',
@@ -823,6 +826,7 @@ const LOCALE_STRINGS = {
     navChats: 'Чаты',
     login: 'Войти',
     settings: 'Настройки',
+    connections: 'Связи',
     support: 'Поддержка (скоро)',
     manageBlocked: 'Управление заблокированными',
     beta: 'Бета-программа',
@@ -858,6 +862,7 @@ const LOCALE_STRINGS = {
     navChats: 'Chats',
     login: 'Anmelden',
     settings: 'Einstellungen',
+    connections: 'Verbindungen',
     support: 'Support (demnächst)',
     manageBlocked: 'Blockierte Benutzer verwalten',
     beta: 'Beta-Programm',
@@ -893,6 +898,7 @@ const LOCALE_STRINGS = {
     navChats: 'チャット',
     login: 'ログイン',
     settings: '設定',
+    connections: 'つながり',
     support: 'サポート（近日公開）',
     manageBlocked: 'ブロックユーザー管理',
     beta: 'ベータプログラム',
@@ -1022,6 +1028,7 @@ class DPTopbar extends HTMLElement {
     this.$coinLabel = s.querySelector('.coin-dropdown-label');
 
     this.$settings = s.getElementById('settings-link');
+    this.$connections = s.getElementById('connections-link');
     this.$support = s.getElementById('support-link');
     this.$manageBlocked = s.getElementById('manage-blocked');
     this.$beta = s.getElementById('beta-link');
@@ -1219,6 +1226,11 @@ class DPTopbar extends HTMLElement {
       if (this._pageLocked) return;
       e.preventDefault();
       window.location.href = this._localizePath('/my/account');
+    });
+    if (this.$connections) this.$connections.addEventListener('click', e => {
+      if (this._pageLocked) return;
+      e.preventDefault();
+      window.location.href = this._localizePath('/connections');
     });
     if (this.$support) this.$support.addEventListener('click', e => e.preventDefault());
 
@@ -1749,6 +1761,10 @@ class DPTopbar extends HTMLElement {
     if (this.$settings) {
       this.$settings.textContent = strings.settings;
       this.$settings.href = this._localizePath('/my/account');
+    }
+    if (this.$connections) {
+      this.$connections.textContent = strings.connections;
+      this.$connections.href = this._localizePath('/connections');
     }
     if (this.$support) {
       this.$support.textContent = strings.support;
