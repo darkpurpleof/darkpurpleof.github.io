@@ -1,9 +1,10 @@
+<!-- Drop-in i18n version of your page: add the script blocks below and replace the visible text nodes with the spans/ids shown. -->
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Главная | Сайт DarkPurpleOF</title>
+  <title>DarkPurpleOF's Website</title>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
@@ -29,10 +30,13 @@
       --border: rgba(255,255,255,0.05);
       --border-strong: rgba(255,255,255,0.08);
       --soft: rgba(255,255,255,0.03);
-
-      --friend-row-height: 110px;
-      --friend-row-height-mobile: 84px;
-      --radius: 14px;
+      --redeem: #2196f3;
+      --redeem-strong: #1c86dd;
+      --moderation: #564059;
+      --watchdog: #8b3a3a;
+      --community: #345cfb;
+      --community-hover: #4b7bf5;
+      --radius: 16px;
     }
 
     body.light {
@@ -60,476 +64,131 @@
     .top-bar { display:none !important; }
 
     main.container {
-      max-width: 1240px;
+      max-width: 1100px;
       width: 100%;
-      margin: 22px auto;
-      padding: 18px;
+      margin: 0 auto;
+      padding: 0 18px;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 340px;
-      gap: 18px;
+      grid-template-columns: minmax(0, 640px) 320px;
+      gap: 0;
+      align-items: start;
       overflow-x: hidden;
     }
 
     @media (max-width: 920px){
-      main.container {
-        grid-template-columns: 1fr;
-        padding: 14px;
-        margin: 12px auto;
-      }
+      main.container { grid-template-columns: 1fr; padding: 0 14px; }
       aside.right-column { order: 2; }
     }
 
-    .stack {
-      display: grid;
-      gap: 14px;
-      min-width: 0;
+    .feed { min-width: 0; border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding-bottom: 24px; }
+    @media (max-width: 920px){ .feed { border-left: none; border-right: none; } }
+
+    .feed-header {
+      position: sticky; top: 0; z-index: 5;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 18px;
     }
 
-    .card {
-      background: linear-gradient(180deg, var(--card), var(--panel));
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px;
-      color: var(--text);
-      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-      min-width: 0;
-    }
+    .feed-header h1 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+    .post { padding: 16px 18px; border-bottom: 1px solid var(--border); display: grid; gap: 10px; }
+    .post-eyebrow { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .post-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .post-title { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.3; }
+    .post-body { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; white-space: pre-wrap; }
+    .post-footer { display: flex; align-items: center; justify-content: flex-end; gap: 6px; color: var(--muted); font-size: 12px; cursor: pointer; padding-top: 4px; }
+    .post-footer:hover { color: var(--text); }
+    .post-footer svg { width: 14px; height: 14px; }
 
-    .hero {
-      display: grid;
-      gap: 14px;
-    }
+    .login-card { display: flex; align-items: center; gap: 14px; background: linear-gradient(135deg, var(--accent), var(--accent-strong)); border-radius: 14px; padding: 16px 18px; color: #fff; cursor: pointer; transition: transform .15s ease; }
+    .login-card:hover { transform: translateY(-1px); }
+    .login-card svg { width: 26px; height: 26px; flex-shrink: 0; }
+    .login-card-title { font-weight: 800; font-size: 15.5px; }
+    .login-card-sub { font-size: 12.5px; opacity: .85; margin-top: 2px; }
 
-    .hero-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      min-width: 0;
-    }
+    .notif-card { display: none; align-items: center; gap: 12px; justify-content: space-between; background: var(--card-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin: 14px 18px 0 18px; }
+    .notif-card p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .notif-btn { flex-shrink: 0; border: 1px solid var(--border-strong); background: var(--soft); color: var(--text); font-weight: 700; font-size: 12.5px; padding: 8px 12px; border-radius: 10px; cursor: pointer; }
+    .notif-btn:hover { background: rgba(255,255,255,0.06); }
 
-    .hero-copy {
-      min-width: 0;
-      display: grid;
-      gap: 8px;
-    }
+    .profile-card { display: none; border-radius: 14px; overflow: hidden; background: var(--card-2); border: 1px solid var(--border); cursor: default; }
+    .profile-banner { width: 100%; height: 110px; background-size: cover; background-position: center; background-color: var(--soft); display: none; }
+    .profile-card-body { display: flex; align-items: center; gap: 14px; padding: 14px 16px; min-width: 0; }
+    .profile-pfp-wrap { position: relative; flex-shrink: 0; }
+    .profile-pfp { width: 62px; height: 62px; border-radius: 12px; background-size: cover; background-position: center; background-color: var(--soft); border: 1px solid var(--border-strong); }
+    .profile-pfp-frame { position: absolute; inset: 0; pointer-events: none; border-radius: 12px; background-size: cover; background-position: center; display: none; }
+    .profile-text { min-width: 0; flex: 1; display: grid; gap: 4px; }
+    .profile-name-verif { font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .profile-name-verif span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .profile-name-verif img { width: 15px; height: 15px; flex-shrink: 0; }
+    .profile-bio { color: var(--muted); font-size: 13px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .profile-arrow { flex-shrink: 0; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: var(--text); cursor: pointer; transition: background .12s ease; }
+    .profile-arrow:hover { background: var(--soft); }
+    .profile-arrow svg { width: 17px; height: 17px; }
 
-    .hero-kicker {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      width: fit-content;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: var(--soft);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: .02em;
-    }
+    .friends-scroll { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 6px 2px; }
+    .friends-scroll::-webkit-scrollbar { height: 6px; }
+    .friends-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+    .friend-item { flex: 0 0 auto; width: 78px; display: grid; justify-items: center; gap: 6px; cursor: pointer; text-align: center; }
+    .friend-item-pfp-wrap { position: relative; width: 62px; height: 62px; }
+    .friend-item-pfp { width: 62px; height: 62px; border-radius: 50%; background-size: cover; background-position: center; background-color: var(--soft); border: 1px solid var(--border-strong); }
+    .friend-item-frame { position: absolute; inset: 0; border-radius: 50%; background-size: cover; background-position: center; pointer-events: none; display: none; }
+    .friend-item-name { font-size: 11.5px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 3px; max-width: 78px; overflow: hidden; }
+    .friend-item-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .friend-item-name img { width: 11px; height: 11px; flex-shrink: 0; }
+    .friends-empty, .friends-loading { width: 100%; padding: 18px 8px; text-align: center; color: var(--muted); font-size: 13px; }
 
-    .hero h1 {
-      margin: 0;
-      font-size: 28px;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-    }
+    .community-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+    .community-avatar { width: 46px; height: 46px; border-radius: 10px; background-size: cover; background-position: center; background-color: var(--soft); flex-shrink: 0; }
+    .community-text { flex: 1; min-width: 0; }
+    .community-title { font-size: 14.5px; font-weight: 700; color: var(--text); }
+    .community-subtitle { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+    .community-btn { flex-shrink: 0; border: none; background: var(--community); color: #fff; font-weight: 700; font-size: 12.5px; padding: 9px 14px; border-radius: 8px; cursor: pointer; transition: background .12s ease; }
+    .community-btn:hover { background: var(--community-hover); }
 
-    .hero-subtitle {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-      max-width: 62ch;
-    }
+    .quote-mark { font-size: 34px; font-weight: 800; color: var(--muted); line-height: 1; margin: 0; }
+    .post-quote { margin: 0; color: var(--text); font-size: 16px; line-height: 1.6; font-weight: 500; letter-spacing: -0.01em; }
+    .quote-refresh { justify-self: end; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--soft); display: grid; place-items: center; cursor: pointer; color: var(--muted); transition: background .12s ease, color .12s ease; }
+    .quote-refresh:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+    .quote-refresh.spin svg { animation: spin .6s linear; }
+    .quote-refresh svg { width: 15px; height: 15px; }
+    @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
-    .hero-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .daily-card { border-radius: 14px; padding: 16px; cursor: pointer; background: var(--soft); border: 1px solid var(--border); transition: background .15s ease, opacity .15s ease; }
+    .daily-card.state-offline { background: var(--accent); border-color: transparent; }
+    .daily-card.state-cooldown { background: var(--card-2); }
+    .daily-card.state-processing { background: var(--card-2); cursor: default; opacity: .85; }
+    .daily-card.state-available { background: var(--card-2); }
+    .daily-head { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; }
+    .daily-head svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .daily-body { min-height: 40px; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 13.5px; padding-top: 10px; line-height: 1.5; }
+    .daily-card.state-offline .daily-body,
+    .daily-card.state-offline .daily-head { color: #fff; }
+    .daily-spinner { width: 26px; height: 26px; border: 2px solid var(--border); border-top: 2px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
 
-    .meta-pill {
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: var(--soft);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .section {
-      display: grid;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .section-head {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .section-title-wrap {
-      display: grid;
-      gap: 4px;
-      min-width: 0;
-    }
-
-    .section-title {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-
-    .section-desc {
-      margin: 0;
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-
-    .section-badge {
-      flex-shrink: 0;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--muted);
-      background: var(--soft);
-      border: 1px solid var(--border);
-      padding: 7px 10px;
-      border-radius: 999px;
-    }
-
-    .announcement-card,
-    .quote-card,
-    .preview-card {
-      display: grid;
-      gap: 10px;
-    }
-
-    .announcement-title {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      margin: 0;
-    }
-
-    .announcement-message {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
-      margin: 0;
-      white-space: pre-wrap;
-    }
-
-    .quote-text {
-      color: var(--text);
-      font-size: 14px;
-      line-height: 1.65;
-      margin: 0;
-    }
-
-    .quote-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    .profile-preview {
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      background: linear-gradient(180deg, var(--card), var(--panel));
-      border-radius: var(--radius);
-      padding: 14px;
-      border: 1px solid var(--border);
-      min-width: 0;
-    }
-
-    .profile-pfp-wrap {
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    .profile-pfp {
-      width: 76px;
-      height: 76px;
-      border-radius: 14px;
-      background-size: cover;
-      background-position: center;
-      border: 1px solid var(--border-strong);
-      background-color: var(--soft);
-    }
-
-    .profile-pfp-frame {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      border-radius: 14px;
-      background-size: cover;
-      background-position: center;
-      display: none;
-    }
-
-    .profile-text {
-      min-width: 0;
-      display: grid;
-      gap: 6px;
-    }
-
-    .profile-name-verif {
-      font-weight: 800;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-      line-height: 1.2;
-    }
-
-    .profile-name-verif span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .profile-name-verif img {
-      width: 14px;
-      height: 14px;
-      flex-shrink: 0;
-    }
-
-    .profile-bio {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.55;
-      word-break: break-word;
-    }
-
-    .friends-shell {
-      display: grid;
-      gap: 10px;
-      min-width: 0;
-    }
-
-    .friends-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .friends-count {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--muted);
-      background: var(--soft);
-      border: 1px solid var(--border);
-      padding: 7px 10px;
-      border-radius: 999px;
-      flex-shrink: 0;
-    }
-
-    .friends-container {
-      display: grid;
-      gap: 12px;
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      grid-auto-rows: var(--friend-row-height);
-      align-items: start;
-      overflow-x: hidden;
-      box-sizing: border-box;
-      border-radius: 12px;
-    }
-
-    @media (min-width: 921px) {
-      .friends-container {
-        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
-        overflow-y: auto;
-        padding-right: 2px;
-      }
-    }
-
-    @media (min-width: 601px) and (max-width: 920px) {
-      .friends-container {
-        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
-        overflow-y: auto;
-        padding-right: 2px;
-      }
-    }
-
-    @media (max-width: 600px) {
-      .friends-container {
-        gap: 8px;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        grid-auto-rows: var(--friend-row-height-mobile);
-        max-height: calc((var(--friend-row-height-mobile) * 3) + (8px * 2));
-        overflow-y: auto;
-      }
-    }
-
-    .friend-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-width: 0;
-      text-align: center;
-      cursor: pointer;
-      background: linear-gradient(180deg, var(--card-2), var(--card));
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 10px;
-      box-sizing: border-box;
-      overflow: hidden;
-      transition: transform .15s ease, border-color .15s ease, background .15s ease;
-    }
-
-    .friend-card:hover {
-      transform: translateY(-1px);
-      border-color: var(--border-strong);
-    }
-
-    .friend-pfp {
-      width: 64px;
-      height: 64px;
-      border-radius: 13px;
-      margin: 0 auto 8px auto;
-      background-size: cover;
-      background-position: center;
-      border: 1px solid var(--border-strong);
-      background-repeat: no-repeat;
-      flex-shrink: 0;
-      background-color: var(--soft);
-    }
-
-    .friend-name {
-      font-size: 13px;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      width: 100%;
-      font-weight: 600;
-    }
-
-    .friend-name img {
-      width: 12px;
-      height: 12px;
-      flex-shrink: 0;
-    }
-
-    .empty-state {
-      padding: 16px;
-      border-radius: 14px;
-      border: 1px dashed var(--border-strong);
-      background: var(--soft);
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid var(--border);
-      border-top: 2px solid var(--accent);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 8px auto;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .action-button {
-      display: inline-flex;
-      gap: 10px;
-      align-items: center;
-      width: 100%;
-      padding: 11px 14px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--soft);
-      cursor: pointer;
-      font-weight: 700;
-      color: var(--text);
-      text-align: left;
-      transition: transform .15s ease, border-color .15s ease, background .15s ease;
-    }
-
-    .action-button:hover {
-      transform: translateY(-1px);
-      border-color: var(--border-strong);
-      background: rgba(255,255,255,0.05);
-    }
-
-    .action-button img {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
-
-    .action-group {
-      display: grid;
-      gap: 8px;
-    }
-
-    .mini-label {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      margin-top: 4px;
-    }
-
-    #toast {
-      position: fixed;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 14px;
-      border-radius: 11px;
-      font-weight: 800;
-      display: none;
-      z-index: 99999;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.22);
-    }
-
+    aside.right-column { display: grid; gap: 14px; padding: 14px 0 14px 18px; position: sticky; top: 0; align-self: start; min-width: 0; }
+    @media (max-width: 920px){ aside.right-column { padding: 14px 0; position: static; } }
+    .redeem-widget { background: linear-gradient(160deg, var(--redeem), var(--redeem-strong)); border-radius: var(--radius); padding: 16px; color: #fff; cursor: pointer; transition: transform .15s ease; }
+    .redeem-widget:hover { transform: translateY(-1px); }
+    .redeem-widget-head { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15.5px; }
+    .redeem-widget-head svg { width: 19px; height: 19px; }
+    .redeem-widget p { margin: 8px 0 0 0; font-size: 12.5px; opacity: .9; line-height: 1.5; }
+    .moderation-widget { background: var(--moderation); border-radius: var(--radius); padding: 16px; color: #fff; cursor: pointer; min-height: 92px; display: flex; flex-direction: column; justify-content: space-between; transition: transform .15s ease; }
+    .moderation-widget:hover { transform: translateY(-1px); }
+    .moderation-widget svg { width: 26px; height: 26px; }
+    .moderation-widget-text { font-size: 13px; font-weight: 600; word-break: break-word; }
+    .watchdog-widget { background: var(--watchdog); border-radius: var(--radius); padding: 16px; color: #fff; }
+    .watchdog-desc { font-size: 12.5px; font-weight: 600; margin: 0 0 10px 0; opacity: .95; }
+    .dot-row { display: flex; align-items: baseline; gap: 6px; font-size: 13px; font-family: "SFMono-Regular", Consolas, monospace; padding: 4px 0; }
+    .dot-row .dr-label { flex-shrink: 0; opacity: .85; }
+    .dot-row .dr-fill { flex: 1; border-bottom: 1px dotted rgba(255,255,255,0.35); transform: translateY(-3px); }
+    .dot-row .dr-value { flex-shrink: 0; font-weight: 700; }
+    #toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 14px; border-radius: 11px; font-weight: 800; display: none; z-index: 99999; box-shadow: 0 12px 28px rgba(0,0,0,0.22); }
     #toast.purple { background: var(--accent-strong); color: #fff; }
     #toast.yellow { background: #e6b800; color: #222; }
     #toast.red { background: #c00; color: #fff; }
-
-    .friends-container::-webkit-scrollbar { width: 8px; }
-    .friends-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 999px; }
-    body.light .friends-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
-
-    @media (max-width: 600px) {
-      .hero h1 { font-size: 24px; }
-      .card { padding: 14px; }
-      .profile-preview { flex-direction: row; gap: 10px; padding: 12px; }
-      .profile-pfp { width: 68px; height: 68px; border-radius: 12px; }
-      .hero-top { flex-direction: column; }
-      .section-head { align-items: flex-start; flex-direction: column; }
-      main.container { padding: 12px; }
-    }
+    @media (max-width: 600px) { .feed-header h1 { font-size: 18px; } .post-quote { font-size: 15px; } }
   </style>
 
   <script type="module" src="/dp-topbar.js"></script>
@@ -542,7 +201,6 @@
         return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
       } catch (e) { return false; }
     };
-
     window.isWebView = function() {
       try {
         const ua = navigator.userAgent || '';
@@ -554,126 +212,105 @@
     };
   </script>
 </head>
-
 <body>
   <dp-topbar></dp-topbar>
 
   <main class="container">
-    <section class="stack">
-      <div class="card hero" role="region" aria-label="Добро пожаловать">
-        <div class="hero-top">
-          <div class="hero-copy">
-            <div class="hero-kicker">Главная</div>
-            <h1>С возвращением</h1>
-            <p class="hero-subtitle">
-              Это ваша панель управления.
-            </p>
-          </div>
-        </div>
+    <section class="feed">
+      <div class="feed-header"><h1 id="t-home">Home</h1></div>
 
-        <div class="hero-meta" aria-label="Сводка страницы">
-          <div class="meta-pill auth-required">Список друзей</div>
-          <div class="meta-pill">Объявления</div>
-          <div class="meta-pill">Цитата дня</div>
-          <div class="meta-pill">Предпросмотр профиля</div>
+      <div class="post" id="login-card-wrap" style="display:none;">
+        <div class="login-card" onclick="location.href='/login'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 17l5-5-5-5M15 12H3M15 21h4a2 2 0 002-2V5a2 2 0 00-2-2h-4"/></svg>
+          <div>
+            <div class="login-card-title" id="t-login">Log in</div>
+            <div class="login-card-sub" id="t-login-sub">Sign in to see your friends, profile and daily rewards.</div>
+          </div>
         </div>
       </div>
 
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title-wrap">
-            <h2 class="section-title">Ваши друзья</h2>
-          </div>
-          <div class="friends-count" id="friends-count">0 друзей</div>
-        </div>
-
-        <div class="card friends-shell">
-          <div class="friends-container" id="friends-list" aria-live="polite"></div>
-        </div>
+      <div class="notif-card" id="notif-card">
+        <p id="t-notif">Turn on notifications to get alerted about important updates.</p>
+        <button class="notif-btn" id="notif-btn" data-i18n="enable">Enable</button>
       </div>
 
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title-wrap">
-            <h2 class="section-title">Объявление</h2>
-            <p class="section-desc">Читайте последнее объявление сайта.</p>
-          </div>
-          <div class="section-badge">Живая лента</div>
-        </div>
-
-        <div class="card announcement-card" aria-live="polite">
-          <div class="announcement-title" id="announcement-title">Загрузка...</div>
-          <div class="announcement-message" id="announcement-message">Пожалуйста, подождите...</div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title-wrap">
-            <h2 class="section-title">Случайная цитата</h2>
-            <p class="section-desc">Наслаждайтесь вдохновляющей цитатой дня.</p>
-          </div>
-          <div class="section-badge">Искра дня</div>
-        </div>
-
-        <div class="card quote-card">
-          <div class="quote-label">Цитата</div>
-          <div id="quote-card" class="quote-text">Загрузка цитаты...</div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title-wrap">
-            <h2 class="section-title">Предпросмотр профиля</h2>
-          </div>
-          <div class="section-badge">Публичный вид</div>
-        </div>
-
-        <div id="profile-preview" class="profile-preview" style="display:none;">
-          <div class="profile-pfp-wrap">
-            <div class="profile-pfp" id="preview-pfp"></div>
-            <div id="preview-pfp-frame" class="profile-pfp-frame"></div>
-          </div>
-
-          <div class="profile-text">
-            <div class="profile-name-verif">
-              <span id="preview-name">Загрузка...</span>
-              <img id="preview-verified" src="/assets/verified.png" alt="Подтверждено" style="display:none;">
+      <div class="post">
+        <div class="post-eyebrow"><span class="dot"></span><span id="t-profile">Profile</span></div>
+        <div class="profile-card" id="profile-card">
+          <div class="profile-banner" id="profile-banner"></div>
+          <div class="profile-card-body">
+            <div class="profile-pfp-wrap">
+              <div class="profile-pfp" id="preview-pfp"></div>
+              <div id="preview-pfp-frame" class="profile-pfp-frame"></div>
             </div>
-            <div class="profile-bio" id="preview-bio"></div>
+            <div class="profile-text">
+              <div class="profile-name-verif">
+                <span id="preview-name">Loading...</span>
+                <img id="preview-verified" src="/assets/verified.png" alt="Verified" style="display:none;">
+              </div>
+              <div class="profile-bio" id="preview-bio"></div>
+            </div>
+            <div class="profile-arrow" onclick="location.href='/profile'" id="profile-arrow" title="Go to profile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <div class="post auth-required" id="friends-post">
+        <div class="post-eyebrow"><span class="dot"></span><span id="t-friends">Friends</span></div>
+        <div class="friends-scroll" id="friends-list" aria-live="polite"></div>
+      </div>
+
+      <div class="post" aria-live="polite">
+        <div class="post-eyebrow"><span class="dot"></span><span id="t-latest-update">Latest website update</span></div>
+        <div class="post-title" id="announcement-title">Loading...</div>
+        <p class="post-body" id="announcement-message">Please wait...</p>
+        <div class="post-footer" id="announcement-footer" style="display:none;">
+          <span id="announcement-date"></span>
+        </div>
+      </div>
+
+      <div class="post">
+        <div class="post-eyebrow"><span class="dot"></span><span id="t-quote-day">Quote of the day</span></div>
+        <p class="quote-mark">&#10077;</p>
+        <p class="post-quote" id="quote-card">Loading quote...</p>
+        <div class="quote-refresh" id="quote-refresh" title="Get another quote">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/></svg>
+        </div>
+      </div>
+
+      <div class="post">
+        <div class="post-eyebrow"><span class="dot"></span><span id="t-daily-reward">Daily reward</span></div>
+        <div class="daily-card state-offline" id="daily-card">
+          <div class="daily-head">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M120-80v-800l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v800l-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60Zm120-200h480v-80H240v80Zm0-160h480v-80H240v80Zm0-160h480v-80H240v80Zm-40 404h560v-568H200v568Zm0-568v568-568Z"/></svg>
+            <span id="daily-title">Daily coins</span>
+          </div>
+          <div class="daily-body" id="daily-body">Log in to claim your daily coins.</div>
         </div>
       </div>
     </section>
 
     <aside class="right-column">
-      <div class="card section">
-        <div class="section-head">
-          <div class="section-title-wrap">
-            <h2 class="section-title">Быстрые действия</h2>
-            <p class="section-desc">Быстро открывайте основные функции с помощью простых кнопок.</p>
-          </div>
+      <div class="redeem-widget" id="redeem-widget" onclick="handleRedeemClick()">
+        <div class="redeem-widget-head">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M120-80v-800l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v800l-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60Zm120-200h480v-80H240v80Zm0-160h480v-80H240v80Zm0-160h480v-80H240v80Zm-40 404h560v-568H200v568Zm0-568v568-568Z"/></svg>
+          <span id="t-redeem-code">Redeem a code</span>
         </div>
+        <p id="t-redeem-desc">Have a promo code? Redeem it here for coins and rewards.</p>
+      </div>
 
-        <div class="action-group">
-          <button class="action-button auth-required" onclick="location.href='/redeem'">
-            <img src="/assets/redeem.png" alt="">
-            <span>Активировать</span>
-          </button>
+      <div class="moderation-widget" id="moderation-widget" onclick="handleModerationClick()">
+        <img src="https://darkpurpleof.neocities.org/Owner.png" width="30" height="30" style="object-fit: cover;">
+        <div class="moderation-widget-text" id="moderation-text">You don't have moderator access.</div>
+      </div>
 
-          <button class="action-button auth-required" onclick="location.href='/manageblockedusers'">
-            <img src="/assets/block.png" alt="">
-            <span>Управление заблокированными пользователями</span>
-          </button>
-
-          <div class="mini-label">Android-приложение</div>
-
-          <button class="action-button" onclick="location.href='/release/download'">
-            <img src="/assets/download.png" alt="">
-            <span>Скачать сейчас</span>
-          </button>
-        </div>
+      <div class="watchdog-widget">
+        <p class="watchdog-desc" id="t-watchdog-desc">Moderation is currently tracking <span id="watchdog-banned-inline">0</span> banned accounts.</p>
+        <div class="dot-row"><span class="dr-label" id="t-banned-users">Banned users</span><span class="dr-fill"></span><span class="dr-value" id="watchdog-users">0</span></div>
+        <div class="dot-row"><span class="dr-label" id="t-banned-ips">Banned IPs</span><span class="dr-fill"></span><span class="dr-value" id="watchdog-ips">0</span></div>
+        <div class="dot-row"><span class="dr-label" id="t-pending-appeals">Pending appeals</span><span class="dr-fill"></span><span class="dr-value" id="watchdog-appeals">0</span></div>
       </div>
     </aside>
   </main>
@@ -689,243 +326,308 @@
       appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
       measurementId: "G-S2X2JYC8Z0"
     };
-
     if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
-
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    function formatNumber(num) {
-      return Intl.NumberFormat('ru', { notation: 'compact' }).format(num);
+    const I18N = {
+      en: {
+        home: 'Home', login: 'Log in', loginSub: 'Sign in to see your friends, profile and daily rewards.', notifications: 'Turn on notifications to get alerted about important updates.', enable: 'Enable', profile: 'Profile', friends: 'Friends', latestUpdate: 'Latest website update', quoteOfDay: 'Quote of the day', getAnotherQuote: 'Get another quote', dailyReward: 'Daily reward', dailyCoins: 'Daily coins', logInToClaim: 'Log in to claim your daily coins.', redeemCode: 'Redeem a code', redeemDesc: 'Have a promo code? Redeem it here for coins and rewards.', noModAccess: "You don't have moderator access.", watchdogDesc: 'Moderation is currently tracking {count} banned accounts.', bannedUsers: 'Banned users', bannedIps: 'Banned IPs', pendingAppeals: 'Pending appeals', announcement: 'Announcement', noAnnouncementsYet: 'No announcements yet', nothingNew: 'There is nothing new right now.', publishedOn: 'Published on', loading: 'Loading...', pleaseWait: 'Please wait...', loadingQuote: 'Loading quote...', noQuotes: 'No quotes available.', failedQuote: 'Failed to load quote.', failedClaim: 'Failed to claim your daily coins.', alreadyClaimed: "You've already claimed today.", earned: 'You earned {amount} DF$!', hugeReward: 'Huge reward: {amount} DF$!', comeBackTomorrow: 'Come back tomorrow', available: 'Available {date}', nextRewardNotReady: "Your next reward isn't ready yet.", earnUpTo: 'Earn up to 10,000 DF$', tapToClaim: 'Tap to claim your reward for today.', loadingFriends: 'Loading friends...', emptyFriends: 'Try sending someone a request', loadingProfile: 'Loading...', noBio: 'No bio added yet.', goToProfile: 'Go to profile', verifiedAlt: 'Verified', moderatorsDesc: 'Moderation is currently tracking', bannedAccounts: 'banned accounts', promoCode: 'Have a promo code? Redeem it here for coins and rewards.' },
+      es: {
+        home: 'Inicio', login: 'Iniciar sesión', loginSub: 'Inicia sesión para ver a tus amigos, tu perfil y las recompensas diarias.', notifications: 'Activa las notificaciones para recibir avisos de actualizaciones importantes.', enable: 'Activar', profile: 'Perfil', friends: 'Amigos', latestUpdate: 'Última actualización del sitio', quoteOfDay: 'Frase del día', getAnotherQuote: 'Obtener otra frase', dailyReward: 'Recompensa diaria', dailyCoins: 'Monedas diarias', logInToClaim: 'Inicia sesión para reclamar tus monedas diarias.', redeemCode: 'Canjear un código', redeemDesc: '¿Tienes un código promocional? Canjéalo aquí por monedas y recompensas.', noModAccess: 'No tienes acceso de moderador.', watchdogDesc: 'La moderación está rastreando actualmente {count} cuentas baneadas.', bannedUsers: 'Usuarios baneados', bannedIps: 'IPs baneadas', pendingAppeals: 'Apelaciones pendientes', announcement: 'Anuncio', noAnnouncementsYet: 'Todavía no hay anuncios', nothingNew: 'No hay nada nuevo por ahora.', publishedOn: 'Publicado el', loading: 'Cargando...', pleaseWait: 'Por favor espera...', loadingQuote: 'Cargando frase...', noQuotes: 'No hay frases disponibles.', failedQuote: 'No se pudo cargar la frase.', failedClaim: 'No se pudieron reclamar tus monedas diarias.', alreadyClaimed: 'Ya reclamaste hoy.', earned: '¡Ganaste {amount} DF$!', hugeReward: '¡Recompensa enorme: {amount} DF$!', comeBackTomorrow: 'Vuelve mañana', available: 'Disponible {date}', nextRewardNotReady: 'Tu próxima recompensa aún no está lista.', earnUpTo: 'Gana hasta 10,000 DF$', tapToClaim: 'Toca para reclamar tu recompensa de hoy.', loadingFriends: 'Cargando amigos...', emptyFriends: 'Intenta enviarle una solicitud a alguien', loadingProfile: 'Cargando...', noBio: 'Aún no se agregó biografía.', goToProfile: 'Ir al perfil', verifiedAlt: 'Verificado', moderatorsDesc: 'La moderación está rastreando', bannedAccounts: 'cuentas baneadas', promoCode: '¿Tienes un código promocional? Canjéalo aquí por monedas y recompensas.' },
+      ru: {
+        home: 'Главная', login: 'Войти', loginSub: 'Войдите, чтобы видеть друзей, профиль и ежедневные награды.', notifications: 'Включите уведомления, чтобы получать важные обновления.', enable: 'Включить', profile: 'Профиль', friends: 'Друзья', latestUpdate: 'Последнее обновление сайта', quoteOfDay: 'Цитата дня', getAnotherQuote: 'Показать другую цитату', dailyReward: 'Ежедневная награда', dailyCoins: 'Ежедневные монеты', logInToClaim: 'Войдите, чтобы получить ежедневные монеты.', redeemCode: 'Активировать код', redeemDesc: 'Есть промокод? Активируйте его здесь за монеты и награды.', noModAccess: 'У вас нет доступа модератора.', watchdogDesc: 'Модерация сейчас отслеживает {count} заблокированных аккаунтов.', bannedUsers: 'Заблокированные пользователи', bannedIps: 'Заблокированные IP', pendingAppeals: 'Ожидающие апелляции', announcement: 'Объявление', noAnnouncementsYet: 'Пока нет объявлений', nothingNew: 'Пока ничего нового нет.', publishedOn: 'Опубликовано', loading: 'Загрузка...', pleaseWait: 'Пожалуйста, подождите...', loadingQuote: 'Загрузка цитаты...', noQuotes: 'Цитаты недоступны.', failedQuote: 'Не удалось загрузить цитату.', failedClaim: 'Не удалось получить ежедневные монеты.', alreadyClaimed: 'Вы уже забрали награду сегодня.', earned: 'Вы получили {amount} DF$!', hugeReward: 'Большая награда: {amount} DF$!', comeBackTomorrow: 'Возвращайтесь завтра', available: 'Доступно {date}', nextRewardNotReady: 'Следующая награда ещё не готова.', earnUpTo: 'Заработайте до 10,000 DF$', tapToClaim: 'Нажмите, чтобы получить награду за сегодня.', loadingFriends: 'Загрузка друзей...', emptyFriends: 'Попробуйте отправить кому-нибудь запрос', loadingProfile: 'Загрузка...', noBio: 'Биография ещё не добавлена.', goToProfile: 'Перейти к профилю', verifiedAlt: 'Проверено', moderatorsDesc: 'Модерация сейчас отслеживает', bannedAccounts: 'заблокированных аккаунтов', promoCode: 'Есть промокод? Активируйте его здесь за монеты и награды.' },
+      de: {
+        home: 'Startseite', login: 'Anmelden', loginSub: 'Melde dich an, um deine Freunde, dein Profil und tägliche Belohnungen zu sehen.', notifications: 'Aktiviere Benachrichtigungen, um wichtige Updates zu erhalten.', enable: 'Aktivieren', profile: 'Profil', friends: 'Freunde', latestUpdate: 'Neueste Website-Aktualisierung', quoteOfDay: 'Zitat des Tages', getAnotherQuote: 'Anderes Zitat anzeigen', dailyReward: 'Tägliche Belohnung', dailyCoins: 'Tägliche Coins', logInToClaim: 'Melde dich an, um deine täglichen Coins zu erhalten.', redeemCode: 'Code einlösen', redeemDesc: 'Hast du einen Promo-Code? Löse ihn hier für Coins und Belohnungen ein.', noModAccess: 'Du hast keinen Moderatorzugriff.', watchdogDesc: 'Die Moderation überwacht derzeit {count} gesperrte Konten.', bannedUsers: 'Gesperrte Nutzer', bannedIps: 'Gesperrte IPs', pendingAppeals: 'Ausstehende Einsprüche', announcement: 'Ankündigung', noAnnouncementsYet: 'Noch keine Ankündigungen', nothingNew: 'Derzeit gibt es nichts Neues.', publishedOn: 'Veröffentlicht am', loading: 'Wird geladen...', pleaseWait: 'Bitte warten...', loadingQuote: 'Zitat wird geladen...', noQuotes: 'Keine Zitate verfügbar.', failedQuote: 'Zitat konnte nicht geladen werden.', failedClaim: 'Deine täglichen Coins konnten nicht eingelöst werden.', alreadyClaimed: 'Du hast heute bereits abgeholt.', earned: 'Du hast {amount} DF$ verdient!', hugeReward: 'Große Belohnung: {amount} DF$!', comeBackTomorrow: 'Komm morgen wieder', available: 'Verfügbar {date}', nextRewardNotReady: 'Deine nächste Belohnung ist noch nicht bereit.', earnUpTo: 'Verdiene bis zu 10.000 DF$', tapToClaim: 'Tippe, um deine heutige Belohnung zu erhalten.', loadingFriends: 'Freunde werden geladen...', emptyFriends: 'Versuche, jemandem eine Anfrage zu senden', loadingProfile: 'Wird geladen...', noBio: 'Noch keine Bio hinzugefügt.', goToProfile: 'Zum Profil', verifiedAlt: 'Verifiziert', moderatorsDesc: 'Die Moderation verfolgt derzeit', bannedAccounts: 'gesperrte Konten', promoCode: 'Hast du einen Promo-Code? Löse ihn hier für Coins und Belohnungen ein.' },
+      ja: {
+        home: 'ホーム', login: 'ログイン', loginSub: 'サインインして、友達・プロフィール・毎日の報酬を確認しましょう。', notifications: '重要な更新を受け取るには通知をオンにしてください。', enable: '有効にする', profile: 'プロフィール', friends: '友だち', latestUpdate: '最新のサイト更新', quoteOfDay: '今日の名言', getAnotherQuote: '別の名言を表示', dailyReward: '毎日の報酬', dailyCoins: '毎日のコイン', logInToClaim: 'ログインして毎日のコインを受け取りましょう。', redeemCode: 'コードを引き換える', redeemDesc: 'プロモコードがありますか？ここでコインと報酬に交換できます。', noModAccess: 'モデレーター権限がありません。', watchdogDesc: '現在、モデレーションは {count} 件の停止アカウントを追跡しています。', bannedUsers: '停止ユーザー', bannedIps: '停止IP', pendingAppeals: '保留中の異議申し立て', announcement: 'お知らせ', noAnnouncementsYet: 'まだお知らせはありません', nothingNew: '今は新しい情報はありません。', publishedOn: '公開日', loading: '読み込み中...', pleaseWait: 'お待ちください...', loadingQuote: '名言を読み込み中...', noQuotes: '名言がありません。', failedQuote: '名言の読み込みに失敗しました。', failedClaim: '毎日のコインを受け取れませんでした。', alreadyClaimed: '今日はすでに受け取り済みです。', earned: '{amount} DF$ を獲得しました！', hugeReward: '大きな報酬: {amount} DF$！', comeBackTomorrow: 'また明日', available: '{date} に利用可能', nextRewardNotReady: '次の報酬はまだ準備できていません。', earnUpTo: '最大 10,000 DF$ を獲得', tapToClaim: 'タップして今日の報酬を受け取る', loadingFriends: '友だちを読み込み中...', emptyFriends: '誰かにリクエストを送ってみましょう', loadingProfile: '読み込み中...', noBio: 'まだ自己紹介が追加されていません。', goToProfile: 'プロフィールへ', verifiedAlt: '認証済み', moderatorsDesc: '現在モデレーションが追跡している', bannedAccounts: '件の停止アカウント', promoCode: 'プロモコードがありますか？ここでコインと報酬に交換できます。' }
+    };
+
+    const SUPPORTED_LANGS = ['en', 'es', 'ru', 'de', 'ja'];
+    let currentLang = 'en';
+
+    function normalizeLang(v) {
+      const s = String(v || '').trim().toLowerCase();
+      if (!s) return '';
+      const map = { english: 'en', spanish: 'es', russian: 'ru', german: 'de', japanese: 'ja', jp: 'ja', ja: 'ja', de: 'de', ru: 'ru', es: 'es', en: 'en' };
+      return SUPPORTED_LANGS.includes(s) ? s : (map[s] || s.split(/[-_]/)[0]);
     }
 
-    function showToast(message, color = "purple", duration = 3500) {
-      const toast = document.getElementById("toast");
+    function getBrowserLang() {
+      const nav = navigator.language || navigator.userLanguage || 'en';
+      const n = normalizeLang(nav);
+      return SUPPORTED_LANGS.includes(n) ? n : 'en';
+    }
+
+    function t(key, params = {}) {
+      const dict = I18N[currentLang] || I18N.en;
+      const fallback = I18N.en[key] ?? key;
+      let value = dict[key] ?? fallback;
+      for (const [k, v] of Object.entries(params)) value = String(value).replaceAll(`{${k}}`, String(v));
+      return value;
+    }
+
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+
+    function applyTranslations() {
+      document.documentElement.lang = currentLang;
+      setText('t-home', t('home'));
+      setText('t-login', t('login'));
+      setText('t-login-sub', t('loginSub'));
+      setText('t-notif', t('notifications'));
+      setText('notif-btn', t('enable'));
+      setText('t-profile', t('profile'));
+      setText('t-friends', t('friends'));
+      setText('t-latest-update', t('latestUpdate'));
+      setText('t-quote-day', t('quoteOfDay'));
+      setText('quote-refresh', '');
+      const qr = document.getElementById('quote-refresh'); if (qr) qr.title = t('getAnotherQuote');
+      setText('t-daily-reward', t('dailyReward'));
+      setText('daily-title', t('dailyCoins'));
+      setText('daily-body', t('logInToClaim'));
+      setText('t-redeem-code', t('redeemCode'));
+      setText('t-redeem-desc', t('redeemDesc'));
+      setText('moderation-text', t('noModAccess'));
+      setText('t-watchdog-desc', t('moderatorsDesc') + ' ' + t('watchdogDesc').replace('{count}', document.getElementById('watchdog-banned-inline')?.textContent || '0'));
+      setText('t-banned-users', t('bannedUsers'));
+      setText('t-banned-ips', t('bannedIps'));
+      setText('t-pending-appeals', t('pendingAppeals'));
+      const p = document.getElementById('profile-arrow'); if (p) p.title = t('goToProfile');
+      const v = document.getElementById('preview-verified'); if (v) v.alt = t('verifiedAlt');
+    }
+
+    async function resolveLanguage(user) {
+      let lang = '';
+      try {
+        if (user && user.email) {
+          const snap = await db.collection('user_data').doc(user.email).get();
+          lang = normalizeLang(snap.exists ? snap.data()?.lang : '') || '';
+        }
+      } catch (e) {}
+      lang = SUPPORTED_LANGS.includes(lang) ? lang : getBrowserLang();
+      currentLang = lang;
+      applyTranslations();
+    }
+
+    function formatNumber(num) {
+      return Intl.NumberFormat(currentLang || 'en', { notation: 'compact' }).format(num);
+    }
+
+    function showToast(message, color = 'purple', duration = 3500) {
+      const toast = document.getElementById('toast');
       if (!toast) return;
       toast.textContent = message;
       toast.className = color;
-      toast.style.display = "block";
-      setTimeout(() => {
-        toast.style.display = "none";
-        toast.className = "";
-      }, duration);
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; toast.className = ''; }, duration);
     }
 
     function escapeHtml(str) {
-      return String(str || '').replace(/[&<>"']/g, s => ({
-        '&':'&amp;',
-        '<':'&lt;',
-        '>':'&gt;',
-        '"':'&quot;',
-        "'":'&#39;'
-      })[s]);
+      return String(str || '').replace(/[&<>"']/g, s => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[s]);
     }
 
-    db.collection('announcements').orderBy('timestamp', 'desc').limit(1).onSnapshot(snapshot => {
-      const t = document.getElementById('announcement-title');
-      const m = document.getElementById('announcement-message');
+    function handleRedeemClick() { location.href = auth.currentUser ? '/redeem' : '/login'; }
+    function handleModerationClick() {
+      const user = auth.currentUser;
+      const isAdmin = !!(user && user.email && user.email.endsWith('@darkpurpleof.github.io'));
+      if (isAdmin) location.href = '/admin'; else window.open('https://darkpurpleof.github.io/form', '_blank');
+    }
 
+    auth.onAuthStateChanged(async user => {
+      const loginWrap = document.getElementById('login-card-wrap');
+      if (loginWrap) loginWrap.style.display = user ? 'none' : 'block';
+      await resolveLanguage(user);
+    });
+
+    (function () {
+      const card = document.getElementById('notif-card');
+      const btn = document.getElementById('notif-btn');
+      if (!card || !btn || !('Notification' in window)) return;
+      function refresh() { card.style.display = Notification.permission === 'default' ? 'flex' : 'none'; }
+      refresh();
+      btn.addEventListener('click', async () => { try { await Notification.requestPermission(); } catch (e) {} refresh(); });
+    })();
+
+    db.collection('announcements').orderBy('timestamp', 'desc').limit(1).onSnapshot(snapshot => {
+      const tEl = document.getElementById('announcement-title');
+      const mEl = document.getElementById('announcement-message');
+      const footer = document.getElementById('announcement-footer');
+      const dateEl = document.getElementById('announcement-date');
       if (!snapshot.empty) {
         snapshot.forEach(doc => {
           const data = doc.data() || {};
-          if (t) t.textContent = data.title || 'Объявление';
-          if (m) m.textContent = data.message || '';
+          if (tEl) tEl.textContent = data.title || t('announcement');
+          if (mEl) mEl.textContent = data.message || '';
+          if (data.timestamp && data.timestamp.toDate) {
+            const d = data.timestamp.toDate();
+            if (dateEl) dateEl.textContent = `${t('publishedOn')} ${d.toLocaleString(currentLang || 'en')}`;
+            if (footer) footer.style.display = 'flex';
+          } else if (footer) footer.style.display = 'none';
         });
       } else {
-        if (t) t.textContent = 'Пока нет объявлений';
-        if (m) m.textContent = 'Сейчас ничего нового нет.';
+        if (tEl) tEl.textContent = t('noAnnouncementsYet');
+        if (mEl) mEl.textContent = t('nothingNew');
+        if (footer) footer.style.display = 'none';
       }
     });
 
-    fetch("/assets/quotes.txt")
-      .then(r => r.text())
-      .then(text => {
-        const quotes = text.split('\n').map(q => q.trim()).filter(q => q);
-        if (quotes.length > 0) {
-          const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    function loadQuote() {
+      return fetch('/assets/quotes.txt')
+        .then(r => r.text())
+        .then(text => {
+          const quotes = text.split('\n').map(q => q.trim()).filter(q => q);
           const q = document.getElementById('quote-card');
-          if (q) q.textContent = randomQuote;
-        } else {
-          const q = document.getElementById('quote-card');
-          if (q) q.textContent = 'Цитаты недоступны.';
-        }
-      })
-      .catch(() => {
-        const q = document.getElementById('quote-card');
-        if (q) q.textContent = 'Не удалось загрузить цитату.';
-      });
-  </script>
+          if (!q) return;
+          q.textContent = quotes.length > 0 ? quotes[Math.floor(Math.random() * quotes.length)] : t('noQuotes');
+        })
+        .catch(() => { const q = document.getElementById('quote-card'); if (q) q.textContent = t('failedQuote'); });
+    }
+    loadQuote();
+    const refreshBtn = document.getElementById('quote-refresh');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => { refreshBtn.classList.add('spin'); loadQuote().finally(() => setTimeout(() => refreshBtn.classList.remove('spin'), 300)); });
+    }
 
-  <script>
     auth.onAuthStateChanged(async user => {
-      const card = document.getElementById('profile-preview');
+      const card = document.getElementById('profile-card');
       if (!card) return;
-
-      if (!user) {
-        card.style.display = 'none';
-        return;
-      }
-
+      if (!user) { card.style.display = 'none'; return; }
       try {
-        const docRef = db.collection('user_data').doc(user.email);
-        const docSnap = await docRef.get();
-
-        if (!docSnap.exists) {
-          card.style.display = 'none';
-          return;
-        }
-
+        const docSnap = await db.collection('user_data').doc(user.email).get();
+        if (!docSnap.exists) { card.style.display = 'none'; return; }
         const data = docSnap.data() || {};
-        card.style.display = 'flex';
-
-        const pfp = document.getElementById('preview-pfp');
-        if (pfp) pfp.style.backgroundImage = `url(${data.profile_picture || '/org-owner.jpg'})`;
-
-        const previewFrame = document.getElementById('preview-pfp-frame');
-        if (previewFrame) {
-          if (data.profile_picture_frame && data.profile_picture_frame.trim() !== '') {
-            previewFrame.style.backgroundImage = `url(${data.profile_picture_frame})`;
-            previewFrame.style.display = 'block';
-          } else {
-            previewFrame.style.display = 'none';
-          }
-        }
-
-        const displayName = data['display name'] || user.email;
-        const nameEl = document.getElementById('preview-name');
-        if (nameEl) nameEl.textContent = displayName;
-
-        const verifiedEl = document.getElementById('preview-verified');
-        if (verifiedEl) verifiedEl.style.display = data.is_verified ? 'inline' : 'none';
-
-        const bioEl = document.getElementById('preview-bio');
-        if (bioEl) {
-          const bio = data.bio || '';
-          bioEl.textContent = bio.length > 96 ? bio.substring(0, 93) + '...' : bio || 'Биография пока не добавлена.';
-        }
-      } catch (e) {
-        console.warn('profile preview failed', e);
-        card.style.display = 'none';
-      }
+        card.style.display = 'block';
+        const banner = document.getElementById('profile-banner');
+        if (banner) { if (data.banner) { banner.style.backgroundImage = `url(${data.banner})`; banner.style.display = 'block'; } else banner.style.display = 'none'; }
+        const pfp = document.getElementById('preview-pfp'); if (pfp) pfp.style.backgroundImage = `url(${data.profile_picture || '/org-owner.jpg'})`;
+        const previewFrame = document.getElementById('preview-pfp-frame'); if (previewFrame) { if (data.profile_picture_frame && data.profile_picture_frame.trim() !== '') { previewFrame.style.backgroundImage = `url(${data.profile_picture_frame})`; previewFrame.style.display = 'block'; } else previewFrame.style.display = 'none'; }
+        const displayName = data['display name'] || user.email; const nameEl = document.getElementById('preview-name'); if (nameEl) nameEl.textContent = displayName;
+        const verifiedEl = document.getElementById('preview-verified'); if (verifiedEl) verifiedEl.style.display = data.is_verified ? 'inline' : 'none';
+        const bioEl = document.getElementById('preview-bio'); if (bioEl) bioEl.textContent = data.bio || t('noBio');
+      } catch (e) { console.warn('profile preview failed', e); card.style.display = 'none'; }
     });
-  </script>
 
-  <div id="toast"></div>
-
-  <script>
     (function () {
-      if (window.__friendsInit) return;
-      window.__friendsInit = true;
-
+      if (window.__friendsInit) return; window.__friendsInit = true;
       const state = { unsub: null, friends: [], user: null, loading: false };
-
-      function setFriendsCount(n) {
-        const el = document.getElementById("friends-count");
-        if (!el) return;
-        el.textContent = `${n} друз${n === 1 ? 'ь' : (n >= 2 && n <= 4 ? 'ья' : 'ей')}`;
-        el.style.display = state.user ? 'block' : 'none';
-      }
-
-      function makeEmptyState(message) {
-        const wrap = document.createElement("div");
-        wrap.className = "empty-state";
-        wrap.textContent = message;
-        return wrap;
-      }
-
-      function makeLoadingState() {
-        const wrap = document.createElement("div");
-        wrap.className = "empty-state";
-        wrap.innerHTML = '<div class="spinner"></div>Загрузка друзей...';
-        return wrap;
-      }
-
-      function makeCard(f) {
-        const card = document.createElement("div");
-        card.className = "friend-card";
-        card.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(f.email)}`;
-
+      function makeEmptyState(message, className) { const wrap = document.createElement('div'); wrap.className = className; wrap.textContent = message; return wrap; }
+      function makeItem(f) {
+        const item = document.createElement('div');
+        item.className = 'friend-item';
+        item.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(f.email)}`;
         const pfpUrl = f.profilePic ? f.profilePic.replace(/'/g, "\\'") : '/org-owner.jpg';
-
-        card.innerHTML = `
-          <div class="friend-pfp" style="background-image:url('${pfpUrl}')"></div>
-          <div class="friend-name">
+        const frameUrl = f.frameUrl ? f.frameUrl.replace(/'/g, "\\'") : '';
+        item.innerHTML = `
+          <div class="friend-item-pfp-wrap">
+            <div class="friend-item-pfp" style="background-image:url('${pfpUrl}')"></div>
+            ${frameUrl ? `<div class="friend-item-frame" style="background-image:url('${frameUrl}');display:block;"></div>` : ''}
+          </div>
+          <div class="friend-item-name">
             <span title="${escapeHtml(f.displayName)}">${escapeHtml(f.displayName)}</span>
-            ${f.verified ? `<img src="/assets/verified.png" alt="Подтверждено">` : ''}
+            ${f.verified ? `<img src="/assets/verified.png" alt="${t('verifiedAlt')}">` : ''}
           </div>
         `;
-        return card;
+        return item;
       }
-
       function renderLayout() {
-        const container = document.getElementById("friends-list");
-        if (!container) return;
-
-        container.innerHTML = "";
-
-        if (state.loading) {
-          container.appendChild(makeLoadingState());
-        } else if (!state.user) {
-          container.appendChild(makeEmptyState("Войдите, чтобы начать"));
-        } else if (!state.friends.length) {
-          container.appendChild(makeEmptyState("Попробуйте отправить кому-нибудь запрос"));
-        } else {
-          for (const f of state.friends) {
-            container.appendChild(makeCard(f));
-          }
-        }
-
-        setFriendsCount(state.friends.length);
+        const container = document.getElementById('friends-list'); const post = document.getElementById('friends-post'); if (!container) return; container.innerHTML = '';
+        if (!state.user) { if (post) post.style.display = 'none'; return; }
+        if (post) post.style.display = 'grid';
+        if (state.loading) container.appendChild(makeEmptyState(t('loadingFriends'), 'friends-loading'));
+        else if (!state.friends.length) container.appendChild(makeEmptyState(t('emptyFriends'), 'friends-empty'));
+        else for (const f of state.friends) container.appendChild(makeItem(f));
       }
-
-      window.addEventListener('resize', () => {
-        renderLayout();
-      });
-
       auth.onAuthStateChanged(async user => {
-        const container = document.getElementById("friends-list");
-        if (state.unsub) {
-          state.unsub();
-          state.unsub = null;
-        }
-
-        state.user = user;
-        state.loading = !!user;
-        state.friends = [];
-        renderLayout();
-
-        if (!user || !container) {
-          return;
-        }
-
-        const friendsListRef = db.collection("friends").doc(user.email).collection("friendlist");
-
+        const container = document.getElementById('friends-list');
+        if (state.unsub) { state.unsub(); state.unsub = null; }
+        state.user = user; state.loading = !!user; state.friends = []; renderLayout();
+        if (!user || !container) return;
+        const friendsListRef = db.collection('friends').doc(user.email).collection('friendlist');
         state.unsub = friendsListRef.onSnapshot(async snapshot => {
-          const emails = [];
-          snapshot.forEach(d => {
-            const id = String(d.id || "").trim().toLowerCase();
-            if (id && !emails.includes(id)) emails.push(id);
-          });
-
-          const docs = await Promise.all(emails.map(email => db.collection("user_data").doc(email).get()));
-
-          state.friends = docs.map((snap, i) => {
-            const email = emails[i];
-            const data = snap.exists ? snap.data() : {};
-            return {
-              displayName: data && data["display name"] ? data["display name"] : email,
-              profilePic: (data && data.profile_picture) || "/org-owner.jpg",
-              verified: !!(data && data.is_verified === true),
-              frameUrl: data ? data.profile_picture_frame : undefined,
-              email
-            };
-          });
-
-          state.loading = false;
-          renderLayout();
+          const emails = []; snapshot.forEach(d => { const id = String(d.id || '').trim().toLowerCase(); if (id && !emails.includes(id)) emails.push(id); });
+          const docs = await Promise.all(emails.map(email => db.collection('user_data').doc(email).get()));
+          state.friends = docs.map((snap, i) => { const email = emails[i]; const data = snap.exists ? snap.data() : {}; return { displayName: data && data['display name'] ? data['display name'] : email, profilePic: (data && data.profile_picture) || '/org-owner.jpg', verified: !!(data && data.is_verified === true), frameUrl: data ? data.profile_picture_frame : undefined, email }; });
+          state.loading = false; renderLayout();
         });
       });
     })();
+
+    (function () {
+      const cardEl = document.getElementById('daily-card');
+      const titleEl = document.getElementById('daily-title');
+      const bodyEl = document.getElementById('daily-body');
+      if (!cardEl) return;
+      let isProcessing = false, isAvailable = false, offlineOrLoggedOut = true, nextAvailableDate = null;
+      function isOnline() { return typeof navigator === 'undefined' || navigator.onLine !== false; }
+      function weightedRandomAmount(min = 10, max = 10000, biasPower = 4.0) { const r = Math.random(); const biased = Math.pow(r, biasPower); const raw = min + (max - min) * biased; return Math.min(max, Math.max(min, Math.round(raw))); }
+      function setState() {
+        cardEl.classList.remove('state-offline', 'state-processing', 'state-cooldown', 'state-available');
+        if (offlineOrLoggedOut) { cardEl.classList.add('state-offline'); titleEl.textContent = t('dailyCoins'); bodyEl.innerHTML = t('logInToClaim'); }
+        else if (isProcessing) { cardEl.classList.add('state-processing'); titleEl.textContent = ''; bodyEl.innerHTML = '<div class="daily-spinner"></div>'; }
+        else if (isAvailable) { cardEl.classList.add('state-available'); titleEl.textContent = t('earnUpTo'); bodyEl.textContent = t('tapToClaim'); }
+        else { cardEl.classList.add('state-cooldown'); titleEl.textContent = t('comeBackTomorrow'); bodyEl.textContent = nextAvailableDate ? `${t('available')} ${nextAvailableDate.toLocaleString(currentLang || 'en', { month: 'long', day: '2-digit', hour: '2-digit', minute: '2-digit' })}` : t('nextRewardNotReady'); }
+      }
+      async function checkAvailability() {
+        const user = auth.currentUser; offlineOrLoggedOut = !isOnline() || !user;
+        if (offlineOrLoggedOut) { isAvailable = false; nextAvailableDate = null; setState(); return; }
+        try {
+          const snap = await db.collection('user_data').doc(user.email).get();
+          const data = snap.exists ? snap.data() : null;
+          const ts = data && data.daily_last && data.daily_last.toDate ? data.daily_last.toDate() : null;
+          const now = Date.now();
+          if (!ts) { isAvailable = true; nextAvailableDate = null; } else { const diff = now - ts.getTime(); const dayMs = 24 * 60 * 60 * 1000; isAvailable = diff >= dayMs; nextAvailableDate = isAvailable ? null : new Date(ts.getTime() + dayMs); }
+        } catch (e) { offlineOrLoggedOut = true; }
+        setState();
+      }
+      async function claim() {
+        const user = auth.currentUser;
+        if (offlineOrLoggedOut) { location.href = '/login'; return; }
+        if (!isAvailable || isProcessing) { if (!isAvailable) showToast(t('alreadyClaimed'), 'yellow'); return; }
+        isProcessing = true; isAvailable = false; setState();
+        const amount = weightedRandomAmount(10, 10000, 4.0);
+        await new Promise(res => setTimeout(res, 6000));
+        try {
+          const docRef = db.collection('user_data').doc(user.email);
+          const snap = await docRef.get();
+          const current = snap.exists ? parseInt(snap.data().coins || '0', 10) || 0 : 0;
+          const newCoins = current + amount;
+          await docRef.set({ coins: String(newCoins), daily_last: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+          showToast(t('earned', { amount }), 'purple');
+          if (amount > 1000) showToast(t('hugeReward', { amount }), 'yellow', 5000);
+        } catch (e) { showToast(t('failedClaim'), 'red'); }
+        finally { isProcessing = false; await checkAvailability(); }
+      }
+      cardEl.addEventListener('click', claim);
+      auth.onAuthStateChanged(() => checkAvailability());
+      window.addEventListener('online', checkAvailability);
+      window.addEventListener('offline', checkAvailability);
+      checkAvailability();
+    })();
+
+    auth.onAuthStateChanged(user => {
+      const textEl = document.getElementById('moderation-text');
+      if (!textEl) return;
+      const isAdmin = !!(user && user.email && user.email.endsWith('@darkpurpleof.github.io'));
+      textEl.textContent = isAdmin ? user.email : t('noModAccess');
+    });
+
+    (function () {
+      const usersEl = document.getElementById('watchdog-users');
+      const ipsEl = document.getElementById('watchdog-ips');
+      const appealsEl = document.getElementById('watchdog-appeals');
+      const inlineEl = document.getElementById('watchdog-banned-inline');
+      if (!usersEl) return;
+      db.collection('banned_users').get().then(snap => { usersEl.textContent = snap.size; if (inlineEl) inlineEl.textContent = snap.size; }).catch(() => {});
+      db.collection('banned_ips').get().then(snap => { ipsEl.textContent = snap.size; }).catch(() => {});
+      db.collection('ban_appeals').get().then(snap => { appealsEl.textContent = snap.size; }).catch(() => {});
+    })();
+
+    applyTranslations();
   </script>
+
+  <div id="toast"></div>
 </body>
 </html>
