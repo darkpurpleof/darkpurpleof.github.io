@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discover</title>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#171717;
+    --card:#1f1f1f;
+    --card-2:#242424;
+    --muted:#9ca3af;
+    --accent:#6b21a8;
+    --accent-strong:#5b21b6;
+    --accent-soft:rgba(107,33,168,0.16);
+    --text:#eaeaea;
+    --border:rgba(255,255,255,0.07);
+    --hover:rgba(255,255,255,0.035);
+    --shadow:0 8px 24px rgba(0,0,0,0.35);
+  }
+  body.light{
+    --bg:#f6f8fb;
+    --card:#fff;
+    --card-2:#fbfbfe;
+    --muted:#475569;
+    --text:#0f172a;
+    --border:rgba(0,0,0,0.07);
+    --hover:rgba(0,0,0,0.02);
+    --accent-soft:rgba(107,33,168,0.08);
+    --shadow:0 8px 24px rgba(15,23,42,0.08);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;overflow-x:hidden;}
+  body{
+    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    background:var(--bg);
+    color:var(--text);
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+
+  dp-topbar{display:block;position:sticky;top:0;z-index:100;}
+
+  main.page{
+    flex:1;
+    width:100%;
+    max-width:800px;
+    margin:0 auto;
+    padding:40px 22px 72px;
+  }
+
+  /* header */
+  .page-head{ margin-bottom:38px; }
+  .eyebrow{
+    margin:0 0 8px;
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+  }
+  .page-head h1{
+    margin:0;
+    font-size:23px;
+    font-weight:700;
+    letter-spacing:-0.015em;
+    line-height:1.4;
+    color:var(--text);
+  }
+  .page-head h1 .q{
+    color:var(--accent);
+    font-weight:800;
+  }
+
+  .empty-state{
+    padding:48px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+  .empty-state strong{ display:block; color:var(--text); font-size:15px; margin-bottom:6px; font-weight:700; }
+  .empty-state svg{ display:block; margin:0 auto 14px; width:34px; height:34px; color:var(--muted); opacity:0.6; }
+
+  /* sections */
+  .section{ margin-bottom:44px; }
+  .section-header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:16px;
+    padding-bottom:12px;
+    border-bottom:1px solid var(--border);
+  }
+  .section-title{
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .section-count{
+    font-size:12px;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+  .section-empty{
+    font-size:13px;
+    color:var(--muted);
+    padding:18px 2px 4px;
+  }
+
+  /* ---- row + custom scrollbar ---- */
+  .row-wrap{ position:relative; }
+  .hscroll{
+    display:flex;
+    gap:16px;
+    overflow-x:auto;
+    scroll-snap-type:x proximity;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+    padding:2px 2px 4px;
+  }
+  .hscroll::-webkit-scrollbar{ display:none; height:0; width:0; }
+
+  .fade-edge{
+    position:absolute;
+    top:0; bottom:12px;
+    width:48px;
+    pointer-events:none;
+    z-index:2;
+    opacity:0;
+    transition:opacity .2s ease;
+  }
+  .fade-left{ left:0; background:linear-gradient(to right, var(--bg), transparent); }
+  .fade-right{ right:0; background:linear-gradient(to left, var(--bg), transparent); }
+  .row-wrap.show-left .fade-left{ opacity:1; }
+  .row-wrap.show-right .fade-right{ opacity:1; }
+
+  .custom-scrollbar{
+    position:relative;
+    height:3px;
+    margin-top:8px;
+    background:rgba(255,255,255,0.09);
+    border-radius:999px;
+    overflow:visible;
+    cursor:pointer;
+    display:none;
+  }
+  body.light .custom-scrollbar{ background:rgba(0,0,0,0.08); }
+  .custom-scrollbar-thumb{
+    position:absolute;
+    top:-1px;
+    left:0;
+    height:5px;
+    background:rgba(255,255,255,0.24);
+    border-radius:999px;
+    cursor:grab;
+    transition:background .15s ease, height .15s ease, top .15s ease, opacity .15s ease;
+    opacity:0.9;
+  }
+  body.light .custom-scrollbar-thumb{ background:rgba(0,0,0,0.22); }
+  .custom-scrollbar:hover .custom-scrollbar-thumb{ background:rgba(255,255,255,0.34); }
+  body.light .custom-scrollbar:hover .custom-scrollbar-thumb{ background:rgba(0,0,0,0.28); }
+  .custom-scrollbar-thumb.dragging{
+    background:rgba(255,255,255,0.4);
+    cursor:grabbing;
+  }
+  body.light .custom-scrollbar-thumb.dragging{ background:rgba(0,0,0,0.32); }
+
+  /* ---- shared media rules (never tile) ---- */
+  .media-cover{
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    background-color:var(--card-2);
+  }
+  .media-contain{
+    background-size:contain;
+    background-position:center;
+    background-repeat:no-repeat;
+  }
+
+  /* ---- verified language: stamp = entity itself is verified, inline check = referenced mention ---- */
+  .name-row{ display:flex; align-items:center; gap:4px; min-width:0; }
+  .name-row .verified-badge{ margin-left:0; }
+  .inline-check{ width:13px; height:13px; flex-shrink:0; vertical-align:middle; display:inline-block; }
+  .verified-badge{
+    width:12px;
+    height:12px;
+    flex-shrink:0;
+    margin-left:4px;
+    display:inline-block;
+    background-image:url('/assets/verified.png');
+    background-size:contain;
+    background-position:center;
+    background-repeat:no-repeat;
+    opacity:0.95;
+  }
+
+  /* ---- skeletons ---- */
+  @keyframes shimmer{
+    0%{ background-position:-200px 0; }
+    100%{ background-position:200px 0; }
+  }
+  .skel{
+    background:linear-gradient(90deg, var(--card) 0%, var(--card-2) 50%, var(--card) 100%);
+    background-size:300px 100%;
+    animation:shimmer 1.4s ease-in-out infinite;
+    border-radius:10px;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .skel{ animation:none; background:var(--card-2); }
+  }
+
+  /* ---- card entrance ---- */
+  @keyframes cardIn{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .card-anim{ animation:cardIn .32s ease both; }
+  @media (prefers-reduced-motion:reduce){
+    .card-anim{ animation:none; }
+  }
+
+  /* ---- marketplace card ---- */
+  .mkt-card{
+    flex:0 0 156px;
+    scroll-snap-align:start;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:12px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    box-shadow:var(--shadow);
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .mkt-card:hover{ transform:translateY(-3px); border-color:var(--accent); }
+  .mkt-card:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .mkt-icon-wrap{ position:relative; }
+  .mkt-icon{
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:11px;
+    border:1px solid var(--border);
+  }
+  .mkt-name{
+    font-weight:700; font-size:13px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .mkt-author{
+    font-size:11.5px; color:var(--muted);
+    display:flex; align-items:center; gap:4px;
+    overflow:hidden;
+  }
+  .mkt-author span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mkt-price{
+    align-self:flex-start;
+    font-size:11.5px; font-weight:700;
+    color:var(--accent);
+    background:var(--accent-soft);
+    padding:3px 8px;
+    border-radius:6px;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:0.01em;
+  }
+
+  /* ---- people card ---- */
+  .person-card{
+    flex:0 0 86px;
+    scroll-snap-align:start;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    text-align:center;
+    background:transparent;
+    border:none;
+    padding:2px;
+  }
+  .person-card:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:50%; }
+  .person-pfp-wrap{ position:relative; width:80px; height:80px; transition:transform .15s ease; overflow:hidden; border-radius:50%; }
+  .person-card:hover .person-pfp-wrap{ transform:translateY(-3px); }
+  .person-pfp{
+    width:80px; height:80px; border-radius:50%;
+    border:1px solid var(--border);
+    overflow:hidden;
+    aspect-ratio:1/1;
+    object-fit:cover;
+    object-position:center;
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+  }
+  .person-frame{
+    position:absolute; inset:-8px;
+    width:96px; height:96px;
+    pointer-events:none;
+    border-radius:50%;
+    overflow:hidden;
+  }
+  .person-name{
+    font-size:12px; font-weight:600;
+    max-width:86px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    display:flex; align-items:center; gap:3px; justify-content:center;
+  }
+
+  /* ---- post card ---- */
+  .post-card{
+    flex:0 0 260px;
+    scroll-snap-align:start;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-left:3px solid var(--accent);
+    border-radius:14px;
+    padding:14px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    box-shadow:var(--shadow);
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .post-card:hover{ transform:translateY(-3px); }
+  .post-card:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .post-author-row{ display:flex; align-items:center; gap:9px; }
+  .post-author-pfp{
+    width:30px; height:30px; border-radius:50%; flex-shrink:0;
+    border:1px solid var(--border);
+    overflow:hidden;
+    aspect-ratio:1/1;
+    object-fit:cover;
+    object-position:center;
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+  }
+  .post-author-info{ min-width:0; flex:1; }
+  .post-author-name{
+    font-size:12.5px; font-weight:700;
+    display:flex; align-items:center; gap:4px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .post-author-email{
+    font-size:11px; color:var(--muted);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .post-text{
+    font-size:13px; line-height:1.5;
+    max-height:78px; overflow:hidden;
+    color:var(--text);
+  }
+  .post-text mark{
+    background:var(--accent-soft); color:var(--accent);
+    padding:0 3px; border-radius:4px; font-weight:700;
+  }
+  body.light .post-text mark{ color:var(--accent-strong); }
+  .post-image-wrap{
+    position:relative; border-radius:10px; overflow:hidden; height:130px;
+    background:var(--card-2);
+  }
+  .post-image{ width:100%; height:100%; object-fit:cover; display:block; }
+  .post-image-dim{
+    position:absolute; inset:0;
+    background:rgba(0,0,0,0.55);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:23px; font-weight:800;
+  }
+
+  /* toast */
+  #toast{
+    position:fixed; top:18px; left:50%; transform:translateX(-50%);
+    padding:10px 14px; border-radius:10px; font-weight:700; font-size:13.5px;
+    display:none; z-index:99999; color:#fff;
+  }
+  #toast.purple{ background:var(--accent-strong); }
+  #toast.yellow{ background:#e6b800; color:#222; }
+  #toast.red{ background:#c00; }
+
+  @media (max-width:480px){
+    main.page{ padding:28px 16px 56px; }
+    .page-head h1{ font-size:20px; }
+  }
+</style>
+</head>
+<body>
+<script type="module" src="/dp-topbar.js"></script>
+<dp-topbar></dp-topbar>
+
+<main class="page">
+
+  <div class="page-head" id="pageHead" style="display:none;">
+    <p class="eyebrow" id="searchEyebrow">Search results</p>
+    <h1 id="headline"></h1>
+  </div>
+
+  <div id="noQueryMsg" class="empty-state" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+    <strong id="noQueryTitle">Nothing to discover yet</strong>
+    <span id="noQueryBody">Search for something to see marketplace items, developer items, posts and people.</span>
+  </div>
+
+  <div id="sections" style="display:none;">
+
+    <section class="section">
+      <div class="section-header">
+        <span class="section-title" id="marketplaceTitle">Marketplace</span>
+        <span class="section-count" id="marketplaceCount"></span>
+      </div>
+      <div class="row-wrap" id="marketplaceWrap">
+        <div class="fade-edge fade-left"></div>
+        <div class="fade-edge fade-right"></div>
+        <div class="hscroll" id="marketplaceRow"></div>
+      </div>
+      <div class="custom-scrollbar" id="marketplaceBar"><div class="custom-scrollbar-thumb"></div></div>
+      <div class="section-empty" id="marketplaceEmpty" style="display:none;"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <span class="section-title" id="devMarketplaceTitle">Developer Marketplace</span>
+        <span class="section-count" id="devMarketplaceCount"></span>
+      </div>
+      <div class="row-wrap" id="devMarketplaceWrap">
+        <div class="fade-edge fade-left"></div>
+        <div class="fade-edge fade-right"></div>
+        <div class="hscroll" id="devMarketplaceRow"></div>
+      </div>
+      <div class="custom-scrollbar" id="devMarketplaceBar"><div class="custom-scrollbar-thumb"></div></div>
+      <div class="section-empty" id="devMarketplaceEmpty" style="display:none;"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <span class="section-title" id="peopleTitle">People</span>
+        <span class="section-count" id="peopleCount"></span>
+      </div>
+      <div class="row-wrap" id="peopleWrap">
+        <div class="fade-edge fade-left"></div>
+        <div class="fade-edge fade-right"></div>
+        <div class="hscroll" id="peopleRow"></div>
+      </div>
+      <div class="custom-scrollbar" id="peopleBar"><div class="custom-scrollbar-thumb"></div></div>
+      <div class="section-empty" id="peopleEmpty" style="display:none;"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <span class="section-title" id="postsTitle">Posts</span>
+        <span class="section-count" id="postsCount"></span>
+      </div>
+      <div class="row-wrap" id="postsWrap">
+        <div class="fade-edge fade-left"></div>
+        <div class="fade-edge fade-right"></div>
+        <div class="hscroll" id="postsRow"></div>
+      </div>
+      <div class="custom-scrollbar" id="postsBar"><div class="custom-scrollbar-thumb"></div></div>
+      <div class="section-empty" id="postsEmpty" style="display:none;"></div>
+    </section>
+
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+    authDomain: "darkpurpleof-s-website.firebaseapp.com",
+    projectId: "darkpurpleof-s-website",
+    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+    messagingSenderId: "520651082420",
+    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+  };
+
+  if (window.firebase && !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  let db = null;
+  try{ db = firebase.firestore(); }
+  catch(e){ console.error('Firebase Firestore not available:', e); }
+
+  const params = new URLSearchParams(window.location.search);
+  const query = (params.get('q') || params.get('query') || '').trim();
+
+  const pageHead = document.getElementById('pageHead');
+  const headline = document.getElementById('headline');
+  const noQueryMsg = document.getElementById('noQueryMsg');
+  const sectionsEl = document.getElementById('sections');
+
+
+  const LOCALES = {
+    en: {
+      title: 'Discover',
+      eyebrow: 'Search results',
+      emptyTitle: 'Nothing to discover yet',
+      emptyBody: 'Search for something to see marketplace items, developer items, posts and people.',
+      marketplace: 'Marketplace',
+      devMarketplace: 'Developer Marketplace',
+      people: 'People',
+      posts: 'Posts',
+      resultOne: 'result',
+      resultMany: 'results',
+      by: 'By',
+      unknownUser: 'Unknown user',
+      noItems: function(q){ return 'No items match "' + q + '".'; },
+      noPeople: function(q){ return 'No people match "' + q + '".'; },
+      noPosts: function(q){ return 'No posts match "' + q + '".'; },
+      marketplaceLoadError: "Couldn't load marketplace items. Try again later.",
+      devMarketplaceLoadError: "Couldn't load developer marketplace items. Try again later.",
+      usersLoadError: "Couldn't load users.",
+      usersLoadErrorLater: "Couldn't load users. Try again later.",
+      postsLoadError: "Couldn't load posts.",
+      postsLoadErrorLater: "Couldn't load posts. Try again later.",
+      headline: function(q){ return 'Results for <span class="q">“' + escapeHtml(q) + '”</span> on marketplace, developer marketplace, posts and users'; },
+      resultsCount: function(n){ return n + ' ' + (n === 1 ? 'result' : 'results'); }
+    },
+    es: {
+      title: 'Descubrir',
+      eyebrow: 'Resultados de búsqueda',
+      emptyTitle: 'Aún no hay nada que descubrir',
+      emptyBody: 'Busca algo para ver artículos del marketplace, elementos de desarrollo, publicaciones y personas.',
+      marketplace: 'Marketplace',
+      devMarketplace: 'Marketplace de desarrolladores',
+      people: 'Personas',
+      posts: 'Publicaciones',
+      resultOne: 'resultado',
+      resultMany: 'resultados',
+      by: 'Por',
+      unknownUser: 'Usuario desconocido',
+      noItems: function(q){ return 'No hay elementos que coincidan con "' + q + '".'; },
+      noPeople: function(q){ return 'No hay personas que coincidan con "' + q + '".'; },
+      noPosts: function(q){ return 'No hay publicaciones que coincidan con "' + q + '".'; },
+      marketplaceLoadError: 'No se pudieron cargar los elementos del marketplace. Inténtalo de nuevo más tarde.',
+      devMarketplaceLoadError: 'No se pudieron cargar los elementos del marketplace de desarrolladores. Inténtalo de nuevo más tarde.',
+      usersLoadError: 'No se pudieron cargar los usuarios.',
+      usersLoadErrorLater: 'No se pudieron cargar los usuarios. Inténtalo de nuevo más tarde.',
+      postsLoadError: 'No se pudieron cargar las publicaciones.',
+      postsLoadErrorLater: 'No se pudieron cargar las publicaciones. Inténtalo de nuevo más tarde.',
+      headline: function(q){ return 'Resultados para <span class="q">“' + escapeHtml(q) + '”</span> en marketplace, marketplace de desarrolladores, publicaciones y usuarios'; },
+      resultsCount: function(n){ return n + ' ' + (n === 1 ? 'resultado' : 'resultados'); }
+    },
+    de: {
+      title: 'Entdecken',
+      eyebrow: 'Suchergebnisse',
+      emptyTitle: 'Noch nichts zu entdecken',
+      emptyBody: 'Suche nach etwas, um Marketplace-Artikel, Entwickler-Artikel, Beiträge und Personen zu sehen.',
+      marketplace: 'Marketplace',
+      devMarketplace: 'Entwickler-Marketplace',
+      people: 'Personen',
+      posts: 'Beiträge',
+      resultOne: 'Ergebnis',
+      resultMany: 'Ergebnisse',
+      by: 'Von',
+      unknownUser: 'Unbekannter Nutzer',
+      noItems: function(q){ return 'Keine Elemente stimmen mit "' + q + '" überein.'; },
+      noPeople: function(q){ return 'Keine Personen stimmen mit "' + q + '" überein.'; },
+      noPosts: function(q){ return 'Keine Beiträge stimmen mit "' + q + '" überein.'; },
+      marketplaceLoadError: 'Marketplace-Elemente konnten nicht geladen werden. Bitte später erneut versuchen.',
+      devMarketplaceLoadError: 'Entwickler-Marketplace-Elemente konnten nicht geladen werden. Bitte später erneut versuchen.',
+      usersLoadError: 'Nutzer konnten nicht geladen werden.',
+      usersLoadErrorLater: 'Nutzer konnten nicht geladen werden. Bitte später erneut versuchen.',
+      postsLoadError: 'Beiträge konnten nicht geladen werden.',
+      postsLoadErrorLater: 'Beiträge konnten nicht geladen werden. Bitte später erneut versuchen.',
+      headline: function(q){ return 'Ergebnisse für <span class="q">“' + escapeHtml(q) + '”</span> im Marketplace, Entwickler-Marketplace, in Beiträgen und Nutzern'; },
+      resultsCount: function(n){ return n + ' ' + (n === 1 ? 'Ergebnis' : 'Ergebnisse'); }
+    },
+    ru: {
+      title: 'Обзор',
+      eyebrow: 'Результаты поиска',
+      emptyTitle: 'Пока нечего открыть',
+      emptyBody: 'Найдите что-нибудь, чтобы увидеть товары маркетплейса, элементы для разработчиков, публикации и людей.',
+      marketplace: 'Маркетплейс',
+      devMarketplace: 'Маркетплейс разработчиков',
+      people: 'Люди',
+      posts: 'Публикации',
+      resultOne: 'результат',
+      resultMany: 'результатов',
+      by: 'От',
+      unknownUser: 'Неизвестный пользователь',
+      noItems: function(q){ return 'Ничего не найдено по запросу "' + q + '".'; },
+      noPeople: function(q){ return 'Не найдено людей по запросу "' + q + '".'; },
+      noPosts: function(q){ return 'Не найдено публикаций по запросу "' + q + '".'; },
+      marketplaceLoadError: 'Не удалось загрузить элементы маркетплейса. Попробуйте позже.',
+      devMarketplaceLoadError: 'Не удалось загрузить элементы маркетплейса разработчиков. Попробуйте позже.',
+      usersLoadError: 'Не удалось загрузить пользователей.',
+      usersLoadErrorLater: 'Не удалось загрузить пользователей. Попробуйте позже.',
+      postsLoadError: 'Не удалось загрузить публикации.',
+      postsLoadErrorLater: 'Не удалось загрузить публикации. Попробуйте позже.',
+      headline: function(q){ return 'Результаты для <span class="q">“' + escapeHtml(q) + '”</span> в маркетплейсе, маркетплейсе разработчиков, публикациях и пользователях'; },
+      resultsCount: function(n){
+        const mod10 = n % 10;
+        const mod100 = n % 100;
+        const word = (mod10 === 1 && mod100 !== 11) ? 'результат' : ((mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) ? 'результата' : 'результатов');
+        return n + ' ' + word;
+      }
+    },
+    ja: {
+      title: '探索',
+      eyebrow: '検索結果',
+      emptyTitle: 'まだ発見するものはありません',
+      emptyBody: '検索すると、マーケットプレイス、開発者向けアイテム、投稿、ユーザーが表示されます。',
+      marketplace: 'マーケットプレイス',
+      devMarketplace: '開発者マーケットプレイス',
+      people: 'ユーザー',
+      posts: '投稿',
+      resultOne: '件の結果',
+      resultMany: '件の結果',
+      by: '作成者',
+      unknownUser: '不明なユーザー',
+      noItems: function(q){ return '"' + q + '" に一致する項目はありません。'; },
+      noPeople: function(q){ return '"' + q + '" に一致するユーザーはいません。'; },
+      noPosts: function(q){ return '"' + q + '" に一致する投稿はありません。'; },
+      marketplaceLoadError: 'マーケットプレイスの項目を読み込めませんでした。後でもう一度お試しください。',
+      devMarketplaceLoadError: '開発者マーケットプレイスの項目を読み込めませんでした。後でもう一度お試しください。',
+      usersLoadError: 'ユーザーを読み込めませんでした。',
+      usersLoadErrorLater: 'ユーザーを読み込めませんでした。後でもう一度お試しください。',
+      postsLoadError: '投稿を読み込めませんでした。',
+      postsLoadErrorLater: '投稿を読み込めませんでした。後でもう一度お試しください。',
+      headline: function(q){ return '「' + q + '」の検索結果（マーケットプレイス、開発者マーケットプレイス、投稿、ユーザー）'; },
+      resultsCount: function(n){ return n + '件'; }
+    }
+  };
+
+  const SUPPORTED_LANGS = ['en', 'es', 'de', 'ru', 'ja'];
+  let locale = 'en';
+  let L = LOCALES.en;
+
+  function normalizeLang(raw){
+    const value = String(raw || '').trim().toLowerCase();
+    if(!value) return 'en';
+    const base = value.split('-')[0].split('_')[0];
+    return SUPPORTED_LANGS.indexOf(base) !== -1 ? base : 'en';
+  }
+
+  function setLocale(nextLang){
+    locale = normalizeLang(nextLang);
+    L = LOCALES[locale] || LOCALES.en;
+    document.documentElement.lang = locale;
+    document.title = L.title;
+    const eyebrowEl = document.getElementById('searchEyebrow');
+    const noQueryTitleEl = document.getElementById('noQueryTitle');
+    const noQueryBodyEl = document.getElementById('noQueryBody');
+    const marketplaceTitleEl = document.getElementById('marketplaceTitle');
+    const devMarketplaceTitleEl = document.getElementById('devMarketplaceTitle');
+    const peopleTitleEl = document.getElementById('peopleTitle');
+    const postsTitleEl = document.getElementById('postsTitle');
+
+    if(eyebrowEl) eyebrowEl.textContent = L.eyebrow;
+    if(noQueryTitleEl) noQueryTitleEl.textContent = L.emptyTitle;
+    if(noQueryBodyEl) noQueryBodyEl.textContent = L.emptyBody;
+    if(marketplaceTitleEl) marketplaceTitleEl.textContent = L.marketplace;
+    if(devMarketplaceTitleEl) devMarketplaceTitleEl.textContent = L.devMarketplace;
+    if(peopleTitleEl) peopleTitleEl.textContent = L.people;
+    if(postsTitleEl) postsTitleEl.textContent = L.posts;
+  }
+
+  async function getCurrentUserLang(){
+    try{
+      if(!window.firebase || !firebase.auth) return 'en';
+      const auth = firebase.auth();
+      const user = auth.currentUser || await new Promise(function(resolve){
+        let unsub = null;
+        unsub = auth.onAuthStateChanged(function(u){
+          if(unsub) unsub();
+          resolve(u || null);
+        }, function(){
+          resolve(null);
+        });
+      });
+      if(user && user.email){
+        const data = await getUserData(user.email);
+        return normalizeLang(data.lang || data.language || 'en');
+      }
+    }catch(e){
+      console.error('Failed to resolve user language:', e);
+    }
+    return 'en';
+  }
+
+  function refreshStaticLabels(){
+    setLocale(locale);
+  }
+
+
+  /* ---------- helpers ---------- */
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+  function escapeRegex(str){
+    return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  function highlightText(text, q){
+    const escaped = escapeHtml(text);
+    if(!q) return escaped;
+    const escQ = escapeRegex(escapeHtml(q));
+    if(!escQ) return escaped;
+    try{
+      const re = new RegExp(escQ, 'ig');
+      return escaped.replace(re, function(m){ return '<mark>' + m + '</mark>'; });
+    }catch(e){ return escaped; }
+  }
+  function bgUrl(url){
+    return "url('" + escapeHtml(url).replace(/'/g, "\\'") + "')";
+  }
+  function stampSVG(){
+    return '<span class="stamp"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+  }
+  function verifiedBadgeHTML(){
+    return '<span class="verified-badge" aria-label="Verified"></span>';
+  }
+  function skeletonRow(containerId, count, kind){
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    for(let i=0;i<count;i++){
+      const el = document.createElement('div');
+      if(kind === 'person'){
+        el.style.cssText = 'flex:0 0 86px;display:flex;flex-direction:column;align-items:center;gap:8px;';
+        el.innerHTML = '<div class="skel" style="width:72px;height:72px;border-radius:50%;"></div><div class="skel" style="width:56px;height:10px;border-radius:5px;"></div>';
+      } else if(kind === 'post'){
+        el.className = 'skel';
+        el.style.cssText += 'flex:0 0 260px;height:150px;border-radius:14px;';
+      } else {
+        el.className = 'skel';
+        el.style.cssText += 'flex:0 0 156px;height:190px;border-radius:14px;';
+      }
+      container.appendChild(el);
+    }
+  }
+
+  /* ---------- custom scrollbar + fade edges ---------- */
+
+  function setupRowChrome(rowId, wrapId, barId){
+    const row = document.getElementById(rowId);
+    const wrap = document.getElementById(wrapId);
+    const bar = document.getElementById(barId);
+    const thumb = bar.querySelector('.custom-scrollbar-thumb');
+    let dragging = false, startX = 0, startScroll = 0;
+
+    function update(){
+      const overflow = row.scrollWidth - row.clientWidth;
+      if(overflow <= 2){
+        bar.style.display = 'none';
+        wrap.classList.remove('show-left','show-right');
+        return;
+      }
+      bar.style.display = 'block';
+      const trackWidth = bar.clientWidth;
+      const ratio = row.clientWidth / row.scrollWidth;
+      const thumbWidth = Math.max(ratio * trackWidth, 32);
+      thumb.style.width = thumbWidth + 'px';
+      const maxThumbLeft = trackWidth - thumbWidth;
+      const left = overflow > 0 ? (row.scrollLeft / overflow) * maxThumbLeft : 0;
+      thumb.style.left = left + 'px';
+      wrap.classList.toggle('show-left', row.scrollLeft > 4);
+      wrap.classList.toggle('show-right', row.scrollLeft < overflow - 4);
+    }
+
+    row.addEventListener('scroll', update, { passive:true });
+    window.addEventListener('resize', update);
+
+    thumb.addEventListener('pointerdown', function(e){
+      dragging = true;
+      thumb.classList.add('dragging');
+      thumb.setPointerCapture(e.pointerId);
+      startX = e.clientX;
+      startScroll = row.scrollLeft;
+      e.preventDefault();
+    });
+    thumb.addEventListener('pointermove', function(e){
+      if(!dragging) return;
+      const trackWidth = bar.clientWidth;
+      const thumbWidth = thumb.offsetWidth;
+      const overflow = row.scrollWidth - row.clientWidth;
+      const maxThumbLeft = trackWidth - thumbWidth;
+      const dx = e.clientX - startX;
+      const scrollDelta = maxThumbLeft > 0 ? (dx / maxThumbLeft) * overflow : 0;
+      row.scrollLeft = startScroll + scrollDelta;
+    });
+    thumb.addEventListener('pointerup', function(e){
+      dragging = false;
+      thumb.classList.remove('dragging');
+      try{ thumb.releasePointerCapture(e.pointerId); }catch(err){}
+    });
+
+    bar.addEventListener('click', function(e){
+      if(e.target === thumb) return;
+      const rect = bar.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const trackWidth = bar.clientWidth;
+      const thumbWidth = thumb.offsetWidth;
+      const overflow = row.scrollWidth - row.clientWidth;
+      const maxThumbLeft = trackWidth - thumbWidth;
+      const targetLeft = Math.min(Math.max(clickX - thumbWidth / 2, 0), maxThumbLeft);
+      row.scrollLeft = maxThumbLeft > 0 ? (targetLeft / maxThumbLeft) * overflow : 0;
+    });
+
+    update();
+    return update;
+  }
+
+  const chrome = {
+    marketplace: setupRowChrome('marketplaceRow', 'marketplaceWrap', 'marketplaceBar'),
+    devMarketplace: setupRowChrome('devMarketplaceRow', 'devMarketplaceWrap', 'devMarketplaceBar'),
+    people: setupRowChrome('peopleRow', 'peopleWrap', 'peopleBar'),
+    posts: setupRowChrome('postsRow', 'postsWrap', 'postsBar')
+  };
+
+  /* ---------- data fetching ---------- */
+
+  const userDataCache = {};
+  async function getUserData(email){
+    if(!email) return {};
+    if(userDataCache[email]) return userDataCache[email];
+    const promise = (async function(){
+      try{
+        const doc = await db.collection('user_data').doc(email).get();
+        return doc.exists ? (doc.data() || {}) : {};
+      }catch(e){
+        console.error('Failed to load user_data for', email, e);
+        return {};
+      }
+    })();
+    userDataCache[email] = promise;
+    const result = await promise;
+    userDataCache[email] = result;
+    return result;
+  }
+
+  async function fetchAuthorsFor(entries, authorKey){
+    const uniqueEmails = Array.from(new Set(entries.map(function(e){ return e[authorKey]; }).filter(Boolean)));
+    await Promise.all(uniqueEmails.map(function(email){ return getUserData(email); }));
+  }
+
+  async function loadMarketplaceJSON(){
+    const res = await fetch('/market/approveddev.json');
+    if(!res.ok) throw new Error('Failed to fetch marketplace JSON');
+    return res.json();
+  }
+
+  async function renderMarketRow(containerId, emptyId, countId, chromeUpdate, items){
+    const container = document.getElementById(containerId);
+    const emptyEl = document.getElementById(emptyId);
+    const countEl = document.getElementById(countId);
+    container.innerHTML = '';
+
+    countEl.textContent = L.resultsCount(items.length);
+
+    if(!items.length){
+      emptyEl.textContent = L.noItems(query);
+      emptyEl.style.display = 'block';
+      chromeUpdate();
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    await fetchAuthorsFor(items, 'author');
+
+    items.forEach(function(item, i){
+      const authorData = userDataCache[item.author] || {};
+      const authorName = authorData['display name'] || item.author || '';
+
+      const card = document.createElement('div');
+      card.className = 'mkt-card card-anim';
+      card.style.animationDelay = (i * 30) + 'ms';
+      card.tabIndex = 0;
+      card.innerHTML =
+        '<div class="mkt-icon-wrap">' +
+          '<div class="mkt-icon media-cover" style="background-image:' + bgUrl(item.icon || '') + '"></div>' +
+        '</div>' +
+        '<div class="mkt-name name-row">' + escapeHtml(item.name || '') + (item.itemverified ? verifiedBadgeHTML() : '') + '</div>' +
+        '<div class="mkt-author"><span>' + L.by + ' ' + escapeHtml(authorName) + '</span>' + (item.authorverified ? verifiedBadgeHTML() : '') + '</div>' +
+        '<div class="mkt-price">' + (item.price != null ? item.price : 0) + ' DF$</div>';
+
+      function go(){
+        window.location.href = '/ugc/viewugc?author=' + encodeURIComponent(item.author || '') +
+          '&id=' + encodeURIComponent(item.id || '') +
+          '&type=' + encodeURIComponent(item.type);
+      }
+      card.addEventListener('click', go);
+      card.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
+
+      container.appendChild(card);
+    });
+
+    chromeUpdate();
+  }
+
+  async function loadMarketplace(q){
+    const lowerQ = q.toLowerCase();
+    skeletonRow('marketplaceRow', 4, 'item');
+    skeletonRow('devMarketplaceRow', 4, 'item');
+
+    try{
+      const data = await loadMarketplaceJSON();
+      const items = (data.marketplace && data.marketplace.items) || [];
+
+      const storeItems = items.filter(function(it){
+        return it.type === 0 && it.name && it.name.toLowerCase().includes(lowerQ);
+      });
+      const devItems = items.filter(function(it){
+        return it.type === 1 && it.name && it.name.toLowerCase().includes(lowerQ);
+      });
+
+      await renderMarketRow('marketplaceRow', 'marketplaceEmpty', 'marketplaceCount', chrome.marketplace, storeItems);
+      await renderMarketRow('devMarketplaceRow', 'devMarketplaceEmpty', 'devMarketplaceCount', chrome.devMarketplace, devItems);
+    }catch(e){
+      console.error('Failed to load marketplace:', e);
+      ['marketplaceRow','devMarketplaceRow'].forEach(function(id){ document.getElementById(id).innerHTML = ''; });
+      document.getElementById('marketplaceEmpty').textContent = L.marketplaceLoadError;
+      document.getElementById('marketplaceEmpty').style.display = 'block';
+      document.getElementById('devMarketplaceEmpty').textContent = L.devMarketplaceLoadError;
+      document.getElementById('devMarketplaceEmpty').style.display = 'block';
+      chrome.marketplace(); chrome.devMarketplace();
+    }
+  }
+
+  async function loadPeople(q){
+    const container = document.getElementById('peopleRow');
+    const emptyEl = document.getElementById('peopleEmpty');
+    const countEl = document.getElementById('peopleCount');
+    const lowerQ = q.toLowerCase();
+
+    skeletonRow('peopleRow', 6, 'person');
+
+    if(!db){
+      container.innerHTML = '';
+      emptyEl.textContent = L.usersLoadError;
+      emptyEl.style.display = 'block';
+      countEl.textContent = '';
+      chrome.people();
+      return;
+    }
+
+    try{
+      const snap = await db.collection('user_data').get();
+      const matches = [];
+
+      snap.forEach(function(doc){
+        const d = doc.data() || {};
+        const name = d['display name'];
+        if(name && typeof name === 'string' && name.toLowerCase().includes(lowerQ)){
+          matches.push({ email: doc.id, data: d, name: name });
+        }
+      });
+
+      container.innerHTML = '';
+      countEl.textContent = L.resultsCount(matches.length);
+
+      if(!matches.length){
+        emptyEl.textContent = L.noPeople(q);
+        emptyEl.style.display = 'block';
+        chrome.people();
+        return;
+      }
+      emptyEl.style.display = 'none';
+
+      matches.forEach(function(p, i){
+        const pfp = p.data['profile_picture'] || '/org-owner.jpg';
+        const frame = p.data['profile_picture_frame'] || null;
+        const verified = !!p.data['is_verified'];
+
+        const card = document.createElement('div');
+        card.className = 'person-card card-anim';
+        card.style.animationDelay = (i * 30) + 'ms';
+        card.tabIndex = 0;
+        card.innerHTML =
+          '<div class="person-pfp-wrap">' +
+            '<div class="person-pfp media-cover" style="background-image:' + bgUrl(pfp) + '"></div>' +
+            (frame ? '<div class="person-frame media-contain" style="background-image:' + bgUrl(frame) + '"></div>' : '') +
+          '</div>' +
+          '<div class="person-name name-row">' + escapeHtml(p.name) + (verified ? verifiedBadgeHTML() : '') + '</div>';
+
+        function go(){ window.location.href = '/viewprofile?profile=' + encodeURIComponent(p.email); }
+        card.addEventListener('click', go);
+        card.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
+
+        container.appendChild(card);
+      });
+
+      chrome.people();
+    }catch(e){
+      console.error('Failed to load people:', e);
+      container.innerHTML = '';
+      emptyEl.textContent = L.usersLoadErrorLater;
+      emptyEl.style.display = 'block';
+      countEl.textContent = '';
+      chrome.people();
+    }
+  }
+
+  async function loadPosts(q){
+    const container = document.getElementById('postsRow');
+    const emptyEl = document.getElementById('postsEmpty');
+    const countEl = document.getElementById('postsCount');
+    const lowerQ = q.toLowerCase();
+
+    skeletonRow('postsRow', 3, 'post');
+
+    if(!db){
+      container.innerHTML = '';
+      emptyEl.textContent = L.postsLoadError;
+      emptyEl.style.display = 'block';
+      countEl.textContent = '';
+      chrome.posts();
+      return;
+    }
+
+    try{
+      const snap = await db.collection('posts').get();
+      const matches = [];
+
+      snap.forEach(function(doc){
+        const d = doc.data() || {};
+        if(d.text && typeof d.text === 'string' && d.text.toLowerCase().includes(lowerQ)){
+          matches.push(Object.assign({ id: doc.id }, d));
+        }
+      });
+
+      container.innerHTML = '';
+      countEl.textContent = L.resultsCount(matches.length);
+
+      if(!matches.length){
+        emptyEl.textContent = L.noPosts(q);
+        emptyEl.style.display = 'block';
+        chrome.posts();
+        return;
+      }
+      emptyEl.style.display = 'none';
+
+      /* fetch all author profiles for matched posts in parallel, once each, before rendering */
+      await fetchAuthorsFor(matches, 'editor');
+
+      matches.forEach(function(post, i){
+        const authorEmail = post.editor || post.author || '';
+        const authorData = userDataCache[authorEmail] || {};
+        const name = authorData['display name'] || authorEmail || L.unknownUser;
+        const pfp = authorData['profile_picture'] || '/org-owner.jpg';
+        const frame = authorData['profile_picture_frame'] || null;
+        const verified = !!authorData['is_verified'];
+        const images = Array.isArray(post.images) ? post.images : [];
+
+        let imageHtml = '';
+        if(images.length > 0){
+          imageHtml =
+            '<div class="post-image-wrap">' +
+              '<img class="post-image" src="' + escapeHtml(images[0]) + '" alt="" loading="lazy">' +
+              (images.length > 1 ? '<div class="post-image-dim">+' + (images.length - 1) + '</div>' : '') +
+            '</div>';
+        }
+
+        const card = document.createElement('div');
+        card.className = 'post-card card-anim';
+        card.style.animationDelay = (i * 30) + 'ms';
+        card.tabIndex = 0;
+        card.innerHTML =
+          '<div class="post-author-row">' +
+            '<div class="post-author-pfp media-cover" style="background-image:' + bgUrl(pfp) + '"></div>' +
+            '<div class="post-author-info">' +
+              '<div class="post-author-name">' + escapeHtml(name) + (verified ? verifiedBadgeHTML() : '') + '</div>' +
+              '<div class="post-author-email">' + escapeHtml(authorEmail) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="post-text">' + highlightText(post.text, q) + '</div>' +
+          imageHtml;
+
+        function go(){ window.location.href = '/posts?post=' + encodeURIComponent(post.id); }
+        card.addEventListener('click', go);
+        card.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
+
+        container.appendChild(card);
+      });
+
+      chrome.posts();
+    }catch(e){
+      console.error('Failed to load posts:', e);
+      container.innerHTML = '';
+      emptyEl.textContent = L.postsLoadErrorLater;
+      emptyEl.style.display = 'block';
+      countEl.textContent = '';
+      chrome.posts();
+    }
+  }
+
+  async function loadAll(q){
+    await Promise.all([ loadMarketplace(q), loadPeople(q), loadPosts(q) ]);
+  }
+
+  function renderView(){
+    if(query){
+      pageHead.style.display = 'block';
+      headline.innerHTML = L.headline(query);
+      sectionsEl.style.display = 'block';
+      noQueryMsg.style.display = 'none';
+      loadAll(query);
+    } else {
+      pageHead.style.display = 'none';
+      sectionsEl.style.display = 'none';
+      noQueryMsg.style.display = 'block';
+    }
+  }
+
+  async function initDiscover(){
+    const lang = await getCurrentUserLang();
+    setLocale(lang);
+    renderView();
+  }
+
+  initDiscover();
+
+})();
+</script>
+</body>
+</html>

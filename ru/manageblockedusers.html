@@ -1,21 +1,18 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Управление заблокированными пользователями</title>
+  <title>Blocked Users</title>
 
   <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* Избегаем горизонтальной прокрутки глобально */
-    html,body { overflow-x: hidden; }
-
     :root{
       --bg:#171717;
       --card:#1f1f1f;
@@ -23,152 +20,146 @@
       --accent:#6b21a8;
       --accent-strong:#5b21b6;
       --text:#eaeaea;
-      --border:rgba(255,255,255,0.06);
+      --border:rgba(255,255,255,0.07);
+      --hover:rgba(255,255,255,0.035);
     }
     body.light{
       --bg:#f6f8fb;
       --card:#fff;
       --muted:#475569;
       --text:#0f172a;
-      --border:rgba(0,0,0,0.06);
+      --border:rgba(0,0,0,0.07);
+      --hover:rgba(0,0,0,0.02);
     }
 
-    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;background:var(--bg);color:var(--text);transition:background .25s,color .25s;}
-    body{display:flex;flex-direction:column;min-height:100vh;}
+    *{box-sizing:border-box;}
+    html,body{margin:0;height:100%;overflow-x:hidden;}
+    body{
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+      display:flex;
+      flex-direction:column;
+      min-height:100vh;
+    }
 
-    /* Компонент topbar */
     dp-topbar{display:block;position:sticky;top:0;z-index:100;}
 
-    /* Макет страницы — адаптивный, без горизонтального переполнения, переносится на маленьких экранах */
-    main.wrapper{
+    main.page{
       flex:1;
-      display:flex;
-      gap:20px;
-      align-items:flex-start;
-      justify-content:center;
-      padding:24px;
-      box-sizing:border-box;
-      max-width:1200px;
-      margin:0 auto;
       width:100%;
-      flex-wrap:wrap;
-    }
-    .panel{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--border);box-sizing:border-box;color:var(--text);}
-    .left { flex:1 1 560px; min-width:280px; max-width:880px; }
-    .right { flex: 0 0 320px; min-width:260px; }
-
-    h1{margin:0 0 6px 0;font-size:20px;font-weight:700;}
-    p.lead { margin:0 0 16px 0; color:var(--muted); font-size:14px; }
-
-    /* элементы управления */
-    .controls { display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
-    .search { flex:1; min-width:160px; }
-    input[type="text"], input[type="email"] { width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); box-sizing:border-box; }
-    .btn { display:inline-flex; gap:8px; align-items:center; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font-weight:600; white-space:nowrap; }
-    .btn.primary { background:var(--accent); color:#fff; border:none; }
-    .btn.critical { background:#c53737; color:#fff; border:none; }
-    .meta { color:var(--muted); font-size:13px; }
-
-    /* список */
-    .list { display:grid; gap:10px; max-height:60vh; overflow:auto; padding-right:6px; box-sizing:border-box; }
-    .blocked-item {
-      display:flex;
-      gap:12px;
-      align-items:center;
-      padding:10px;
-      border-radius:8px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,0.01);
-      min-width:0;
-    }
-    .pfp { width:48px; height:48px; border-radius:8px; background-size:cover; background-position:center; background-repeat:no-repeat; border:1px solid var(--border); flex-shrink:0; }
-    .info { flex:1 1 0; min-width:0; }
-    .name { font-weight:700; font-size:14px; display:flex; gap:8px; align-items:center; color:var(--text); }
-    .tag { font-size:13px; color:var(--muted); word-break:break-all; }
-    .item-actions { display:flex; gap:8px; align-items:center; flex-shrink:0; }
-
-    /* карточки правой колонки */
-    .card { margin-bottom:12px; padding:12px; border-radius:8px; border:1px solid var(--border); background:transparent; }
-    .small { font-size:13px; color:var(--muted); }
-
-    /* адаптивные настройки */
-    @media (max-width:920px){
-      main.wrapper{flex-direction:column;padding:16px;align-items:stretch;}
-      .right{width:100%;flex:1 1 auto;}
-      .list{max-height:45vh;}
+      max-width:640px;
+      margin:0 auto;
+      padding:32px 20px 60px;
     }
 
-    /* toast */
-    #toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 14px; border-radius: 10px; font-weight:700; display:none; z-index:99999; color:#fff; box-sizing:border-box; }
-    #toast.purple{ background: var(--accent-strong); } #toast.yellow{ background:#e6b800; color:#222 } #toast.red{ background:#c00; }
+    .page-head{ margin-bottom:22px; }
+    .page-head h1{ margin:0; font-size:20px; font-weight:700; letter-spacing:-0.01em; }
+    .page-head p{ margin:6px 0 0; font-size:13.5px; color:var(--muted); }
 
-    /* вспомогательные стили */
-    .muted { color:var(--muted); font-size:13px; }
-    .spaced { margin-top:12px; }
+    .block-row{ display:flex; gap:8px; margin-bottom:14px; }
+    .block-row input{
+      flex:1; min-width:0; padding:11px 13px; border-radius:10px;
+      border:1px solid var(--border); background:var(--card); color:var(--text); font-size:14px;
+    }
+    .block-row input::placeholder{ color:var(--muted); }
+    .block-row input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:6px;
+      padding:11px 16px; border-radius:10px; border:1px solid var(--border);
+      background:transparent; color:var(--text); cursor:pointer; font-family:inherit;
+      font-weight:600; font-size:13.5px; white-space:nowrap;
+      transition:background .15s, opacity .15s, transform .05s;
+    }
+    .btn:hover{ background:var(--hover); }
+    .btn:active{ transform:translateY(1px); }
+    .btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; }
+    .btn.primary{ background:var(--accent); border-color:transparent; color:#fff; }
+    .btn.primary:hover{ background:var(--accent-strong); }
+    .btn.ghost{ background:transparent; }
+    .btn.small{ padding:7px 10px; font-size:12.5px; border-radius:8px; }
+    .btn.danger-text{ background:transparent; border:none; color:#e06565; padding:6px 4px; font-weight:600; }
+    .btn.danger-text:hover{ text-decoration:underline; background:none; }
+
+    .toolbar{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+    .search-wrap{ position:relative; flex:1; min-width:0; }
+    .search-wrap input{
+      width:100%; padding:9px 12px 9px 32px; border-radius:9px;
+      border:1px solid var(--border); background:var(--card); color:var(--text); font-size:13.5px;
+    }
+    .search-wrap svg{
+      position:absolute; left:10px; top:50%; transform:translateY(-50%);
+      width:14px; height:14px; color:var(--muted); pointer-events:none;
+    }
+
+    .count-pill{ font-size:12.5px; color:var(--muted); white-space:nowrap; padding:0 2px; }
+
+    .list{
+      margin-top:14px; display:flex; flex-direction:column; border:1px solid var(--border);
+      border-radius:12px; overflow:hidden; background:var(--card);
+    }
+    .row{
+      display:flex; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid var(--border); min-width:0;
+    }
+    .row:last-child{ border-bottom:none; }
+    .row:hover{ background:var(--hover); }
+
+    .pfp{
+      width:38px; height:38px; border-radius:8px; background-size:cover; background-position:center; background-repeat:no-repeat;
+      border:1px solid var(--border); flex-shrink:0;
+    }
+    .row-info{ flex:1; min-width:0; }
+    .row-name{ font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .row-sub{ font-size:12.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .row-actions{ display:flex; gap:6px; flex-shrink:0; }
+
+    .empty-state{
+      padding:36px 20px; text-align:center; color:var(--muted); font-size:13.5px;
+    }
+    .empty-state strong{ display:block; color:var(--text); font-size:14.5px; margin-bottom:4px; }
+
+    .footer-row{ display:flex; justify-content:space-between; align-items:center; margin-top:16px; }
+
+    #toast{
+      position:fixed; top:18px; left:50%; transform:translateX(-50%);
+      padding:10px 14px; border-radius:10px; font-weight:700; font-size:13.5px;
+      display:none; z-index:99999; color:#fff;
+    }
+    #toast.purple{ background:var(--accent-strong); }
+    #toast.yellow{ background:#e6b800; color:#222; }
+    #toast.red{ background:#c00; }
+
+    @media (max-width:480px){
+      main.page{ padding:22px 14px 48px; }
+      .block-row{ flex-direction:column; }
+      .block-row .btn{ width:100%; }
+    }
   </style>
 </head>
 <body>
   <script type="module" src="/dp-topbar.js"></script>
   <dp-topbar></dp-topbar>
 
-  <main class="wrapper" role="main" aria-label="Управление заблокированными пользователями">
-    <section class="panel left" aria-label="Список заблокированных пользователей">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div style="min-width:0;">
-          <h1>Управление заблокированными пользователями</h1>
-          <p class="lead">Просматривайте, ищите, снимайте блокировку или экспортируйте заблокированных пользователей. Изменения сразу синхронизируются с вашей учётной записью.</p>
-        </div>
+  <main class="page" aria-label="Manage blocked users">
+    <div class="page-head">
+      <h1 id="t-title">Blocked users</h1>
+      <p id="t-subtitle">Manage the users you have blocked from your account.</p>
+    </div>
 
-        <div class="meta" id="stats">Загрузка…</div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchInput" type="text" placeholder="Search blocked users" aria-label="Search blocked users">
       </div>
+    </div>
 
-      <!-- controls -->
-      <div class="controls spaced">
-        <input id="searchInput" class="search" type="text" placeholder="Поиск по имени или адресу электронной почты" aria-label="Поиск заблокированных пользователей">
-        <button id="refreshBtn" class="btn" title="Обновить список">Обновить</button>
-        <button id="exportBtn" class="btn" title="Экспорт CSV">Экспорт</button>
-      </div>
+    <div id="listContainer" class="list" aria-live="polite">
+      <div class="empty-state" id="loadingState">Loading…</div>
+    </div>
 
-      <!-- add block -->
-      <div class="card">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <input id="blockEmail" type="email" placeholder="Заблокировать пользователя по email (example@domain.com)" aria-label="Адрес электронной почты для блокировки" />
-          <button id="addBlockBtn" class="btn primary" title="Заблокировать пользователя">Блокировать</button>
-        </div>
-      </div>
-
-      <!-- blocked list -->
-      <div id="listContainer" class="list spaced" aria-live="polite"></div>
-
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-        <button id="unblockAllBtn" class="btn critical">Снять блокировку со всех</button>
-        <button id="clearSearchBtn" class="btn">Очистить поиск</button>
-      </div>
-    </section>
-
-    <!-- right column - info / help -->
-    <aside class="panel right" aria-label="Справка и информация">
-      <div class="card">
-        <div class="muted">Заблокированные пользователи</div>
-        <div id="count" style="font-weight:700;font-size:18px;margin-top:6px">—</div>
-      </div>
-
-      <div class="card">
-        <div class="muted">Быстрые действия</div>
-        <div style="display:flex;gap:8px;margin-top:8px;flex-direction:column;">
-          <button id="openBlockedProfileBtn" class="btn">Открыть профиль выбранного пользователя</button>
-          <button id="copyListBtn" class="btn">Скопировать адреса электронной почты</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="muted">Частые вопросы</div>
-        <ul style="margin:8px 0 0 16px;color:var(--muted);">
-          <li>Если снять блокировку, вы снова сможете взаимодействовать с этим пользователем.</li>
-          <li>Информация о заблокированных пользователях хранится только в вашей учётной записи.</li>
-        </ul>
-      </div>
-    </aside>
+    <div class="footer-row"></div>
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
@@ -186,28 +177,151 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Ссылки на элементы интерфейса
-    const listContainer = document.getElementById('listContainer');
-    const stats = document.getElementById('stats');
-    const countEl = document.getElementById('count');
-    const searchInput = document.getElementById('searchInput');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const addBlockBtn = document.getElementById('addBlockBtn');
-    const blockEmailInput = document.getElementById('blockEmail');
-    const unblockAllBtn = document.getElementById('unblockAllBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const copyListBtn = document.getElementById('copyListBtn');
-    const openProfileBtn = document.getElementById('openBlockedProfileBtn');
-    const clearSearchBtn = document.getElementById('clearSearchBtn');
-    const toastEl = document.getElementById('toast');
+    const SUPPORTED_LANGS = ['en', 'es', 'ru', 'de', 'ja'];
+    const I18N = {
+      en: {
+        title: 'Blocked users',
+        subtitle: 'Manage the users you have blocked from your account.',
+        searchPlaceholder: 'Search blocked users',
+        loading: 'Loading…',
+        noBlockedUsersTitle: 'No blocked users',
+        noBlockedUsersBody: 'Anyone you block will show up here.',
+        noMatchesTitle: 'No matches',
+        noMatchesBody: 'Try a different name or email.',
+        view: 'View',
+        unblock: 'Unblock',
+        confirmUnblock: 'Unblock {email}?',
+        userDataNotFound: 'User data not found',
+        failedLoad: 'Failed to load blocked users',
+        notSignedIn: 'Not signed in',
+        failedUnblock: 'Failed to unblock',
+        loginToManage: 'Log in to manage blocked users',
+        loginToSee: 'Log in to see your blocked users.',
+        unblocked: 'Unblocked {email}'
+      },
+      es: {
+        title: 'Usuarios bloqueados',
+        subtitle: 'Administra los usuarios que has bloqueado desde tu cuenta.',
+        searchPlaceholder: 'Buscar usuarios bloqueados',
+        loading: 'Cargando…',
+        noBlockedUsersTitle: 'No hay usuarios bloqueados',
+        noBlockedUsersBody: 'Cualquier persona que bloquees aparecerá aquí.',
+        noMatchesTitle: 'Sin resultados',
+        noMatchesBody: 'Prueba con otro nombre o correo.',
+        view: 'Ver',
+        unblock: 'Desbloquear',
+        confirmUnblock: '¿Desbloquear a {email}?',
+        userDataNotFound: 'No se encontraron los datos del usuario',
+        failedLoad: 'No se pudieron cargar los usuarios bloqueados',
+        notSignedIn: 'No has iniciado sesión',
+        failedUnblock: 'No se pudo desbloquear',
+        loginToManage: 'Inicia sesión para administrar usuarios bloqueados',
+        loginToSee: 'Inicia sesión para ver tus usuarios bloqueados.',
+        unblocked: 'Desbloqueado {email}'
+      },
+      ru: {
+        title: 'Заблокированные пользователи',
+        subtitle: 'Управляйте пользователями, которых вы заблокировали в аккаунте.',
+        searchPlaceholder: 'Поиск среди заблокированных',
+        loading: 'Загрузка…',
+        noBlockedUsersTitle: 'Заблокированных пользователей нет',
+        noBlockedUsersBody: 'Все, кого вы заблокируете, будут показаны здесь.',
+        noMatchesTitle: 'Совпадений нет',
+        noMatchesBody: 'Попробуйте другое имя или email.',
+        view: 'Открыть',
+        unblock: 'Разблокировать',
+        confirmUnblock: 'Разблокировать {email}?',
+        userDataNotFound: 'Данные пользователя не найдены',
+        failedLoad: 'Не удалось загрузить заблокированных пользователей',
+        notSignedIn: 'Вы не вошли в аккаунт',
+        failedUnblock: 'Не удалось разблокировать',
+        loginToManage: 'Войдите, чтобы управлять заблокированными пользователями',
+        loginToSee: 'Войдите, чтобы увидеть заблокированных пользователей.',
+        unblocked: 'Разблокирован {email}'
+      },
+      de: {
+        title: 'Blockierte Nutzer',
+        subtitle: 'Verwalte die Nutzer, die du in deinem Konto blockiert hast.',
+        searchPlaceholder: 'Blockierte Nutzer suchen',
+        loading: 'Wird geladen…',
+        noBlockedUsersTitle: 'Keine blockierten Nutzer',
+        noBlockedUsersBody: 'Alle von dir blockierten Personen werden hier angezeigt.',
+        noMatchesTitle: 'Keine Treffer',
+        noMatchesBody: 'Versuche es mit einem anderen Namen oder einer anderen E-Mail.',
+        view: 'Ansehen',
+        unblock: 'Entsperren',
+        confirmUnblock: '{email} entsperren?',
+        userDataNotFound: 'Nutzerdaten nicht gefunden',
+        failedLoad: 'Blockierte Nutzer konnten nicht geladen werden',
+        notSignedIn: 'Nicht angemeldet',
+        failedUnblock: 'Entsperren fehlgeschlagen',
+        loginToManage: 'Melde dich an, um blockierte Nutzer zu verwalten',
+        loginToSee: 'Melde dich an, um deine blockierten Nutzer zu sehen.',
+        unblocked: '{email} entsperrt'
+      },
+      ja: {
+        title: 'ブロックしたユーザー',
+        subtitle: 'アカウントでブロックしたユーザーを管理します。',
+        searchPlaceholder: 'ブロックしたユーザーを検索',
+        loading: '読み込み中…',
+        noBlockedUsersTitle: 'ブロックしたユーザーはいません',
+        noBlockedUsersBody: 'ブロックした相手はここに表示されます。',
+        noMatchesTitle: '一致する結果がありません',
+        noMatchesBody: '別の名前またはメールアドレスで試してください。',
+        view: '表示',
+        unblock: 'ブロック解除',
+        confirmUnblock: '{email} のブロックを解除しますか？',
+        userDataNotFound: 'ユーザーデータが見つかりません',
+        failedLoad: 'ブロックしたユーザーの読み込みに失敗しました',
+        notSignedIn: 'サインインしていません',
+        failedUnblock: 'ブロック解除に失敗しました',
+        loginToManage: 'ブロックしたユーザーを管理するにはログインしてください',
+        loginToSee: 'ブロックしたユーザーを見るにはログインしてください。',
+        unblocked: '{email} をブロック解除しました'
+      }
+    };
 
-    // состояние
+    let currentLang = 'en';
     let currentUserEmail = null;
     let blockedList = [];
     let blockedDetails = [];
-    let selectedEmail = null;
+
+    const listContainer = document.getElementById('listContainer');
+    const searchInput = document.getElementById('searchInput');
+    const toastEl = document.getElementById('toast');
+
+    function normalizeLang(v) {
+      const s = String(v || '').trim().toLowerCase();
+      if (!s) return '';
+      const base = s.split(/[-_]/)[0];
+      const map = { english: 'en', spanish: 'es', russian: 'ru', german: 'de', japanese: 'ja', jp: 'ja' };
+      return SUPPORTED_LANGS.includes(base) ? base : (map[s] || map[base] || '');
+    }
+
+    function browserLang() {
+      return SUPPORTED_LANGS.includes(normalizeLang(navigator.language)) ? normalizeLang(navigator.language) : 'en';
+    }
+
+    function t(key, params = {}) {
+      const dict = I18N[currentLang] || I18N.en;
+      let value = dict[key] ?? I18N.en[key] ?? key;
+      for (const [k, v] of Object.entries(params)) value = String(value).replaceAll(`{${k}}`, String(v));
+      return value;
+    }
+
+    function applyTranslations() {
+      document.documentElement.lang = currentLang;
+      document.title = t('title');
+      document.getElementById('t-title').textContent = t('title');
+      document.getElementById('t-subtitle').textContent = t('subtitle');
+      searchInput.placeholder = t('searchPlaceholder');
+      searchInput.setAttribute('aria-label', t('searchPlaceholder'));
+      const loadingState = document.getElementById('loadingState');
+      if (loadingState && loadingState.textContent.trim() === 'Loading…') loadingState.textContent = t('loading');
+    }
 
     function showToast(message, color = 'purple', duration = 3000) {
+      if (!toastEl) return;
       toastEl.textContent = message;
       toastEl.className = color;
       toastEl.style.display = 'block';
@@ -228,97 +342,90 @@
       }
     }
 
-    function renderList(filter = '') {
-      listContainer.innerHTML = '';
-      const normalized = (filter || '').toLowerCase().trim();
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[c]));
+    }
 
+    function renderList(filter = '') {
+      const normalized = (filter || '').toLowerCase().trim();
       const visible = blockedDetails.filter(b => {
         if (!b) return false;
-        return !normalized || (b.displayName && b.displayName.toLowerCase().includes(normalized)) || b.email.toLowerCase().includes(normalized) || (b.tagline && b.tagline.toLowerCase().includes(normalized));
+        return !normalized ||
+          (b.displayName && b.displayName.toLowerCase().includes(normalized)) ||
+          b.email.toLowerCase().includes(normalized) ||
+          (b.tagline && b.tagline.toLowerCase().includes(normalized));
       });
 
       if (visible.length === 0) {
-        listContainer.innerHTML = '<div class="muted">Заблокированных пользователей нет.</div>';
-        countEl.textContent = `${visible.length}`;
+        listContainer.innerHTML = blockedList.length === 0
+          ? `<div class="empty-state"><strong>${escapeHtml(t('noBlockedUsersTitle'))}</strong>${escapeHtml(t('noBlockedUsersBody'))}</div>`
+          : `<div class="empty-state"><strong>${escapeHtml(t('noMatchesTitle'))}</strong>${escapeHtml(t('noMatchesBody'))}</div>`;
         return;
       }
 
+      listContainer.innerHTML = '';
       visible.forEach(item => {
-        const el = document.createElement('div');
-        el.className = 'blocked-item';
-        el.tabIndex = 0;
+        const row = document.createElement('div');
+        row.className = 'row';
 
         const pfp = document.createElement('div');
         pfp.className = 'pfp';
         pfp.style.backgroundImage = `url('${item.profile_picture || '/org-owner.jpg'}')`;
 
         const info = document.createElement('div');
-        info.className = 'info';
-
-        const nameLine = document.createElement('div');
-        nameLine.className = 'name';
-        nameLine.innerHTML = `<span>${escapeHtml(item.displayName || item.email)}</span>`;
-
-        const tag = document.createElement('div');
-        tag.className = 'tag muted';
-        tag.textContent = item.tagline || item.email;
-
-        info.appendChild(nameLine);
-        info.appendChild(tag);
+        info.className = 'row-info';
+        info.innerHTML = `
+          <div class="row-name">${escapeHtml(item.displayName || item.email)}</div>
+          <div class="row-sub">${escapeHtml(item.tagline || item.email)}</div>
+        `;
 
         const actions = document.createElement('div');
-        actions.className = 'item-actions';
+        actions.className = 'row-actions';
 
         const viewBtn = document.createElement('button');
-        viewBtn.className = 'btn';
-        viewBtn.textContent = 'Открыть';
+        viewBtn.className = 'btn small';
+        viewBtn.textContent = t('view');
         viewBtn.onclick = () => { window.location.href = `/viewprofile?profile=${encodeURIComponent(item.email)}`; };
 
         const unblockBtn = document.createElement('button');
-        unblockBtn.className = 'btn';
-        unblockBtn.textContent = 'Снять';
+        unblockBtn.className = 'btn small';
+        unblockBtn.textContent = t('unblock');
         unblockBtn.onclick = async () => {
-          if (!confirm(`Вы действительно хотите снять блокировку с ${item.email}?`)) return;
+          if (!confirm(t('confirmUnblock', { email: item.email }))) return;
           await unblockEmail(item.email);
         };
 
         actions.appendChild(viewBtn);
         actions.appendChild(unblockBtn);
-
-        el.appendChild(pfp);
-        el.appendChild(info);
-        el.appendChild(actions);
-
-        el.addEventListener('click', () => {
-          document.querySelectorAll('.blocked-item').forEach(n => n.style.outline = '');
-          el.style.outline = '2px solid rgba(107,33,168,0.18)';
-          selectedEmail = item.email;
-        });
-
-        listContainer.appendChild(el);
+        row.appendChild(pfp);
+        row.appendChild(info);
+        row.appendChild(actions);
+        listContainer.appendChild(row);
       });
-
-      countEl.textContent = `${visible.length}`;
     }
 
     async function loadBlockedUsers(email) {
-      showLoading(true);
+      listContainer.innerHTML = `<div class="empty-state">${escapeHtml(t('loading'))}</div>`;
       try {
         const userSnap = await db.collection('user_data').doc(email).get();
         if (!userSnap.exists) {
           blockedList = [];
           blockedDetails = [];
           renderList(searchInput.value);
-          stats.textContent = 'Данные пользователя отсутствуют';
-          showToast('Данные пользователя отсутствуют', 'yellow', 2000);
+          showToast(t('userDataNotFound'), 'yellow', 2000);
           return;
         }
         const data = userSnap.data();
         blockedList = Array.isArray(data.blockedUsers) ? data.blockedUsers.slice() : [];
-        stats.textContent = `${blockedList.length} заблок.`;
         const emails = blockedList.slice(0, 200);
         const detailPromises = emails.map(async e => {
-          const ud = await fetchUserData(e).catch(()=>null);
+          const ud = await fetchUserData(e).catch(() => null);
           return {
             email: e,
             displayName: ud && ud['display name'] ? ud['display name'] : e,
@@ -330,149 +437,51 @@
         renderList(searchInput.value);
       } catch (err) {
         console.error('loadBlockedUsers', err);
-        showToast('Не удалось загрузить заблокированных пользователей', 'red', 3000);
-      } finally {
-        showLoading(false);
-      }
-    }
-
-    function showLoading(on) {
-      if (on) {
-        stats.textContent = 'Загрузка...';
-      } else {
-        stats.textContent = `${blockedList.length} заблок.`;
+        showToast(t('failedLoad'), 'red', 3000);
       }
     }
 
     async function unblockEmail(email) {
-      if (!currentUserEmail) return showToast('Вы не вошли в систему', 'yellow');
+      if (!currentUserEmail) return showToast(t('notSignedIn'), 'yellow');
       try {
         await db.collection('user_data').doc(currentUserEmail).update({
           blockedUsers: firebase.firestore.FieldValue.arrayRemove(email)
         });
-        showToast(`${email} снят с блокировки`, 'purple', 2000);
+        showToast(t('unblocked', { email }), 'purple', 2000);
         await loadBlockedUsers(currentUserEmail);
       } catch (e) {
         console.error('unblockEmail', e);
-        showToast('Не удалось снять блокировку', 'red', 3000);
+        showToast(t('failedUnblock'), 'red', 3000);
       }
     }
 
-    async function unblockAll() {
-      if (!currentUserEmail) return showToast('Вы не вошли в систему', 'yellow');
-      if (!confirm('Снять блокировку со всех пользователей? Это действие нельзя отменить.')) return;
-      try {
-        await db.collection('user_data').doc(currentUserEmail).update({
-          blockedUsers: []
-        });
-        showToast('Блокировка со всех пользователей снята', 'purple', 2000);
-        await loadBlockedUsers(currentUserEmail);
-      } catch (e) {
-        console.error('unblockAll', e);
-        showToast('Не удалось снять блокировку со всех', 'red', 3000);
-      }
-    }
-
-    // добавление блокировки с удалением социальных связей и запретом самоблокировки
-    async function addBlock(emailToBlock) {
-      if (!currentUserEmail) return showToast('Вы не вошли в систему', 'yellow');
-
-      emailToBlock = (emailToBlock || '').trim().toLowerCase();
-      if (!emailToBlock || !/\S+@\S+\.\S+/.test(emailToBlock)) return showToast('Введите действительный адрес электронной почты', 'yellow');
-      if (emailToBlock === currentUserEmail) return showToast("Нельзя блокировать самого себя", 'red');
-
-      try {
-        // добавить в blockedUsers (создать массив, если нужно)
-        try {
-          await db.collection('user_data').doc(currentUserEmail).update({
-            blockedUsers: firebase.firestore.FieldValue.arrayUnion(emailToBlock)
-          });
-        } catch (updateErr) {
-          // если поле отсутствует, создаём его
-          await db.collection('user_data').doc(currentUserEmail).set({ blockedUsers: [emailToBlock] }, { merge: true });
-        }
-
-        // удалить социальные связи в batch
-        const batch = db.batch();
-        batch.delete(db.doc(`followers/${currentUserEmail}/usersWhoFollowMe/${emailToBlock}`));
-        batch.delete(db.doc(`following/${currentUserEmail}/usersIFollow/${emailToBlock}`));
-        batch.delete(db.doc(`friends/${currentUserEmail}/friendlist/${emailToBlock}`));
-        batch.delete(db.doc(`friends/${emailToBlock}/friendlist/${currentUserEmail}`));
-        batch.delete(db.doc(`friends/${currentUserEmail}/requests/${emailToBlock}`));
-        await batch.commit();
-
-        showToast(`${emailToBlock} заблокирован, связанные связи удалены`, 'purple', 2500);
-        blockEmailInput.value = '';
-        await loadBlockedUsers(currentUserEmail);
-
-      } catch (e) {
-        console.error('addBlock', e);
-        showToast('Не удалось заблокировать пользователя', 'red', 3000);
-      }
-    }
-
-    function exportCSV() {
-      if (!blockedDetails.length) return showToast('Нет заблокированных пользователей для экспорта', 'yellow');
-      const csvRows = [['displayName','email','tagline']];
-      blockedDetails.forEach(b => csvRows.push([`"${(b.displayName||'').replace(/"/g,'""')}"`, b.email, `"${(b.tagline||'').replace(/"/g,'""')}"`]));
-      const csv = csvRows.map(r => r.join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'blocked_users.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Экспорт начат', 'purple', 2000);
-    }
-
-    async function copyEmails() {
-      if (!blockedList.length) return showToast('Нет адресов электронной почты для копирования', 'yellow');
-      try {
-        await navigator.clipboard.writeText(blockedList.join('\n'));
-        showToast('Скопировано в буфер обмена', 'purple', 2000);
-      } catch (e) {
-        showToast('Не удалось скопировать', 'red', 2000);
-      }
-    }
-
-    function escapeHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-    function openSelectedProfile() {
-      if (!selectedEmail) return showToast('Сначала выберите пользователя', 'yellow');
-      window.location.href = `./viewprofile?profile=${encodeURIComponent(selectedEmail)}`;
-    }
-
-    // события
-    refreshBtn.addEventListener('click', ()=>{ if (currentUserEmail) loadBlockedUsers(currentUserEmail); });
     searchInput.addEventListener('input', () => renderList(searchInput.value));
-    addBlockBtn.addEventListener('click', () => addBlock((blockEmailInput.value||'').trim().toLowerCase()));
-    unblockAllBtn.addEventListener('click', unblockAll);
-    exportBtn.addEventListener('click', exportCSV);
-    copyListBtn.addEventListener('click', copyEmails);
-    openProfileBtn.addEventListener('click', openSelectedProfile);
-    clearSearchBtn.addEventListener('click', ()=>{ searchInput.value=''; renderList(''); });
 
-    // отключаем кнопку блокировки, если введён ваш email (быстрый UX-защитный механизм)
-    blockEmailInput.addEventListener('input', () => {
-      const v = (blockEmailInput.value||'').trim().toLowerCase();
-      addBlockBtn.disabled = !v || (v === (currentUserEmail || '').toLowerCase());
-      addBlockBtn.style.opacity = addBlockBtn.disabled ? 0.6 : 1;
-    });
+    async function resolveLanguage(user) {
+      let lang = '';
+      try {
+        if (user && user.email) {
+          const snap = await db.collection('user_data').doc(user.email).get();
+          lang = normalizeLang(snap.exists ? snap.data()?.lang : '') || '';
+        }
+      } catch (e) {}
+      currentLang = SUPPORTED_LANGS.includes(lang) ? lang : browserLang();
+      applyTranslations();
+    }
 
-    // состояние авторизации
     auth.onAuthStateChanged(async user => {
+      await resolveLanguage(user);
+
       if (!user) {
-        showToast('Войдите в систему, чтобы управлять заблокированными пользователями', 'yellow', 3000);
+        showToast(t('loginToManage'), 'yellow', 3000);
         currentUserEmail = null;
-        blockedList = []; blockedDetails = [];
-        renderList();
-        stats.textContent = 'Вышли из системы';
-        countEl.textContent = '—';
+        blockedList = [];
+        blockedDetails = [];
+        listContainer.innerHTML = `<div class="empty-state">${escapeHtml(t('loginToSee'))}</div>`;
         return;
       }
+
       currentUserEmail = user.email;
-      addBlockBtn.disabled = false;
       await loadBlockedUsers(currentUserEmail);
     });
   </script>

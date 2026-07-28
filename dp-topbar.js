@@ -92,6 +92,19 @@ template.innerHTML = `
       opacity: 0.6;
     }
 
+    .search-hint {
+      display: none;
+      padding: 0 12px 8px 12px;
+      font-size: 11px;
+      line-height: 1.4;
+      opacity: 0.66;
+      user-select: none;
+    }
+
+    .search-hint.show {
+      display: block;
+    }
+
     .search-dropdown {
       display: none;
       position: absolute;
@@ -124,8 +137,30 @@ template.innerHTML = `
       flex-direction: column;
       gap: 4px;
       max-height: 320px;
-      overflow: auto;
-      padding-right: 2px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 6px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+    }
+
+    .search-results::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .search-results::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .search-results::-webkit-scrollbar-thumb {
+      background-color: rgba(255, 255, 255, 0.28);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+
+    .search-results::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(255, 255, 255, 0.42);
     }
 
     .search-item {
@@ -207,6 +242,66 @@ template.innerHTML = `
       font-size: 13px;
       opacity: 0.7;
       user-select: none;
+    }
+
+    .search-preset-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .search-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding: 0 2px 2px 2px;
+    }
+
+    .search-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 140ms ease, border-color 140ms ease;
+      white-space: nowrap;
+    }
+
+    .search-chip:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .search-preset-icon {
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      flex-shrink: 0;
+      margin-right: 2px;
+      opacity: 1;
+    }
+
+    .search-preset-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: #ffffff;
+      fill: #fff !important;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 1;
+      filter: drop-shadow(0 0 0.5px rgba(255,255,255,0.5));
     }
 
     .brand {
@@ -707,11 +802,12 @@ template.innerHTML = `
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z"></path>
           </svg>
-          <input id="top-search-input" type="text" placeholder="Search users by name or email..." autocomplete="off" spellcheck="false" aria-label="Search users">
+          <input id="top-search-input" type="text" placeholder="Search users by name, username, marketplace items and posts" autocomplete="off" spellcheck="false" aria-label="Search users">
         </div>
         <div class="search-dropdown" id="search-dropdown" aria-hidden="true">
           <div class="search-meta" id="search-meta">Search users</div>
           <div class="search-results" id="search-results"></div>
+          <div class="search-hint" id="search-hint">To look up posts, marketplace and more, press ⏎</div>
         </div>
       </div>
     </div>
@@ -781,12 +877,18 @@ const LOCALE_STRINGS = {
     mobileSearchAria: 'Open search',
     mobileCoinAria: 'Open DF options',
     coinAria: 'Open DF options',
-    searchPlaceholder: 'Search users by name or email...',
+    searchPlaceholder: 'Search users by name, username, marketplace items and posts',
+    searchDiscoverHint: 'To look up posts, marketplace and more, press ⏎',
     searchUsers: 'Search users',
     searchSearching: 'Searching...',
     searchUnavailable: 'Search unavailable',
     noResults: 'No results',
     foundResults: 'Found {count} result{s}',
+    searchPresetMarketplace: '{query} in Marketplace',
+    searchPresetPosts: '{query} in Posts',
+    searchPresetDevMarketplace: '{query} in Development Marketplace',
+    searchPresetSettings: '{query} in Settings',
+    searchPresetPlaygroundsFlags: '{query} in Playgrounds Flags',
     navHome: 'Home',
     navPosts: 'Posts',
     navCreate: 'Create',
@@ -818,12 +920,18 @@ const LOCALE_STRINGS = {
     mobileSearchAria: 'Abrir búsqueda',
     mobileCoinAria: 'Abrir opciones DF',
     coinAria: 'Abrir opciones DF',
-    searchPlaceholder: 'Buscar usuarios por nombre o correo...',
+    searchPlaceholder: 'Buscar usuarios por nombre, nombre de usuario, artículos del mercado y publicaciones',
+    searchDiscoverHint: 'Para buscar publicaciones, marketplace y más, presiona ⏎',
     searchUsers: 'Buscar usuarios',
     searchSearching: 'Buscando...',
     searchUnavailable: 'Búsqueda no disponible',
     noResults: 'Sin resultados',
     foundResults: 'Encontrado {count} resultado{s}',
+    searchPresetMarketplace: '{query} en Marketplace',
+    searchPresetPosts: '{query} en Publicaciones',
+    searchPresetDevMarketplace: '{query} en Marketplace de desarrollo',
+    searchPresetSettings: '{query} en Ajustes',
+    searchPresetPlaygroundsFlags: '{query} en Playgrounds Flags',
     navHome: 'Inicio',
     navPosts: 'Publicaciones',
     navCreate: 'Crear',
@@ -855,12 +963,18 @@ const LOCALE_STRINGS = {
     mobileSearchAria: 'Открыть поиск',
     mobileCoinAria: 'Открыть DF опции',
     coinAria: 'Открыть DF опции',
-    searchPlaceholder: 'Искать пользователей по имени или email...',
+    searchPlaceholder: 'Искать пользователей по имени, имени пользователя, товарам маркетплейса и постам',
+    searchDiscoverHint: 'Чтобы искать посты, маркетплейс и другое, нажмите ⏎',
     searchUsers: 'Поиск пользователей',
     searchSearching: 'Поиск...',
     searchUnavailable: 'Поиск недоступен',
     noResults: 'Нет результатов',
     foundResults: 'Найдено {count} результатов',
+    searchPresetMarketplace: '{query} в Marketplace',
+    searchPresetPosts: '{query} в Постах',
+    searchPresetDevMarketplace: '{query} в Marketplace для разработчиков',
+    searchPresetSettings: '{query} в Настройках',
+    searchPresetPlaygroundsFlags: '{query} в Playgrounds Flags',
     navHome: 'Главная',
     navPosts: 'Посты',
     navCreate: 'Создать',
@@ -892,12 +1006,18 @@ const LOCALE_STRINGS = {
     mobileSearchAria: 'Suche öffnen',
     mobileCoinAria: 'DF-Optionen öffnen',
     coinAria: 'DF-Optionen öffnen',
-    searchPlaceholder: 'Benutzer nach Name oder E-Mail suchen...',
+    searchPlaceholder: 'Benutzer nach Name, Benutzernamen, Marktplatzartikeln und Beiträgen suchen',
+    searchDiscoverHint: 'Um Beiträge, Marketplace und mehr zu suchen, drücke ⏎',
     searchUsers: 'Benutzer suchen',
     searchSearching: 'Suche...',
     searchUnavailable: 'Suche nicht verfügbar',
     noResults: 'Keine Ergebnisse',
     foundResults: '{count} Ergebnis{s} gefunden',
+    searchPresetMarketplace: '{query} im Marketplace',
+    searchPresetPosts: '{query} in Beiträgen',
+    searchPresetDevMarketplace: '{query} im Entwicklungs-Marketplace',
+    searchPresetSettings: '{query} in Einstellungen',
+    searchPresetPlaygroundsFlags: '{query} in Playgrounds Flags',
     navHome: 'Start',
     navPosts: 'Beiträge',
     navCreate: 'Erstellen',
@@ -929,12 +1049,18 @@ const LOCALE_STRINGS = {
     mobileSearchAria: '検索を開く',
     mobileCoinAria: 'DFオプションを開く',
     coinAria: 'DFオプションを開く',
-    searchPlaceholder: '名前またはメールでユーザーを検索...',
+    searchPlaceholder: '名前、ユーザー名、マーケットプレイスの商品、投稿でユーザーを検索',
+    searchDiscoverHint: '投稿、マーケットプレイスなどを検索するには ⏎ を押してください',
     searchUsers: 'ユーザーを検索',
     searchSearching: '検索中...',
     searchUnavailable: '検索できません',
     noResults: '結果がありません',
     foundResults: '{count}件の結果',
+    searchPresetMarketplace: '{query} をマーケットプレイスで',
+    searchPresetPosts: '{query} を投稿で',
+    searchPresetDevMarketplace: '{query} を開発マーケットプレイスで',
+    searchPresetSettings: '{query} を設定で',
+    searchPresetPlaygroundsFlags: '{query} を Playgrounds Flags で',
     navHome: 'ホーム',
     navPosts: '投稿',
     navCreate: '作成',
@@ -1006,6 +1132,13 @@ class DPTopbar extends HTMLElement {
     this._setLocale(this._getBrowserLocale(), { redirect: false });
     this._waitForFirebaseAndInit();
     
+    // If the current URL contains a supported search query, populate the
+    // topbar search input immediately so users see the query in the topbar.
+    try {
+      this._maybePopulateSearchFromURL();
+    } catch (err) {
+      console.warn('Could not populate search from URL', err);
+    }
     // Detect URL changes and update locale
     this._lastPathname = window.location.pathname;
     this._boundOnUrlChange = this._onUrlChange.bind(this);
@@ -1042,6 +1175,12 @@ class DPTopbar extends HTMLElement {
       const newLocale = pathLocale || (this._currentUser ? this._locale : this._getBrowserLocale());
       if (newLocale !== this._locale) {
         this._setLocale(newLocale, { redirect: this._localeRedirectEnabled });
+      }
+      // Update search input if URL changed to a supported search route
+      try {
+        this._maybePopulateSearchFromURL();
+      } catch (err) {
+        console.warn('Could not populate search from URL on navigation', err);
       }
     }
   }
@@ -1086,6 +1225,7 @@ class DPTopbar extends HTMLElement {
     this.$searchInput = s.getElementById('top-search-input');
     this.$searchDropdown = s.getElementById('search-dropdown');
     this.$searchMeta = s.getElementById('search-meta');
+    this.$searchHint = s.getElementById('search-hint');
     this.$searchResults = s.getElementById('search-results');
   }
 
@@ -1336,6 +1476,7 @@ class DPTopbar extends HTMLElement {
         window.location.href = this._localizePath('/login');
         return;
       }
+      this._updateSearchHintVisibility();
       this._scheduleSearch(e.target.value);
     });
 
@@ -1345,8 +1486,10 @@ class DPTopbar extends HTMLElement {
       }
       if (e.key === 'Enter') {
         e.preventDefault();
-        const first = this.$searchResults?.querySelector('.search-item');
-        if (first) first.click();
+        const query = String(this.$searchInput?.value || '').trim();
+        if (!query) return;
+        const discoverPath = this._localizePath(`/discover?q=${encodeURIComponent(query)}`);
+        window.location.href = discoverPath;
       }
     });
 
@@ -1361,6 +1504,52 @@ class DPTopbar extends HTMLElement {
         this._showSearchDropdown();
       }
     });
+  }
+
+  _maybePopulateSearchFromURL() {
+    if (!this.$searchInput) return;
+
+    try {
+      const pathnameRaw = window.location.pathname || '/';
+      // strip optional locale prefix like /es
+      let pathname = pathnameRaw.replace(/^\/[a-z]{2}(?=\/|$)/, '');
+      if (!pathname.startsWith('/')) pathname = '/' + pathname;
+      // remove .html suffix for file-based pages
+      const pathNoHtml = pathname.replace(/\.html$/, '');
+      const params = new URLSearchParams(window.location.search || '');
+
+      const routes = [
+        { prefix: '/discover', param: 'q' },
+        { prefix: '/marketplace', param: 'filter' },
+        { prefix: '/ugc/posts', param: 'query' },
+        { prefix: '/playgrounds', param: 'experiments' },
+        { prefix: '/my/account', param: 'search' }
+      ];
+
+      for (const r of routes) {
+        if (pathNoHtml === r.prefix || pathNoHtml.startsWith(r.prefix + '/')) {
+          const raw = params.get(r.param) || '';
+          const value = String(raw).trim();
+          if (value) {
+            this.$searchInput.value = value;
+            this._updateSearchHintVisibility();
+            // If user is signed in, run search and show dropdown; otherwise
+            // just leave the value visible for the user.
+            if (this._currentUserEmail) {
+              try {
+                this._showSearchDropdown();
+                this._scheduleSearch(value);
+              } catch (e) {
+                // Non-fatal
+              }
+            }
+          }
+          break;
+        }
+      }
+    } catch (err) {
+      console.warn('Error parsing URL for search population', err);
+    }
   }
 
   _scheduleSearch(rawQuery) {
@@ -1426,7 +1615,6 @@ class DPTopbar extends HTMLElement {
     const email = String(user?.email || '').toLowerCase();
     const displayNameRaw = String(user?.['display name'] || user?.display_name || '');
     const displayName = displayNameRaw.toLowerCase().trim();
-    const isEmailQuery = q.includes('@') && q.includes('.');
     const publicFlag = user?.isProfilePublic;
     const publicFlagAlt = user?.is_profile_public;
     const isPrivate = publicFlag === false || publicFlagAlt === false;
@@ -1438,15 +1626,21 @@ class DPTopbar extends HTMLElement {
     const blockedByUserAlt = Array.isArray(user?.blocked_users) && user.blocked_users.includes(this._currentUserEmail);
     if (blockedByUser || blockedByUserAlt) return false;
 
-    if (isEmailQuery) {
-      return email === q;
+    if (q.includes('@')) return false;
+
+    const usernameCandidates = [];
+    if (!/\s/.test(q)) {
+      usernameCandidates.push(`${q}@darkpurpleof.github.io`);
+      usernameCandidates.push(`${q}@users.darkpurpleof.github.io`);
     }
+
+    if (usernameCandidates.includes(email)) return true;
 
     if (displayName.startsWith('https://')) return false;
     if (displayName === '[content deleted]' || displayName === '[contenido eliminado]') return false;
     if (this._looksLikeEmail(displayNameRaw)) return false;
 
-    return displayName.includes(q) || email.includes(q);
+    return displayName.includes(q);
   }
 
   _looksLikeEmail(value) {
@@ -1469,12 +1663,102 @@ class DPTopbar extends HTMLElement {
       return;
     }
 
+    const safeQuery = String(query || '').trim();
+    const strings = this._getStrings();
+    const presets = [
+      {
+        label: this._formatMessage('searchPresetMarketplace', { query: safeQuery }),
+        href: this._localizePath(`/marketplace?filter=${encodeURIComponent(safeQuery)}`),
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M841-518v318q0 33-23.5 56.5T761-120H201q-33 0-56.5-23.5T121-200v-318q-23-21-35.5-54t-.5-72l42-136q8-26 28.5-43t47.5-17h556q27 0 47 16.5t29 43.5l42 136q12 39-.5 71T841-518Zm-272-42q27 0 41-18.5t11-41.5l-22-140h-78v148q0 21 14 36.5t34 15.5Zm-180 0q23 0 37.5-15.5T441-612v-148h-78l-22 140q-4 24 10.5 42t37.5 18Zm-178 0q18 0 31.5-13t16.5-33l22-154h-78l-40 134q-6 20 6.5 43t41.5 23Zm540 0q29 0 42-23t6-43l-42-134h-76l22 154q3 20 16.5 33t31.5 13ZM201-200h560v-282q-5 2-6.5 2H751q-27 0-47.5-9T663-518q-18 18-41 28t-49 10q-27 0-50.5-10T481-518q-17 18-39.5 28T393-480q-29 0-52.5-10T299-518q-21 21-41.5 29.5T211-480h-4.5q-2.5 0-5.5-2v282Zm560 0H201h560Z"/></svg>'
+      },
+      {
+        label: this._formatMessage('searchPresetPosts', { query: safeQuery }),
+        href: this._localizePath(`/ugc/posts?query=${encodeURIComponent(safeQuery)}`),
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M240-80q-50 0-85-35t-35-85v-120h120v-560h600v680q0 50-35 85t-85 35H240Zm480-80q17 0 28.5-11.5T760-200v-600H320v480h360v120q0 17 11.5 28.5T720-160ZM360-600v-80h360v80H360Zm0 120v-80h360v80H360ZM240-160h360v-80H200v40q0 17 11.5 28.5T240-160Zm0 0h-40 400-360Z"/></svg>'
+      },
+      {
+        label: this._formatMessage('searchPresetDevMarketplace', { query: safeQuery }),
+        href: this._localizePath(`/marketplace?filter=${encodeURIComponent(safeQuery)}&type=dev`),
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M200-200h520v-184l45-22q16-8 25.5-22t9.5-32q0-17-9.5-31.5T765-514l-45-21v-185H528l-10-68q-3-22-19.5-37T460-840q-23 0-39.5 15T401-788l-10 68H200v86q56 21 88 68t32 106q0 60-32 107t-88 68v85Zm0 80q-34 0-57-23t-23-57v-152q48 0 84-30.5t36-77.5q0-46-36-76t-84-32v-152q0-33 23.5-56.5T200-800h122q7-51 46-85.5t92-34.5q52 0 91 34.5t47 85.5h122q33 0 56.5 23.5T800-720v134q36 18 58 52t22 74q0 41-22 75t-58 51v134q0 34-23.5 57T720-120H200Zm300-340Z"/></svg>'
+      },
+      {
+        label: this._formatMessage('searchPresetSettings', { query: safeQuery }),
+        href: this._localizePath(`/my/account?search=${encodeURIComponent(safeQuery)}`),
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>'
+      },
+      {
+        label: this._formatMessage('searchPresetPlaygroundsFlags', { query: safeQuery }),
+        href: this._localizePath(`/playgrounds/?experiments=${encodeURIComponent(safeQuery)}`),
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M80-160v-480h120v-160h240v160h80v-160h240v160h120v480H80Zm80-80h640v-320H160v320Zm120-400h80v-80h-80v80Zm320 0h80v-80h-80v80ZM160-240h640-640Zm120-400h80-80Zm320 0h80-80Z"/></svg>'
+      }
+    ];
+
+    const presetList = document.createElement('div');
+    presetList.className = 'search-preset-list';
+    presets.forEach(preset => {
+      const item = document.createElement('button');
+      item.className = 'search-item';
+      item.type = 'button';
+
+      const iconWrap = document.createElement('div');
+      iconWrap.className = 'search-preset-icon';
+      iconWrap.innerHTML = preset.icon;
+
+      const text = document.createElement('div');
+      text.className = 'search-text';
+
+      const title = document.createElement('div');
+      title.className = 'search-name';
+      title.textContent = preset.label;
+
+      text.appendChild(title);
+
+      item.appendChild(iconWrap);
+      item.appendChild(text);
+      item.addEventListener('click', () => {
+        window.location.href = preset.href;
+      });
+
+      presetList.appendChild(item);
+    });
+
+    this.$searchResults.appendChild(presetList);
+
     if (!users.length) {
       this._setSearchState(this._formatMessage('noUsersFoundFor', { query }));
-      const empty = document.createElement('div');
-      empty.className = 'search-empty';
-      empty.textContent = this._getStrings().noResults;
-      this.$searchResults.appendChild(empty);
+
+      const chipRow = document.createElement('div');
+      chipRow.className = 'search-chip-row';
+
+      const chipSuggestions = [
+  'Featured',
+  'Plugins',
+  'Games',
+  'Open Source',
+  'Themes',
+  'Development',
+  'Creator Tools',
+  'Verified Creators',
+  'New Releases',
+  'Free',
+  'Popular',
+  'Staff Picks',
+  'Utilities',
+  'Experimental'
+].filter(Boolean);
+
+      chipSuggestions.forEach(suggestion => {
+        const chip = document.createElement('button');
+        chip.className = 'search-chip';
+        chip.type = 'button';
+        chip.textContent = suggestion;
+        chip.addEventListener('click', () => {
+          window.location.href = this._localizePath(`/discover?q=${encodeURIComponent(suggestion)}`);
+        });
+        chipRow.appendChild(chip);
+      });
+
+      this.$searchResults.appendChild(chipRow);
       this._showSearchDropdown();
       return;
     }
@@ -1550,18 +1834,28 @@ class DPTopbar extends HTMLElement {
   _clearSearchResults(metaText) {
     if (this.$searchResults) this.$searchResults.innerHTML = '';
     if (this.$searchMeta && metaText) this.$searchMeta.textContent = metaText;
+    this._updateSearchHintVisibility();
+  }
+
+  _updateSearchHintVisibility() {
+    const hasQuery = String(this.$searchInput?.value || '').trim();
+    if (!this.$searchHint) return;
+    const shouldShow = Boolean(this.$searchDropdown?.classList.contains('show') && hasQuery);
+    this.$searchHint.classList.toggle('show', shouldShow);
   }
 
   _showSearchDropdown() {
     if (!this.$searchDropdown) return;
     this.$searchDropdown.classList.add('show');
     this.$searchDropdown.setAttribute('aria-hidden', 'false');
+    this._updateSearchHintVisibility();
   }
 
   _hideSearchDropdown() {
     if (!this.$searchDropdown) return;
     this.$searchDropdown.classList.remove('show');
     this.$searchDropdown.setAttribute('aria-hidden', 'true');
+    this.$searchHint?.classList.remove('show');
   }
 
   _onDocumentClick(e) {
@@ -1776,6 +2070,8 @@ class DPTopbar extends HTMLElement {
       this.$searchInput.setAttribute('aria-label', strings.searchPlaceholder);
     }
     if (this.$searchMeta) this.$searchMeta.textContent = strings.searchUsers;
+    if (this.$searchHint) this.$searchHint.textContent = strings.searchDiscoverHint;
+    this._updateSearchHintVisibility();
     if (this.$coin) this.$coin.setAttribute('aria-label', strings.coinAria);
     if (this.$brand) {
       this.$brand.setAttribute('aria-label', strings.brandAria);

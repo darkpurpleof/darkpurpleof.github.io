@@ -6,7 +6,7 @@
   "use strict";
 
   // ── Config ────────────────────────────────────────────────────────────
-  const UPLOAD_ENDPOINT = "https://darkpurpleofswebsitetooling.netlify.app/api/catbox";
+  const UPLOAD_ENDPOINT = "https://darkpurpleofswebsite.netlify.app/api/catbox";
 
   const BLOCKED_EXTENSIONS = new Set([
     "apk","apks","xapk","aab","apkm","ipa","dmg","pkg","mobileconfig",

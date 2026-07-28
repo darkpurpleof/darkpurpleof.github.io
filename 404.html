@@ -3,138 +3,732 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DarkPurpleOF — Not Found</title>
+  <title>Page not found</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
- 
+  <!-- Firebase SDK (classic/compat, same as the rest of the site, so dp-topbar loads normally) -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    /* same CSS as before */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+
     :root{
       --bg: #171717;
+      --panel: #1b1b1b;
       --card: #1f1f1f;
-      --text: #e9e9e9;
+      --card-2: #232323;
       --muted: #a8a8a8;
+      --text: #eaeaea;
       --accent: #6b21a8;
-      --border: rgba(255,255,255,0.04);
-      --radius: 12px;
-      --max-width: 920px;
+      --accent-strong: #5b21b6;
+      --border: rgba(255,255,255,0.05);
+      --border-strong: rgba(255,255,255,0.08);
+      --soft: rgba(255,255,255,0.03);
+      --radius: 16px;
+      --max-width: 620px;
     }
+
     body.light {
-      --bg:#f6f8fb;
-      --card:#fff;
-      --text:#0f172a;
-      --muted:#475569;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --card: #ffffff;
+      --card-2: #f8fafc;
+      --muted: #475569;
+      --text: #0f172a;
       --border: rgba(0,0,0,0.06);
+      --border-strong: rgba(0,0,0,0.09);
+      --soft: rgba(0,0,0,0.025);
     }
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow-x:hidden;}
-    body{display:flex;flex-direction:column;min-height:100vh;}
-    dp-topbar{display:block;position:sticky;top:0;z-index:100;}
-    main.container{ width:100%; max-width:var(--max-width); margin:28px auto; padding:20px; box-sizing:border-box; }
-    .card{ background:var(--card); border-radius:var(--radius); padding:22px; border:1px solid var(--border); box-shadow:0 8px 26px rgba(2,6,23,0.45); color:var(--text); }
-    .header { display:flex; gap:16px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
-    h1 { margin:0; font-size:20px; font-weight:700; color:var(--text); }
-    .sub { color:var(--muted); margin-top:8px; font-size:14px; }
-    .poem { margin-top:18px; font-size:16px; line-height:1.6; color:var(--text); white-space:pre-wrap; }
-    .meta { margin-top:16px; color:var(--muted); font-size:13px; }
-    .file-path { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; background:rgba(255,255,255,0.02); padding:6px 8px; border-radius:8px; display:inline-block; color:var(--text); border:1px solid var(--border); }
-    @media (max-width:720px){
-      .poem { font-size:15px; }
-      main.container { margin:16px auto; padding:14px; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background .25s ease, color .25s ease;
+    }
+
+    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+    .top-bar { display:none !important; }
+
+    main.container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .card {
+      width: 100%;
+      background: linear-gradient(180deg, var(--card), var(--panel));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 34px 30px;
+      box-shadow: 0 20px 44px rgba(0,0,0,0.28);
+      text-align: center;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    .card.visible { opacity: 1; transform: translateY(0); }
+
+    .icon-badge {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 20px auto;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: var(--soft);
+      border: 1px solid var(--border-strong);
+      color: var(--accent);
+    }
+    .icon-badge svg { width: 26px; height: 26px; display: block; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--soft);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .eyebrow .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .eyebrow.pending .dot { background: #e6b800; }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin-top: 10px;
+      font-size: 14.5px;
+      line-height: 1.6;
+      max-width: 46ch;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .path-row {
+      margin-top: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 100%;
+    }
+    .path-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .file-path {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+      background: var(--soft);
+      padding: 6px 10px;
+      border-radius: 8px;
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 12.5px;
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .actions {
+      margin-top: 26px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13.5px;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn svg { width: 15px; height: 15px; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #fff;
+    }
+    .btn-secondary {
+      background: var(--soft);
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.06); }
+
+    .progress-dots {
+      margin-top: 22px;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+    }
+    .progress-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: .35;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    .progress-dots span:nth-child(2) { animation-delay: .18s; }
+    .progress-dots span:nth-child(3) { animation-delay: .36s; }
+    @keyframes pulse {
+      0%, 100% { opacity: .25; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.25); }
+    }
+
+    .foot-note {
+      margin-top: 22px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .foot-note a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+    .foot-note a:hover { color: var(--text); }
+
+    @media (max-width: 480px) {
+      .card { padding: 28px 20px; }
+      h1 { font-size: 21px; }
     }
   </style>
 </head>
 <body>
   <dp-topbar></dp-topbar>
 
-  <main class="container" role="main" aria-labelledby="pageTitle">
-    <div class="card" role="region" aria-label="Not Found">
-      <div class="header">
-        <div>
-          <h1 id="pageTitle">Not Found</h1>
-          <div id="header-sub" class="sub">The requested resource was not found on this server.</div>
-        </div>
-        <div class="meta" id="meta-right" aria-hidden="true"></div>
+  <main class="container">
+    <div class="card" id="state-card" role="region" aria-label="Page not found">
+      <div class="icon-badge" id="icon-badge">
+        <!-- icon injected here -->
       </div>
 
-      <div style="margin-top:12px;">
-        <div class="sub">Requested path:</div>
-        <div style="margin-top:8px;"><span id="missing-file" class="file-path">/unknown</span></div>
+      <div style="display: none;" class="eyebrow" id="eyebrow">
+        <span class="dot"></span>
+        <span id="eyebrow-text">Not found</span>
       </div>
 
-      <div id="poemContainer" class="poem" role="article" aria-live="polite"></div>
+      <h1 id="state-title">This page doesn't exist</h1>
+      <p class="sub" id="state-sub">
+        The page you're looking for may have been moved, renamed, or never existed. Double-check the address, or head back to somewhere that does.
+      </p>
 
-      <div class="meta" id="langMeta" style="margin-top:18px;"></div>
+      <div class="path-row" id="path-row" style="display: none;">
+        <span class="path-label" id="path-label">Requested:</span>
+        <span id="missing-file" class="file-path">/unknown</span>
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="/">
+          Back to homepage
+        </a>
+      </div>
+
+      <div class="foot-note">
+        If you think this is a mistake, <a href="https://darkpurpleof.github.io/support" target="_blank" rel="noopener">let us know</a>.
+      </div>
     </div>
   </main>
 
-  <!-- Firebase initialization for dp-topbar -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
-
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
       authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      databaseURL: "https://darkpurpleof-s-website-default-rtdb.firebaseio.com",
       projectId: "darkpurpleof-s-website",
-      storageBucket: "darkpurpleof-s-website.appspot.com",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
       messagingSenderId: "520651082420",
-      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
+      measurementId: "G-S2X2JYC8Z0"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-    // make Firebase available globally exactly like dp-topbar expects
-    window.firebase = {
-      app,
-      auth: () => auth,
-      firestore: () => db
-    };
-
-    // now import topbar AFTER Firebase is ready
-    import("/dp-topbar.js");
+    const db = firebase.firestore();
+    const auth = firebase.auth();
   </script>
+
+  <script type="module" src="/dp-topbar.js"></script>
+
 
   <script>
-    const POEMS = {
-      en: `Once late at night, my cursor crept,\nThrough lists of pages I had kept;\nI clicked a link — a sudden hush —\nA silent page, a broken flush.\n\nI begged the server, “Show it true!”\nBut only 404 came through.\nQuoth the Server — the page's gone,\nNo file to sing, no file to spawn.`,
-      es: `En la noche mi cursor vagó,\npor páginas que el alma amó;\nhice clic — y en vez de luz y flor,\nhallé silencio, hallé error.\n\nClamé al servidor con afán:\n“¿Dónde está mi página, en qué plan?”\nRespondió liso: ya no está —\n404, la ruta se fue ya.`,
-      ru: `Ночью курсор путь нашёл,\nпо страницам, что я вёл;\nя кликнул — тишина кругом,\nпустота и лишь один лом.\n\nЯ воскликнул: "Где ж мой html?"\nНо сервер тихо: "Нет, он в тлен".\nСказал Сервер — и речи нет:\nКод 404 — ушёл ответ.`,
-      ja: `夜にカーソル 静かに巡り\n大事な頁を探し回り\nクリック一つで 空っぽの窓\n音もなく 消えたその道\n\n問いかける「頁はどこだ？」\n返る声は 無情の合図\nサーバーは言う — 404だよ\nそこに頁は もうないよ`,
-      de: `Spät in der Nacht kroch mein Cursor sacht,\nDurch Seitenlisten, die ich bewacht;\nIch klickte einen Link — Stille erwacht —\nEine leere Seite, nichts entfacht.\n\nIch bat den Server: "Zeig mir die Wahrheit!"\nDoch nur 404 in voller Klarheit.\nDer Server sprach — die Seite fort,\nKein Text, kein Bild, kein einziger Ort.`
-    };
+    (function () {
+      const SUPPORTED_LANGS = new Set(['en', 'es', 'ru', 'de', 'ja']);
+      const DEFAULT_LANG = 'en';
 
-    function chooseLang() {
-      const nav = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || navigator.userLanguage || 'en'];
-      for (const code of nav) {
-        if (!code) continue;
-        const lang = code.slice(0,2).toLowerCase();
-        if (POEMS[lang]) return lang;
+      const I18N = {
+        en: {
+          pageTitle: 'Page not found',
+          ariaLabel: 'Page not found',
+          eyebrow: 'Not found',
+          comingSoon: 'Coming soon',
+          legacy: 'Legacy',
+          docs: 'Docs',
+          events: 'Events',
+          playgrounds: 'Playgrounds',
+          files: 'Files',
+          defaultTitle: "This page doesn't exist",
+          defaultSub: "The page you're looking for may have been moved, renamed, or never existed. Double-check the address, or head back to somewhere that does.",
+          soonTitle: 'Great things are in the works',
+          soonSub: "This section is being built right now. Check back soon — it'll be worth the wait.",
+          legacyTitle: 'This legacy page is gone',
+          legacySub: 'Legacy pages are deleted over time. The ones that remain are preserved for historical reasons, and some may be restored later if doing so does not conflict with current usage.',
+          docsTitle: 'Documentation vanished again',
+          docsSub: "We looked through the docs, the docs for the docs, and the docs about those docs. Somehow, this one still isn't here.",
+          eventTitle: 'This event is over',
+          eventSub: 'This event has finished, was removed, or never existed in the first place. Old links do that sometimes.',
+          playgroundsTitle: "This playground page couldn't be found",
+          playgroundsSub: "The page inside DarkPurpleOF's Playgrounds could not be found. It may have been renamed, removed, or never built at all.",
+          fileTitle: 'Missing file',
+          fileSub: 'The requested file could not be found. It may have been moved, deleted, renamed, or was never uploaded in the first place.',
+          buttonHome: 'Back to homepage',
+          footNoteLead: 'If you think this is a mistake,',
+          footNoteLink: 'let us know',
+          sectionLabel: 'Section:',
+          legacyPathLabel: 'Legacy path:',
+          docsPathLabel: 'Docs path:',
+          eventPathLabel: 'Event path:',
+          playgroundPathLabel: 'Playground path:',
+          filePathLabel: 'File path:',
+          requestedLabel: 'Requested:'
+        },
+        es: {
+          pageTitle: 'Página no encontrada',
+          ariaLabel: 'Página no encontrada',
+          eyebrow: 'No encontrada',
+          comingSoon: 'Próximamente',
+          legacy: 'Legado',
+          docs: 'Docs',
+          events: 'Eventos',
+          playgrounds: 'Playgrounds',
+          files: 'Archivos',
+          defaultTitle: 'Esta página no existe',
+          defaultSub: 'La página que buscas pudo haberse movido, renombrado o quizá nunca existió. Revisa la dirección o vuelve a un lugar que sí exista.',
+          soonTitle: 'Se vienen cosas geniales',
+          soonSub: 'Esta sección se está construyendo ahora mismo. Vuelve pronto; valdrá la pena la espera.',
+          legacyTitle: 'Esta página antigua ya no está',
+          legacySub: 'Las páginas antiguas se van eliminando con el tiempo. Las que permanecen se conservan por razones históricas, y algunas podrían restaurarse después si no entran en conflicto con el uso actual.',
+          docsTitle: 'La documentación desapareció otra vez',
+          docsSub: 'Revisamos la documentación, la documentación de la documentación y la documentación sobre esa documentación. De algún modo, esta todavía no está aquí.',
+          eventTitle: 'Este evento ya terminó',
+          eventSub: 'Este evento ya terminó, fue eliminado o nunca existió desde el principio. Los enlaces viejos a veces hacen eso.',
+          playgroundsTitle: 'No se pudo encontrar esta página de playground',
+          playgroundsSub: 'No se pudo encontrar la página dentro de DarkPurpleOF’s Playgrounds. Puede haber sido renombrada, eliminada o nunca haber sido creada.',
+          fileTitle: 'Archivo no encontrado',
+          fileSub: 'No se pudo encontrar el archivo solicitado. Puede haberse movido, eliminado, renombrado o quizá nunca se subió.',
+          buttonHome: 'Volver al inicio',
+          footNoteLead: 'Si crees que esto es un error,',
+          footNoteLink: 'avísanos',
+          sectionLabel: 'Sección:',
+          legacyPathLabel: 'Ruta heredada:',
+          docsPathLabel: 'Ruta de docs:',
+          eventPathLabel: 'Ruta del evento:',
+          playgroundPathLabel: 'Ruta del playground:',
+          filePathLabel: 'Ruta del archivo:',
+          requestedLabel: 'Solicitado:'
+        },
+        ru: {
+          pageTitle: 'Страница не найдена',
+          ariaLabel: 'Страница не найдена',
+          eyebrow: 'Не найдено',
+          comingSoon: 'Скоро',
+          legacy: 'Старое',
+          docs: 'Документация',
+          events: 'События',
+          playgrounds: 'Playgrounds',
+          files: 'Файлы',
+          defaultTitle: 'Этой страницы не существует',
+          defaultSub: 'Страница, которую вы ищете, могла быть перемещена, переименована или никогда не существовала. Проверьте адрес или вернитесь туда, где страница точно есть.',
+          soonTitle: 'Скоро будет кое-что классное',
+          soonSub: 'Этот раздел сейчас создаётся. Загляните позже — ожидание того стоит.',
+          legacyTitle: 'Эта устаревшая страница удалена',
+          legacySub: 'Устаревшие страницы со временем удаляются. Те, что остаются, сохраняются по историческим причинам, а некоторые могут быть восстановлены позже, если это не будет мешать текущему использованию.',
+          docsTitle: 'Документация снова исчезла',
+          docsSub: 'Мы проверили документацию, документацию к документации и документацию об этой документации. И всё равно этой страницы здесь нет.',
+          eventTitle: 'Это событие уже закончилось',
+          eventSub: 'Это событие завершилось, было удалено или вообще никогда не существовало. Старые ссылки иногда так делают.',
+          playgroundsTitle: 'Эту страницу playground не удалось найти',
+          playgroundsSub: 'Страница внутри DarkPurpleOF’s Playgrounds не найдена. Возможно, она была переименована, удалена или вообще никогда не создавалась.',
+          fileTitle: 'Файл не найден',
+          fileSub: 'Запрошенный файл не удалось найти. Возможно, он был перемещён, удалён, переименован или вообще никогда не загружался.',
+          buttonHome: 'На главную',
+          footNoteLead: 'Если это ошибка,',
+          footNoteLink: 'сообщите нам',
+          sectionLabel: 'Раздел:',
+          legacyPathLabel: 'Путь legacy:',
+          docsPathLabel: 'Путь docs:',
+          eventPathLabel: 'Путь события:',
+          playgroundPathLabel: 'Путь playground:',
+          filePathLabel: 'Путь файла:',
+          requestedLabel: 'Запрошено:'
+        },
+        de: {
+          pageTitle: 'Seite nicht gefunden',
+          ariaLabel: 'Seite nicht gefunden',
+          eyebrow: 'Nicht gefunden',
+          comingSoon: 'Demnächst',
+          legacy: 'Alt',
+          docs: 'Docs',
+          events: 'Events',
+          playgrounds: 'Playgrounds',
+          files: 'Dateien',
+          defaultTitle: 'Diese Seite existiert nicht',
+          defaultSub: 'Die gesuchte Seite wurde möglicherweise verschoben, umbenannt oder hat nie existiert. Prüfe die Adresse oder gehe zurück zu einer Seite, die es gibt.',
+          soonTitle: 'Großartige Dinge sind in Arbeit',
+          soonSub: 'Dieser Bereich wird gerade erstellt. Schau bald wieder vorbei — es lohnt sich.',
+          legacyTitle: 'Diese Legacy-Seite ist weg',
+          legacySub: 'Legacy-Seiten werden mit der Zeit gelöscht. Die verbleibenden werden aus historischen Gründen aufbewahrt, und einige können später wiederhergestellt werden, sofern das nicht mit der aktuellen Nutzung kollidiert.',
+          docsTitle: 'Die Dokumentation ist wieder verschwunden',
+          docsSub: 'Wir haben die Doku, die Doku zur Doku und die Doku über diese Doku durchsucht. Irgendwie ist diese Seite trotzdem nicht da.',
+          eventTitle: 'Dieses Event ist vorbei',
+          eventSub: 'Dieses Event ist beendet, wurde entfernt oder hat nie existiert. Alte Links machen das manchmal.',
+          playgroundsTitle: 'Diese Playground-Seite konnte nicht gefunden werden',
+          playgroundsSub: 'Die Seite in DarkPurpleOF’s Playgrounds konnte nicht gefunden werden. Sie wurde vielleicht umbenannt, entfernt oder nie erstellt.',
+          fileTitle: 'Datei fehlt',
+          fileSub: 'Die angeforderte Datei konnte nicht gefunden werden. Sie wurde möglicherweise verschoben, gelöscht, umbenannt oder nie hochgeladen.',
+          buttonHome: 'Zur Startseite',
+          footNoteLead: 'Wenn das ein Fehler ist,',
+          footNoteLink: 'lass es uns wissen',
+          sectionLabel: 'Bereich:',
+          legacyPathLabel: 'Legacy-Pfad:',
+          docsPathLabel: 'Docs-Pfad:',
+          eventPathLabel: 'Event-Pfad:',
+          playgroundPathLabel: 'Playground-Pfad:',
+          filePathLabel: 'Dateipfad:',
+          requestedLabel: 'Angefordert:'
+        },
+        ja: {
+          pageTitle: 'ページが見つかりません',
+          ariaLabel: 'ページが見つかりません',
+          eyebrow: '見つかりません',
+          comingSoon: '近日公開',
+          legacy: '旧ページ',
+          docs: 'ドキュメント',
+          events: 'イベント',
+          playgrounds: 'Playgrounds',
+          files: 'ファイル',
+          defaultTitle: 'このページは存在しません',
+          defaultSub: 'お探しのページは移動されたか、名前が変更されたか、または最初から存在しなかった可能性があります。URLを確認するか、別の場所へ戻ってください。',
+          soonTitle: '素敵なものを準備中です',
+          soonSub: 'このセクションは現在作成中です。もう少しお待ちください。きっと価値があります。',
+          legacyTitle: 'この旧ページは削除されました',
+          legacySub: '旧ページは時間とともに削除されます。残っているものは保存目的で残されており、現在の利用と競合しない場合は後で復元されることがあります。',
+          docsTitle: 'ドキュメントがまた見つかりません',
+          docsSub: 'ドキュメント、ドキュメントのドキュメント、そしてそのドキュメントについてのドキュメントまで確認しましたが、どうしてもこのページは見つかりません。',
+          eventTitle: 'このイベントは終了しました',
+          eventSub: 'このイベントは終了したか、削除されたか、そもそも存在しなかった可能性があります。古いリンクではよくあることです。',
+          playgroundsTitle: 'このPlaygroundページは見つかりませんでした',
+          playgroundsSub: 'DarkPurpleOF’s Playgrounds 内のページが見つかりませんでした。名前の変更、削除、または未作成の可能性があります。',
+          fileTitle: 'ファイルが見つかりません',
+          fileSub: '指定されたファイルが見つかりませんでした。移動、削除、名前変更、または未アップロードの可能性があります。',
+          buttonHome: 'ホームへ戻る',
+          footNoteLead: 'もしこれが誤りだと思うなら、',
+          footNoteLink: 'お知らせください',
+          sectionLabel: 'セクション:',
+          legacyPathLabel: '旧パス:',
+          docsPathLabel: 'Docs パス:',
+          eventPathLabel: 'イベントパス:',
+          playgroundPathLabel: 'Playground パス:',
+          filePathLabel: 'ファイルパス:',
+          requestedLabel: '要求されたパス:'
+        }
+      };
+
+      const STATIC_KEYS = {
+        title: document.querySelector('title'),
+        stateCardLabel: document.getElementById('state-card'),
+        eyebrowText: document.getElementById('eyebrow-text'),
+        stateTitle: document.getElementById('state-title'),
+        stateSub: document.getElementById('state-sub'),
+        pathLabel: document.getElementById('path-label'),
+        missingFile: document.getElementById('missing-file'),
+        homeButton: document.querySelector('.btn.btn-primary'),
+        footLead: document.querySelector('.foot-note'),
+      };
+
+      let currentLang = DEFAULT_LANG;
+      let currentT = I18N[DEFAULT_LANG];
+
+      function normalizeLang(lang) {
+        const base = String(lang || '').trim().toLowerCase().split('-')[0];
+        return SUPPORTED_LANGS.has(base) ? base : DEFAULT_LANG;
       }
-      return 'en';
-    }
 
-    (function init() {
-      const path = decodeURI(window.location.pathname || '/');
-      const page = path.substring(path.lastIndexOf('/') + 1) || '';
-      const displayPath = page ? ('/' + page) : path;
-      document.getElementById('missing-file').textContent = displayPath;
+      function t() {
+        return currentT;
+      }
 
-      document.getElementById('pageTitle').textContent = 'Not Found » ' + displayPath;
-      document.getElementById('header-sub').textContent = 'The requested resource was not found on this server.';
+      function setStaticTexts(lang) {
+        currentLang = normalizeLang(lang);
+        currentT = I18N[currentLang] || I18N[DEFAULT_LANG];
+        document.documentElement.lang = currentLang;
 
-      const lang = chooseLang();
-      try { document.documentElement.lang = lang; } catch(e){}
+        if (STATIC_KEYS.title) STATIC_KEYS.title.textContent = currentT.pageTitle;
+        if (STATIC_KEYS.stateCardLabel) STATIC_KEYS.stateCardLabel.setAttribute('aria-label', currentT.ariaLabel);
+        if (STATIC_KEYS.homeButton) STATIC_KEYS.homeButton.textContent = currentT.buttonHome;
 
-      document.getElementById('poemContainer').textContent = POEMS[lang] || POEMS.en;
+        const foot = document.querySelector('.foot-note');
+        if (foot) {
+          foot.innerHTML = `${currentT.footNoteLead} <a href="https://darkpurpleof.github.io/support" target="_blank" rel="noopener">${currentT.footNoteLink}</a>.`;
+        }
 
-      const labels = { en: 'English', es: 'Español', ru: 'Русский', ja: '日本語', de: 'Deutsch' };
-      document.getElementById('langMeta').textContent = `Detected language: ${labels[lang] || lang}. Poem shown in that language.`;
+        if (STATIC_KEYS.eyebrowText && STATIC_KEYS.eyebrowText.dataset.role === 'dynamic') {
+          // handled in renderState
+        }
+      }
 
-      document.getElementById('meta-right').textContent = new Date().toLocaleString();
+      function normalizePath(p) {
+        if (!p) return '/';
+        let out = decodeURI(p).trim().toLowerCase();
+        if (out.length > 1 && out.endsWith('/')) out = out.slice(0, -1);
+        if (!out.startsWith('/')) out = '/' + out;
+        return out;
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      const ICONS = {
+        notfound: `
+         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M589.5-372.5Q602-385 602-402t-12.5-29.5Q577-444 560-444t-29.5 12.5Q518-419 518-402t12.5 29.5Q543-360 560-360t29.5-12.5ZM530-488h60q0-29 6-42.5t28-35.5q30-30 40-48.5t10-43.5q0-45-31.5-73.5T560-760q-41 0-71.5 23T446-676l54 22q9-25 24.5-37.5T560-704q24 0 39 13.5t15 36.5q0 14-8 26.5T578-596q-33 29-40.5 45.5T530-488ZM320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z"/></svg>
+        `,
+        soon: `
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M756-120 537-339l84-84 219 219-84 84Zm-552 0-84-84 276-276-68-68-28 28-51-51v82l-28 28-121-121 28-28h82l-50-50 142-142q20-20 43-29t47-9q24 0 47 9t43 29l-92 92 50 50-28 28 68 68 90-90q-4-11-6.5-23t-2.5-24q0-59 40.5-99.5T701-841q15 0 28.5 3t27.5 9l-99 99 72 72 99-99q7 14 9.5 27.5T841-701q0 59-40.5 99.5T701-561q-12 0-24-2t-23-7L204-120Z"/></svg>
+        `,
+        legacy: `
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M381-481q-41-41-41-99t41-99q41-41 99-41t99 41q41 41 41 99t-41 99q-41 41-99 41t-99-41Zm141.5-56.5Q540-555 540-580t-17.5-42.5Q505-640 480-640t-42.5 17.5Q420-605 420-580t17.5 42.5Q455-520 480-520t42.5-17.5ZM480-60 120-280v-400l360-220 360 220v400L480-60Zm0-93 147-91q-34-18-71.5-27t-75.5-9q-38 0-75.5 9T333-244l147 91ZM256-291q50-34 107-51.5T480-360q60 0 117 17.5T704-291l56-33v-311L480-806 200-635v311l56 33Zm224-189Z"/></svg>
+        `,
+        docs: `
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M200-800v640-640 200-200Zm80 400h147q11-23 25.5-43t32.5-37H280v80Zm0 160h123q-3-20-3-40t3-40H280v80ZM200-80q-33 0-56.5-23.5T120-160v-640q0-33 23.5-56.5T200-880h320l240 240v92q-19-6-39-9t-41-3v-40H480v-200H200v640h227q11 23 25.5 43T485-80H200Zm621.5-341.5Q880-363 880-280t-58.5 141.5Q763-80 680-80t-141.5-58.5Q480-197 480-280t58.5-141.5Q597-480 680-480t141.5 58.5Zm-123 254Q706-175 706-186t-7.5-18.5Q691-212 680-212t-18.5 7.5Q654-197 654-186t7.5 18.5Q669-160 680-160t18.5-7.5ZM662-236h36v-10q0-11 6-19.5t14-16.5q14-12 22-23t8-31q0-29-19-46.5T680-400q-23 0-41.5 13.5T612-350l32 14q3-12 12.5-21t23.5-9q15 0 23.5 7.5T712-336q0 11-6 18.5T692-302q-6 6-12.5 12T668-276q-3 6-4.5 12t-1.5 14v14Z"/></svg>
+        `,
+        file: `
+         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M720-330q0 104-73 177T470-80q-104 0-177-73t-73-177v-370q0-75 52.5-127.5T400-880q75 0 127.5 52.5T580-700v350q0 46-32 78t-78 32q-46 0-78-32t-32-78v-370h80v370q0 13 8.5 21.5T470-320q13 0 21.5-8.5T500-350v-350q-1-42-29.5-71T400-800q-42 0-71 29t-29 71v370q-1 71 49 120.5T470-160q70 0 119-49.5T640-330v-390h80v390Z"/></svg>
+        `,
+        event: `
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="m388-212-56-56 92-92-92-92 56-56 92 92 92-92 56 56-92 92 92 92-56 56-92-92-92 92ZM200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z"/></svg>
+        `,
+        playground: `
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M80-160v-480h120v-160h240v160h80v-160h240v160h120v480H80Zm80-80h640v-320H160v320Zm120-400h80v-80h-80v80Zm320 0h80v-80h-80v80ZM160-240h640-640Zm120-400h80-80Zm320 0h80-80Z"/></svg>
+        `
+      };
+
+      function renderState(state) {
+        const card = document.getElementById('state-card');
+        const iconBadge = document.getElementById('icon-badge');
+        const eyebrow = document.getElementById('eyebrow');
+        const eyebrowText = document.getElementById('eyebrow-text');
+        const title = document.getElementById('state-title');
+        const sub = document.getElementById('state-sub');
+        const pathRow = document.getElementById('path-row');
+        const pathLabel = document.getElementById('path-label');
+        const missingFile = document.getElementById('missing-file');
+
+        iconBadge.innerHTML = state.icon || ICONS.notfound;
+        eyebrow.className = 'eyebrow' + (state.pending ? ' pending' : '');
+        eyebrow.style.display = state.eyebrow ? 'inline-flex' : 'none';
+        eyebrowText.dataset.role = 'dynamic';
+        eyebrowText.textContent = state.eyebrow || (state.pending ? currentT.comingSoon : currentT.eyebrow);
+        title.textContent = state.title || currentT.defaultTitle;
+        sub.textContent = state.sub || currentT.defaultSub;
+
+        if (state.showPath) {
+          pathLabel.textContent = state.pathLabel || currentT.requestedLabel;
+          missingFile.textContent = state.pathValue || '/unknown';
+          pathRow.style.display = 'none';
+        } else {
+          pathRow.style.display = 'none';
+        }
+
+        document.title = state.pageTitle || currentT.pageTitle;
+        card.classList.remove('visible');
+        card.style.display = 'block';
+        requestAnimationFrame(() => card.classList.add('visible'));
+      }
+
+      function resolveState(currentPath, pages) {
+        if (pages.includes(currentPath)) {
+          return {
+            pending: true,
+            eyebrow: currentT.comingSoon,
+            pageTitle: currentT.comingSoon,
+            title: currentT.soonTitle,
+            sub: currentT.soonSub,
+            icon: ICONS.soon,
+            showPath: true,
+            pathLabel: currentT.sectionLabel,
+            pathValue: currentPath
+          };
+        }
+
+        if (currentPath.startsWith('/legacy/')) {
+          return {
+            eyebrow: currentT.legacy,
+            pageTitle: currentT.legacy,
+            title: currentT.legacyTitle,
+            sub: currentT.legacySub,
+            icon: ICONS.legacy,
+            showPath: true,
+            pathLabel: currentT.legacyPathLabel,
+            pathValue: currentPath
+          };
+        }
+
+        if (currentPath.startsWith('/docs/')) {
+          return {
+            eyebrow: currentT.docs,
+            pageTitle: currentT.docs,
+            title: currentT.docsTitle,
+            sub: currentT.docsSub,
+            icon: ICONS.docs,
+            showPath: true,
+            pathLabel: currentT.docsPathLabel,
+            pathValue: currentPath
+          };
+        }
+
+        if (currentPath.startsWith('/events/')) {
+          return {
+            eyebrow: currentT.events,
+            pageTitle: currentT.events,
+            title: currentT.eventTitle,
+            sub: currentT.eventSub,
+            icon: ICONS.event,
+            showPath: true,
+            pathLabel: currentT.eventPathLabel,
+            pathValue: currentPath
+          };
+        }
+
+        if (currentPath.startsWith('/playgrounds/')) {
+          return {
+            eyebrow: currentT.playgrounds,
+            pageTitle: currentT.playgrounds,
+            title: currentT.playgroundsTitle,
+            sub: currentT.playgroundsSub,
+            icon: ICONS.playground,
+            showPath: true,
+            pathLabel: currentT.playgroundPathLabel,
+            pathValue: currentPath
+          };
+        }
+
+        const lastSegment = (currentPath.split('/').pop() || '').trim();
+        const hasExtension = /\.[^/.]+$/.test(lastSegment);
+        const isHtml = /\.html?$/i.test(lastSegment);
+
+        if (hasExtension && !isHtml) {
+          return {
+            eyebrow: currentT.files,
+            pageTitle: currentT.files,
+            title: currentT.fileTitle,
+            sub: currentT.fileSub,
+            icon: ICONS.file,
+            showPath: true,
+            pathLabel: currentT.filePathLabel,
+            pathValue: currentPath
+          };
+        }
+
+        return {
+          eyebrow: currentT.eyebrow,
+          pageTitle: currentT.pageTitle,
+          title: currentT.defaultTitle,
+          sub: currentT.defaultSub,
+          icon: ICONS.notfound,
+          showPath: true,
+          pathLabel: currentT.requestedLabel,
+          pathValue: currentPath
+        };
+      }
+
+      const rawPath = window.location.pathname || '/';
+      const currentPath = normalizePath(rawPath);
+
+      function bootstrapWithPages(pages) {
+        const normalizedPages = Array.isArray(pages) ? pages.map(normalizePath) : [];
+        const state = resolveState(currentPath, normalizedPages);
+        renderState(state);
+      }
+
+      async function loadLanguage() {
+        try {
+          const user = auth.currentUser;
+          if (!user || !user.email) {
+            setStaticTexts(DEFAULT_LANG);
+            return;
+          }
+          const doc = await db.collection('user_data').doc(user.email).get();
+          const lang = doc.exists ? doc.data()?.lang : null;
+          setStaticTexts(lang);
+        } catch (e) {
+          setStaticTexts(DEFAULT_LANG);
+        }
+      }
+
+      async function init() {
+        await loadLanguage();
+
+        db.collection('server_global_data').doc('general').get()
+          .then(doc => {
+            const pages = (doc.exists && Array.isArray(doc.data().coming_soon_pages))
+              ? doc.data().coming_soon_pages
+              : [];
+            bootstrapWithPages(pages);
+          })
+          .catch(() => {
+            bootstrapWithPages([]);
+          });
+      }
+
+      auth.onAuthStateChanged(() => {
+        init();
+      });
     })();
   </script>
+
 </body>
-</html>

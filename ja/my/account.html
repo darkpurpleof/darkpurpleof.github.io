@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>設定</title>
- 
+  <title>Settings</title>
+
   <!-- Firebase classic (compat) only, no modular imports -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
@@ -12,12 +12,17 @@
 
   <script src="/dp-topbar.js"></script>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
   <style>
-    /* Global box-sizing and overflow guard to prevent any accidental horizontal scroll */
+    /* ============ reset / guards ============ */
     *, *::before, *::after { box-sizing: border-box; }
     html, body { height: 100%; width: 100%; overflow-x: hidden; }
-    img { max-width: 100%; display: block; }
+    img, svg { max-width: 100%; display: block; }
 
+    /* ============ color tokens (unchanged from the current site) ============ */
     :root{
       --bg: #171717;
       --card: #1f1f1f;
@@ -26,289 +31,207 @@
       --accent-strong: #5b21b6;
       --text: #eaeaea;
       --border: rgba(255,255,255,0.04);
-      --friend-row-height: 110px;
-      --friend-row-height-mobile: 84px;
       --danger: #b91c1c;
       --success: #7214be;
       --soft: rgba(255,255,255,0.03);
+
+      /* typography + rhythm tokens (non-color) */
+      --font-display: 'Space Grotesk', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      --font-body: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      --radius-card: 20px;
+      --radius-item: 14px;
     }
     body.light {
       --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06); --soft: rgba(0,0,0,0.03);
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+    }
+
     body {
       margin:0;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      font-family: var(--font-body);
       background-color: var(--bg);
       color:var(--text);
-      transition: background .25s, color .25s;
       min-height:100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
     dp-topbar { display:block; position:sticky; top:0; z-index:100; }
-    .top-bar { display:none !important; }
 
-    main.container {
-      max-width:1200px;
-      width:100%;
-      margin:24px auto;
-      padding:20px;
-      display:grid;
-      grid-template-columns:1fr;
-      gap:20px;
-      box-sizing:border-box;
-      overflow-x: hidden;
-    }
-    @media (max-width:920px){
-      main.container{ grid-template-columns:1fr; padding:16px; }
-      aside.right-column{ order:2; }
-    }
+    a, button { font-family: inherit; }
+    :focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; border-radius: 6px; }
 
+    /* ============ app bar (mirrors Compose TopAppBar) ============ */
+    .appbar {
+      position: sticky; top: 56px; z-index: 60;
+      display:flex; align-items:center; gap:14px;
+      max-width: 720px; margin:0 auto; padding: 14px 16px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .appbar .menu-btn {
+      background:none; border:none; color:var(--text); cursor:pointer;
+      padding:8px; border-radius:10px; line-height:0; flex-shrink:0;
+    }
+    .appbar .menu-btn:hover { background: var(--soft); }
+    .appbar .menu-btn svg { width:20px; height:20px; }
+    .appbar h1 { margin:0; font-family: var(--font-display); font-size:18px; font-weight:600; }
+
+    /* ============ page shell ============ */
+    .page-shell { max-width: 720px; margin: 0 auto; padding: 20px 16px 70px; }
+    .page-sub { margin: 0 0 16px; color: var(--muted); font-size:13px; }
+
+    /* ============ status cards (UpdateCard / PermissionCard) ============ */
+    .status-card {
+      display:flex; align-items:center; gap:14px;
+      border-radius: var(--radius-card);
+      padding: 16px; margin: 18px 0;
+      color:#fff; cursor:default;
+    }
+    .status-card.is-clickable { cursor:pointer; }
+    .status-card.tone-accent { background: var(--accent-strong); }
+    .status-card.tone-danger { background: var(--danger); }
+    .status-card.tone-muted  { background: #4b454f; }
+    .status-card .status-icon { flex-shrink:0; width:22px; height:22px; }
+    .status-card .status-icon svg { width:100%; height:100%; }
+    .status-card h3 { margin:0; font-family: var(--font-display); font-size:14.5px; font-weight:600; }
+    .status-card p { margin:2px 0 0; font-size:12.5px; opacity:.88; }
+    .status-card .spinner {
+      width:20px; height:20px; border-radius:50%;
+      border:2px solid rgba(255,255,255,.35); border-top-color:#fff;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============ settings cards (mirrors SettingsCard composable) ============ */
     .card {
-      background:var(--card);
-      border-radius:12px;
-      padding:18px;
-      border:1px solid var(--border);
-      color:var(--text);
-      box-shadow:0 6px 18px rgba(2,6,23,0.45);
-      overflow:visible;
+      background: var(--card); border:1px solid var(--border);
+      border-radius: var(--radius-card); padding: 16px; margin-bottom: 20px;
     }
+    .card-header { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+    .card-header svg { width:18px; height:18px; color: var(--text); flex-shrink:0; }
+    .card-header h2 { flex:1; margin:0; font-family: var(--font-display); font-size:15px; font-weight:600; }
+    .card-header .header-action {
+      background:none; border:none; color: var(--muted); cursor:pointer;
+      padding:6px; border-radius:8px; line-height:0;
+    }
+    .card-header .header-action:hover { background: var(--soft); color: var(--text); }
+    .card-header .header-action svg { width:16px; height:16px; }
 
-    .hero {
-      display:flex;
-      gap:16px;
-      align-items:center;
-      justify-content:space-between;
-      padding:20px;
-      border-radius:12px;
-      min-width:0;
-    }
-    .hero > div { min-width:0; }
-    .muted { color:var(--muted); font-size:13px; }
-    .title-line { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
-    .tiny-chip {
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:6px 10px;
-      border-radius:999px;
-      background:var(--soft);
-      border:1px solid var(--border);
-      color:var(--muted);
-      font-size:12px;
-      user-select:none;
-    }
-
-    .grid-two {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-    @media (max-width:720px){ .grid-two { grid-template-columns:1fr; } }
-
-    .profile-preview {
-      display:flex;
-      gap:14px;
-      align-items:center;
-      background:var(--card);
-      border-radius:12px;
-      padding:12px;
-      border:1px solid var(--border);
-    }
-    .profile-pfp {
-      width:72px; height:72px; border-radius:12px;
-      background-size:cover; background-position:center;
-      border:1px solid var(--border);
-      flex-shrink:0;
-      background-color: var(--soft);
-    }
-    .profile-text { display:flex; flex-direction:column; gap:6px; min-width:0; }
-    .profile-name-verif { font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px; min-width:0; }
-    .profile-name-verif span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .profile-name-verif img { width:14px; height:14px; margin-left:4px; }
-
-    .action-button {
-      display:inline-flex; gap:10px; align-items:center;
-      padding:10px 14px; border-radius:10px;
-      border:1px solid var(--border);
-      background:transparent; cursor:pointer;
-      font-weight:600; color:var(--text);
-      text-decoration:none;
-    }
-    .action-button:hover { background:var(--soft); }
-    .action-button:disabled, .action-button.disabled {
-      opacity:.5; cursor:not-allowed; pointer-events:none;
-    }
-    .action-button img{ width:18px; height:18px; }
-    .action-row { display:flex; gap:10px; flex-wrap:wrap; }
-
-    #toast {
-      position:fixed; top:18px; left:50%; transform:translateX(-50%);
-      padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999;
-      box-shadow:0 12px 30px rgba(0,0,0,.25);
-      max-width:min(92vw, 520px);
-      text-align:center;
-    }
-    #toast.purple { background:var(--accent-strong); color:#fff; }
-    #toast.yellow{ background:#e6b800; color:#222; }
-    #toast.red{ background:#c00; color:#fff; }
-    #toast.green{ background:var(--success); color:#fff; }
-
-    .settings-card { background:var(--card); border-radius:12px; border:1px solid var(--border); box-shadow:0 6px 18px rgba(2,6,23,0.3); overflow:hidden; }
-    .settings-card-head {
-      display:flex; align-items:center; gap:10px;
-      padding:16px 16px 10px 16px; border-bottom:1px solid var(--border);
-    }
-    .settings-card-head h2 { margin:0; font-size:18px; }
-    .settings-card-body { padding:0 16px 8px 16px; }
-
-    .setting-item {
+    /* item = mirrors SettingsItem composable */
+    .item {
       display:flex; align-items:center; gap:12px;
-      padding:14px 0; border-bottom:1px solid var(--border);
-      min-width:0;
+      padding: 12px 6px; border-radius: var(--radius-item);
+      cursor:pointer; background:none; border:none; width:100%; text-align:left; color:inherit;
     }
-    .setting-item:last-child { border-bottom:none; }
-    .setting-main { flex:1; min-width:0; }
-    .setting-title {
-      margin:0 0 4px 0; font-size:15px; font-weight:700;
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    }
-    .setting-desc { margin:0; font-size:13px; color:var(--muted); line-height:1.4; }
-    .setting-item .click-target { display:flex; width:100%; align-items:center; gap:12px; cursor:pointer; }
-    .setting-item .click-target.disabled { cursor:not-allowed; opacity:.45; }
+    .item:hover:not(.disabled) { background: var(--soft); }
+    .item.disabled { opacity:.42; cursor:default; }
+    .item-main { flex:1; min-width:0; }
+    .item-title { margin:0 0 2px; font-size:14px; font-weight:600; font-family: var(--font-display); letter-spacing:-.005em; }
+    .item-desc { margin:0; font-size:12.5px; color: var(--muted); line-height:1.5; }
+    .item-desc.is-unavailable { font-style: italic; opacity: 0.9; }
+    .item-trail { flex-shrink:0; display:flex; align-items:center; color: var(--muted); }
+    .item-trail svg { width:16px; height:16px; }
 
-    .switch {
-      position:relative; width:46px; height:26px; flex-shrink:0;
+    .pill {
+      display:inline-flex; align-items:center; padding: 4px 9px; border-radius: 999px;
+      background: var(--soft); border:1px solid var(--border); color: var(--muted); font-size:10.5px; font-weight:600;
+      font-family: var(--font-mono); letter-spacing:.03em; white-space:nowrap;
     }
-    .switch input { opacity:0; width:0; height:0; }
+
+    /* switch, reused as-is from the site's existing style */
+    .switch { position:relative; width:40px; height:23px; flex-shrink:0; }
+    .switch input { opacity:0; width:0; height:0; position:absolute; }
     .slider {
-      position:absolute; inset:0; cursor:pointer; background:#555; transition:.2s; border-radius:999px;
+      position:absolute; inset:0; cursor:pointer; background:#555; transition:.18s; border-radius:999px;
       border:1px solid rgba(255,255,255,.08);
     }
+    body.light .slider { background:#cbd5e1; }
     .slider:before {
-      position:absolute; content:""; height:20px; width:20px; left:3px; top:2px; background:white; transition:.2s; border-radius:50%;
+      position:absolute; content:""; height:17px; width:17px; left:2px; top:2px; background:white; transition:.18s; border-radius:50%;
+      box-shadow: 0 1px 2px rgba(0,0,0,.3);
     }
-    .switch input:checked + .slider { background:var(--accent-strong); }
-    .switch input:checked + .slider:before { transform:translateX(20px); }
+    .switch input:checked + .slider { background: var(--accent-strong); }
+    .switch input:checked + .slider:before { transform:translateX(17px); }
+    .switch input:disabled + .slider { opacity:.4; cursor:not-allowed; }
 
-    .friends-container {
-      display:grid;
-      gap:12px;
-      padding:12px;
-      width:100%; max-width:100%; min-width:0;
-      grid-template-columns:repeat(5, minmax(0, 1fr));
-      grid-auto-rows:var(--friend-row-height);
-      align-items:start;
-      overflow-x:hidden;
-      box-sizing:border-box;
-      border-radius:8px;
-      background:rgba(255,255,255,.01);
-      border:1px solid var(--border);
+    /* ============ toast ============ */
+    #toast {
+      position:fixed; top:18px; left:50%; transform:translateX(-50%);
+      padding:10px 16px; border-radius:10px; font-weight:600; font-size:13.5px; display:none; z-index:99999;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+      max-width:min(92vw, 480px); text-align:center;
     }
-    @media (min-width: 921px) {
-      .friends-container {
-        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
-        overflow-y:auto;
-      }
-    }
-    @media (min-width: 601px) and (max-width: 920px) {
-      .friends-container {
-        max-height: calc((var(--friend-row-height) * 4) + (12px * 3));
-        overflow-y:auto;
-      }
-    }
-    @media (max-width: 600px) {
-      .friends-container {
-        gap:8px; padding:10px;
-        grid-auto-rows:var(--friend-row-height-mobile);
-        max-height: calc((var(--friend-row-height-mobile) * 2) + (8px * 1));
-        overflow-y:auto;
-      }
-    }
-    .friend-card {
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      width:100%; min-width:0; text-align:center; cursor:pointer;
-      background:var(--soft); border:1px solid var(--border); border-radius:12px;
-      padding:10px; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .friend-card:hover { background:rgba(107,33,168,.12); }
-    .friend-pfp {
-      width:64px; height:64px; border-radius:12px; margin:0 auto 8px auto;
-      background-size:cover; background-position:center; border:2px solid rgba(0,0,0,0.06);
-      flex-shrink:0; background-repeat:no-repeat;
-      background-color:var(--soft);
-    }
-    .friend-name {
-      font-size:13px; color:var(--text); display:flex; align-items:center; justify-content:center; gap:6px;
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;
-    }
-    .friend-name img { width:12px; height:12px; margin-left:6px; }
-    .friends-empty { color:var(--muted); font-size:13px; padding:8px 2px 2px; }
+    #toast.purple { background:var(--accent-strong); color:#fff; }
+    #toast.red{ background:var(--danger); color:#fff; }
+    #toast.green{ background:var(--success); color:#fff; }
 
+    /* ============ dialogs (mirrors Compose AlertDialog) ============ */
     .overlay {
-      position:fixed; inset:0; background:rgba(0,0,0,.55);
+      position:fixed; inset:0; background:rgba(0,0,0,.6);
       display:none; align-items:center; justify-content:center; padding:16px; z-index:2000;
     }
     .overlay.show { display:flex; }
     .modal {
-      width:min(640px, 100%);
+      width:min(440px, 100%);
       max-height:min(90vh, 900px);
       overflow:auto;
       background:var(--card); color:var(--text);
       border:1px solid var(--border);
-      border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.45);
+      border-radius: 24px; box-shadow:0 30px 80px rgba(0,0,0,.5);
     }
-    .modal-head {
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding:18px 18px 12px; border-bottom:1px solid var(--border);
-      position:sticky; top:0; background:linear-gradient(to bottom, var(--card), color-mix(in srgb, var(--card) 88%, transparent));
-      backdrop-filter: blur(8px);
+    .modal-head { display:flex; align-items:center; gap:10px; padding:20px 22px 4px; }
+    .modal-head svg { width:18px; height:18px; flex-shrink:0; }
+    .modal-head h3 { margin:0; font-family: var(--font-display); font-size:16.5px; font-weight:600; flex:1; }
+    .modal-body { padding:12px 22px 4px; }
+    .modal-body p.helper { margin:0 0 10px; }
+    .modal-actions { display:flex; gap:6px; justify-content:flex-end; padding: 14px 14px 16px; flex-wrap:wrap; }
+
+    .text-btn {
+      background:none; border:none; color: var(--accent-strong); cursor:pointer;
+      padding: 9px 12px; border-radius:999px; font-size:13.5px; font-weight:600;
     }
-    .modal-head h3 { margin:0; font-size:18px; }
-    .modal-body { padding:18px; }
-    .modal-actions {
-      display:flex; gap:10px; justify-content:flex-end; padding:0 18px 18px;
-      flex-wrap:wrap;
-    }
-    .input, .select, .textarea {
+    .text-btn:hover { background: var(--soft); }
+    .text-btn.danger { color:#f7b7b7; }
+
+    .input, .select {
       width:100%; background:var(--soft); color:var(--text);
-      border:1px solid var(--border); border-radius:12px; padding:12px 14px;
-      outline:none; font:inherit;
+      border:1px solid var(--border); border-radius:9px; padding:10px 12px;
+      outline:none; font:inherit; font-size:13.5px;
     }
-    .input:focus, .select:focus, .textarea:focus { border-color: rgba(107,33,168,.6); box-shadow:0 0 0 3px rgba(107,33,168,.15); }
-    .textarea { min-height:110px; resize:vertical; }
-    .helper { color:var(--muted); font-size:13px; line-height:1.5; }
-    .separator { height:1px; background:var(--border); margin:14px 0; }
-    .pill-list { display:flex; gap:8px; flex-wrap:wrap; }
-    .pill {
-      display:inline-flex; align-items:center; gap:6px; padding:8px 10px;
-      border-radius:999px; background:var(--soft); border:1px solid var(--border); font-size:12px;
+    .input:focus, .select:focus { border-color: rgba(107,33,168,.6); box-shadow:0 0 0 3px rgba(107,33,168,.15); }
+    .helper { color:var(--muted); font-size:12.5px; line-height:1.55; margin:0; }
+    .field { margin-top:14px; }
+    .field label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-weight:500; }
+    .grid-two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .error-text { color:#fca5a5; font-size:12.5px; margin: 8px 0 0; display:none; }
+
+    #regionList { display:grid; gap:4px; padding:8px; }
+    .region-opt {
+      display:flex; justify-content:space-between; width:100%; text-align:left;
+      background:none; border:none; color:var(--text); padding:8px 10px; border-radius:7px;
+      font-size:13px; cursor:pointer;
     }
-    .linkish { color:#c4b5fd; cursor:pointer; text-decoration:underline; }
-    .hidden { display:none !important; }
+    .region-opt:hover { background: var(--soft); }
+    .region-opt span:last-child { color: var(--muted); }
 
-    .right-column { display:flex; flex-direction:column; gap:20px; }
-    .footer-note { font-size:12px; color:var(--muted); line-height:1.5; }
+    .credits-mono { font-family: var(--font-mono); font-size:12.5px; line-height:1.7; color: var(--text); margin:0 0 4px; }
+    .credits-link { color: var(--accent-strong); font-weight:600; cursor:pointer; background:none; border:none; padding:0; font:inherit; }
+    .translation-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; }
+    .translation-row:last-child { border-bottom:none; }
+    .translation-row a { color: var(--accent-strong); font-weight:600; text-decoration:none; }
+    .translation-row a:hover { text-decoration:underline; }
 
-    /* smaller visuals for small screens */
-    @media (max-width: 600px) {
-      .friend-card { padding: 6px; }
-      .friend-pfp { width: 40px; height: 40px; margin-bottom:6px; }
-      .friend-name { font-size: 11px; }
-      .profile-preview { flex-direction:row; gap:10px; padding:10px; }
-      main.container { margin: 12px auto; padding: 12px; max-width: 100%; overflow-x: hidden; }
-      .hero { padding:16px; }
+    @media (max-width: 640px) {
+      .appbar { top: 0; }
+      .grid-two { grid-template-columns: 1fr; }
     }
-
-    .friends-container::-webkit-scrollbar { width: 8px; }
-    .friends-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.04); border-radius: 6px; }
-    .modal::-webkit-scrollbar { width: 10px; }
-    .modal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 6px; }
   </style>
 
   <script>
-    // Firebase configuration goes here. Initialize at the top, before the page logic.
-    // Replace these placeholders with your real config.
     const firebaseConfig = {
       apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
       authDomain: "darkpurpleof-s-website.firebaseapp.com",
@@ -319,11 +242,7 @@
       appId: "1:520651082420:web:bb05c0c3fd64517952e5e1",
       measurementId: "G-S2X2JYC8Z0"
     };
-
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
   </script>
@@ -333,298 +252,190 @@
 
   <div id="toast"></div>
 
-  <main class="container">
-    <section class="left-column" style="display:flex; flex-direction:column; gap:20px; min-width:0;">
-      <div class="card hero">
-        <div style="min-width:0; flex:1;">
-          <div class="title-line">
-            <h1 id="pageTitle" style="margin:0; font-size:28px; line-height:1.1;">設定</h1>
-            <span class="tiny-chip" id="sessionChip">ゲスト</span>
-          </div>
-          <p class="muted" style="margin:10px 0 0;">1つの安全な画面から、アカウントの各種オプションと設定を管理できます。</p>
-        </div>
-      </div>
+  <!-- ============ APP BAR ============ -->
+  <div class="appbar">
+    <h1>Settings</h1>
+  </div>
 
-      <div class="settings-card">
-        <div class="settings-card-head">
-          <span>👤</span>
-          <h2>ユーザー情報</h2>
-        </div>
-        <div class="settings-card-body" id="userInfoCard">
-          <div class="setting-item">
-            <div class="setting-main">
-              <p class="setting-title">ログイン</p>
-              <p class="setting-desc">このブラウザに関連付けられたアカウントにログインまたはログアウトします。</p>
-            </div>
-            <button class="action-button" id="btnLoginLogout" type="button">ログイン</button>
-          </div>
-          <div class="setting-item">
-            <div class="setting-main">
-              <p class="setting-title">ベータプログラムに参加</p>
-              <p class="setting-desc">先行アクセスプログラムに参加して、新機能を試します。</p>
-            </div>
-            <button class="action-button" id="btnBetaProgram" type="button">開く</button>
-          </div>
-        </div>
-      </div>
+  <!-- ============ PAGE ============ -->
+  <div class="page-shell">
+    <p class="page-sub">Adjust web settings</p>
 
-      <div class="settings-card">
-        <div class="settings-card-head">
-          <span>🌐</span>
-          <h2>公開プロフィール</h2>
-        </div>
-        <div class="settings-card-body">
-          <div class="setting-item">
-            <div class="setting-main">
-              <p class="setting-title">地域を変更</p>
-              <p class="setting-desc" id="regionDesc">地域データを読み込み中...</p>
-            </div>
-            <button class="action-button" id="btnRegion" type="button">編集</button>
-          </div>
-          <div class="setting-item">
-            <div class="setting-main">
-              <p class="setting-title">生年月日を設定</p>
-              <p class="setting-desc" id="birthdayDesc">生年月日を読み込み中...</p>
-            </div>
-            <button class="action-button" id="btnBirthday" type="button">編集</button>
-          </div>
-          <div class="setting-item">
-            <div class="setting-main">
-              <p class="setting-title">言語</p>
-              <p class="setting-desc" id="langDesc">言語を読み込み中...</p>
-            </div>
-            <button class="action-button" id="btnLang" type="button">編集</button>
-          </div>
-          <div class="setting-item">
-            <div class="setting-main">
-              <p class="setting-title">ブロックしたユーザーを管理</p>
-              <p class="setting-desc">ブロックしたユーザーの一覧を確認します。</p>
-            </div>
-            <button class="action-button" id="btnBlocked" type="button">開く</button>
-          </div>
-          <div class="setting-item">
-            <div class="setting-main">
-              <p class="setting-title">本人確認を行う</p>
-              <p class="setting-desc">このオプションはまだ利用できません。</p>
-            </div>
-            <button class="action-button disabled" type="button">近日公開</button>
-          </div>
-          <div class="setting-item">
-            <div class="setting-main">
-              <p class="setting-title">公開プロフィール</p>
-              <p class="setting-desc">プロフィールを他のユーザーに表示するかを切り替えます。</p>
-            </div>
-            <label class="switch" title="公開プロフィール">
-              <input id="togglePublicProfile" type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="setting-item">
-            <div class="setting-main">
-              <p class="setting-title">掲示板への投稿を許可</p>
-              <p class="setting-desc">あなたの掲示板への投稿を有効または無効にします。</p>
-            </div>
-            <label class="switch" title="掲示板への投稿を許可">
-              <input id="toggleAllowPosts" type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
+    <!-- Notification permission card -->
+    <div id="permissionCard"></div>
 
-      <div class="settings-card">
-        <div class="settings-card-head">
-          <span>✨</span>
-          <h2>その他</h2>
-        </div>
-        <div class="settings-card-body">
-          <div class="setting-item">
-            <div class="setting-main">
-              <p class="setting-title">設定をリセット</p>
-              <p class="setting-desc">ログアウトして、このブラウザのローカルセッションデータを削除します。</p>
-            </div>
-            <button class="action-button" id="btnReset" type="button">リセット</button>
-          </div>
-        </div>
+    <!-- User info card -->
+    <div class="card" id="cardUserInfo">
+      <div class="card-header">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#B7B7B7"><path d="M234-276q51-39 114-61.5T480-360q69 0 132 22.5T726-276q35-41 54.5-93T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 59 19.5 111t54.5 93Zm146.5-204.5Q340-521 340-580t40.5-99.5Q421-720 480-720t99.5 40.5Q620-639 620-580t-40.5 99.5Q539-440 480-440t-99.5-40.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm100-95.5q47-15.5 86-44.5-39-29-86-44.5T480-280q-53 0-100 15.5T294-220q39 29 86 44.5T480-160q53 0 100-15.5ZM523-537q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm-43-43Zm0 360Z"/></svg>
+        <h2>User info</h2>
       </div>
-    </section>
-  </main>
+      <div class="items" id="itemsUserInfo"></div>
+    </div>
 
-  <!-- Language modal -->
+    <!-- Public profile card -->
+    <div class="card" id="cardProfile">
+      <div class="card-header">
+        <img src="/org-owner.jpg" alt="Public profile" style="width:18px;height:18px;object-fit:cover;border-radius:4px;flex-shrink:0;display:block;" />
+        <h2>Public profile</h2>
+      </div>
+      <div class="items" id="itemsProfile"></div>
+    </div>
+
+    <!-- Extras card -->
+    <div class="card" id="cardExtras">
+      <div class="card-header">
+        
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#B7B7B7"><path d="m344-60-76-128-144-32 14-148-98-112 98-112-14-148 144-32 76-128 136 58 136-58 76 128 144 32-14 148 98 112-98 112 14 148-144 32-76 128-136-58-136 58Zm34-102 102-44 104 44 56-96 110-26-10-112 74-84-74-86 10-112-110-24-58-96-102 44-104-44-56 96-110 24 10 112-74 86 74 84-10 114 110 24 58 96Zm102-318Zm-42 142 226-226-56-58-170 170-86-84-56 56 142 142Z"/></svg>
+        <h2>Extras</h2>
+      </div>
+      <div class="items" id="itemsExtras"></div>
+    </div>
+
+    <!-- Info card -->
+    <div class="card" id="cardInfo">
+      <div class="card-header">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#B7B7B7"><path d="M440-280h80v-240h-80v240Zm68.5-331.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z"/></svg>
+        <h2>Info</h2>
+      </div>
+      <div class="items" id="itemsInfo"></div>
+    </div>
+
+    <!-- Debug card (hidden until unlocked) -->
+    <div class="card hidden" id="cardDebug" style="display:none;">
+      <div class="card-header">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#B7B7B7"><path d="M686-132 444-376q-20 8-40.5 12t-43.5 4q-100 0-170-70t-70-170q0-36 10-68.5t28-61.5l146 146 72-72-146-146q29-18 61.5-28t68.5-10q100 0 170 70t70 170q0 23-4 43.5T584-516l244 242q12 12 12 29t-12 29l-84 84q-12 12-29 12t-29-12Z"/></svg>
+        <h2>Debug</h2>
+      </div>
+      <div class="items" id="itemsDebug"></div>
+    </div>
+
+  </div>
+
+  <!-- ============ DIALOGS ============ -->
+
   <div class="overlay" id="languageModal">
     <div class="modal">
-      <div class="modal-head">
-        <h3>言語を変更</h3>
-        <button class="action-button" type="button" data-close="languageModal">閉じる</button>
-      </div>
+      <div class="modal-head"><h3>Change language</h3></div>
       <div class="modal-body">
-        <p class="helper">アプリの言語を選択してください。Android アプリとこの画面で使用されます。Android ではシステム言語よりこの設定が優先されます。</p>
-
-        <div style="margin-top:12px;">
-          <label class="helper">言語</label>
+        <p class="helper">Select the app language.</p>
+        <div class="field">
+          <label for="langSelect">Language</label>
           <select class="select" id="langSelect">
-            <option value="ja">日本語</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
             <option value="de">Deutsch</option>
             <option value="ru">Русский</option>
-            <option value="es">Español</option>
-            <option value="en">English</option>
+            <option value="ja">日本語</option>
           </select>
         </div>
       </div>
       <div class="modal-actions">
-        <button class="action-button" type="button" data-close="languageModal">キャンセル</button>
-        <button class="action-button" id="btnSaveLang" type="button">言語を保存</button>
+        <button class="text-btn" type="button" data-close="languageModal">Cancel</button>
+        <button class="text-btn" id="btnSaveLang" type="button">Save</button>
       </div>
     </div>
   </div>
 
-  <!-- Region modal -->
   <div class="overlay" id="regionModal">
     <div class="modal">
-      <div class="modal-head">
-        <h3>地域を設定</h3>
-        <button class="action-button" type="button" data-close="regionModal">閉じる</button>
-      </div>
+      <div class="modal-head"><h3>Change region</h3></div>
       <div class="modal-body">
-        <p class="helper">2文字の国コードを選択してください。</p>
-        <div class="grid-two" style="margin-top:12px;">
-          <div>
-            <label class="helper">検索</label>
-            <input class="input" id="regionSearch" placeholder="国を検索..." />
-          </div>
-          <div>
-            <label class="helper">選択済みコード</label>
-            <input class="input" id="regionCodeInput" maxlength="2" placeholder="MX" />
-          </div>
+        <p class="helper">Select a 2-letter country code. You can change this once per year.</p>
+        <div class="grid-two field">
+          <div><label for="regionSearch">Search</label><input class="input" id="regionSearch" placeholder="Search country…" /></div>
+          <div><label for="regionCodeInput">Selected code</label><input class="input" id="regionCodeInput" maxlength="2" placeholder="MX" /></div>
         </div>
-        <div style="margin-top:12px; max-height:280px; overflow:auto; border:1px solid var(--border); border-radius:12px;">
-          <div id="regionList" style="display:grid; gap:6px; padding:10px;"></div>
+        <div class="field" style="max-height:240px; overflow:auto; border:1px solid var(--border); border-radius:10px;">
+          <div id="regionList"></div>
         </div>
       </div>
       <div class="modal-actions">
-        <button class="action-button" type="button" data-close="regionModal">キャンセル</button>
-        <button class="action-button" id="btnSaveRegion" type="button">地域を保存</button>
+        <button class="text-btn" type="button" data-close="regionModal">Cancel</button>
+        <button class="text-btn" id="btnSaveRegion" type="button">Save</button>
       </div>
     </div>
   </div>
 
-  <!-- Birthday modal -->
   <div class="overlay" id="birthdayModal">
     <div class="modal">
       <div class="modal-head">
-        <h3>生年月日を設定</h3>
-        <button class="action-button" type="button" data-close="birthdayModal">閉じる</button>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18M6 3v4M18 3v4M4 8h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"/></svg>
+        <h3>Set your birthday</h3>
       </div>
       <div class="modal-body">
-        <p class="helper"><strong>dd/mm/yyyy</strong> 形式を使ってください。保存後は、この日付の変更にサポート対応が必要になる場合があります。</p>
-        <div style="margin-top:12px;">
-          <label class="helper">生年月日</label>
-          <input class="input" id="birthdayInput" placeholder="dd/mm/yyyy" />
-        </div>
-        <p class="helper" id="birthdayError" style="color:#fca5a5; display:none; margin-top:10px;"></p>
+        <p class="helper">Note: once your birthday is set, you can't change it unless you contact support and submit proof of your age. Your age won't be public unless you want it to be.</p>
+        <div class="field"><label for="birthdayInput">Birthday</label><input class="input" id="birthdayInput" placeholder="dd/mm/yyyy" /></div>
+        <p class="error-text" id="birthdayError"></p>
       </div>
       <div class="modal-actions">
-        <button class="action-button" type="button" data-close="birthdayModal">キャンセル</button>
-        <button class="action-button" id="btnSaveBirthday" type="button">保存</button>
+        <button class="text-btn" type="button" data-close="birthdayModal">Cancel</button>
+        <button class="text-btn" id="btnSaveBirthday" type="button">Save</button>
       </div>
     </div>
   </div>
 
-  <!-- Logout confirm -->
-  <div class="overlay" id="logoutModal">
+  <div class="overlay" id="birthdayConfirmModal">
     <div class="modal">
-      <div class="modal-head">
-        <h3>ログアウト</h3>
-        <button class="action-button" type="button" data-close="logoutModal">閉じる</button>
-      </div>
-      <div class="modal-body">
-        <p class="helper" id="logoutText">本当にログアウトしますか？</p>
-      </div>
+      <div class="modal-head"><h3>Save and finish</h3></div>
+      <div class="modal-body"><p class="helper" id="birthdayConfirmText"></p></div>
       <div class="modal-actions">
-        <button class="action-button" type="button" data-close="logoutModal">キャンセル</button>
-        <button class="action-button" id="btnConfirmLogout" type="button">ログアウト</button>
+        <button class="text-btn" id="btnBirthdayGoBack" type="button">Go back</button>
+        <button class="text-btn" id="btnBirthdayConfirm" type="button">Save</button>
       </div>
     </div>
   </div>
 
-  <!-- Reset confirm -->
-  <div class="overlay" id="resetModal">
+  <div class="overlay" id="verifyModal">
     <div class="modal">
-      <div class="modal-head">
-        <h3>設定をリセット</h3>
-        <button class="action-button" type="button" data-close="resetModal">閉じる</button>
-      </div>
-      <div class="modal-body">
-        <p class="helper">現在のアカウントをログアウトし、このページで使用しているブラウザの保存データを削除します。</p>
-      </div>
+      <div class="modal-head"><h3>Verify your identity</h3></div>
+      <div class="modal-body"><p class="helper">Verify this is your legit account. Managed and processed by inquiry with Persona.</p></div>
       <div class="modal-actions">
-        <button class="action-button" type="button" data-close="resetModal">キャンセル</button>
-        <button class="action-button" id="btnConfirmReset" type="button">今すぐリセット</button>
+        <button class="text-btn" type="button" data-close="verifyModal">Cancel</button>
+        <button class="text-btn" id="btnVerifyContinue" type="button">Continue</button>
       </div>
     </div>
   </div>
 
-  <!-- Credits modal -->
+  <div class="overlay" id="verifyProcessingModal">
+    <div class="modal">
+      <div class="modal-head"><h3>Verification in progress</h3></div>
+      <div class="modal-body"><p class="helper">We're processing your verification request. This may take a moment.</p></div>
+      <div class="modal-actions">
+        <button class="text-btn" type="button" data-close="verifyProcessingModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="confirmModal">
+    <div class="modal">
+      <div class="modal-head"><h3 id="confirmTitle">Confirm</h3></div>
+      <div class="modal-body"><p class="helper" id="confirmText"></p></div>
+      <div class="modal-actions">
+        <button class="text-btn" type="button" data-close="confirmModal">Cancel</button>
+        <button class="text-btn danger" id="btnConfirmAction" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <div class="overlay" id="creditsModal">
     <div class="modal">
-      <div class="modal-head">
-        <h3>システム設定</h3>
-        <button class="action-button" type="button" data-close="creditsModal">閉じる</button>
-      </div>
+      <div class="modal-head"><h3>Website System Settings</h3></div>
       <div class="modal-body">
-        <p class="helper"><strong id="creditsTapTarget" style="cursor:pointer; user-select:none;">システム設定</strong> <span class="muted">もう一度押すとデバッグツールを表示します</span></p>
-        <p class="helper">Copyright © Dark Purple OF 2023-2025. All rights reserved.</p>
-        <p class="helper">無断使用は禁止されています。</p>
-        <div class="separator"></div>
-        <p class="helper"><span class="linkish" id="btnMoreInfo">サイトでさらに詳しく見る</span></p>
+        <p class="credits-mono">System Settings V1.5</p>
+        <p class="credits-mono">Copyright(c) Dark Purple OF 2023–2025, All rights reserved</p>
+        <p class="credits-mono">Please do not steal</p>
+        <p style="margin-top:10px;"><button class="credits-link" id="btnMoreInfo" type="button">More info at website</button></p>
       </div>
-      <div class="modal-actions">
-        <button class="action-button" type="button" data-close="creditsModal">閉じる</button>
-      </div>
+      <div class="modal-actions"><button class="text-btn" type="button" data-close="creditsModal">Close</button></div>
     </div>
   </div>
 
-  <!-- Translation modal -->
-  <div class="overlay" id="translationsModal">
+  <div class="overlay" id="translationModal">
     <div class="modal">
-      <div class="modal-head">
-        <h3>翻訳</h3>
-        <button class="action-button" type="button" data-close="translationsModal">閉じる</button>
-      </div>
-      <div class="modal-body" id="translationsBody">
-      </div>
-      <div class="modal-actions">
-        <button class="action-button" type="button" data-close="translationsModal">閉じる</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Debug modal -->
-  <div class="overlay" id="debugModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>デバッグ</h3>
-        <button class="action-button" type="button" data-close="debugModal">閉じる</button>
-      </div>
-      <div class="modal-body">
-        <div class="setting-item" style="padding-top:0;">
-          <div class="setting-main">
-            <p class="setting-title">デバッグ設定を開く</p>
-            <p class="setting-desc">実験的な設定にアクセスします。</p>
-          </div>
-          <button class="action-button" id="btnOpenDebug" type="button">開く</button>
-        </div>
-        <div class="setting-item">
-          <div class="setting-main">
-            <p class="setting-title">デバッグを無効化</p>
-            <p class="setting-desc">デバッグモードを無効にして、詳細コントロールを非表示にします。</p>
-          </div>
-          <button class="action-button" id="btnDisableDebug" type="button">無効化</button>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="action-button" type="button" data-close="debugModal">閉じる</button>
-      </div>
+      <div class="modal-head"><h3>Translations</h3></div>
+      <div class="modal-body" id="translationBody"></div>
+      <div class="modal-actions"><button class="text-btn" type="button" data-close="translationModal">Dismiss</button></div>
     </div>
   </div>
 
@@ -632,9 +443,10 @@
     const $ = (s, r = document) => r.querySelector(s);
     const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
+    /* ============ toast ============ */
     const toast = {
       el: $('#toast'),
-      show(message, kind = 'purple', ms = 2400) {
+      show(message, kind = 'purple', ms = 2600) {
         this.el.className = '';
         this.el.classList.add(kind);
         this.el.textContent = message;
@@ -644,84 +456,792 @@
       }
     };
 
+    const openModal = (id) => $('#' + id).classList.add('show');
+    const closeModal = (id) => $('#' + id).classList.remove('show');
+    $$('[data-close]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close'))));
+    $$('.overlay').forEach(ov => ov.addEventListener('click', (e) => { if (e.target === ov) ov.classList.remove('show'); }));
+
+    /* small helper mirroring Kotlin's AlertDialog(title, message, onConfirm) */
+    function confirmDialog(title, message, onConfirm, confirmLabel = t('confirm')) {
+      $('#confirmTitle').textContent = title;
+      $('#confirmText').textContent = message;
+      const btn = $('#btnConfirmAction');
+      btn.textContent = confirmLabel;
+      btn.onclick = () => { closeModal('confirmModal'); onConfirm(); };
+      openModal('confirmModal');
+    }
+
+    /* ============ static data ============ */
     const REGION_LIST = [
-      ['MX','メキシコ'], ['US','アメリカ合衆国'], ['ES','スペイン'], ['AR','アルゼンチン'], ['CO','コロンビア'], ['CL','チリ'], ['PE','ペルー'],
-      ['VE','ベネズエラ'], ['EC','エクアドル'], ['GT','グアテマラ'], ['CR','コスタリカ'], ['PA','パナマ'], ['DO','ドミニカ共和国'],
-      ['UY','ウルグアイ'], ['PY','パラグアイ'], ['BO','ボリビア'], ['BR','ブラジル'], ['CA','カナダ'], ['GB','イギリス'],
-      ['FR','フランス'], ['DE','ドイツ'], ['IT','イタリア'], ['PT','ポルトガル'], ['NL','オランダ'], ['BE','ベルギー'], ['SE','スウェーデン'],
-      ['NO','ノルウェー'], ['FI','フィンランド'], ['PL','ポーランド'], ['CZ','チェコ'], ['AT','オーストリア'], ['CH','スイス'], ['IE','アイルランド'],
-      ['JP','日本'], ['KR','韓国'], ['CN','中国'], ['TW','台湾'], ['HK','香港'], ['IN','インド'], ['PH','フィリピン'],
-      ['ID','インドネシア'], ['MY','マレーシア'], ['SG','シンガポール'], ['AU','オーストラリア'], ['NZ','ニュージーランド'], ['ZA','南アフリカ']
+      ['MX','Mexico'], ['US','United States'], ['ES','Spain'], ['AR','Argentina'], ['CO','Colombia'], ['CL','Chile'], ['PE','Peru'],
+      ['VE','Venezuela'], ['EC','Ecuador'], ['GT','Guatemala'], ['CR','Costa Rica'], ['PA','Panama'], ['DO','Dominican Republic'],
+      ['UY','Uruguay'], ['PY','Paraguay'], ['BO','Bolivia'], ['BR','Brazil'], ['CA','Canada'], ['GB','United Kingdom'],
+      ['FR','France'], ['DE','Germany'], ['IT','Italy'], ['PT','Portugal'], ['NL','Netherlands'], ['BE','Belgium'], ['SE','Sweden'],
+      ['NO','Norway'], ['FI','Finland'], ['PL','Poland'], ['CZ','Czechia'], ['AT','Austria'], ['CH','Switzerland'], ['IE','Ireland'],
+      ['JP','Japan'], ['KR','South Korea'], ['CN','China'], ['TW','Taiwan'], ['HK','Hong Kong'], ['IN','India'], ['PH','Philippines'],
+      ['ID','Indonesia'], ['MY','Malaysia'], ['SG','Singapore'], ['AU','Australia'], ['NZ','New Zealand'], ['ZA','South Africa']
     ];
+    const LANG_LIST = [['en','English'],['es','Spanish'],['de','German'],['ru','Russian'],['ja','Japanese']];
+    const WEB_VERSION = '2.0';
 
-    const state = {
-      user: null,
-      userDoc: null,
-      profilePublic: true,
-      postsAllowed: true,
-      region: null,
-      birthDate: null,
-      lang: null,
-      debugEnabled: false,
-      tapCount: 0,
-      lastTapTime: 0,
-      friendsUnsub: null,
-      userUnsub: null
-    };
+    const state = { user: null, userDoc: null, userUnsub: null, tapCount: 0, lastTapTime: 0, debugEnabled: localStorage.getItem('debug_enabled') === 'true', siteVersion: null };
 
-    const LANG_LIST = [
-      ['ja', '日本語'],
-      ['de', 'Deutsch'],
-      ['ru', 'Русский'],
-      ['es', 'Español'],
-      ['en', 'English']
-    ];
+    const getUserKey = (u) => u?.email || u?.uid || null;
+    const userRef = (u) => { const k = getUserKey(u); return k ? db.collection('user_data').doc(k) : null; };
+
+    /* ============ helpers ============ */
+    const SUPPORTED_LANGS = ['en', 'es', 'ru', 'de', 'ja'];
+    let currentLang = 'en';
+
+    const I18N = {
+      "en": {
+            "title": "Settings",
+            "settings": "Settings",
+            "adjust_web_settings": "Adjust web settings",
+            "enable_notifications_title": "Enable notifications",
+            "enable_notifications_desc": "Get updated information about followers, updates and more",
+            "notifications_enabled": "Notifications enabled.",
+            "could_not_request_permission": "Could not request permission.",
+            "user_info": "User info",
+            "public_profile": "Public profile",
+            "extras": "Extras",
+            "info": "Info",
+            "debug": "Debug",
+            "change_language": "Change language",
+            "select_app_language": "Select the app language.",
+            "language": "Language",
+            "english": "English",
+            "spanish": "Spanish",
+            "german": "German",
+            "russian": "Russian",
+            "japanese": "Japanese",
+            "cancel": "Cancel",
+            "save": "Save",
+            "close": "Close",
+            "continue": "Continue",
+            "change_region": "Change region",
+            "select_country_code": "Select a 2-letter country code. You can change this once per year.",
+            "search": "Search",
+            "selected_code": "Selected code",
+            "search_country_placeholder": "Search country…",
+            "set_birthday": "Set your birthday",
+            "birthday_note": "Note: once your birthday is set, you can't change it unless you contact support and submit proof of your age. Your age won't be public unless you want it to be.",
+            "birthday_placeholder": "dd/mm/yyyy",
+            "save_and_finish": "Save and finish",
+            "go_back": "Go back",
+            "verify_identity": "Verify your identity",
+            "verify_identity_desc": "Verify this is your legit account. Managed and processed by inquiry with Persona.",
+            "verification_in_progress": "Verification in progress",
+            "verification_in_progress_desc": "We're processing your verification request. This may take a moment.",
+            "confirm": "Confirm",
+            "website_system_settings": "Website System Settings",
+            "system_settings_v1_5": "System Settings V1.5",
+            "copyright_notice": "Copyright(c) Dark Purple OF 2023–2025, All rights reserved",
+            "please_do_not_steal": "Please do not steal",
+            "more_info_at_website": "More info at website",
+            "translations": "Translations",
+            "dismiss": "Dismiss",
+            "no_matches": "No matches.",
+            "logout": "Log out",
+            "login": "Login",
+            "sign_out_desc": "Sign out of the account tied to this browser.",
+            "sign_in_desc": "Sign in to unlock the rest of your settings.",
+            "verify_user": "Verify user",
+            "verify_user_desc": "Verify your identity and unlock access to the panel mods.",
+            "enroll_beta": "Enroll in beta program",
+            "enroll_beta_desc": "Get early features on the app and an exclusive badge.",
+            "manage_plugins": "Manage installed plugins",
+            "not_available_platform": "Not available on this platform",
+            "current_region": "Current region",
+    "can_change_on": "you can change this on",
+    "years_old": "years old",
+    "current_language": "Current language",
+            "log_in_to_set_language": "Log in to set your language.",
+            "log_in_to_set_region": "You need to be logged in to set your region.",
+            "set_account_region": "Set your account's region. You can change this once per year.",
+            "can_change_once_year": "You can change it once per year.",
+            "log_in_to_set_birthday": "Log in to set your birthday.",
+            "click_set_birthday": "Click to set your birthday. You can't change this after.",
+            "manage_blocked_users": "Manage blocked users",
+            "manage_blocked_users_desc": "Manage users that you have blocked.",
+            "verify_identity_private": "Verify your identity",
+            "verify_identity_private_desc": "Verify this is your legit account, managed and processed by inquiry with Persona.",
+            "public_profile_desc": "Switch between a public/private profile. Change at anytime.",
+            "make_profile_private": "Make your profile private",
+            "private_profile_warning": "This will make it so only you can see your profile. Other users won't be able to see it — your email will still be visible according to the ToS.",
+            "profile_set_private": "Profile set to private.",
+            "make_private": "Make private",
+            "allow_posts_on_wall": "Allow posts on your wall",
+            "allow_posts_on_wall_desc": "Allow/deny posts on your wall. You can still remove them individually.",
+            "send_test_announcement": "Send test announcement",
+            "send_test_announcement_desc": "Sends a demo system notification to this browser.",
+            "reset_settings": "Reset settings",
+            "reset_settings_desc": "This will sign out the current account and clear browser storage used by this page.",
+            "reset_now": "Reset now",
+            "copyright": "Copyright",
+            "view_copyright_info": "View copyright information.",
+            "user": "User",
+            "version_info": "Version info",
+            "send_feedback": "Send feedback",
+            "send_feedback_desc": "Email the developer directly.",
+            "translation_attribution": "Translation attribution",
+            "translation_attribution_desc": "See who translated this app.",
+            "debugger_enabled": "You're now a debugger.",
+            "open_debug_settings": "Open debug settings",
+            "caution_experimental": "Caution: experimental features ahead.",
+            "disable_debug": "Disable debug",
+            "hide_these_options": "Hide these options.",
+            "debug_hidden": "Debug hidden.",
+            "invalid_language_code": "Invalid language code.",
+            "use_valid_region_code": "Use a valid 2-letter region code.",
+            "language_saved": "Language saved.",
+            "region_saved": "Region saved.",
+            "birthday_saved": "Birthday saved.",
+            "could_not_load_user_data": "Could not load user data.",
+            "could_not_send_notification": "Could not send notification.",
+            "logged_out": "Logged out.",
+            "logout_failed": "Logout failed.",
+            "browser_storage_cleared": "Browser storage cleared.",
+            "reset_failed": "Reset failed.",
+            "system_message": "System Message",
+            "demo_announcement": "This is a demo announcement from Settings.",
+            "confirm_make_private_title": "Make your profile private",
+            "confirm_make_private_desc": "This will make it so only you can see your profile. Other users won't be able to see it — your email will still be visible according to the ToS.",
+            "confirm_reset_title": "Reset settings",
+            "confirm_reset_desc": "This will sign out the current account and clear browser storage used by this page.",
+            "confirm_logout_title": "Log out",
+            "birthday_confirm_prefix": "Confirm you are",
+            "birthday_confirm_suffix": "years old. You can't change this later.",
+            "invalid_birthday_format": "Invalid format. Use dd/mm/yyyy.",
+            "invalid_date_format": "Invalid date format.",
+            "month_range": "Month must be between 1 and 12.",
+            "date_does_not_exist": "That date does not exist.",
+            "future_birthday": "You can't be born in the future.",
+            "min_age": "You must be at least 1 year old.",
+            "no_user": "Not signed in",
+            "unknown_user": "Unknown user",
+            "web": "Web",
+            "feedback_subject": "Feedback about the website",
+            "translations_label": "Translations"
+      },
+      "es": {
+            "title": "Configuración",
+            "settings": "Configuración",
+            "adjust_web_settings": "Ajustar la configuración web",
+            "enable_notifications_title": "Activar notificaciones",
+            "enable_notifications_desc": "Recibe información actualizada sobre seguidores, novedades y más",
+            "notifications_enabled": "Notificaciones activadas.",
+            "could_not_request_permission": "No se pudo solicitar permiso.",
+            "user_info": "Información del usuario",
+            "public_profile": "Perfil público",
+            "extras": "Extras",
+            "info": "Información",
+            "debug": "Depuración",
+            "change_language": "Cambiar idioma",
+            "select_app_language": "Selecciona el idioma de la app.",
+            "language": "Idioma",
+            "english": "Inglés",
+            "spanish": "Español",
+            "german": "Alemán",
+            "russian": "Ruso",
+            "japanese": "Japonés",
+            "cancel": "Cancelar",
+            "save": "Guardar",
+            "close": "Cerrar",
+            "continue": "Continuar",
+            "change_region": "Cambiar región",
+            "select_country_code": "Selecciona un código de país de 2 letras. Puedes cambiarlo una vez al año.",
+            "search": "Buscar",
+            "selected_code": "Código seleccionado",
+            "search_country_placeholder": "Buscar país…",
+            "set_birthday": "Establecer tu cumpleaños",
+            "birthday_note": "Nota: una vez establecido tu cumpleaños, no podrás cambiarlo a menos que contactes soporte y envíes prueba de tu edad. Tu edad no será pública a menos que quieras que lo sea.",
+            "birthday_placeholder": "dd/mm/aaaa",
+            "save_and_finish": "Guardar y terminar",
+            "go_back": "Volver",
+            "verify_identity": "Verificar tu identidad",
+            "verify_identity_desc": "Verifica que esta es tu cuenta legítima. Gestionado y procesado mediante consulta con Persona.",
+            "verification_in_progress": "Verificación en progreso",
+            "verification_in_progress_desc": "Estamos procesando tu solicitud de verificación. Esto puede tardar un momento.",
+            "confirm": "Confirmar",
+            "website_system_settings": "Configuración del sitio web",
+            "system_settings_v1_5": "Configuración del sistema V1.5",
+            "copyright_notice": "Copyright(c) Dark Purple OF 2023–2025, Todos los derechos reservados",
+            "please_do_not_steal": "Por favor no robes",
+            "more_info_at_website": "Más información en el sitio web",
+            "translations": "Traducciones",
+            "dismiss": "Cerrar",
+            "no_matches": "No hay coincidencias.",
+            "logout": "Cerrar sesión",
+            "login": "Iniciar sesión",
+            "sign_out_desc": "Cerrar sesión de la cuenta vinculada a este navegador.",
+            "sign_in_desc": "Inicia sesión para desbloquear el resto de tus ajustes.",
+            "verify_user": "Verificar usuario",
+            "verify_user_desc": "Verifica tu identidad y desbloquea el acceso a los mods del panel.",
+            "enroll_beta": "Unirse al programa beta",
+            "enroll_beta_desc": "Obtén funciones anticipadas en la app y una insignia exclusiva.",
+            "manage_plugins": "Administrar plugins instalados",
+            "not_available_platform": "No disponible en esta plataforma",
+            "current_region": "Región actual",
+    "can_change_on": "puedes cambiarlo el",
+    "years_old": "años",
+    "current_language": "Idioma actual",
+            "log_in_to_set_language": "Inicia sesión para configurar tu idioma.",
+            "log_in_to_set_region": "Debes iniciar sesión para configurar tu región.",
+            "set_account_region": "Configura la región de tu cuenta. Puedes cambiarla una vez al año.",
+            "can_change_once_year": "Puedes cambiarlo una vez al año.",
+            "log_in_to_set_birthday": "Inicia sesión para configurar tu cumpleaños.",
+            "click_set_birthday": "Haz clic para configurar tu cumpleaños. No podrás cambiarlo después.",
+            "manage_blocked_users": "Administrar usuarios bloqueados",
+            "manage_blocked_users_desc": "Administra los usuarios que has bloqueado.",
+            "verify_identity_private": "Verificar tu identidad",
+            "verify_identity_private_desc": "Verifica que esta es tu cuenta legítima, gestionada y procesada mediante consulta con Persona.",
+            "public_profile_desc": "Alterna entre un perfil público y privado. Puedes cambiarlo en cualquier momento.",
+            "make_profile_private": "Hacer privado tu perfil",
+            "private_profile_warning": "Esto hará que solo tú puedas ver tu perfil. Otros usuarios no podrán verlo — tu correo seguirá siendo visible según los Términos de Servicio.",
+            "profile_set_private": "Perfil configurado como privado.",
+            "make_private": "Hacer privado",
+            "allow_posts_on_wall": "Permitir publicaciones en tu muro",
+            "allow_posts_on_wall_desc": "Permite o deniega publicaciones en tu muro. Aun así puedes eliminarlas individualmente.",
+            "send_test_announcement": "Enviar anuncio de prueba",
+            "send_test_announcement_desc": "Envía una notificación de sistema de demostración a este navegador.",
+            "reset_settings": "Restablecer ajustes",
+            "reset_settings_desc": "Esto cerrará la sesión de la cuenta actual y borrará el almacenamiento del navegador usado por esta página.",
+            "reset_now": "Restablecer ahora",
+            "copyright": "Copyright",
+            "view_copyright_info": "Ver información de copyright.",
+            "user": "Usuario",
+            "version_info": "Información de versión",
+            "send_feedback": "Enviar comentarios",
+            "send_feedback_desc": "Enviar un correo directo al desarrollador.",
+            "translation_attribution": "Créditos de traducción",
+            "translation_attribution_desc": "Ver quién tradujo esta app.",
+            "debugger_enabled": "Ahora eres depurador.",
+            "open_debug_settings": "Abrir ajustes de depuración",
+            "caution_experimental": "Atención: hay funciones experimentales.",
+            "disable_debug": "Desactivar depuración",
+            "hide_these_options": "Ocultar estas opciones.",
+            "debug_hidden": "Depuración oculta.",
+            "invalid_language_code": "Código de idioma inválido.",
+            "use_valid_region_code": "Usa un código de región válido de 2 letras.",
+            "language_saved": "Idioma guardado.",
+            "region_saved": "Región guardada.",
+            "birthday_saved": "Cumpleaños guardado.",
+            "could_not_load_user_data": "No se pudieron cargar los datos del usuario.",
+            "could_not_send_notification": "No se pudo enviar la notificación.",
+            "logged_out": "Sesión cerrada.",
+            "logout_failed": "Falló el cierre de sesión.",
+            "browser_storage_cleared": "Almacenamiento del navegador borrado.",
+            "reset_failed": "Falló el restablecimiento.",
+            "system_message": "Mensaje del sistema",
+            "demo_announcement": "Este es un anuncio de prueba desde Configuración.",
+            "confirm_make_private_title": "Hacer privado tu perfil",
+            "confirm_make_private_desc": "Esto hará que solo tú puedas ver tu perfil. Otros usuarios no podrán verlo — tu correo seguirá siendo visible según los Términos de Servicio.",
+            "confirm_reset_title": "Restablecer ajustes",
+            "confirm_reset_desc": "Esto cerrará la sesión de la cuenta actual y borrará el almacenamiento del navegador usado por esta página.",
+            "confirm_logout_title": "Cerrar sesión",
+            "birthday_confirm_prefix": "Confirma que tienes",
+            "birthday_confirm_suffix": "años. No podrás cambiarlo después.",
+            "invalid_birthday_format": "Formato inválido. Usa dd/mm/aaaa.",
+            "invalid_date_format": "Formato de fecha inválido.",
+            "month_range": "El mes debe estar entre 1 y 12.",
+            "date_does_not_exist": "Esa fecha no existe.",
+            "future_birthday": "No puedes haber nacido en el futuro.",
+            "min_age": "Debes tener al menos 1 año.",
+            "no_user": "No has iniciado sesión",
+            "unknown_user": "Usuario desconocido",
+            "web": "Web",
+            "feedback_subject": "Comentarios sobre el sitio web",
+            "translations_label": "Traducciones"
+      },
+      "ru": {
+            "title": "Настройки",
+            "settings": "Настройки",
+            "adjust_web_settings": "Настроить веб-параметры",
+            "enable_notifications_title": "Включить уведомления",
+            "enable_notifications_desc": "Получайте обновления о подписчиках, новостях и многом другом",
+            "notifications_enabled": "Уведомления включены.",
+            "could_not_request_permission": "Не удалось запросить разрешение.",
+            "user_info": "Информация о пользователе",
+            "public_profile": "Публичный профиль",
+            "extras": "Дополнительно",
+            "info": "Инфо",
+            "debug": "Отладка",
+            "change_language": "Изменить язык",
+            "select_app_language": "Выберите язык приложения.",
+            "language": "Язык",
+            "english": "Английский",
+            "spanish": "Испанский",
+            "german": "Немецкий",
+            "russian": "Русский",
+            "japanese": "Японский",
+            "cancel": "Отмена",
+            "save": "Сохранить",
+            "close": "Закрыть",
+            "continue": "Продолжить",
+            "change_region": "Изменить регион",
+            "select_country_code": "Выберите двухбуквенный код страны. Вы можете менять его раз в год.",
+            "search": "Поиск",
+            "selected_code": "Выбранный код",
+            "search_country_placeholder": "Искать страну…",
+            "set_birthday": "Указать дату рождения",
+            "birthday_note": "Примечание: после установки даты рождения изменить её нельзя, кроме как через поддержку и подтверждение возраста. Ваш возраст не будет публичным, если вы сами этого не захотите.",
+            "birthday_placeholder": "дд/мм/гггг",
+            "save_and_finish": "Сохранить и завершить",
+            "go_back": "Назад",
+            "verify_identity": "Подтвердите личность",
+            "verify_identity_desc": "Подтвердите, что это ваш настоящий аккаунт. Обрабатывается и проверяется через Persona.",
+            "verification_in_progress": "Проверка выполняется",
+            "verification_in_progress_desc": "Мы обрабатываем ваш запрос на проверку. Это может занять некоторое время.",
+            "confirm": "Подтвердить",
+            "website_system_settings": "Системные настройки сайта",
+            "system_settings_v1_5": "Системные настройки V1.5",
+            "copyright_notice": "Copyright(c) Dark Purple OF 2023–2025, Все права защищены",
+            "please_do_not_steal": "Пожалуйста, не воруйте",
+            "more_info_at_website": "Подробнее на сайте",
+            "translations": "Переводы",
+            "dismiss": "Закрыть",
+            "no_matches": "Совпадений нет.",
+            "logout": "Выйти",
+            "login": "Вход",
+            "sign_out_desc": "Выйти из аккаунта, привязанного к этому браузеру.",
+            "sign_in_desc": "Войдите, чтобы открыть остальные настройки.",
+            "verify_user": "Проверить пользователя",
+            "verify_user_desc": "Подтвердите личность и получите доступ к модам панели.",
+            "enroll_beta": "Присоединиться к бета-программе",
+            "enroll_beta_desc": "Получайте ранние функции приложения и эксклюзивный значок.",
+            "manage_plugins": "Управление установленными плагинами",
+            "not_available_platform": "Недоступно на этой платформе",
+            "current_region": "Текущий регион",
+    "can_change_on": "вы сможете изменить это",
+    "years_old": "лет",
+    "current_language": "Текущий язык",
+            "log_in_to_set_language": "Войдите, чтобы установить язык.",
+            "log_in_to_set_region": "Нужно войти, чтобы установить регион.",
+            "set_account_region": "Укажите регион аккаунта. Его можно менять раз в год.",
+            "can_change_once_year": "Можно менять раз в год.",
+            "log_in_to_set_birthday": "Войдите, чтобы указать дату рождения.",
+            "click_set_birthday": "Нажмите, чтобы указать дату рождения. После этого изменить её нельзя.",
+            "manage_blocked_users": "Управление заблокированными пользователями",
+            "manage_blocked_users_desc": "Управляйте пользователями, которых вы заблокировали.",
+            "verify_identity_private": "Подтвердите личность",
+            "verify_identity_private_desc": "Подтвердите, что это ваш настоящий аккаунт, обрабатываемый и проверяемый через Persona.",
+            "public_profile_desc": "Переключайтесь между публичным и приватным профилем. Менять можно в любое время.",
+            "make_profile_private": "Сделать профиль приватным",
+            "private_profile_warning": "Это сделает так, что профиль сможете видеть только вы. Другие пользователи не смогут его видеть — ваш email по-прежнему будет виден согласно условиям использования.",
+            "profile_set_private": "Профиль установлен как приватный.",
+            "make_private": "Сделать приватным",
+            "allow_posts_on_wall": "Разрешить публикации на вашей стене",
+            "allow_posts_on_wall_desc": "Разрешайте или запрещайте публикации на вашей стене. Их всё равно можно удалять по отдельности.",
+            "send_test_announcement": "Отправить тестовое объявление",
+            "send_test_announcement_desc": "Отправляет демонстрационное системное уведомление в этот браузер.",
+            "reset_settings": "Сбросить настройки",
+            "reset_settings_desc": "Это выйдет из текущего аккаунта и очистит хранилище браузера, используемое этой страницей.",
+            "reset_now": "Сбросить сейчас",
+            "copyright": "Copyright",
+            "view_copyright_info": "Посмотреть информацию об авторских правах.",
+            "user": "Пользователь",
+            "version_info": "Информация о версии",
+            "send_feedback": "Отправить отзыв",
+            "send_feedback_desc": "Написать разработчику напрямую по email.",
+            "translation_attribution": "Авторы перевода",
+            "translation_attribution_desc": "Посмотреть, кто перевёл это приложение.",
+            "debugger_enabled": "Теперь вы отладчик.",
+            "open_debug_settings": "Открыть настройки отладки",
+            "caution_experimental": "Внимание: впереди экспериментальные функции.",
+            "disable_debug": "Отключить отладку",
+            "hide_these_options": "Скрыть эти параметры.",
+            "debug_hidden": "Отладка скрыта.",
+            "invalid_language_code": "Недопустимый код языка.",
+            "use_valid_region_code": "Используйте корректный двухбуквенный код региона.",
+            "language_saved": "Язык сохранён.",
+            "region_saved": "Регион сохранён.",
+            "birthday_saved": "Дата рождения сохранена.",
+            "could_not_load_user_data": "Не удалось загрузить данные пользователя.",
+            "could_not_send_notification": "Не удалось отправить уведомление.",
+            "logged_out": "Вы вышли из системы.",
+            "logout_failed": "Не удалось выйти.",
+            "browser_storage_cleared": "Хранилище браузера очищено.",
+            "reset_failed": "Не удалось сбросить.",
+            "system_message": "Системное сообщение",
+            "demo_announcement": "Это демонстрационное объявление из настроек.",
+            "confirm_make_private_title": "Сделать профиль приватным",
+            "confirm_make_private_desc": "Это сделает так, что профиль сможете видеть только вы. Другие пользователи не смогут его видеть — ваш email по-прежнему будет виден согласно условиям использования.",
+            "confirm_reset_title": "Сбросить настройки",
+            "confirm_reset_desc": "Это выйдет из текущего аккаунта и очистит хранилище браузера, используемое этой страницей.",
+            "confirm_logout_title": "Выйти",
+            "birthday_confirm_prefix": "Подтвердите, что вам",
+            "birthday_confirm_suffix": "лет. После этого изменить это нельзя.",
+            "invalid_birthday_format": "Неверный формат. Используйте dd/mm/yyyy.",
+            "invalid_date_format": "Неверный формат даты.",
+            "month_range": "Месяц должен быть от 1 до 12.",
+            "date_does_not_exist": "Такой даты не существует.",
+            "future_birthday": "Вы не можете родиться в будущем.",
+            "min_age": "Вам должно быть как минимум 1 год.",
+            "no_user": "Вы не вошли в систему",
+            "unknown_user": "Неизвестный пользователь",
+            "web": "Веб",
+            "feedback_subject": "Отзыв о сайте",
+            "translations_label": "Переводы"
+      },
+      "de": {
+            "title": "Einstellungen",
+            "settings": "Einstellungen",
+            "adjust_web_settings": "Web-Einstellungen anpassen",
+            "enable_notifications_title": "Benachrichtigungen aktivieren",
+            "enable_notifications_desc": "Erhalte aktualisierte Informationen über Follower, Updates und mehr",
+            "notifications_enabled": "Benachrichtigungen aktiviert.",
+            "could_not_request_permission": "Berechtigung konnte nicht angefordert werden.",
+            "user_info": "Nutzerinfo",
+            "public_profile": "Öffentliches Profil",
+            "extras": "Extras",
+            "info": "Info",
+            "debug": "Debug",
+            "change_language": "Sprache ändern",
+            "select_app_language": "Wähle die App-Sprache aus.",
+            "language": "Sprache",
+            "english": "Englisch",
+            "spanish": "Spanisch",
+            "german": "Deutsch",
+            "russian": "Russisch",
+            "japanese": "Japanisch",
+            "cancel": "Abbrechen",
+            "save": "Speichern",
+            "close": "Schließen",
+            "continue": "Weiter",
+            "change_region": "Region ändern",
+            "select_country_code": "Wähle einen zweistelligen Ländercode. Du kannst ihn einmal im Jahr ändern.",
+            "search": "Suchen",
+            "selected_code": "Ausgewählter Code",
+            "search_country_placeholder": "Land suchen…",
+            "set_birthday": "Geburtstag festlegen",
+            "birthday_note": "Hinweis: Sobald dein Geburtstag festgelegt ist, kannst du ihn nicht mehr ändern, außer du kontaktierst den Support und reichst einen Altersnachweis ein. Dein Alter ist nicht öffentlich, außer du möchtest das.",
+            "birthday_placeholder": "TT/MM/JJJJ",
+            "save_and_finish": "Speichern und beenden",
+            "go_back": "Zurück",
+            "verify_identity": "Identität bestätigen",
+            "verify_identity_desc": "Bestätige, dass dies dein echtes Konto ist. Verwaltet und geprüft durch Persona.",
+            "verification_in_progress": "Verifizierung läuft",
+            "verification_in_progress_desc": "Wir bearbeiten deine Verifizierungsanfrage. Das kann einen Moment dauern.",
+            "confirm": "Bestätigen",
+            "website_system_settings": "Website-Systemeinstellungen",
+            "system_settings_v1_5": "Systemeinstellungen V1.5",
+            "copyright_notice": "Copyright(c) Dark Purple OF 2023–2025, Alle Rechte vorbehalten",
+            "please_do_not_steal": "Bitte nicht stehlen",
+            "more_info_at_website": "Mehr Infos auf der Website",
+            "translations": "Übersetzungen",
+            "dismiss": "Schließen",
+            "no_matches": "Keine Treffer.",
+            "logout": "Abmelden",
+            "login": "Anmelden",
+            "sign_out_desc": "Melde dich von dem Konto ab, das mit diesem Browser verbunden ist.",
+            "sign_in_desc": "Melde dich an, um die restlichen Einstellungen freizuschalten.",
+            "verify_user": "Nutzer verifizieren",
+            "verify_user_desc": "Bestätige deine Identität und schalte den Zugang zu den Panel-Mods frei.",
+            "enroll_beta": "Am Beta-Programm teilnehmen",
+            "enroll_beta_desc": "Erhalte frühe Funktionen der App und ein exklusives Abzeichen.",
+            "manage_plugins": "Installierte Plugins verwalten",
+            "not_available_platform": "Auf dieser Plattform nicht verfügbar",
+            "current_region": "Aktuelle Region",
+    "can_change_on": "du kannst es ändern am",
+    "years_old": "Jahre alt",
+    "current_language": "Aktuelle Sprache",
+            "log_in_to_set_language": "Melde dich an, um deine Sprache festzulegen.",
+            "log_in_to_set_region": "Du musst eingeloggt sein, um deine Region festzulegen.",
+            "set_account_region": "Lege die Region deines Kontos fest. Du kannst sie einmal im Jahr ändern.",
+            "can_change_once_year": "Du kannst es einmal im Jahr ändern.",
+            "log_in_to_set_birthday": "Melde dich an, um deinen Geburtstag festzulegen.",
+            "click_set_birthday": "Klicke, um deinen Geburtstag festzulegen. Danach kannst du ihn nicht mehr ändern.",
+            "manage_blocked_users": "Blockierte Nutzer verwalten",
+            "manage_blocked_users_desc": "Verwalte Nutzer, die du blockiert hast.",
+            "verify_identity_private": "Identität bestätigen",
+            "verify_identity_private_desc": "Bestätige, dass dies dein echtes Konto ist, das durch Persona verwaltet und geprüft wird.",
+            "public_profile_desc": "Wechsle zwischen einem öffentlichen und privaten Profil. Du kannst es jederzeit ändern.",
+            "make_profile_private": "Profil privat machen",
+            "private_profile_warning": "Dadurch kannst nur du dein Profil sehen. Andere Nutzer können es nicht sehen — deine E-Mail bleibt gemäß den Nutzungsbedingungen sichtbar.",
+            "profile_set_private": "Profil auf privat gesetzt.",
+            "make_private": "Privat machen",
+            "allow_posts_on_wall": "Beiträge auf deiner Pinnwand erlauben",
+            "allow_posts_on_wall_desc": "Erlaube oder verbiete Beiträge auf deiner Pinnwand. Du kannst sie trotzdem einzeln entfernen.",
+            "send_test_announcement": "Testankündigung senden",
+            "send_test_announcement_desc": "Sendet eine Demo-Systembenachrichtigung an diesen Browser.",
+            "reset_settings": "Einstellungen zurücksetzen",
+            "reset_settings_desc": "Dadurch wird das aktuelle Konto abgemeldet und der von dieser Seite verwendete Browser-Speicher gelöscht.",
+            "reset_now": "Jetzt zurücksetzen",
+            "copyright": "Copyright",
+            "view_copyright_info": "Copyright-Informationen ansehen.",
+            "user": "Benutzer",
+            "version_info": "Versionsinfo",
+            "send_feedback": "Feedback senden",
+            "send_feedback_desc": "Dem Entwickler direkt eine E-Mail senden.",
+            "translation_attribution": "Übersetzungsnachweis",
+            "translation_attribution_desc": "Sehen, wer diese App übersetzt hat.",
+            "debugger_enabled": "Du bist jetzt ein Debugger.",
+            "open_debug_settings": "Debug-Einstellungen öffnen",
+            "caution_experimental": "Achtung: experimentelle Funktionen voraus.",
+            "disable_debug": "Debug deaktivieren",
+            "hide_these_options": "Diese Optionen ausblenden.",
+            "debug_hidden": "Debug verborgen.",
+            "invalid_language_code": "Ungültiger Sprachcode.",
+            "use_valid_region_code": "Verwende einen gültigen zweistelligen Regionscode.",
+            "language_saved": "Sprache gespeichert.",
+            "region_saved": "Region gespeichert.",
+            "birthday_saved": "Geburtstag gespeichert.",
+            "could_not_load_user_data": "Nutzerdaten konnten nicht geladen werden.",
+            "could_not_send_notification": "Benachrichtigung konnte nicht gesendet werden.",
+            "logged_out": "Abgemeldet.",
+            "logout_failed": "Abmeldung fehlgeschlagen.",
+            "browser_storage_cleared": "Browser-Speicher gelöscht.",
+            "reset_failed": "Zurücksetzen fehlgeschlagen.",
+            "system_message": "Systemmeldung",
+            "demo_announcement": "Dies ist eine Demo-Ankündigung aus den Einstellungen.",
+            "confirm_make_private_title": "Profil privat machen",
+            "confirm_make_private_desc": "Dadurch kannst nur du dein Profil sehen. Andere Nutzer können es nicht sehen — deine E-Mail bleibt gemäß den Nutzungsbedingungen sichtbar.",
+            "confirm_reset_title": "Einstellungen zurücksetzen",
+            "confirm_reset_desc": "Dadurch wird das aktuelle Konto abgemeldet und der von dieser Seite verwendete Browser-Speicher gelöscht.",
+            "confirm_logout_title": "Abmelden",
+            "birthday_confirm_prefix": "Bestätige, dass du",
+            "birthday_confirm_suffix": "Jahre alt bist. Das kannst du später nicht ändern.",
+            "invalid_birthday_format": "Ungültiges Format. Verwende dd/mm/yyyy.",
+            "invalid_date_format": "Ungültiges Datumsformat.",
+            "month_range": "Der Monat muss zwischen 1 und 12 liegen.",
+            "date_does_not_exist": "Dieses Datum existiert nicht.",
+            "future_birthday": "Du kannst nicht in der Zukunft geboren sein.",
+            "min_age": "Du musst mindestens 1 Jahr alt sein.",
+            "no_user": "Nicht angemeldet",
+            "unknown_user": "Unbekannter Benutzer",
+            "web": "Web",
+            "feedback_subject": "Feedback zur Website",
+            "translations_label": "Übersetzungen"
+      },
+      "ja": {
+            "title": "設定",
+            "settings": "設定",
+            "adjust_web_settings": "ウェブ設定を調整",
+            "enable_notifications_title": "通知を有効にする",
+            "enable_notifications_desc": "フォロワー、更新情報などの最新情報を受け取る",
+            "notifications_enabled": "通知が有効になりました。",
+            "could_not_request_permission": "権限を要求できませんでした。",
+            "user_info": "ユーザー情報",
+            "public_profile": "公開プロフィール",
+            "extras": "その他",
+            "info": "情報",
+            "debug": "デバッグ",
+            "change_language": "言語を変更",
+            "select_app_language": "アプリの言語を選択してください。",
+            "language": "言語",
+            "english": "英語",
+            "spanish": "スペイン語",
+            "german": "ドイツ語",
+            "russian": "ロシア語",
+            "japanese": "日本語",
+            "cancel": "キャンセル",
+            "save": "保存",
+            "close": "閉じる",
+            "continue": "続行",
+            "change_region": "地域を変更",
+            "select_country_code": "2文字の国コードを選択してください。変更は年に1回できます。",
+            "search": "検索",
+            "selected_code": "選択中のコード",
+            "search_country_placeholder": "国を検索…",
+            "set_birthday": "誕生日を設定",
+            "birthday_note": "注意: 誕生日を設定すると、サポートに連絡して年齢の証明を提出しない限り変更できません。公開を希望しない限り、年齢は公開されません。",
+            "birthday_placeholder": "dd/mm/yyyy",
+            "save_and_finish": "保存して完了",
+            "go_back": "戻る",
+            "verify_identity": "本人確認",
+            "verify_identity_desc": "これがあなたの正当なアカウントであることを確認します。Persona によって管理・処理されます。",
+            "verification_in_progress": "確認中",
+            "verification_in_progress_desc": "確認リクエストを処理しています。少し時間がかかる場合があります。",
+            "confirm": "確認",
+            "website_system_settings": "サイトのシステム設定",
+            "system_settings_v1_5": "システム設定 V1.5",
+            "copyright_notice": "Copyright(c) Dark Purple OF 2023–2025, 無断転載禁止",
+            "please_do_not_steal": "盗用しないでください",
+            "more_info_at_website": "サイトで詳細を見る",
+            "translations": "翻訳",
+            "dismiss": "閉じる",
+            "no_matches": "一致するものがありません。",
+            "logout": "ログアウト",
+            "login": "ログイン",
+            "sign_out_desc": "このブラウザに紐付いたアカウントからサインアウトします。",
+            "sign_in_desc": "他の設定を使うにはサインインしてください。",
+            "verify_user": "ユーザーを確認",
+            "verify_user_desc": "本人確認を行い、パネル管理機能へのアクセスを解除します。",
+            "enroll_beta": "ベータプログラムに参加",
+            "enroll_beta_desc": "アプリの先行機能と限定バッジを取得できます。",
+            "manage_plugins": "インストール済みプラグインを管理",
+            "not_available_platform": "このプラットフォームでは利用できません",
+            "current_region": "現在の地域",
+    "can_change_on": "変更できる日",
+    "years_old": "歳",
+    "current_language": "現在の言語",
+            "log_in_to_set_language": "言語を設定するにはログインしてください。",
+            "log_in_to_set_region": "地域を設定するにはログインが必要です。",
+            "set_account_region": "アカウントの地域を設定します。年に1回変更できます。",
+            "can_change_once_year": "年に1回変更できます。",
+            "log_in_to_set_birthday": "誕生日を設定するにはログインしてください。",
+            "click_set_birthday": "クリックして誕生日を設定します。設定後は変更できません。",
+            "manage_blocked_users": "ブロックしたユーザーを管理",
+            "manage_blocked_users_desc": "ブロックしたユーザーを管理します。",
+            "verify_identity_private": "本人確認",
+            "verify_identity_private_desc": "これがあなたの正当なアカウントであることを確認します。Persona により管理・処理されます。",
+            "public_profile_desc": "公開プロフィールと非公開プロフィールを切り替えます。いつでも変更できます。",
+            "make_profile_private": "プロフィールを非公開にする",
+            "private_profile_warning": "これにより、あなた自身だけがプロフィールを見られるようになります。他のユーザーは見られません — 利用規約に従ってメールアドレスは表示されます。",
+            "profile_set_private": "プロフィールは非公開に設定されました。",
+            "make_private": "非公開にする",
+            "allow_posts_on_wall": "ウォールへの投稿を許可",
+            "allow_posts_on_wall_desc": "ウォールへの投稿を許可または禁止します。個別に削除することもできます。",
+            "send_test_announcement": "テスト告知を送信",
+            "send_test_announcement_desc": "このブラウザにデモのシステム通知を送信します。",
+            "reset_settings": "設定をリセット",
+            "reset_settings_desc": "現在のアカウントからサインアウトし、このページで使用したブラウザの保存データを消去します。",
+            "reset_now": "今すぐリセット",
+            "copyright": "著作権",
+            "view_copyright_info": "著作権情報を見る。",
+            "user": "ユーザー",
+            "version_info": "バージョン情報",
+            "send_feedback": "フィードバックを送信",
+            "send_feedback_desc": "開発者に直接メールします。",
+            "translation_attribution": "翻訳クレジット",
+            "translation_attribution_desc": "このアプリの翻訳者を見る。",
+            "debugger_enabled": "デバッガーになりました。",
+            "open_debug_settings": "デバッグ設定を開く",
+            "caution_experimental": "注意: 実験的な機能があります。",
+            "disable_debug": "デバッグを無効化",
+            "hide_these_options": "これらのオプションを非表示にする。",
+            "debug_hidden": "デバッグは非表示になりました。",
+            "invalid_language_code": "無効な言語コードです。",
+            "use_valid_region_code": "有効な2文字の地域コードを使用してください。",
+            "language_saved": "言語を保存しました。",
+            "region_saved": "地域を保存しました。",
+            "birthday_saved": "誕生日を保存しました。",
+            "could_not_load_user_data": "ユーザーデータを読み込めませんでした。",
+            "could_not_send_notification": "通知を送信できませんでした。",
+            "logged_out": "ログアウトしました。",
+            "logout_failed": "ログアウトに失敗しました。",
+            "browser_storage_cleared": "ブラウザの保存データを消去しました。",
+            "reset_failed": "リセットに失敗しました。",
+            "system_message": "システムメッセージ",
+            "demo_announcement": "これは設定からのデモ告知です。",
+            "confirm_make_private_title": "プロフィールを非公開にする",
+            "confirm_make_private_desc": "これにより、あなた自身だけがプロフィールを見られるようになります。他のユーザーは見られません — 利用規約に従ってメールアドレスは表示されます。",
+            "confirm_reset_title": "設定をリセット",
+            "confirm_reset_desc": "現在のアカウントからサインアウトし、このページで使用したブラウザの保存データを消去します。",
+            "confirm_logout_title": "ログアウト",
+            "birthday_confirm_prefix": "あなたが",
+            "birthday_confirm_suffix": "歳であることを確認してください。後で変更できません。",
+            "invalid_birthday_format": "無効な形式です。dd/mm/yyyy を使用してください。",
+            "invalid_date_format": "無効な日付形式です。",
+            "month_range": "月は1〜12の範囲である必要があります。",
+            "date_does_not_exist": "その日付は存在しません。",
+            "future_birthday": "未来の日付は使えません。",
+            "min_age": "少なくとも1歳である必要があります。",
+            "no_user": "未ログイン",
+            "unknown_user": "不明なユーザー",
+            "web": "ウェブ",
+            "feedback_subject": "サイトについてのフィードバック",
+            "translations_label": "翻訳"
+      }
+};
+
+    function normalizeLang(lang) {
+      const code = String(lang || 'en').toLowerCase().trim();
+      return SUPPORTED_LANGS.includes(code) ? code : 'en';
+    }
+
+    function t(key) {
+      const langPack = I18N[currentLang] || I18N.en;
+      return langPack[key] ?? I18N.en[key] ?? key;
+    }
+
+    function setText(selector, value) {
+      const el = document.querySelector(selector);
+      if (el) el.textContent = value;
+    }
+
+    function setPlaceholder(selector, value) {
+      const el = document.querySelector(selector);
+      if (el) el.setAttribute('placeholder', value);
+    }
+
+    function applyTranslations() {
+      document.documentElement.lang = currentLang;
+      document.title = t('title');
+      setText('.appbar h1', t('settings'));
+      setText('.page-sub', t('adjust_web_settings'));
+      setText('#cardUserInfo .card-header h2', t('user_info'));
+      setText('#cardProfile .card-header h2', t('public_profile'));
+      setText('#cardExtras .card-header h2', t('extras'));
+      setText('#cardInfo .card-header h2', t('info'));
+      setText('#cardDebug .card-header h2', t('debug'));
+      setText('#languageModal .modal-head h3', t('change_language'));
+      setText('#languageModal .modal-body .helper', t('select_app_language'));
+      setText('label[for="langSelect"]', t('language'));
+      setText('#langSelect option[value="en"]', t('english'));
+      setText('#langSelect option[value="es"]', t('spanish'));
+      setText('#langSelect option[value="de"]', t('german'));
+      setText('#langSelect option[value="ru"]', t('russian'));
+      setText('#langSelect option[value="ja"]', t('japanese'));
+      setText('#languageModal .modal-actions .text-btn:first-child', t('cancel'));
+      setText('#btnSaveLang', t('save'));
+      setText('#regionModal .modal-head h3', t('change_region'));
+      setText('#regionModal .modal-body .helper', t('select_country_code'));
+      setText('#regionModal label[for="regionSearch"]', t('search'));
+      setText('#regionModal label[for="regionCodeInput"]', t('selected_code'));
+      setPlaceholder('#regionSearch', t('search_country_placeholder'));
+      setPlaceholder('#regionCodeInput', 'MX');
+      setText('#regionModal .modal-actions .text-btn:first-child', t('cancel'));
+      setText('#btnSaveRegion', t('save'));
+      setText('#birthdayModal .modal-head h3', t('set_birthday'));
+      setText('#birthdayModal .modal-body .helper', t('birthday_note'));
+      setText('label[for="birthdayInput"]', t('set_birthday'));
+      setPlaceholder('#birthdayInput', t('birthday_placeholder'));
+      setText('#birthdayModal .modal-actions .text-btn:first-child', t('cancel'));
+      setText('#btnSaveBirthday', t('save'));
+      setText('#birthdayConfirmModal .modal-head h3', t('save_and_finish'));
+      setText('#btnBirthdayGoBack', t('go_back'));
+      setText('#btnBirthdayConfirm', t('save'));
+      setText('#verifyModal .modal-head h3', t('verify_identity'));
+      setText('#verifyModal .modal-body .helper', t('verify_identity_desc'));
+      setText('#verifyModal .modal-actions .text-btn:first-child', t('cancel'));
+      setText('#btnVerifyContinue', t('continue'));
+      setText('#verifyProcessingModal .modal-head h3', t('verification_in_progress'));
+      setText('#verifyProcessingModal .modal-body .helper', t('verification_in_progress_desc'));
+      setText('#verifyProcessingModal .modal-actions .text-btn', t('close'));
+      setText('#confirmTitle', t('confirm'));
+      setText('#btnConfirmAction', t('confirm'));
+      setText('#creditsModal .modal-head h3', t('website_system_settings'));
+      setText('#creditsModal .credits-mono:nth-of-type(1)', t('system_settings_v1_5'));
+      setText('#creditsModal .credits-mono:nth-of-type(2)', t('copyright_notice'));
+      setText('#creditsModal .credits-mono:nth-of-type(3)', t('please_do_not_steal'));
+      setText('#btnMoreInfo', t('more_info_at_website'));
+      setText('#creditsModal .modal-actions .text-btn', t('close'));
+      setText('#translationModal .modal-head h3', t('translations'));
+      setText('#translationModal .modal-actions .text-btn', t('dismiss'));
+    }
 
     function formatLang(code) {
-      if (!code) return '言語が選択されていません。';
+      if (!code) return null;
       const item = LANG_LIST.find(([c]) => c === String(code).toLowerCase());
       return item ? `${item[1]} (${item[0]})` : String(code).toLowerCase();
     }
-
-    function getUserKey(user) {
-      return user?.email || user?.uid || null;
-    }
-
-    function userRef(user) {
-      const key = getUserKey(user);
-      return key ? db.collection('user_data').doc(key) : null;
-    }
-
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>'"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[m]));
-    }
-
-    function openModal(id) { $('#' + id).classList.add('show'); }
-    function closeModal(id) { $('#' + id).classList.remove('show'); }
-
-    function closeAllModals() {
-      $$('.overlay').forEach(o => o.classList.remove('show'));
-    }
-
     function formatRegion(code) {
-      if (!code) return 'アカウントの地域を設定してください。変更は年1回のみ可能です。';
+      if (!code) return null;
       const item = REGION_LIST.find(([c]) => c.toUpperCase() === code.toUpperCase());
-      return item ? `${item[1]} (${item[0]})` : code.toUpperCase();
+      return item ? item[1] : code.toUpperCase();
     }
-
     function regionEmoji(code) {
-      if (!code || code.length !== 2) return '❔';
+      if (!code || code.length !== 2) return '';
       return code.toUpperCase().split('').map(ch => String.fromCodePoint(0x1F1E6 + (ch.charCodeAt(0) - 65))).join('');
     }
-
     function calculateAge(birthdayString) {
       if (!birthdayString) return null;
       const parts = birthdayString.split('/');
       if (parts.length !== 3) return null;
-      const d = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10) - 1;
-      const y = parseInt(parts[2], 10);
-      if (!d || !m && m !== 0 || !y) return null;
+      const d = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1, y = parseInt(parts[2], 10);
+      if (!d || (!m && m !== 0) || !y) return null;
       const dob = new Date(y, m, d);
       if (isNaN(dob.getTime())) return null;
       const today = new Date();
@@ -730,321 +1250,346 @@
       if (md < 0 || (md === 0 && today.getDate() < dob.getDate())) age--;
       return age;
     }
-
     function validateBirthdayInput(input) {
       const parts = String(input).trim().split('/');
-      if (parts.length !== 3) return '形式が正しくありません。dd/mm/yyyy を使用してください。';
+      if (parts.length !== 3) return 'Invalid format. Use dd/mm/yyyy.';
       const [dd, mm, yyyy] = parts.map(v => parseInt(v, 10));
-      if (![dd, mm, yyyy].every(Number.isFinite)) return '日付の形式が正しくありません。';
-      if (mm < 1 || mm > 12) return '月は1から12の間で入力してください。';
+      if (![dd, mm, yyyy].every(Number.isFinite)) return 'Invalid date format.';
+      if (mm < 1 || mm > 12) return 'Month must be between 1 and 12.';
       const dt = new Date(yyyy, mm - 1, dd);
-      if (dt.getFullYear() !== yyyy || dt.getMonth() !== mm - 1 || dt.getDate() !== dd) return 'その日付は存在しません。';
-      const now = new Date();
-      if (dt > now) return '未来の日付は入力できません。';
+      if (dt.getFullYear() !== yyyy || dt.getMonth() !== mm - 1 || dt.getDate() !== dd) return 'That date does not exist.';
+      if (dt > new Date()) return "You can't be born in the future.";
       const age = calculateAge(`${dd}/${mm}/${yyyy}`);
-      if (age === null || age < 1) return '少なくとも1歳以上である必要があります。';
+      if (age === null || age < 1) return 'You must be at least 1 year old.';
       return null;
     }
-
-    function mailToFeedback() {
-      const email = (navigator.language || '').toLowerCase().startsWith('ja')
-        ? 'boykisser2189@gmail.com'
-        : 'javiercorzo387@gmail.com';
-      const subject = 'フィードバック';
-      return `mailto:${email}?subject=${encodeURIComponent(subject)}`;
-    }
-
-    function setProfileHeader(user) {
-      const name = user?.displayName || user?.email?.split('@')[0] || 'ゲスト';
-      const profileNameEl = $('#profileName');
-      if (profileNameEl) profileNameEl.textContent = name;
-      const profileEmailEl = $('#profileEmail');
-      if (profileEmailEl) profileEmailEl.textContent = user?.email || 'まだログインしていません';
-      const profileUidEl = $('#profileUid');
-      if (profileUidEl) profileUidEl.textContent = `uid: ${user?.uid || '-'}`;
-      $('#sessionChip').textContent = user?.email ? '接続済み' : 'ゲスト';
-      $('#btnLoginLogout').textContent = user ? 'ログアウト' : 'ログイン';
-      const logoutTopBtn = $('#btnLogoutTop');
-      if (logoutTopBtn) logoutTopBtn.textContent = user ? '⎋ ログアウト' : 'ログイン';
-    }
-
-    function setBadgeIfNeeded(user) {
-      const badge = $('#profileBadge');
-      if (!badge) return;
-      const isVerified = !!(user?.email && user.email.endsWith('@darkpurpleof.github.io'));
-      if (isVerified) {
-        badge.style.display = 'inline-block';
-        badge.alt = 'verified';
-        badge.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2l2.4 2.2 3.2-.1 1.2 3 2.9 1.4-.6 3.1 1.7 2.8-2.1 2.4-.1 3.2-3 1.2-1.4 2.9-3.1-.6L12 22l-2.2-2.4-3.1.6-1.4-2.9-3-1.2-.1-3.2-2.1-2.4 1.7-2.8-.6-3.1 2.9-1.4 1.2-3 3.2.1L12 2z" fill="#22c55e"/>
-            <path d="M9.5 12.6l1.9 1.9 3.9-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        `);
-      } else {
-        badge.style.display = 'none';
-        badge.removeAttribute('src');
-      }
-    }
-
-    function setVisibilityByLogin(user) {
-      const loggedIn = !!user;
-      const setState = (id, value) => { const el = $('#' + id); if (el) el.disabled = value; };
-      setState('btnVerifyUser', !loggedIn);
-      setState('btnBetaProgram', !loggedIn);
-      setState('btnPlugins', !loggedIn);
-      setState('btnRegion', !loggedIn);
-      setState('btnBirthday', !loggedIn);
-      setState('btnBlocked', !loggedIn);
-      setState('btnLang', !loggedIn);
-      setState('btnDemo', !loggedIn);
-      setState('btnReset', !loggedIn);
-      setState('btnOverlay', false);
-      setState('togglePublicProfile', !loggedIn);
-      setState('toggleAllowPosts', !loggedIn);
-    }
-
-    function updateDerivedTexts(doc) {
-      const region = doc?.region || null;
-      const nextChange = doc?.regionchange_next?.toDate ? doc.regionchange_next.toDate() : null;
-      const birthDate = doc?.birth_date || null;
-      const loggedIn = !!state.user;
-
-      const now = new Date();
-      const canChange = !nextChange || nextChange <= now;
-      const regionName = region ? formatRegion(region) : null;
-      const regionFlag = region ? regionEmoji(region) : '❔';
-
-      if (!loggedIn) {
-        $('#regionDesc').textContent = '地域を設定するにはログインが必要です。';
-        $('#birthdayDesc').textContent = '生年月日を設定するにはログインしてください。';
-      } else {
-        $('#regionDesc').textContent = region
-          ? (canChange ? `あなたの地域は ${regionName} ${regionFlag} に設定されています。今すぐ変更できます。` : `あなたの地域は ${regionName} ${regionFlag} に設定されています。変更可能日は ${nextChange.toLocaleDateString()} です。`)
-          : 'アカウントの地域を設定してください。変更は年1回のみ可能です。';
-        if (!birthDate) {
-          $('#birthdayDesc').textContent = 'クリックして生年月日を設定してください。後から変更するにはサポートが必要です。';
-        } else {
-          const age = calculateAge(birthDate);
-          $('#birthdayDesc').textContent = age ? `${birthDate} • ${age}歳` : birthDate;
-        }
-      }
-
-      const lang = doc?.lang || null;
-      $('#langDesc').textContent = lang
-        ? `現在の言語: ${formatLang(lang)}。`
-        : 'お好みの言語を選択してください。';
-
-      $('#togglePublicProfile').checked = !!doc?.isProfilePublic;
-      $('#toggleAllowPosts').checked = !!doc?.postsAllowed;
-
-      // Hide/show edit buttons based on data state
-      $('#btnBirthday').style.display = birthDate ? 'none' : '';
-      $('#btnRegion').style.display = canChange ? '' : 'none';
-    }
-
-    function renderFriends(list = []) {
-      const box = $('#friendsContainer');
-      const empty = $('#friendsEmpty');
-      if (!box) return;
-      box.innerHTML = '';
-      if (!list.length) {
-        if (empty) empty.style.display = 'block';
-        return;
-      }
-      if (empty) empty.style.display = 'none';
-      list.slice(0, 15).forEach(friend => {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'friend-card';
-        card.innerHTML = `
-          <div class="friend-pfp" style="background-image:url('${friend.photoURL || ''}')"></div>
-          <div class="friend-name">${escapeHtml(friend.name || friend.email || '友達')} ${friend.verified ? '<img alt="verified" src="data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 2.2 3.2-.1 1.2 3 2.9 1.4-.6 3.1 1.7 2.8-2.1 2.4-.1 3.2-3 1.2-1.4 2.9-3.1-.6L12 22l-2.2-2.4-3.1.6-1.4-2.9-3-1.2-.1-3.2-2.1-2.4 1.7-2.8-.6-3.1 2.9-1.4 1.2-3 3.2.1L12 2z" fill="#22c55e"/></svg>`) + '" />' : ''}</div>
-        `;
-        card.addEventListener('click', () => {
-          if (friend.email) {
-            window.location.href = `./viewprofile.html?email=${encodeURIComponent(friend.email)}`;
-          }
-        });
-        box.appendChild(card);
-      });
-    }
-
-    async function loadUserDoc() {
-      if (!state.user) {
-        state.userDoc = null;
-        updateDerivedTexts(null);
-        renderFriends([]);
-        return;
-      }
-
-      const ref = userRef(state.user);
-      if (!ref) return;
-
-      if (state.userUnsub) state.userUnsub();
-      state.userUnsub = ref.onSnapshot((snap) => {
-        const doc = snap.exists ? snap.data() : {};
-        state.userDoc = doc;
-        updateDerivedTexts(doc);
-        $('#togglePublicProfile').checked = !!doc?.isProfilePublic;
-        $('#langDesc').dataset.lang = doc?.lang || '';
-        $('#toggleAllowPosts').checked = !!doc?.postsAllowed;
-        $('#birthdayDesc').dataset.birth = doc?.birth_date || '';
-        $('#regionDesc').dataset.region = doc?.region || '';
-      }, () => {
-        toast.show('ユーザーデータを読み込めませんでした。', 'red');
-      });
-
-      // Friends preview: try common fields, but stay graceful if not present.
-      if (state.friendsUnsub) state.friendsUnsub();
-      state.friendsUnsub = ref.collection('friends').onSnapshot((snap) => {
-        const list = [];
-        snap.forEach(doc => {
-          const d = doc.data() || {};
-          list.push({
-            name: d.name || d.displayName || d.email,
-            email: d.email,
-            photoURL: d.photoURL,
-            verified: !!d.verified
-          });
-        });
-        renderFriends(list);
-      }, () => renderFriends([]));
-    }
+    const ARROW_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M17 7H8M17 7v9"/></svg>';
 
     async function updateUserField(field, value) {
-      if (!state.user) throw new Error('ログインしていません');
+      if (!state.user) throw new Error('Not logged in');
       const ref = userRef(state.user);
-      if (!ref) throw new Error('ユーザー参照がありません');
+      if (!ref) throw new Error('Missing user reference');
       await ref.set({ [field]: value }, { merge: true });
     }
 
-    function buildTranslationBody() {
-      const body = $('#translationsBody');
-      body.innerHTML = `
-        <div class="helper">元の設定ダイアログに表示される言語クレジットです。</div>
-        <div class="separator"></div>
-        <div style="display:grid; gap:12px;">
-          <div>
-            <div class="muted">スペイン語訳</div>
-            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
-          </div>
-          <div>
-            <div class="muted">ロシア語訳</div>
-            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
-          </div>
-          <div>
-            <div class="muted">英語訳</div>
-            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
-          </div>
-          <div>
-            <div class="muted">日本語訳</div>
-            <div class="linkish" data-profile="boykisser2189@darkpurpleof.github.io">Amethyst</div>
-          </div>
-          <div>
-            <div class="muted">ドイツ語訳</div>
-            <div class="linkish" data-profile="darkpurpleof@darkpurpleof.github.io">Dark Purple</div>
-          </div>
-        </div>
-      `;
-      $$('[data-profile]', body).forEach(el => {
-        el.addEventListener('click', () => {
-          const email = el.getAttribute('data-profile');
-          window.location.href = `./viewprofile.html?email=${encodeURIComponent(email)}`;
-        });
+    /* ============================================================
+       Card / item renderer — mirrors the Kotlin SettingsCard /
+       SettingsItemData component model 1:1, just built in DOM.
+       ============================================================ */
+    function renderItems(containerId, items) {
+      const el = $('#' + containerId);
+      el.innerHTML = '';
+      items.forEach(it => {
+        if (!it) return;
+        const row = document.createElement(it.onClick && it.enabled !== false && !it.toggle ? 'button' : 'div');
+        row.type = row.tagName === 'BUTTON' ? 'button' : undefined;
+        row.className = 'item' + (it.enabled === false ? ' disabled' : '');
+        const main = document.createElement('div');
+        main.className = 'item-main';
+        const title = document.createElement('p');
+        title.className = 'item-title';
+        title.textContent = it.title;
+        main.appendChild(title);
+        if (it.desc) {
+          const desc = document.createElement('p');
+          desc.className = 'item-desc' + (it.descClass ? ` ${it.descClass}` : '');
+          desc.textContent = it.desc;
+          main.appendChild(desc);
+        }
+        row.appendChild(main);
+
+        if (it.toggle) {
+          const label = document.createElement('label');
+          label.className = 'switch';
+          label.addEventListener('click', (e) => e.stopPropagation());
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = !!it.toggle.checked;
+          input.disabled = it.enabled === false;
+          input.addEventListener('change', (e) => it.toggle.onChange(e.target.checked, e.target));
+          const slider = document.createElement('span');
+          slider.className = 'slider';
+          label.appendChild(input);
+          label.appendChild(slider);
+          row.appendChild(label);
+        } else if (it.pill) {
+          const pill = document.createElement('span');
+          pill.className = 'pill';
+          pill.textContent = it.pill;
+          row.appendChild(pill);
+        } else if (it.onClick && it.enabled !== false) {
+          const trail = document.createElement('span');
+          trail.className = 'item-trail';
+          trail.innerHTML = ARROW_ICON;
+          row.appendChild(trail);
+        }
+
+        if (it.onClick && it.enabled !== false && !it.toggle) {
+          row.addEventListener('click', it.onClick);
+        }
+        el.appendChild(row);
       });
     }
 
-    function buildRegionList(filterText = '') {
-      const q = filterText.trim().toLowerCase();
-      const list = $('#regionList');
-      const filtered = REGION_LIST.filter(([code, name]) => {
-        return !q || code.toLowerCase().includes(q) || name.toLowerCase().includes(q);
+    /* ============ Notification permission card ============ */
+    function renderPermissionCard() {
+      const host = $('#permissionCard');
+      const supported = 'Notification' in window;
+      const granted = supported && Notification.permission === 'granted';
+      if (!supported || granted) { host.innerHTML = ''; return; }
+      host.innerHTML = `
+        <div class="status-card tone-accent is-clickable" id="permCardBtn">
+          <span class="status-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+          <div><h3>Enable notifications</h3><p>Get updated information about followers, updates and more</p></div>
+        </div>`;
+      $('#permCardBtn').addEventListener('click', async () => {
+        try {
+          const perm = await Notification.requestPermission();
+          if (perm === 'granted') toast.show(t('notifications_enabled'), 'green');
+          renderPermissionCard();
+        } catch (e) { toast.show(t('could_not_request_permission'), 'red'); }
       });
-      list.innerHTML = filtered.map(([code, name]) => `
-        <button type="button" class="action-button" data-code="${code}" style="justify-content:space-between; width:100%;">
-          <span>${code}</span><span style="opacity:.8">${name}</span>
-        </button>
-      `).join('') || '<div class="helper">一致する項目がありません。</div>';
-      $$('[data-code]', list).forEach(btn => {
-        btn.addEventListener('click', () => {
-          $('#regionCodeInput').value = btn.getAttribute('data-code');
-          toast.show(`地域を選択しました: ${btn.getAttribute('data-code')}`, 'green');
-        });
-      });
     }
 
-    async function saveLang() {
-      const code = $('#langSelect').value.trim().toLowerCase();
-      if (!['ja', 'de', 'ru', 'es', 'en'].includes(code)) {
-        toast.show('無効な言語コードです。', 'red');
-        return;
+    /* ============ USER INFO card ============ */
+    function renderUserInfoCard() {
+      const loggedIn = !!state.user;
+      const email = state.user?.email || null;
+      const isStaff = !!email && email.endsWith('@darkpurpleof.github.io');
+
+      renderItems('itemsUserInfo', [
+        {
+          title: loggedIn ? t('logout') : t('login'),
+          desc: loggedIn ? t('sign_out_desc') : t('sign_in_desc'),
+          onClick: () => {
+            if (loggedIn) { confirmDialog(t('confirm_logout_title'), `${t('logout')} ${email}?`, logoutAndRedirect, t('logout')); }
+            else window.location.href = '/login';
+          }
+        },
+        {
+          title: t('verify_user'),
+          desc: t('verify_user_desc'),
+          enabled: isStaff,
+          onClick: () => openModal('verifyModal')
+        },
+        {
+          title: t('enroll_beta'),
+          desc: t('enroll_beta_desc'),
+          enabled: loggedIn,
+          onClick: () => { if (loggedIn) window.location.href = '/creator/beta-features'; }
+        },
+        {
+          title: t('manage_plugins'),
+          desc: t('not_available_platform'),
+          enabled: false,
+          descClass: 'is-unavailable'
+        },
+        {
+          title: t('language'),
+          desc: formatLang(state.userDoc?.lang) ? `Current language: ${formatLang(state.userDoc?.lang)}.` : (loggedIn ? t('select_app_language') : t('log_in_to_set_language')),
+          enabled: loggedIn,
+          onClick: () => {
+            $('#langSelect').value = (state.userDoc?.lang || 'en').toLowerCase();
+            openModal('languageModal');
+          }
+        }
+      ]);
+    }
+
+    /* ============ PUBLIC PROFILE card ============ */
+    function renderProfileCard() {
+      const loggedIn = !!state.user;
+      const doc = state.userDoc || {};
+      const region = doc.region || null;
+      const nextChange = doc.regionchange_next?.toDate ? doc.regionchange_next.toDate() : null;
+      const canChange = !nextChange || nextChange <= new Date();
+      const birthDate = doc.birth_date || null;
+
+      let regionDesc;
+      if (!loggedIn) regionDesc = t('log_in_to_set_region');
+      else if (!region) regionDesc = t('set_account_region');
+      else regionDesc = canChange
+        ? `${t('current_region')}: ${formatRegion(region)} ${regionEmoji(region)} — ${t('can_change_once_year')}`
+        : `${t('current_region')}: ${formatRegion(region)} ${regionEmoji(region)} — ${t('can_change_on')} ${nextChange.toLocaleDateString()}.`;
+
+      let birthdayDesc;
+      if (!loggedIn) birthdayDesc = t('log_in_to_set_birthday');
+      else if (!birthDate) birthdayDesc = t('click_set_birthday');
+      else { const age = calculateAge(birthDate); birthdayDesc = age !== null ? `${birthDate} — ${age} ${t('years_old')}` : birthDate; }
+
+      renderItems('itemsProfile', [
+        {
+          title: t('change_region'),
+          desc: regionDesc,
+          enabled: loggedIn && canChange,
+          onClick: () => {
+            $('#regionCodeInput').value = (region || '').toUpperCase();
+            $('#regionSearch').value = '';
+            buildRegionList('');
+            openModal('regionModal');
+          }
+        },
+        {
+          title: t('set_birthday'),
+          desc: birthdayDesc,
+          enabled: loggedIn && !birthDate,
+          onClick: () => {
+            $('#birthdayInput').value = birthDate || '';
+            $('#birthdayError').style.display = 'none';
+            openModal('birthdayModal');
+          }
+        },
+        {
+          title: t('manage_blocked_users'),
+          desc: t('manage_blocked_users_desc'),
+          enabled: loggedIn,
+          onClick: () => window.open('https://darkpurpleof.github.io/manageblockedusers', '_blank')
+        },
+        {
+          title: t('verify_identity'),
+          desc: t('verify_identity_private_desc'),
+          enabled: false,
+          descClass: 'is-unavailable'
+        },
+        {
+          title: t('public_profile'),
+          desc: t('public_profile_desc'),
+          enabled: loggedIn,
+          toggle: {
+            checked: !!doc.isProfilePublic,
+            onChange: async (checked, inputEl) => {
+              if (checked) {
+                await updateUserField('isProfilePublic', true);
+              } else {
+                inputEl.checked = true;
+                confirmDialog(
+                  t('make_profile_private'),
+                  t('private_profile_warning'),
+                  async () => { await updateUserField('isProfilePublic', false); toast.show(t('profile_set_private'), 'green'); },
+                  t('make_private')
+                );
+              }
+            }
+          }
+        },
+        {
+          title: t('allow_posts_on_wall'),
+          desc: t('allow_posts_on_wall_desc'),
+          enabled: loggedIn,
+          toggle: {
+            checked: !!doc.postsAllowed,
+            onChange: async (checked) => { await updateUserField('postsAllowed', checked); toast.show('Saved.', 'green'); }
+          }
+        }
+      ]);
+    }
+
+    /* ============ EXTRAS card ============ */
+    function renderExtrasCard() {
+      const loggedIn = !!state.user;
+      const notifAllowed = 'Notification' in window && Notification.permission === 'granted';
+
+      renderItems('itemsExtras', [
+        {
+          title: t('send_test_announcement'),
+          desc: t('send_test_announcement_desc'),
+          enabled: notifAllowed,
+          onClick: () => sendTestAnnouncement()
+        },
+        {
+          title: t('reset_settings'),
+          desc: `${t('reset_settings_desc')} ${state.user?.email || ''}`,
+          enabled: loggedIn,
+          onClick: () => confirmDialog(t('reset_settings'), t('reset_settings_desc'), resetSettings, t('reset_now'))
+        },
+      ]);
+    }
+
+    function getPlatformDetails() {
+      const ua = navigator.userAgent || '';
+      let codename = 'generic';
+      let version = 'Unknown';
+
+      if (/Firefox/i.test(ua)) {
+        const m = ua.match(/Firefox\/(\d+(?:\.\d+)?)/i);
+        codename = 'gecko';
+        version = m ? m[1] : 'Unknown';
+      } else if (/Android/i.test(ua)) {
+        const m = ua.match(/Android (\d+(?:\.\d+)?)/i);
+        codename = 'chromium';
+        version = m ? m[1] : 'Unknown';
+      } else if (/Windows/i.test(ua)) {
+        const m = ua.match(/Windows NT (\d+\.\d+)/i);
+        codename = 'windows';
+        version = m ? {
+          '10.0': '10',
+          '6.3': '8.1',
+          '6.2': '8',
+          '6.1': '7',
+          '6.0': 'Vista'
+        }[m[1]] || m[1] : 'Unknown';
+      } else if (/Mac OS X/i.test(ua)) {
+        const m = ua.match(/Mac OS X (\d+[._]\d+(?:[._]\d+)?)/i);
+        codename = 'macosx';
+        version = m ? m[1].replace(/_/g, '.') : 'Unknown';
+      } else if (/Linux/i.test(ua)) {
+        codename = 'linux';
+        version = 'Unknown';
+      } else if (/iPhone|iPad|iPod/i.test(ua)) {
+        const m = ua.match(/OS (\d+(?:_\d+){0,2})/i);
+        codename = 'macosx';
+        version = m ? m[1].replace(/_/g, '.') : 'Unknown';
       }
-      await updateUserField('lang', code);
-      toast.show('言語を保存しました。', 'green');
-      closeModal('languageModal');
-    }
 
-    async function saveRegion() {
-      const code = $('#regionCodeInput').value.trim().toUpperCase();
-      if (!/^[A-Z]{2}$/.test(code)) {
-        toast.show('有効な2文字の地域コードを入力してください。', 'red');
-        return;
+      if (typeof HostAPI !== 'undefined') {
+        try {
+          const hostName = typeof HostAPI.hostname === 'function' ? String(HostAPI.hostname()).trim() : '';
+          const hostVersion = typeof HostAPI.version === 'function' ? String(HostAPI.version()).trim() : '';
+          if (hostName && hostVersion) {
+            return { codename, version, display: `${hostName} (${hostVersion})` };
+          }
+          if (hostName) {
+            return { codename, version, display: hostName };
+          }
+          if (hostVersion) {
+            return { codename, version, display: hostVersion };
+          }
+        } catch (e) {}
       }
-      await updateUserField('region', code);
-      const nextChange = new Date();
-      nextChange.setFullYear(nextChange.getFullYear() + 1);
-      await updateUserField('regionchange_next', firebase.firestore.Timestamp.fromDate(nextChange));
-      toast.show('地域を保存しました。', 'green');
-      closeModal('regionModal');
+
+      return { codename, version, display: `${codename} (${version})` };
     }
 
-    async function saveBirthday() {
-      const input = $('#birthdayInput').value.trim();
-      const error = validateBirthdayInput(input);
-      if (error) {
-        $('#birthdayError').textContent = error;
-        $('#birthdayError').style.display = 'block';
-        return;
-      }
-      $('#birthdayError').style.display = 'none';
-      await updateUserField('birth_date', input);
-      toast.show('生年月日を保存しました。', 'green');
-      closeModal('birthdayModal');
-    }
-
-    async function toggleField(field, value) {
-      if (!state.user) {
-        toast.show('先にログインしてください。', 'red');
-        return;
-      }
-      await updateUserField(field, value);
-      toast.show('保存しました。', 'green');
-    }
-
-    async function logoutAndRedirect() {
+    async function loadSiteVersion() {
       try {
-        await auth.signOut();
-        toast.show('ログアウトしました。', 'green');
-        setTimeout(() => { window.location.href = '/login'; }, 500);
+        const snap = await db.doc('server_global_data/general').get();
+        const data = snap.exists ? snap.data() : null;
+        const raw = Number(data?.siteVer);
+        state.siteVersion = Number.isFinite(raw) ? raw : null;
       } catch (e) {
-        toast.show('ログアウト中にエラーが発生しました。', 'red');
+        state.siteVersion = null;
       }
+      renderInfoCard();
     }
 
-    async function resetSettings() {
-      try {
-        await auth.signOut();
-        localStorage.clear();
-        sessionStorage.clear();
-        toast.show('ブラウザの保存データを削除しました。', 'green');
-        setTimeout(() => { window.location.href = '/login'; }, 500);
-      } catch (e) {
-        toast.show('リセット中にエラーが発生しました。', 'red');
-      }
+    /* ============ INFO card ============ */
+    function renderInfoCard() {
+      const userId = state.user ? (state.user.uid || state.user.email || t('unknown_user')) : t('no_user');
+      const versionLabel = state.siteVersion !== null ? `${state.siteVersion} (${t('web')})` : t('web');
+      const platform = getPlatformDetails();
+      const versionInfo = `${versionLabel} - ${platform.display}`;
+
+      renderItems('itemsInfo', [
+        { title: t('copyright'), desc: t('view_copyright_info'), onClick: () => openModal('creditsModal') },
+        { title: t('user'), desc: userId, enabled: false },
+        { title: t('version_info'), desc: versionInfo, onClick: () => onVersionTap() },
+        { title: t('send_feedback'), desc: t('send_feedback_desc'), onClick: () => sendFeedback() },
+        { title: t('translation_attribution'), desc: t('translation_attribution_desc'), onClick: () => openModal('translationModal') }
+      ]);
     }
 
-    function revealDebugMaybe() {
+    function onVersionTap() {
+      if (state.debugEnabled) return;
       const now = Date.now();
       if (now - state.lastTapTime > 1000) state.tapCount = 0;
       state.tapCount += 1;
@@ -1052,160 +1597,173 @@
       if (state.tapCount >= 7) {
         state.tapCount = 0;
         state.debugEnabled = true;
-        toast.show('デバッグが有効になりました。', 'purple');
-        openModal('debugModal');
         localStorage.setItem('debug_enabled', 'true');
+        if (navigator.vibrate) navigator.vibrate(500);
+        toast.show(t('debugger_enabled'), 'purple');
+        renderDebugCard();
       }
     }
 
-    function initThemeToggle() {
-      const saved = localStorage.getItem('theme') || 'dark';
-      document.body.classList.toggle('light', saved === 'light');
-      const themeBtn = $('#btnToggleTheme');
-      if (themeBtn) {
-        themeBtn.addEventListener('click', () => {
-          const light = document.body.classList.toggle('light');
-          localStorage.setItem('theme', light ? 'light' : 'dark');
+    function sendFeedback() {
+      const subject = encodeURIComponent(t('feedback_subject'));
+      window.location.href = `mailto:javiercorzo387@gmail.com?subject=${subject}`;
+    }
+
+    $('#btnMoreInfo').addEventListener('click', () => window.open('https://darkpurpleof.github.io/systeminfo', '_blank'));
+
+    function renderTranslationBody() {
+      const rows = [
+        ['Spanish', 'Dark Purple'],
+        ['Russian', 'Dark Purple'],
+        ['English', 'Dark Purple'],
+        ['Japanese', 'Amethyst'],
+        ['German', 'Dark Purple'],
+      ];
+      $('#translationBody').innerHTML = rows.map(([lang, translator]) => `
+        <div class="translation-row"><span>${lang}</span><a href="#" data-translator="${translator}">${translator}</a></div>
+      `).join('');
+    }
+
+    /* ============ DEBUG card ============ */
+    function renderDebugCard() {
+      const card = $('#cardDebug');
+      if (!state.debugEnabled) { card.style.display = 'none'; return; }
+      card.style.display = '';
+      renderItems('itemsDebug', [
+        { title: t('open_debug_settings'), desc: t('caution_experimental'), onClick: () => window.location.href = './debug.html' },
+        { title: t('disable_debug'), desc: t('hide_these_options'), onClick: () => {
+            state.debugEnabled = false;
+            localStorage.removeItem('debug_enabled');
+            renderDebugCard();
+            toast.show(t('debug_hidden'), 'green');
+        }}
+      ]);
+    }
+
+    /* ============ region list ============ */
+    function buildRegionList(filterText = '') {
+      const q = filterText.trim().toLowerCase();
+      const list = $('#regionList');
+      const filtered = REGION_LIST.filter(([code, name]) => !q || code.toLowerCase().includes(q) || name.toLowerCase().includes(q));
+      list.innerHTML = filtered.map(([code, name]) => `
+        <button type="button" class="region-opt" data-code="${code}"><span>${code}</span><span>${name}</span></button>
+      `).join('') || `<p class="helper" style="padding:8px 10px;">${t('no_matches')}</p>`;
+      $$('.region-opt', list).forEach(btn => {
+        btn.addEventListener('click', () => {
+          $('#regionCodeInput').value = btn.getAttribute('data-code');
+          toast.show(`${t('selected_code')} ${btn.getAttribute('data-code')}`, 'green');
         });
-      }
-    }
-
-    function initQuickLinks() {
-      const openLoginBtn = $('#btnOpenLogin');
-      if (openLoginBtn) openLoginBtn.addEventListener('click', () => window.location.href = '/login');
-      const systemInfoBtn = $('#btnSystemInfo');
-      if (systemInfoBtn) systemInfoBtn.addEventListener('click', () => window.location.href = 'https://darkpurpleof.github.io/systeminfo');
-      const blockedBtn = $('#btnBlocked');
-      if (blockedBtn) blockedBtn.addEventListener('click', () => window.location.href = 'https://darkpurpleof.github.io/manageblockedusers');
-      const betaProgramBtn = $('#btnBetaProgram');
-      if (betaProgramBtn) betaProgramBtn.addEventListener('click', () => window.location.href = '/beta-features');
-      const moreInfoBtn = $('#btnMoreInfo');
-      if (moreInfoBtn) moreInfoBtn.addEventListener('click', () => window.open('https://darkpurpleof.github.io/systeminfo', '_blank'));
-      const mailFeedbackBtn = $('#btnMailFeedback');
-      if (mailFeedbackBtn) mailFeedbackBtn.setAttribute('href', mailToFeedback());
-    }
-
-    function initModalButtons() {
-      $$('[data-close]').forEach(btn => {
-        btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
-      });
-      $$('.overlay').forEach(ov => {
-        ov.addEventListener('click', (e) => {
-          if (e.target === ov) ov.classList.remove('show');
-        });
       });
     }
 
+    /* ============ save handlers ============ */
+    async function saveLang() {
+      const code = $('#langSelect').value.trim().toLowerCase();
+      if (!LANG_LIST.some(([c]) => c === code)) return toast.show(t('invalid_language_code'), 'red');
+      await updateUserField('lang', code);
+      toast.show(t('language_saved'), 'green');
+      closeModal('languageModal');
+    }
+    async function saveRegion() {
+      const code = $('#regionCodeInput').value.trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(code)) return toast.show(t('use_valid_region_code'), 'red');
+      await updateUserField('region', code);
+      const nextChange = new Date(); nextChange.setFullYear(nextChange.getFullYear() + 1);
+      await updateUserField('regionchange_next', firebase.firestore.Timestamp.fromDate(nextChange));
+      toast.show(t('region_saved'), 'green');
+      closeModal('regionModal');
+    }
+    async function saveBirthday() {
+      const input = $('#birthdayInput').value.trim();
+      const error = validateBirthdayInput(input);
+      if (error) { $('#birthdayError').textContent = error; $('#birthdayError').style.display = 'block'; return; }
+      $('#birthdayError').style.display = 'none';
+      const age = calculateAge(input);
+      $('#birthdayConfirmText').textContent = `${t('birthday_confirm_prefix')} ${age} ${t('birthday_confirm_suffix')}`;
+      $('#birthdayGoBack');
+      closeModal('birthdayModal');
+      openModal('birthdayConfirmModal');
+      $('#btnBirthdayGoBack').onclick = () => { closeModal('birthdayConfirmModal'); openModal('birthdayModal'); };
+      $('#btnBirthdayConfirm').onclick = async () => {
+        await updateUserField('birth_date', input);
+        toast.show(t('birthday_saved'), 'green');
+        closeModal('birthdayConfirmModal');
+      };
+    }
+    function sendTestAnnouncement() {
+      try {
+        const n = new Notification(t('system_message'), { body: t('demo_announcement') });
+        setTimeout(() => n.close(), 6000);
+      } catch (e) { toast.show(t('could_not_send_notification'), 'red'); }
+    }
+    async function logoutAndRedirect() {
+      try { await auth.signOut(); toast.show(t('logged_out'), 'green'); setTimeout(() => window.location.href = '/login', 500); }
+      catch (e) { toast.show(t('logout_failed'), 'red'); }
+    }
+    async function resetSettings() {
+      try {
+        await auth.signOut();
+        localStorage.clear();
+        sessionStorage.clear();
+        toast.show(t('browser_storage_cleared'), 'green');
+        setTimeout(() => window.location.href = '/login', 500);
+      } catch (e) { toast.show(t('reset_failed'), 'red'); }
+    }
+
+    /* ============ init buttons for static modals ============ */
     function initStaticButtons() {
-      $('#btnLoginLogout').addEventListener('click', () => {
-        if (state.user) openModal('logoutModal');
-        else window.location.href = '/login';
-      });
-      const logoutTopBtn = $('#btnLogoutTop');
-      if (logoutTopBtn) {
-        logoutTopBtn.addEventListener('click', () => {
-          if (state.user) openModal('logoutModal');
-          else window.location.href = '/login';
-        });
-      }
-      $('#btnConfirmLogout').addEventListener('click', logoutAndRedirect);
-      $('#btnLang').addEventListener('click', () => {
-        if (!state.user) return toast.show('先にログインしてください。', 'red');
-        $('#langSelect').value = (state.userDoc?.lang || 'es').toLowerCase();
-        openModal('languageModal');
-      });
       $('#btnSaveLang').addEventListener('click', saveLang);
-      $('#btnConfirmReset').addEventListener('click', resetSettings);
-      $('#btnReset').addEventListener('click', () => openModal('resetModal'));
-      const creditsBtn = $('#btnCredits');
-      if (creditsBtn) creditsBtn.addEventListener('click', () => openModal('creditsModal'));
-      const translationsBtn = $('#btnTranslations');
-      if (translationsBtn) translationsBtn.addEventListener('click', () => openModal('translationsModal'));
-      $('#btnRegion').addEventListener('click', () => {
-        if (!state.user) return toast.show('先にログインしてください。', 'red');
-        $('#regionCodeInput').value = (state.userDoc?.region || '').toUpperCase();
-        $('#regionSearch').value = '';
-        buildRegionList('');
-        openModal('regionModal');
-      });
-      $('#btnBirthday').addEventListener('click', () => {
-        if (!state.user) return toast.show('先にログインしてください。', 'red');
-        $('#birthdayInput').value = state.userDoc?.birth_date || '';
-        $('#birthdayError').style.display = 'none';
-        openModal('birthdayModal');
-      });
       $('#btnSaveRegion').addEventListener('click', saveRegion);
-      $('#btnSaveBirthday').addEventListener('click', saveBirthday);
-      $('#togglePublicProfile').addEventListener('change', async (e) => {
-        if (!state.user) return;
-        const on = e.target.checked;
-        if (on) {
-          await toggleField('isProfilePublic', true);
-        } else {
-          // Keep the same safety flow as the app: ask before making private.
-          e.target.checked = true;
-          openModal('logoutModal');
-          $('#logoutText').textContent = 'このモーダルは確認用として再利用されています。アプリの手順に従って、予定された確認ステップでプロフィールの公開設定を変更してください。';
-          $('#btnConfirmLogout').textContent = '閉じる';
-          $('#btnConfirmLogout').onclick = () => {
-            $('#btnConfirmLogout').textContent = 'ログアウト';
-            $('#logoutText').textContent = '本当にログアウトしますか？';
-            $('#btnConfirmLogout').onclick = logoutAndRedirect;
-            closeModal('logoutModal');
-          };
-          return;
-        }
-      });
-      $('#toggleAllowPosts').addEventListener('change', async (e) => {
-        if (!state.user) return;
-        await toggleField('postsAllowed', e.target.checked);
-      });
-      $('#creditsTapTarget').addEventListener('click', revealDebugMaybe);
-      const openDebugBtn = $('#btnOpenDebug');
-      if (openDebugBtn) openDebugBtn.addEventListener('click', () => window.location.href = './debug.html');
-      $('#btnDisableDebug').addEventListener('click', () => {
-        state.debugEnabled = false;
-        localStorage.removeItem('debug_enabled');
-        closeModal('debugModal');
-        toast.show('デバッグを非表示にしました。', 'green');
-      });
       $('#regionSearch').addEventListener('input', (e) => buildRegionList(e.target.value));
       $('#regionCodeInput').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().slice(0, 2); });
-      const systemInfoBtn = $('#btnSystemInfo');
-      if (systemInfoBtn) systemInfoBtn.addEventListener('click', () => window.open('https://darkpurpleof.github.io/systeminfo', '_blank'));
+      $('#btnSaveBirthday').addEventListener('click', saveBirthday);
+      $('#btnVerifyContinue').addEventListener('click', () => { closeModal('verifyModal'); openModal('verifyProcessingModal'); });
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.body.classList.toggle('light', saved === 'light');
+    }
+
+    async function loadUserDoc() {
+      if (state.userUnsub) { state.userUnsub(); state.userUnsub = null; }
+      if (!state.user) { state.userDoc = null; renderAll(); return; }
+      const ref = userRef(state.user);
+      if (!ref) return;
+      state.userUnsub = ref.onSnapshot((snap) => {
+        state.userDoc = snap.exists ? snap.data() : {};
+        currentLang = normalizeLang(state.userDoc?.lang || 'en');
+        applyTranslations();
+        renderAll();
+      }, () => toast.show(t('could_not_load_user_data'), 'red'));
+    }
+
+    function renderAll() {
+      renderUserInfoCard();
+      renderProfileCard();
+      renderExtrasCard();
+      renderInfoCard();
+      renderDebugCard();
     }
 
     function initAuth() {
       auth.onAuthStateChanged(async (user) => {
         state.user = user || null;
-        setProfileHeader(user);
-        setBadgeIfNeeded(user);
-        setVisibilityByLogin(user);
         await loadUserDoc();
       });
     }
 
     function initPage() {
-      initThemeToggle();
-      initQuickLinks();
-      initModalButtons();
+      initTheme();
       initStaticButtons();
-      initAuth();
-      buildTranslationBody();
       buildRegionList('');
-      setProfileHeader(null);
-      setVisibilityByLogin(null);
-      setBadgeIfNeeded(null);
-
-      $('#pageTitle').addEventListener('click', revealDebugMaybe);
-      const profileNameEl = $('#profileName');
-      if (profileNameEl) profileNameEl.addEventListener('click', revealDebugMaybe);
-      $('#regionDesc').addEventListener('click', () => {
-        if (state.user) openModal('regionModal');
-      });
-      $('#birthdayDesc').addEventListener('click', () => {
-        if (state.user) openModal('birthdayModal');
-      });
+      currentLang = 'en';
+      applyTranslations();
+      renderTranslationBody();
+      renderPermissionCard();
+      renderAll();
+      loadSiteVersion();
+      initAuth();
     }
 
     document.addEventListener('DOMContentLoaded', initPage);

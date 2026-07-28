@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Transaction History</title>
+<title>My transactions</title>
 
-<!-- Firebase clásico (NO modular) -->
+<!-- Classic Firebase (not modular) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-<!-- Inicializar Firebase -->
+<!-- Initialize Firebase -->
 <script>
 firebase.initializeApp({
    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
@@ -22,12 +22,10 @@ firebase.initializeApp({
 });
 </script>
 
-<!-- Topbar -->
+<!-- Top bar -->
 <script src="./dp-topbar.js"></script>
 
-<!-- TU TEMA -->
 <style>
-/* (PEGUÉ EXACTAMENTE TU CSS AQUÍ, sin tocar nada) */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; width: 100%; overflow-x: hidden; }
 img { max-width: 100%; display: block; }
@@ -39,7 +37,12 @@ img { max-width: 100%; display: block; }
   --accent: #6b21a8;
   --accent-strong: #5b21b6;
   --text: #eaeaea;
-  --border: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --green: #34d399;
+  --red: #f87171;
+  --purple: var(--accent);
+  --field-bg: #e9e9ec;
+  --field-text: #1a1a1a;
 }
 body {
   margin:0;
@@ -48,39 +51,162 @@ body {
   color:var(--text);
 }
 
-h2 {
-  padding-left: 12px;
+dp-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-p.muted {
-  padding-left: 12px;
+main.container{
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px 12px 48px 12px;
+}
+
+/* ---------- Header ---------- */
+.page-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.page-header h1{
+  font-size: 26px;
+  margin: 0 0 6px 0;
+}
+
+.user-name{
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 6px 0;
+}
+
+.balance-line{
+  font-size: 14px;
+  color: var(--text);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.coin-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:2px 6px;
+  border-radius:999px;
+  background: var(--accent);
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+  line-height:1;
+}
+
+.topup-btn{
+  background: var(--accent);
+  color:#fff;
+  border:none;
+  border-radius: 6px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.topup-btn:hover{ background: var(--accent-strong); }
+
+/* ---------- Filters (light dropdowns, Roblox-style) ---------- */
+.filters{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.field{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 170px;
+}
+
+.field label{
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.field select,
+.field input[type="text"]{
+  background: var(--field-bg);
+  color: var(--field-text);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 6px;
+  padding: 9px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  min-width: 170px;
+}
+
+.field select:focus,
+.field input:focus{
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.field.search{ flex:1 1 220px; }
+.field.search input{ width:100%; min-width: 0; }
+
+/* ---------- Table ---------- */
+.result-count{
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
 }
 
 .table-header, .row {
   display:flex;
-  padding:12px;
+  padding:14px 8px;
   align-items:center;
+  gap: 8px;
 }
 
 .table-header {
   color:var(--muted);
   font-size:12px;
+  border-bottom: 1px solid var(--border);
 }
 
-.row:nth-child(even){
-  background: rgba(255,255,255,0.05);
+.row{
+  border-bottom: 1px solid var(--border);
+}
+
+.row:hover{
+  background: rgba(255,255,255,0.03);
 }
 
 .col { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.col.source { flex:2; display:flex; align-items:center; gap:6px; cursor:pointer; }
-.col.desc { flex:2; display:flex; align-items:center; gap:6px; }
+.col.source { flex:2; display:flex; align-items:center; gap:8px; cursor:pointer; }
+.col.desc { flex:3; display:flex; align-items:center; gap:10px; white-space: normal; }
+.col.amount{ text-align:right; flex:1; font-weight:600; }
+.col.amount.in{ color: var(--purple); }
+.col.amount.out{ color: var(--red); }
+
+.desc-text{ display:flex; flex-direction:column; overflow:hidden; }
+.desc-title{ color: var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.desc-sub{ color: var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 .pfp {
-  width:24px;
-  height:24px;
+  width:28px;
+  height:28px;
   border-radius:50%;
   background-size:cover;
   background-position:center;
+  flex-shrink:0;
 }
 
 .item-img {
@@ -89,55 +215,79 @@ p.muted {
   border-radius:6px;
   background-size:cover;
   background-position:center;
+  flex-shrink:0;
 }
 
 .verified {
   width:12px;
   height:12px;
+  flex-shrink:0;
+}
+
+.empty-state{
+  padding: 40px 12px;
+  text-align:center;
+  color: var(--muted);
+}
+
+/* ---------- Resumen view ---------- */
+.summary-section{ margin-bottom: 28px; }
+
+.summary-section h3{
+  font-size: 15px;
+  margin: 0 0 4px 0;
+}
+
+.summary-row{
+  display:flex;
+  justify-content: space-between;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.summary-row.total{
+  font-weight: 700;
+}
+
+.summary-row .label{ color: var(--text); }
+.summary-row .value{ color: var(--muted); }
+.summary-row.total .value{ color: var(--text); }
+
+.summary-head{
+  display:flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
 }
 
 /* Diseño para móviles */
 @media (max-width: 768px) {
-  body {
-    font-size: 16px;
-  }
+  body { font-size: 16px; }
 
-  .table-header {
-    display: none;
-  }
+  .table-header { display: none; }
 
   .row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     background: var(--card);
   }
 
-  .col {
-    width: 100%;
-    flex: none;
-    padding: 0;
-    white-space: normal;
-    font-size: 14px;
-  }
+  .col { width: 100%; flex: none; padding: 0; white-space: normal; font-size: 14px; }
+  .col.source, .col.desc, .col.amount { flex: none; }
+  .col.amount{ text-align:left; }
 
-  .col.source, .col.desc {
-    flex: none;
-  }
+  .page-header h1{ font-size: 24px; }
 
-  h2 {
-    font-size: 28px;
-    padding-left: 16px;
-  }
-
-  p.muted {
-    padding-left: 16px;
-    font-size: 16px;
-  }
+  .field, .field select, .field input{ min-width: 0; }
+  .field{ flex: 1 1 100%; }
 }
 </style>
 </head>
@@ -147,34 +297,553 @@ p.muted {
 <dp-topbar></dp-topbar>
 
 <main class="container">
-  <h2>Transaction History</h2>
-  <p class="muted">Review transactions made with your account</p>
 
-  <div class="table-header">
-    <div class="col">Date</div>
-    <div class="col source">Source</div>
-    <div class="col desc">Description</div>
-    <div class="col">Amount</div>
+  <div class="page-header">
+    <div>
+      <h1>My transactions</h1>
+      <p class="user-name" id="user-name">Loading…</p>
+      <p class="balance-line">My balance: <span id="balance-amount">—</span></p>
+    </div>
+    <button class="topup-btn" id="topup-btn">Top up DF$</button>
   </div>
 
-  <div id="transactions"></div>
+  <div class="filters">
+    <div class="field">
+      <label for="type-select">Transaction type</label>
+      <select id="type-select">
+        <option value="all">All</option>
+        <option value="outgoing">Purchases</option>
+        <option value="incoming">Incoming</option>
+        <option value="summary">Summary</option>
+      </select>
+    </div>
+
+    <div class="field" id="page-size-field">
+      <label for="page-size-select">Items per page</label>
+      <select id="page-size-select">
+        <option value="10">10 per page</option>
+        <option value="25">25 per page</option>
+        <option value="50">50 per page</option>
+        <option value="0">All</option>
+      </select>
+    </div>
+
+    <div class="field" id="sort-field">
+      <label for="sort-select">Sort by</label>
+      <select id="sort-select">
+        <option value="date-desc">Most recent</option>
+        <option value="date-asc">Oldest</option>
+        <option value="amount-desc">Amount: high to low</option>
+        <option value="amount-asc">Amount: low to high</option>
+      </select>
+    </div>
+
+    <div class="field" id="range-field" style="display:none;">
+      <label for="range-select">Date range</label>
+      <select id="range-select">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="0">All time</option>
+      </select>
+    </div>
+
+    <div class="field search">
+      <label for="search-input">Search</label>
+      <input type="text" id="search-input" placeholder="Source or description…">
+    </div>
+  </div>
+
+  <!-- Vista de lista -->
+  <div id="list-view">
+    <p class="result-count" id="result-count"></p>
+
+    <div class="table-header">
+      <div class="col">Date</div>
+      <div class="col source">Source</div>
+      <div class="col desc">Description</div>
+      <div class="col amount">Amount</div>
+    </div>
+
+    <div id="transactions"></div>
+  </div>
+
+  <!-- Vista de resumen -->
+  <div id="summary-view" style="display:none;">
+    <h2 style="font-size:18px; margin: 4px 0 16px 0;">Summary</h2>
+
+    <div class="summary-section">
+      <h3>Incoming DF$</h3>
+      <div class="summary-head"><span>Category</span><span>Amount</span></div>
+      <div id="summary-in"></div>
+    </div>
+
+    <div class="summary-section">
+      <h3>Outgoing DF$</h3>
+      <div class="summary-head"><span>Category</span><span>Amount</span></div>
+      <div id="summary-out"></div>
+    </div>
+  </div>
+
 </main>
 
 <script>
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-function formatDate(ts){
+let allTransactions = []; // { date, source, sourceData, description, context, image, type, amount, category }
+
+const SUPPORTED_LANGS = ["en", "es", "ru", "de", "ja"];
+const LOCALE_MAP = {
+  en: "en-US",
+  es: "es-ES",
+  ru: "ru-RU",
+  de: "de-DE",
+  ja: "ja-JP"
+};
+
+const I18N = {
+  en: {
+    pageTitle: "My transactions",
+    loading: "Loading…",
+    balancePrefix: "My balance:",
+    topup: "Top up DF$",
+    typeLabel: "Transaction type",
+    all: "All",
+    purchases: "Purchases",
+    incoming: "Incoming",
+    summary: "Summary",
+    itemsPerPage: "Items per page",
+    perPage10: "10 per page",
+    perPage25: "25 per page",
+    perPage50: "50 per page",
+    allItems: "All",
+    sortBy: "Sort by",
+    mostRecent: "Most recent",
+    oldest: "Oldest",
+    amountHighLow: "Amount: high to low",
+    amountLowHigh: "Amount: low to high",
+    dateRange: "Date range",
+    last7Days: "Last 7 days",
+    last30Days: "Last 30 days",
+    last90Days: "Last 90 days",
+    allTime: "All time",
+    search: "Search",
+    searchPlaceholder: "Source or description…",
+    date: "Date",
+    source: "Source",
+    description: "Description",
+    amount: "Amount",
+    summaryTitle: "Summary",
+    category: "Category",
+    incomingDf: "Incoming DF$",
+    outgoingDf: "Outgoing DF$",
+    total: "Total",
+    noTransactions: "No transactions match your search.",
+    transaction_one: "1 transaction",
+    transaction_other: "{count} transactions",
+    categories: {
+      incoming: {
+        coin_purchase: "Coin purchases",
+        item_sale: "Item sales",
+        transfer_in: "Received transfers",
+        other: "Other income"
+      },
+      outgoing: {
+        purchase: "Purchases",
+        transfer_out: "Sent transfers",
+        system_fee: "System charges",
+        asset_upload: "Asset uploads",
+        grounds_content: "Additional Playgrounds content",
+        beta_program: "Beta program"
+      }
+    }
+  },
+  es: {
+    pageTitle: "My transactions",
+    loading: "Cargando…",
+    balancePrefix: "Mi saldo:",
+    topup: "Recargar DF$",
+    typeLabel: "Tipo de transacción",
+    all: "Todas",
+    purchases: "Compras",
+    incoming: "Entradas",
+    summary: "Resumen",
+    itemsPerPage: "Elementos por página",
+    perPage10: "10 por página",
+    perPage25: "25 por página",
+    perPage50: "50 por página",
+    allItems: "Todos",
+    sortBy: "Ordenar por",
+    mostRecent: "Más reciente",
+    oldest: "Más antiguo",
+    amountHighLow: "Monto: mayor a menor",
+    amountLowHigh: "Monto: menor a mayor",
+    dateRange: "Rango de fecha",
+    last7Days: "Últimos 7 días",
+    last30Days: "Últimos 30 días",
+    last90Days: "Últimos 90 días",
+    allTime: "Todo el tiempo",
+    search: "Buscar",
+    searchPlaceholder: "Origen o descripción…",
+    date: "Fecha",
+    source: "Origen",
+    description: "Descripción",
+    amount: "Monto",
+    summaryTitle: "Resumen",
+    category: "Categoría",
+    incomingDf: "DF$ entrantes",
+    outgoingDf: "DF$ salientes",
+    total: "Total",
+    noTransactions: "No hay transacciones que coincidan con tu búsqueda.",
+    transaction_one: "1 transacción",
+    transaction_other: "{count} transacciones",
+    categories: {
+      incoming: {
+        coin_purchase: "Compras de moneda",
+        item_sale: "Venta de objetos",
+        transfer_in: "Transferencias recibidas",
+        other: "Otros ingresos"
+      },
+      outgoing: {
+        purchase: "Compras",
+        transfer_out: "Transferencias enviadas",
+        system_fee: "System charges",
+        asset_upload: "Subidas de assets",
+        grounds_content: "Contenido adicional de Playgrounds",
+        beta_program: "Programa beta"
+      }
+    }
+  },
+  ru: {
+    pageTitle: "Мои транзакции",
+    loading: "Загрузка…",
+    balancePrefix: "Мой баланс:",
+    topup: "Пополнить DF$",
+    typeLabel: "Тип транзакции",
+    all: "Все",
+    purchases: "Покупки",
+    incoming: "Входящие",
+    summary: "Сводка",
+    itemsPerPage: "Элементов на страницу",
+    perPage10: "10 на страницу",
+    perPage25: "25 на страницу",
+    perPage50: "50 на страницу",
+    allItems: "Все",
+    sortBy: "Сортировать по",
+    mostRecent: "Сначала новые",
+    oldest: "Сначала старые",
+    amountHighLow: "Сумма: по убыванию",
+    amountLowHigh: "Сумма: по возрастанию",
+    dateRange: "Диапазон дат",
+    last7Days: "Последние 7 дней",
+    last30Days: "Последние 30 дней",
+    last90Days: "Последние 90 дней",
+    allTime: "За всё время",
+    search: "Поиск",
+    searchPlaceholder: "Источник или описание…",
+    date: "Дата",
+    source: "Источник",
+    description: "Описание",
+    amount: "Сумма",
+    summaryTitle: "Сводка",
+    category: "Категория",
+    incomingDf: "Входящие DF$",
+    outgoingDf: "Исходящие DF$",
+    total: "Итого",
+    noTransactions: "По вашему запросу транзакции не найдены.",
+    transaction_one: "1 транзакция",
+    transaction_other: "{count} транзакций",
+    categories: {
+      incoming: {
+        coin_purchase: "Покупка монет",
+        item_sale: "Продажа предметов",
+        transfer_in: "Полученные переводы",
+        other: "Прочие доходы"
+      },
+      outgoing: {
+        purchase: "Покупки",
+        transfer_out: "Отправленные переводы",
+        system_fee: "Системные списания",
+        asset_upload: "Загрузки assets",
+        grounds_content: "Дополнительный контент Playgrounds",
+        beta_program: "Бета-программа"
+      }
+    }
+  },
+  de: {
+    pageTitle: "Meine Transaktionen",
+    loading: "Wird geladen…",
+    balancePrefix: "Mein Guthaben:",
+    topup: "DF$ aufladen",
+    typeLabel: "Transaktionstyp",
+    all: "Alle",
+    purchases: "Käufe",
+    incoming: "Eingänge",
+    summary: "Übersicht",
+    itemsPerPage: "Einträge pro Seite",
+    perPage10: "10 pro Seite",
+    perPage25: "25 pro Seite",
+    perPage50: "50 pro Seite",
+    allItems: "Alle",
+    sortBy: "Sortieren nach",
+    mostRecent: "Neueste zuerst",
+    oldest: "Älteste zuerst",
+    amountHighLow: "Betrag: hoch bis niedrig",
+    amountLowHigh: "Betrag: niedrig bis hoch",
+    dateRange: "Datumsbereich",
+    last7Days: "Letzte 7 Tage",
+    last30Days: "Letzte 30 Tage",
+    last90Days: "Letzte 90 Tage",
+    allTime: "Gesamte Zeit",
+    search: "Suchen",
+    searchPlaceholder: "Quelle oder Beschreibung…",
+    date: "Datum",
+    source: "Quelle",
+    description: "Beschreibung",
+    amount: "Betrag",
+    summaryTitle: "Übersicht",
+    category: "Kategorie",
+    incomingDf: "Eingehende DF$",
+    outgoingDf: "Ausgehende DF$",
+    total: "Gesamt",
+    noTransactions: "Keine Transaktionen stimmen mit Ihrer Suche überein.",
+    transaction_one: "1 Transaktion",
+    transaction_other: "{count} Transaktionen",
+    categories: {
+      incoming: {
+        coin_purchase: "Münzkäufe",
+        item_sale: "Artikelverkäufe",
+        transfer_in: "Erhaltene Überweisungen",
+        other: "Sonstige Einnahmen"
+      },
+      outgoing: {
+        purchase: "Käufe",
+        transfer_out: "Gesendete Überweisungen",
+        system_fee: "Systemgebühren",
+        asset_upload: "Asset-Uploads",
+        grounds_content: "Zusätzliche Playgrounds-Inhalte",
+        beta_program: "Beta-Programm"
+      }
+    }
+  },
+  ja: {
+    pageTitle: "取引履歴",
+    loading: "読み込み中…",
+    balancePrefix: "残高:",
+    topup: "DF$をチャージ",
+    typeLabel: "取引の種類",
+    all: "すべて",
+    purchases: "購入",
+    incoming: "受け取り",
+    summary: "概要",
+    itemsPerPage: "1ページあたりの件数",
+    perPage10: "1ページ10件",
+    perPage25: "1ページ25件",
+    perPage50: "1ページ50件",
+    allItems: "すべて",
+    sortBy: "並び替え",
+    mostRecent: "新しい順",
+    oldest: "古い順",
+    amountHighLow: "金額：大きい順",
+    amountLowHigh: "金額：小さい順",
+    dateRange: "日付範囲",
+    last7Days: "過去7日",
+    last30Days: "過去30日",
+    last90Days: "過去90日",
+    allTime: "全期間",
+    search: "検索",
+    searchPlaceholder: "送信元または説明…",
+    date: "日付",
+    source: "送信元",
+    description: "説明",
+    amount: "金額",
+    summaryTitle: "概要",
+    category: "カテゴリ",
+    incomingDf: "受け取りDF$",
+    outgoingDf: "送信DF$",
+    total: "合計",
+    noTransactions: "検索条件に一致する取引はありません。",
+    transaction_one: "1件の取引",
+    transaction_other: "{count}件の取引",
+    categories: {
+      incoming: {
+        coin_purchase: "コイン購入",
+        item_sale: "アイテム販売",
+        transfer_in: "受け取った送金",
+        other: "その他の収入"
+      },
+      outgoing: {
+        purchase: "購入",
+        transfer_out: "送信した送金",
+        system_fee: "システム手数料",
+        asset_upload: "アセットのアップロード",
+        grounds_content: "Playgroundsの追加コンテンツ",
+        beta_program: "ベータプログラム"
+      }
+    }
+  }
+};
+
+let currentLang = "en";
+let currentUserBetaEnrolled = false;
+
+function normalizeLang(lang) {
+  const value = String(lang || "").trim().toLowerCase();
+  return SUPPORTED_LANGS.includes(value) ? value : "en";
+}
+
+function t(key) {
+  const lang = I18N[currentLang] ? currentLang : "en";
+  const parts = String(key).split(".");
+  let value = I18N[lang];
+  for (const part of parts) {
+    if (value && Object.prototype.hasOwnProperty.call(value, part)) {
+      value = value[part];
+    } else {
+      value = undefined;
+      break;
+    }
+  }
+  if (value === undefined && lang !== "en") {
+    value = I18N.en;
+    for (const part of parts) {
+      if (value && Object.prototype.hasOwnProperty.call(value, part)) {
+        value = value[part];
+      } else {
+        value = undefined;
+        break;
+      }
+    }
+  }
+  return value === undefined ? key : value;
+}
+
+function localizedNumber(n) {
+  const num = Number(n) || 0;
+  return new Intl.NumberFormat(LOCALE_MAP[currentLang] || LOCALE_MAP.en).format(num);
+}
+
+function applyLanguage(lang) {
+  currentLang = normalizeLang(lang);
+  document.documentElement.lang = currentLang;
+  document.title = t("pageTitle");
+
+  const typeSelect = document.getElementById("type-select");
+  const pageSizeSelect = document.getElementById("page-size-select");
+  const sortSelect = document.getElementById("sort-select");
+  const rangeSelect = document.getElementById("range-select");
+
+  document.getElementById("topup-btn").textContent = t("topup");
+  document.getElementById("user-name").textContent = document.getElementById("user-name").textContent || t("loading");
+  document.querySelector(".balance-line").childNodes[0].textContent = `${t("balancePrefix")} `;
+  document.querySelector('label[for="type-select"]').textContent = t("typeLabel");
+  typeSelect.options[0].textContent = t("all");
+  typeSelect.options[1].textContent = t("purchases");
+  typeSelect.options[2].textContent = t("incoming");
+  typeSelect.options[3].textContent = t("summary");
+
+  document.querySelector('label[for="page-size-select"]').textContent = t("itemsPerPage");
+  pageSizeSelect.options[0].textContent = t("perPage10");
+  pageSizeSelect.options[1].textContent = t("perPage25");
+  pageSizeSelect.options[2].textContent = t("perPage50");
+  pageSizeSelect.options[3].textContent = t("allItems");
+
+  document.querySelector('label[for="sort-select"]').textContent = t("sortBy");
+  sortSelect.options[0].textContent = t("mostRecent");
+  sortSelect.options[1].textContent = t("oldest");
+  sortSelect.options[2].textContent = t("amountHighLow");
+  sortSelect.options[3].textContent = t("amountLowHigh");
+
+  document.querySelector('label[for="range-select"]').textContent = t("dateRange");
+  rangeSelect.options[0].textContent = t("last7Days");
+  rangeSelect.options[1].textContent = t("last30Days");
+  rangeSelect.options[2].textContent = t("last90Days");
+  rangeSelect.options[3].textContent = t("allTime");
+
+  document.querySelector('label[for="search-input"]').textContent = t("search");
+  document.getElementById("search-input").placeholder = t("searchPlaceholder");
+
+  const tableHeaders = document.querySelectorAll(".table-header .col");
+  if (tableHeaders[0]) tableHeaders[0].textContent = t("date");
+  if (tableHeaders[1]) tableHeaders[1].textContent = t("source");
+  if (tableHeaders[2]) tableHeaders[2].textContent = t("description");
+  if (tableHeaders[3]) tableHeaders[3].textContent = t("amount");
+
+  const summaryH2 = document.querySelector("#summary-view h2");
+  if (summaryH2) summaryH2.textContent = t("summaryTitle");
+  const summaryH3 = document.querySelectorAll("#summary-view .summary-section h3");
+  if (summaryH3[0]) summaryH3[0].textContent = t("incomingDf");
+  if (summaryH3[1]) summaryH3[1].textContent = t("outgoingDf");
+  const summaryHeads = document.querySelectorAll("#summary-view .summary-head");
+  summaryHeads.forEach(head => {
+    const spans = head.querySelectorAll("span");
+    if (spans[0]) spans[0].textContent = t("category");
+    if (spans[1]) spans[1].textContent = t("amount");
+  });
+
+  render();
+}
+
+function getCategoryLabel(direction, key) {
+  return t(`categories.${direction}.${key}`);
+}
+
+function getSummaryCategoryForIncoming(tx) {
+  const transType = String(tx.transType || tx.transtype || tx.type || "").trim().toLowerCase();
+  if (transType === "coins") return "coin_purchase";
+  if (transType === "sales") return "item_sale";
+  if (transType === "received") return "transfer_in";
+  return "other";
+}
+
+function getSummaryCategoryForOutgoing(tx) {
+  const transType = String(tx.transType || tx.transtype || tx.type || "").trim().toLowerCase();
+  if (transType === "purchased") return "purchase";
+  if (transType === "sent") return "transfer_out";
+  if (transType === "system") return "system_fee";
+  if (transType === "assets") return "asset_upload";
+  if (transType === "grounds") return "grounds_content";
+  if (transType === "beta") return "beta_program";
+  return "purchase";
+}
+
+function ensureHttps(url) {
+  if (!url) return url;
+  url = String(url).trim();
+  if (/^(https?:|data:|\/|\.)/i.test(url)) {
+    return url;
+  }
+  return "https://" + url;
+}
+
+function formatDate(ts) {
   const d = ts.toDate();
-  return d.toLocaleString();
+  const locale = LOCALE_MAP[currentLang] || LOCALE_MAP.en;
+  return `${d.toLocaleDateString(locale)} ${d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+function formatCoins(n) {
+  return localizedNumber(n);
+}
+
+async function loadUserHeader(user) {
+  const userSnap = await db.collection("user_data").doc(user.email).get();
+  const userData = userSnap.data() || {};
+
+  if (userData.profile_picture) {
+    userData.profile_picture = ensureHttps(userData.profile_picture);
+  }
+
+  currentUserBetaEnrolled = !!userData.beta_enrolled;
+  applyLanguage(userData.lang || "en");
+  document.getElementById("user-name").textContent = userData["display name"] || user.email;
+  document.getElementById("balance-amount").textContent = formatCoins(userData.coins);
 }
 
 async function loadTransactions(){
   const user = auth.currentUser;
   if(!user) return;
-
-  const container = document.getElementById("transactions");
-  container.innerHTML = "";
 
   const snap = await db
     .collection("transactions")
@@ -182,24 +851,113 @@ async function loadTransactions(){
     .collection("records")
     .get();
 
-  let index = 0;
+  const userCache = {};
+  allTransactions = [];
 
   for(const doc of snap.docs){
     const tx = doc.data();
 
-    // obtener user data
-    const userSnap = await db.collection("user_data").doc(tx.source).get();
-    const userData = userSnap.data() || {};
+    if(!userCache[tx.source]){
+      const userSnap = await db.collection("user_data").doc(tx.source).get();
+      const uData = userSnap.data() || {};
+      if (uData.profile_picture) {
+        uData.profile_picture = ensureHttps(uData.profile_picture);
+      }
+      userCache[tx.source] = uData;
+    }
+
+    allTransactions.push({
+      id: doc.id,
+      date: tx.date,
+      source: tx.source,
+      sourceData: userCache[tx.source],
+      description: tx.description,
+      context: tx.context || "",
+      image: ensureHttps(tx.image),
+      type: tx.type,
+      amount: Number(tx.amount) || 0,
+      category: tx.category || "other",
+      transType: tx.transType || tx.transtype || ""
+    });
+  }
+
+  render();
+}
+
+function getFiltered(){
+  const search = document.getElementById("search-input").value.trim().toLowerCase();
+  const typeVal = document.getElementById("type-select").value;
+  const sort = document.getElementById("sort-select").value;
+
+  const activeType = typeVal === "summary" ? "all" : typeVal;
+
+  let filtered = allTransactions.filter(tx => {
+    if(activeType !== "all" && tx.type !== activeType) return false;
+
+    if(search){
+      const name = (tx.sourceData["display name"] || tx.source || "").toLowerCase();
+      const desc = (tx.description || "").toLowerCase();
+      if(!name.includes(search) && !desc.includes(search)) return false;
+    }
+
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    switch(sort){
+      case "date-asc": return a.date.toDate() - b.date.toDate();
+      case "amount-desc": return b.amount - a.amount;
+      case "amount-asc": return a.amount - b.amount;
+      case "date-desc":
+      default: return b.date.toDate() - a.date.toDate();
+    }
+  });
+
+  return filtered;
+}
+
+function getRangeFiltered(){
+  const days = Number(document.getElementById("range-select").value);
+  if(!days) return allTransactions;
+
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+
+  return allTransactions.filter(tx => tx.date.toDate() >= cutoff);
+}
+
+function renderRows(filtered){
+  const container = document.getElementById("transactions");
+  container.innerHTML = "";
+
+  document.getElementById("result-count").textContent =
+    filtered.length === 1
+      ? t("transaction_one")
+      : t("transaction_other").replace("{count}", String(filtered.length));
+
+  const pageSize = Number(document.getElementById("page-size-select").value);
+  const rows = pageSize ? filtered.slice(0, pageSize) : filtered;
+
+  if(rows.length === 0){
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = t("noTransactions");
+    container.appendChild(empty);
+    return;
+  }
+
+  for(const tx of rows){
+    const userData = tx.sourceData;
 
     const row = document.createElement("div");
     row.className = "row";
 
-    // DATE
+    // Date
     const date = document.createElement("div");
     date.className = "col";
     date.textContent = formatDate(tx.date);
 
-    // SOURCE
+    // Source
     const source = document.createElement("div");
     source.className = "col source";
 
@@ -219,12 +977,12 @@ async function loadTransactions(){
       badge.className = "verified";
       source.appendChild(badge);
     }
- 
+
     source.onclick = () => {
       window.location.href = `viewprofile?profile=${tx.source}`;
     };
 
-    // DESCRIPTION
+    // Description
     const desc = document.createElement("div");
     desc.className = "col desc";
 
@@ -235,18 +993,30 @@ async function loadTransactions(){
       desc.appendChild(img);
     }
 
-    const descText = document.createElement("span");
-    descText.textContent = tx.description;
+    const descText = document.createElement("div");
+    descText.className = "desc-text";
+
+    const descTitle = document.createElement("span");
+    descTitle.className = "desc-title";
+    descTitle.textContent = tx.description;
+    descText.appendChild(descTitle);
+
+    if(tx.context){
+      const descSub = document.createElement("span");
+      descSub.className = "desc-sub";
+      descSub.textContent = tx.context;
+      descText.appendChild(descSub);
+    }
 
     desc.appendChild(descText);
 
-    // AMOUNT
+    // Amount
     const amount = document.createElement("div");
-    amount.className = "col";
+    amount.className = `col amount ${tx.type === "outgoing" ? "out" : "in"}`;
     amount.textContent =
       tx.type === "outgoing"
-        ? `-DF$ ${tx.amount}`
-        : `DF$ ${tx.amount}`;
+        ? `-DF$ ${formatCoins(tx.amount)}`
+        : `+DF$ ${formatCoins(tx.amount)}`;
 
     row.appendChild(date);
     row.appendChild(source);
@@ -254,13 +1024,107 @@ async function loadTransactions(){
     row.appendChild(amount);
 
     container.appendChild(row);
-    index++;
   }
 }
 
-auth.onAuthStateChanged(user => {
-  if(user){
-    loadTransactions();
+function renderSummary() {
+  const ranged = getRangeFiltered();
+
+  const inTx = ranged.filter(t => t.type === "incoming");
+  const outTx = ranged.filter(t => t.type === "outgoing");
+
+  const inTotals = {
+    coin_purchase: 0,
+    item_sale: 0,
+    transfer_in: 0,
+    other: 0
+  };
+  inTx.forEach(t => {
+    const category = getSummaryCategoryForIncoming(t);
+    inTotals[category] += t.amount;
+  });
+
+  const outTotals = {
+    purchase: 0,
+    transfer_out: 0,
+    system_fee: 0,
+    asset_upload: 0,
+    grounds_content: 0,
+    beta_program: 0
+  };
+  outTx.forEach(t => {
+    const category = getSummaryCategoryForOutgoing(t);
+    outTotals[category] += t.amount;
+  });
+
+  const inContainer = document.getElementById("summary-in");
+  inContainer.innerHTML = "";
+  let inTotal = 0;
+  Object.keys(inTotals).forEach(key => {
+    inTotal += inTotals[key];
+    inContainer.appendChild(summaryRow(getCategoryLabel("incoming", key), inTotals[key]));
+  });
+  inContainer.appendChild(summaryRow(t("total"), inTotal, true));
+
+  const outContainer = document.getElementById("summary-out");
+  outContainer.innerHTML = "";
+  let outTotal = 0;
+  Object.keys(outTotals).forEach(key => {
+    outTotal += outTotals[key];
+    outContainer.appendChild(summaryRow(getCategoryLabel("outgoing", key), outTotals[key]));
+  });
+  outContainer.appendChild(summaryRow(t("total"), outTotal, true));
+}
+
+function summaryRow(label, amount, isTotal) {
+  const row = document.createElement("div");
+  row.className = "summary-row" + (isTotal ? " total" : "");
+
+  const l = document.createElement("span");
+  l.className = "label";
+  l.textContent = label;
+
+  const v = document.createElement("span");
+  v.className = "value";
+  v.textContent = `DF$ ${formatCoins(amount)}`;
+
+  row.appendChild(l);
+  row.appendChild(v);
+  return row;
+}
+
+function render() {
+  const typeVal = document.getElementById("type-select").value;
+  const isSummary = typeVal === "summary";
+
+  document.getElementById("list-view").style.display = isSummary ? "none" : "block";
+  document.getElementById("summary-view").style.display = isSummary ? "block" : "none";
+  document.getElementById("page-size-field").style.display = isSummary ? "none" : "flex";
+  document.getElementById("sort-field").style.display = isSummary ? "none" : "flex";
+  document.getElementById("range-field").style.display = isSummary ? "flex" : "none";
+
+  if (isSummary) {
+    renderSummary();
+  } else {
+    renderRows(getFiltered());
+  }
+}
+
+// ---- filters ----
+document.getElementById("type-select").addEventListener("change", render);
+document.getElementById("page-size-select").addEventListener("change", render);
+document.getElementById("sort-select").addEventListener("change", render);
+document.getElementById("range-select").addEventListener("change", render);
+document.getElementById("search-input").addEventListener("input", render);
+
+document.getElementById("topup-btn").addEventListener("click", () => {
+  window.location.href = "shop.html";
+});
+
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    await loadUserHeader(user);
+    await loadTransactions();
   } else {
     window.location.href = "login.html";
   }

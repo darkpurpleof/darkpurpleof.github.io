@@ -7,9 +7,13 @@
         "icon": "https://boykisser2189.neocities.org/he.png",
         "author": "boykisser2189@darkpurpleof.github.io",
         "type": 1,
-        "subtype": "Role"
+        "itemverified": true,
+        "desc": "ooh, you like kissing boys, don't you?",
+        "subtype": "Role",
+        "price": 5,
+        "authorverified": true
       },
-      {"id":"PFPFRAMES","name":"Profile Frames","icon":"https://boykisser2189.neocities.org/frames.jpg","author":"boykisser2189@darkpurpleof.github.io","type":1,"subtype":"Bundle"}
+      {"id":"PFPFRAMES","name":"Profile Frames","price": 300, "icon":"https://boykisser2189.neocities.org/frames.jpg","author":"boykisser2189@darkpurpleof.github.io","type":1,"itemverified": true,"subtype":"Bundle","authorverified": true}
     ]
   }
 }

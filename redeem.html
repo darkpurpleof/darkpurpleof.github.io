@@ -686,7 +686,8 @@
         description: "Redeemed Code",
         image: "https://darkpurpleof.github.io/org-owner.jpg",
         source: "system@darkpurpleof.github.io",
-        type: "incoming"
+        type: "incoming",
+        transtype: "coins"
       });
       await codeRef.delete();
       showSuccess(`${coins} coins have been added to your account.`, `You now have <strong>${newCoins} coins</strong>.`);
@@ -726,7 +727,8 @@
         description: "DF$",
         image: codeData.image||"https://darkpurpleof.github.io/org-owner.jpg",
         source: codeData.author||"system@darkpurpleof.github.io",
-        type: "incoming"
+        type: "incoming",
+        transtype: "coins"
       });
       await codeRef.delete();
       showSuccess(`${amount} coins (DF$) have been added to your account.`, `You now have <strong>${newCoins} coins</strong>.`);

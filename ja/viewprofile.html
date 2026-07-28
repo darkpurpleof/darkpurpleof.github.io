@@ -1,19 +1,20 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>プロフィール</title>
+  <title>Profile</title>
 
   <script src="/authorUGCList.js"></script>
-  <script src="/sendgift.js"></script>
+
+    <script src="/sendgift.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
- 
+
   <style>
     :root{
       --bg:#171717;
@@ -51,335 +52,460 @@
     dp-topbar{display:block;position:sticky;top:0;z-index:100;}
 
     main.container{
-      width:min(1160px, calc(100% - 28px));
-      margin:22px auto 28px;
-      display:grid;
-      grid-template-columns:minmax(0,1fr) 360px;
-      gap:18px;
-      align-items:start;
+      width:min(880px, calc(100% - 28px));
+      margin:28px auto 60px;
+      display:flex;
+      flex-direction:column;
+      gap:20px;
     }
 
-    @media (max-width: 980px){
-      main.container{grid-template-columns:1fr;width:min(100%, calc(100% - 20px));}
-    }
-
-    .stack{display:flex;flex-direction:column;gap:18px;}
-    .card{
-      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0));
-      background-color:var(--card);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:18px;
-      box-shadow:var(--soft-shadow);
-    }
-
+    /* ---------------- Hero ---------------- */
     .hero{
       position:relative;
-      overflow:hidden;
-      padding:0;
+      border-radius:22px;
+      overflow:visible;
+      background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
+      background-color:var(--card);
+      border:1px solid var(--border);
+      box-shadow:var(--soft-shadow);
     }
-
     .hero-banner{
       width:100%;
-      min-height:190px;
+      height:210px;
       background:#2a2a2a center/cover no-repeat;
-      border-bottom:1px solid var(--border);
       position:relative;
+      cursor:pointer;
+      border-radius:22px 22px 0 0;
     }
     .hero-banner::after{
       content:"";
       position:absolute;
       inset:0;
-      background:linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.42));
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.5) 100%),
+        linear-gradient(120deg, rgba(107,33,168,0.20), rgba(0,0,0,0) 60%);
     }
 
-    .hero-body{
-      position:relative;
-      padding:0 18px 18px;
-    }
-
-    .profile-row{
-      display:flex;
-      gap:18px;
-      align-items:flex-start;
-      margin-top:-52px;
-      flex-wrap:wrap;
-    }
-
-    .pfp-wrap{
-      position:relative;
-      width:126px;
-      flex:0 0 126px;
-    }
-    .pfp{
-      width:126px;
-      height:126px;
-      border-radius:18px;
-      background-size:cover;
-      background-position:center;
-      background-repeat:no-repeat;
-      border:1px solid var(--border-strong);
-      background-color:#303030;
-      box-shadow:0 12px 26px rgba(0,0,0,0.26);
-    }
-    .pfp-frame{
+    .hero-body{position:relative;padding:0 28px 28px;}
+    .owner-actions{
       position:absolute;
-      inset:0;
-      border-radius:18px;
-      pointer-events:none;
-      display:none;
-      background-size:cover;
-      background-position:center;
-      background-repeat:no-repeat;
-    }
-
-    .meta{flex:1;min-width:240px;padding-top:54px;}
-    .display-name{
-      font-size:26px;
-      line-height:1.1;
-      font-weight:800;
+      top:12px;
+      right:28px;
       display:flex;
-      gap:8px;
+      justify-content:flex-end;
       align-items:center;
-      flex-wrap:wrap;
-      letter-spacing:-0.02em;
-    }
-    .verified{
-      width:18px;
-      height:18px;
-      background-image:url('/assets/verified.png');
-      background-size:contain;
-      background-repeat:no-repeat;
-      display:inline-block;
-      transform:translateY(1px);
-    }
-    .email{color:var(--muted);font-size:13px;margin-top:7px;word-break:break-all;}
-    .bio{
-      margin-top:14px;
-      color:var(--text);
-      line-height:1.6;
-      font-size:14px;
-      max-width:860px;
-    }
-    .section-label{display:block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-    .subtle{color:var(--muted);font-size:13px;line-height:1.5;}
-
-    .top-metrics{
-      display:grid;
-      grid-template-columns:repeat(3, minmax(0, 1fr));
       gap:10px;
-      margin-top:16px;
-    }
-    @media (max-width: 640px){
-      .top-metrics{grid-template-columns:1fr;}
-    }
-    .metric{
-      background:var(--card-2);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:12px 14px;
-      min-height:72px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      gap:4px;
-    }
-    .metric .k{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
-    .metric .v{font-size:18px;font-weight:800;letter-spacing:-0.02em;}
-
-    .mini-row{
-      display:flex;
-      gap:8px;
       flex-wrap:wrap;
-      margin-top:16px;
+      z-index:20;
+      pointer-events:auto;
     }
-    .chip{
+    .owner-action-btn{
+      border:1px solid var(--btn-border-muted);
+      background:var(--card-2);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 12px;
+      min-height:36px;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
       display:inline-flex;
       align-items:center;
-      gap:7px;
-      padding:8px 11px;
+      justify-content:center;
+      transition:transform .14s ease, border-color .14s ease, background .14s ease;
+    }
+    .owner-action-btn:hover{transform:translateY(-1px);border-color:var(--border-strong);}
+
+    .identity-row{
+      display:flex;
+      gap:18px;
+      align-items:flex-end;
+      margin-top:-58px;
+      flex-wrap:wrap;
+    }
+
+    .pfp-wrap{position:relative;flex:0 0 auto;width:132px;height:132px;}
+    .pfp-ring{
+      width:132px;height:132px;
+      border-radius:50%;
+      padding:4px;
+      background:transparent;
+      overflow:hidden;
+    }
+    .pfp{
+      width:100%;height:100%;
+      border-radius:50%;
+      background-size:cover;background-position:center;background-repeat:no-repeat;
+      background-color:#303030;
+      border:3px solid var(--card);
+      cursor:pointer;
+      overflow:hidden;
+    }
+    .pfp-frame{
+      position:absolute;inset:4px;
+      border-radius:50%;
+      pointer-events:none;
+      display:none;
+      background-size:cover;background-position:center;background-repeat:no-repeat;
+    }
+
+    .identity-main{flex:1;min-width:220px;padding-bottom:8px;}
+    .display-name{
+      font-size:26px;font-weight:800;line-height:1.15;
+      display:flex;gap:8px;align-items:center;flex-wrap:wrap;letter-spacing:-0.02em;
+      text-shadow:0 2px 12px rgba(0,0,0,0.25);
+    }
+    .verified{width:19px;height:19px;background-image:url('/assets/verified.png');background-size:contain;background-repeat:no-repeat;display:inline-block;transform:translateY(1px);}
+    .email{color:var(--muted);font-size:13px;margin-top:5px;word-break:break-all;}
+
+    .status-line{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+    .chip{
+      display:inline-flex;align-items:center;gap:7px;
+      padding:6px 11px;border-radius:999px;
+      border:1px solid var(--border);background:var(--white-btn-bg);
+      color:var(--text);font-size:12.5px;font-weight:600;
+    }
+    .chip:empty{display:none;}
+    .chip.dot::before{
+      content:"";width:7px;height:7px;border-radius:999px;
+      background:var(--accent);box-shadow:0 0 0 4px rgba(107,33,168,0.18);flex:0 0 auto;
+    }
+
+    .section-label{display:block;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+    .subtle{color:var(--muted);font-size:13px;line-height:1.55;margin:0;}
+    .muted{color:var(--muted);}
+
+    .stat-strip{display:flex;align-items:center;gap:0;margin-top:20px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--border);}
+    .stat-strip .stat-item{display:flex;align-items:baseline;gap:6px;padding-right:16px;margin-right:16px;border-right:1px solid var(--border-strong);}
+    .stat-strip .stat-item:last-child{border-right:none;margin-right:0;padding-right:0;}
+    .stat-strip .stat-item .v{font-size:16px;font-weight:800;letter-spacing:-0.01em;}
+    .stat-strip .stat-item .k{font-size:12.5px;color:var(--muted);font-weight:600;}
+
+    .bio-block{margin-top:18px;}
+    #bio-text{font-size:14.5px;line-height:1.65;color:var(--text);max-width:640px;}
+
+    /* ---------------- Prominent interaction bar ---------------- */
+    .hero-actions-row{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      margin-top:20px;flex-wrap:wrap;
+    }
+    .action-buttons{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+    .action-tools{display:flex;align-items:center;gap:8px;}
+    .share-btn,
+    .more-btn{
+      width:44px;height:44px;
       border-radius:999px;
-      border:1px solid var(--border);
+      border:1px solid var(--btn-border-muted);
       background:var(--white-btn-bg);
       color:var(--text);
-      font-size:13px;
-      font-weight:600;
+      display:inline-flex;
+      align-items:center;justify-content:center;
+      cursor:pointer;
+      transition:background .14s ease, border-color .14s ease, transform .14s ease;
     }
-    .chip.dot::before{
-      content:"";
-      width:7px;
-      height:7px;
+    .share-btn:hover,
+    .more-btn:hover{border-color:var(--border-strong);transform:translateY(-1px);}
+    .share-btn svg,
+    .more-btn svg{width:18px;height:18px;}
+    .action-btn{
+      padding:11px 18px;
       border-radius:999px;
-      background:var(--accent);
-      box-shadow:0 0 0 4px rgba(107,33,168,0.18);
-      flex:0 0 auto;
-    }
-
-    .heading{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:14px;
-    }
-    .title{font-size:18px;font-weight:800;margin:0;letter-spacing:-0.01em;}
-    .subtitle{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.45;}
-
-    .controls{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-    .btn{
-      padding:9px 13px;
-      border-radius:10px;
       border:1px solid var(--btn-border-muted);
       background:var(--white-btn-bg);
       color:var(--text);
       cursor:pointer;
       font-weight:700;
-      min-height:38px;
+      font-size:14px;
+      min-height:44px;
       display:inline-flex;
       gap:8px;
       align-items:center;
       justify-content:center;
-      transition:transform .14s ease, opacity .14s ease, background .14s ease, border-color .14s ease;
+      white-space:nowrap;
+      transition:transform .14s ease, opacity .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease;
     }
-    .btn:hover{transform:translateY(-1px);border-color:var(--border-strong);}
-    .btn:disabled{cursor:not-allowed;transform:none;}
-    .btn.primary{background:var(--accent);color:#fff;border:none;}
-    .btn.primary:hover{background:var(--accent-strong);}
-    .btn.ghost{background:transparent;}
-    .btn.red{background:var(--white-btn-bg);color:var(--danger-dark);border:1px solid rgba(106,15,15,0.13);}
-    .btn.red:hover{border-color:rgba(106,15,15,0.28);}
+    .action-btn svg{width:17px;height:17px;flex:0 0 auto;}
+    .action-btn:hover{transform:translateY(-1px);border-color:var(--border-strong);box-shadow:0 6px 16px rgba(0,0,0,0.18);}
+    .action-btn:active{transform:translateY(0);}
+    .action-btn:disabled{cursor:not-allowed;transform:none;box-shadow:none;}
+    .action-btn:disabled,
+    .more-btn:disabled{
+      opacity:0.6;
+      filter:grayscale(0.7);
+      cursor:not-allowed;
+    }
+    .action-btn.primary{
+      background:linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color:#fff;
+      border:1px solid transparent;
+      box-shadow:0 8px 20px rgba(107,33,168,0.34);
+    }
+    .action-btn.primary:hover{filter:brightness(1.08);}
+    .action-btn.secondary{background:var(--card-2);}
+    .action-btn.red{background:rgba(192,27,27,0.08);color:var(--danger-dark);border:1px solid rgba(106,15,15,0.16);}
+    .action-btn.red:hover{background:rgba(192,27,27,0.14);border-color:rgba(106,15,15,0.3);}
+    .action-btn.friend-remove{background:#fca5a5;color:#7f1d1d;border-color:#f87171;}
+    .action-btn.friend-remove:hover{background:#f87171;border-color:#ef4444;}
 
-    .content-grid{display:grid;grid-template-columns:1fr;gap:18px;}
-    .two-up{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
-    @media (max-width: 720px){.two-up{grid-template-columns:1fr;}}
+    body.light .action-btn.friend-remove{background:#fee2e2;color:#991b1b;border-color:#fecaca;}
+    body.light .action-btn.friend-remove:hover{background:#fecaca;border-color:#fca5a5;}
 
-    .list{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+    .more-wrap{position:relative;z-index:60;flex:0 0 auto;}
+    .more-menu{
+      position:absolute;top:calc(100% + 8px);right:0;min-width:210px;
+      background:var(--card);border:1px solid var(--border-strong);border-radius:14px;
+      box-shadow:0 16px 40px rgba(0,0,0,0.38);padding:6px;
+      display:none;flex-direction:column;gap:2px;z-index:100;
+    }
+    .more-menu.open{display:flex;}
+    .more-menu .action-btn{
+      justify-content:flex-start;width:100%;border-radius:9px;border:none;
+      background:transparent;padding:9px 10px;min-height:36px;font-size:13.5px;box-shadow:none;
+    }
+    .more-menu .action-btn:hover{transform:none;background:var(--white-btn-bg);box-shadow:none;}
+    .more-menu .action-btn.red:hover{background:rgba(192,27,27,0.1);}
+
+    @media (max-width: 560px){
+      .hero-actions-row{width:100%;position:static;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+      .action-buttons{width:auto;flex:1 1 auto;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0;}
+      .action-buttons .action-btn{width:auto;flex:0 0 auto;}
+      .hero-actions-row > .action-tools{position:static;margin-left:8px;display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+      .share-btn{display:none;}
+      .more-btn{border-radius:14px;}
+      .action-btn{border-radius:14px;}
+      .action-buttons #friendBtn{
+        flex:1 1 auto;
+        width:auto;
+        min-width:0;
+        padding:11px 14px;
+        height:44px;
+        border-radius:14px;
+      }
+    }
+
+    @media (min-width: 561px){
+      .hero-actions-row{
+        justify-content:flex-start;
+        gap:8px;
+      }
+
+      .hero-actions-row > .action-buttons{
+        flex:1 1 auto;
+        min-width:0;
+      }
+
+      .hero-actions-row > .action-buttons .action-btn{
+        width:100%;
+        border-radius:14px;
+      }
+
+      .hero-actions-row > .more-wrap .more-btn{
+        border-radius:14px;
+      }
+    }
+
+    /* ---------------- Tabs ---------------- */
+    .tab-nav{
+      display:flex;gap:4px;
+      background:var(--card);border:1px solid var(--border);
+      padding:6px;border-radius:14px;box-shadow:var(--soft-shadow);
+      position:sticky;top:12px;z-index:10;
+    }
+    .tab-btn{
+      flex:1;padding:10px 14px;border-radius:10px;border:none;background:transparent;
+      color:var(--muted);font-weight:700;font-size:13.5px;cursor:pointer;
+      transition:background .15s ease,color .15s ease;
+      font-family:inherit;
+    }
+    .tab-btn.active{background:var(--accent);color:#fff;}
+    .tab-btn:hover:not(.active){background:var(--white-btn-bg);color:var(--text);}
+
+    .tab-panel{display:none;animation:fadeIn .18s ease;}
+    .tab-panel.active{display:block;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+    .panel-card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0));
+      background-color:var(--card);
+      border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:var(--soft-shadow);
+    }
+    .panel-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;}
+    .panel-title h3{margin:0;font-size:16px;letter-spacing:-0.01em;}
+
+    /* Overview */
+    .feature-list{display:flex;flex-direction:column;gap:12px;}
+    .feature-item{display:flex;gap:14px;align-items:flex-start;padding:15px;border:1px solid var(--border);border-radius:14px;background:var(--card-2);}
+    .feature-item .f-icon{
+      width:38px;height:38px;border-radius:11px;flex:0 0 auto;
+      background:rgba(107,33,168,0.14);color:var(--accent);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .feature-item .f-icon svg{width:19px;height:19px;}
+    .feature-item strong{display:block;font-size:14.5px;margin-bottom:4px;}
+
+    /* Roles grid */
+    .role-grid{display:flex;flex-direction:column;gap:12px;}
     .role-item{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      padding:10px 12px;
-      border:1px solid var(--border);
-      border-radius:12px;
-      background:rgba(255,255,255,0.015);
+      display:flex;gap:12px;align-items:center;padding:14px;
+      border:1px solid var(--border);border-radius:14px;background:var(--card-2);
+      transition:transform .15s ease,border-color .15s ease;
     }
-    .role-item img{width:28px;height:28px;object-fit:cover;border-radius:6px;flex:0 0 auto;}
-    .role-item strong{font-size:14px;}
+    .role-item:hover{transform:translateY(-2px);border-color:var(--border-strong);}
+    .role-item img{width:34px;height:34px;object-fit:cover;border-radius:9px;flex:0 0 auto;background:rgba(255,255,255,0.04);}
+    .role-item strong{font-size:14px;display:block;color:var(--text);}
+    .role-item .subtle{margin-top:2px;}
 
-    .stats-row{display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap;}
-    .stat{background:transparent;border-radius:10px;padding:9px 11px;border:1px solid var(--border);color:var(--muted);font-weight:700;font-size:13px;}
-
-    .panel-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
-    .panel-title h3{margin:0;font-size:15px;letter-spacing:-0.01em;}
-
-    .actions-vertical{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
-    .muted{color:var(--muted);}
-    .divider{height:1px;background:var(--border);margin:14px 0;}
-
-    .side-note{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:14px;
-      background:rgba(255,255,255,0.015);
+    .post-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+    .post-filter{
+      padding:8px 12px;border-radius:10px;border:1px solid var(--border);
+      background:var(--white-btn-bg);color:var(--muted);font:inherit;font-size:12.5px;
+      font-weight:700;cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease;
     }
-    .side-note strong{font-size:14px;}
+    .post-filter:hover{background:var(--hover, var(--white-btn-bg));color:var(--text);border-color:var(--border-strong);}
+    .post-filter.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+    .profile-posts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+    .profile-post-card{
+      min-width:0;background:var(--card-2);border:1px solid var(--border);
+      border-left:3px solid var(--accent);border-radius:14px;padding:16px;
+      cursor:pointer;display:flex;flex-direction:column;gap:11px;box-shadow:var(--soft-shadow);
+      transition:transform .15s ease,border-color .15s ease;
+    }
+    .profile-post-card:hover{transform:translateY(-3px);border-color:var(--accent);}
+    .profile-post-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+    .profile-post-head{display:flex;align-items:center;gap:8px;min-width:0;}
+    .profile-post-author{min-width:0;flex:1;display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .profile-post-date{flex:0 0 auto;color:var(--muted);font-size:11px;white-space:nowrap;}
+    .profile-post-text{font-size:14px;line-height:1.55;max-height:110px;overflow:hidden;white-space:pre-wrap;word-break:break-word;}
+    .profile-post-image-wrap{position:relative;border-radius:10px;overflow:hidden;height:160px;background:var(--bg);}
+    .profile-post-image{width:100%;height:100%;object-fit:cover;display:block;}
+    .profile-post-image-dim{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;color:#fff;font-size:23px;font-weight:800;}
+    .profile-post-empty{grid-column:1/-1;padding:28px 8px;color:var(--muted);font-size:13px;text-align:center;}
+
+    @media (max-width:560px){
+      .profile-posts{grid-template-columns:1fr;}
+    }
+
+    #ugc-list{margin-top:2px;}
 
     #toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:10px 14px;border-radius:10px;font-weight:700;display:none;z-index:99999;color:#fff;box-shadow:var(--soft-shadow);}
-    #toast.purple{background:var(--accent-strong);} 
-    #toast.red{background:#c00;} 
+    #toast.purple{background:var(--accent-strong);}
+    #toast.red{background:#c00;}
     #toast.yellow{background:#e6b800;color:#222;}
+
+    .share-dialog-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.62);display:none;align-items:center;justify-content:center;padding:20px;z-index:99999;}
+    .share-dialog-backdrop.open{display:flex;}
+    .share-dialog{width:min(460px, 100%);background:var(--card);border:1px solid var(--border-strong);border-radius:18px;padding:20px;box-shadow:var(--soft-shadow);color:var(--text);}
+    .share-dialog h3{margin:0 0 8px;font-size:18px;}
+    .share-dialog p{margin:0 0 12px;color:var(--muted);line-height:1.55;font-size:14px;}
+    .share-dialog input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card-2);color:var(--text);font:inherit;margin-bottom:12px;}
+    .share-dialog-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+    .share-dialog-actions button{padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--white-btn-bg);color:var(--text);font:inherit;font-weight:700;cursor:pointer;}
+    .share-dialog-actions .primary{background:var(--accent);color:#fff;border-color:var(--accent);} 
   </style>
 </head>
 <body>
   <script type="module" src="/dp-topbar.js"></script>
   <script type="module" src="/dp-rich-components.js"></script>
   <script src="/dp-diag.js"></script>
+  <script type="module" src="/imageviewer.js"></script>
   <dp-topbar></dp-topbar>
+ 
+  <main class="container" role="main" aria-label="View profile">
 
-  <main class="container" role="main" aria-label="プロフィールを表示">
-    <section class="stack">
-      <article class="card hero">
-        <div id="banner" class="hero-banner" title="プロフィールバナー"></div>
-        <div class="hero-body">
-          <div class="profile-row">
-            <div class="pfp-wrap">
-              <div id="profile-pic" class="pfp" title="プロフィール写真"></div>
-              <div id="pfp-frame" class="pfp-frame"></div>
+    <article class="hero">
+      <div id="banner" class="hero-banner" title="Profile banner"></div>
+      <div class="hero-body">
+        <div id="ownerActions" class="owner-actions" hidden></div>
+        <div class="identity-row">
+          <div class="pfp-wrap">
+            <div class="pfp-ring">
+              <div id="profile-pic" class="pfp" title="Profile picture"></div>
             </div>
+            <div id="pfp-frame" class="pfp-frame"></div>
+          </div>
 
-            <div class="meta">
-              <div class="display-name">
-                <div id="display-name">読み込み中…</div>
-                <div id="verified" class="verified" title="認証済み" style="display:none;"></div>
-              </div>
-              <div id="email" class="email"></div>
+          <div class="identity-main">
+            <div class="display-name">
+              <div id="display-name">Loading…</div>
+              <div id="verified" class="verified" title="Verified" style="display:none;"></div>
+            </div>
+            <div id="email" class="email"></div>
+          </div>
+        </div>
 
-              <div class="mini-row" id="statusChips">
-                <span class="chip dot" id="status-chip">公開プロフィール</span>
-                <span class="chip" id="last-updated"></span>
-              </div>
+        <div class="stat-strip" id="counters">
+          <div class="stat-item"><span class="v" id="followers-count">0</span><span class="k">Followers</span></div>
+          <div class="stat-item"><span class="v" id="following-count">0</span><span class="k">Following</span></div>
+          <div class="stat-item"><span class="v" id="friends-count">0</span><span class="k">Friends</span></div>
+        </div>
 
-              <div class="bio">
-                <span class="section-label">自己紹介</span>
-                <div id="bio-text">読み込み中…</div>
-              </div>
+        <div class="bio-block">
+          <span class="section-label">Bio</span>
+          <div id="bio-text">Loading…</div>
+        </div>
 
-              <div class="top-metrics" id="counters">
-                <div class="metric"><div class="k">フォロワー</div><div class="v" id="followers-count">0</div></div>
-                <div class="metric"><div class="k">フォロー中</div><div class="v" id="following-count">0</div></div>
-                <div class="metric"><div class="k">友達</div><div class="v" id="friends-count">0</div></div>
-              </div>
+        <div class="hero-actions-row" id="interactionArea">
+          <div id="interactionButtons" class="action-buttons">
+            <div style="color:var(--muted)">Loading actions…</div>
+          </div>
+          <div class="action-tools">
+            <button id="shareBtn" class="share-btn" type="button" title="Share profile" aria-label="Share profile">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M680-80q-50 0-85-35t-35-85q0-6 3-28L282-392q-16 15-37 23.5t-45 8.5q-50 0-85-35t-35-85q0-50 35-85t85-35q24 0 45 8.5t37 23.5l281-164q-2-7-2.5-13.5T560-760q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-24 0-45-8.5T598-672L317-508q2 7 2.5 13.5t.5 14.5q0 8-.5 14.5T317-452l281 164q16-15 37-23.5t45-8.5q50 0 85 35t35 85q0 50-35 85t-85 35Zm0-80q17 0 28.5-11.5T720-200q0-17-11.5-28.5T680-240q-17 0-28.5 11.5T640-200q0 17 11.5 28.5T680-160ZM200-440q17 0 28.5-11.5T240-480q0-17-11.5-28.5T200-520q-17 0-28.5 11.5T200-480q0 17 11.5 28.5T200-440Zm508.5-291.5Q720-743 720-760t-11.5-28.5Q697-800 680-800t-28.5 11.5Q640-777 640-760t11.5 28.5Q663-720 680-720t28.5-11.5ZM680-200ZM200-480Zm480-280Z"/></svg>
+            </button>
+            <div class="more-wrap">
+              <button id="moreBtn" class="more-btn" title="More options" aria-haspopup="true" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
+              </button>
+              <div id="moreMenu" class="more-menu"></div>
             </div>
           </div>
         </div>
-      </article>
+      </div>
+    </article>
 
-      <div class="two-up">
-        <section class="card">
-          <div class="panel-title">
-            <h3>このプロフィールについて</h3>
-          </div>
-          <div class="side-note">
-            <strong id="profile-kind">公開プロフィール</strong>
-            <div class="subtle" id="profile-summary">このユーザーの公開情報が、見えるつながりや役割とともにここに表示されます。</div>
-          </div>
-          <div class="divider"></div>
-          <div class="subtle" id="profile-extra">まだ追加情報はありません。</div>
-        </section>
+    <nav class="tab-nav" role="tablist">
+      <button class="tab-btn active" data-tab="roles" role="tab" aria-selected="true">Roles</button>
+      <button class="tab-btn" data-tab="posts" role="tab" aria-selected="false">Posts</button>
+      <button class="tab-btn" data-tab="activity" role="tab" aria-selected="false">Creations</button>
+    </nav>
 
-        <section class="card">
-          <div class="panel-title">
-            <h3>役割と情報</h3>
-            <span class="muted" style="font-size:12px;font-weight:700;">公開バッジ</span>
-          </div>
-          <div id="rolesList" class="list"></div>
-        </section>
+    <section class="tab-panel active" data-panel="roles">
+      <div class="panel-card">
+        <div class="panel-title">
+          <h3>Roles &amp; info</h3>
+          <span class="muted" style="font-size:12px;font-weight:700;">Public badges</span>
+        </div>
+        <div id="rolesList" class="role-grid"></div>
       </div>
     </section>
 
-    <aside class="stack">
-      <section id="interactionArea" class="card">
+    <section class="tab-panel" data-panel="posts">
+      <div class="panel-card">
         <div class="panel-title">
-            <h3>やり取り</h3>
-            <span class="muted" style="font-size:12px;font-weight:700;">直接操作</span>
-          </div>
-          <div id="interactionButtons" class="actions-vertical">
-          <div style="color:var(--muted)">操作を読み込み中…</div>
+          <h3>Posts</h3>
+          <span class="muted" id="profile-post-count" style="font-size:12px;font-weight:700;"></span>
         </div>
-      </section>
+        <div class="post-filters" role="group" aria-label="Post filters">
+          <button class="post-filter active" type="button" data-post-filter="posts">Posts</button>
+          <button class="post-filter" type="button" data-post-filter="wall">Wall</button>
+          <button class="post-filter" type="button" data-post-filter="pinned">Pined Posts</button>
+          <button class="post-filter" type="button" data-post-filter="reposted">Reposted</button>
+        </div>
+        <div id="profile-posts" class="profile-posts"></div>
+      </div>
+    </section>
 
-      <section class="card">
+    <section class="tab-panel" data-panel="activity">
+      <div class="panel-card">
         <div class="panel-title">
-          <h3>公開アクティビティ</h3>
-          <span class="muted" style="font-size:12px;font-weight:700;">UGC</span>
+          <h3>Public creations</h3>
+          <span class="muted" style="font-size:12px;font-weight:700;">Creations</span>
         </div>
-        <div class="subtle" style="margin-bottom:10px;">このユーザーが投稿した最近の公開コンテンツ。</div>
+        <div class="subtle" style="margin-bottom:14px;">Recent public creations posted by this user.</div>
         <div id="ugc-list"></div>
-      </section>
-    </aside>
+      </div>
+    </section>
+
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
@@ -397,44 +523,227 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    const SUPPORTED_LANGS = new Set(['en', 'es', 'ja', 'de', 'ru']);
+    const I18N = {"en":{"pageTitle":"Profile","loading":"Loading…","loadingActions":"Loading actions…","followers":"Followers","following":"Following","friends":"Friends","bio":"Bio","rolesTab":"Roles","postsTab":"Posts","creationsTab":"Creations","rolesInfo":"Roles & info","publicBadges":"Public badges","filterPosts":"Posts","filterWall":"Wall","filterPinned":"Pinned posts","filterReposted":"Reposted","publicCreationsTitle":"Public creations","publicCreationsDesc":"Recent public creations posted by this user.","profileBanner":"Profile banner","profilePicture":"Profile picture","verified":"Verified","shareProfile":"Share profile","moreOptions":"More options","editProfile":"Edit Profile","settings":"Settings","sendGift":"Send Gift","chat":"Chat","follow":"Follow","unfollow":"Unfollow","addFriend":"Add Friend","removeFriend":"Remove Friend","acceptFriendRequest":"Accept Friend Request","requestPending":"Request Pending","block":"Block","unblock":"Unblock","report":"Report","loadingPosts":"Loading posts...","loadingPostsLater":"Couldn't load posts. Try again later.","noPostsFound":"No posts found for this filter.","unknownUser":"Unknown user","unknownDate":"Unknown date","userNotFound":"User Not Found","linkCopied":"Link copied","copyFailed":"Copy failed","profileShared":"Profile shared","blockedProfileWarningTitle":"Blocked profile warning","blockedProfileWarningText":"You have blocked {name}. You can still view this profile, but profile actions are disabled until you unblock them.","okay":"Okay","shareDialogTitle":"Share profile","shareDialogText":"Sharing isn't supported by this browser, so copy the link below instead.","copyLink":"Copy link","close":"Close","signInViewMore":"Sign in to view more actions","signInShare":"Sign in to share this profile","signInInteract":"Sign in to interact","signInUseActions":"Sign in to use profile actions","giftUnavailable":"Gift system unavailable","userDoesNotExist":"User does not exist","unavailableBecauseUserNotFound":"Unavailable because user was not found","actionUnavailable":"Action unavailable","blockedPermError":"Blocked: insufficient permissions to change block state","dataLoadingError":"Data loading error","failed":"Failed","unfollowed":"Unfollowed","followed":"Following","friendRemoved":"Friend removed","friendRequestAccepted":"Friend request accepted","friendRequestSent":"Friend request sent","userBlocked":"User blocked","userUnblocked":"User unblocked","alreadySentFriendRequest":"You have already sent a friend request","blockedUnfollow":"You have blocked this user. Unblock to follow.","blockedSendRequest":"You have blocked this user. Unblock to send request.","youAreAlreadyFriends":"You are already friends","requestAlreadyPending":"Request already pending","actionFailed":"Action failed","noBioAvailable":"No bio available","noDisplayName":"No Display Name","shareProfileText":"Check out {name}'s profile, visit it at {url}","role_admin_desc":"Official Administrator of the platform, can manage users","role_member_desc":"Normal member of the platform","role_creator_en_desc":"Helped translate the app into English, creator of the app!","role_german_desc":"User who translated the app into German","role_spanish_desc":"User who translated the app into Spanish","role_japanese_desc":"User who translated the app into Japanese","role_russian_desc":"User who translated the app into Russian","role_owner_desc":"The owner of the DarkPurpleOF's website, official account, it's me DarkPurple!","role_tester_desc":"User who tested the app before its official release","role_legacy_desc":"Users registered on the platform prior to December 2024","role_system_desc":"Official system account!","role_elite_desc":"Users whose actions or contributions have been deeply known in the platform","role_feedback_desc":"Users whose contributions or ideas have been added to the app or website","role_verified_desc":"Users who have verified their identity or email, indicating authenticity","role_furry_desc":"Oohh~ you like kissing boys, don't you?","role_unbannable_desc":"Users who can't be banned by moderation tools or the system"},"es":{"pageTitle":"Perfil","loading":"Cargando…","loadingActions":"Cargando acciones…","followers":"Seguidores","following":"Siguiendo","friends":"Amigos","bio":"Bio","rolesTab":"Roles","postsTab":"Publicaciones","creationsTab":"Creaciones","rolesInfo":"Roles e info","publicBadges":"Insignias públicas","filterPosts":"Publicaciones","filterWall":"Muro","filterPinned":"Publicaciones fijadas","filterReposted":"Reposteadas","publicCreationsTitle":"Creaciones públicas","publicCreationsDesc":"Creaciones públicas recientes publicadas por este usuario.","profileBanner":"Banner del perfil","profilePicture":"Foto de perfil","verified":"Verificado","shareProfile":"Compartir perfil","moreOptions":"Más opciones","editProfile":"Editar perfil","settings":"Ajustes","sendGift":"Enviar regalo","chat":"Chat","follow":"Seguir","unfollow":"Dejar de seguir","addFriend":"Agregar amigo","removeFriend":"Eliminar amigo","acceptFriendRequest":"Aceptar solicitud de amistad","requestPending":"Solicitud pendiente","block":"Bloquear","unblock":"Desbloquear","report":"Reportar","loadingPosts":"Cargando publicaciones...","loadingPostsLater":"No se pudieron cargar las publicaciones. Intenta de nuevo más tarde.","noPostsFound":"No se encontraron publicaciones para este filtro.","unknownUser":"Usuario desconocido","unknownDate":"Fecha desconocida","userNotFound":"Usuario no encontrado","linkCopied":"Enlace copiado","copyFailed":"Error al copiar","profileShared":"Perfil compartido","blockedProfileWarningTitle":"Aviso de perfil bloqueado","blockedProfileWarningText":"Has bloqueado a {name}. Aún puedes ver este perfil, pero las acciones del perfil están desactivadas hasta que lo desbloquees.","okay":"Entendido","shareDialogTitle":"Compartir perfil","shareDialogText":"El navegador no admite compartir, así que copia el enlace de abajo.","copyLink":"Copiar enlace","close":"Cerrar","signInViewMore":"Inicia sesión para ver más acciones","signInShare":"Inicia sesión para compartir este perfil","signInInteract":"Inicia sesión para interactuar","signInUseActions":"Inicia sesión para usar acciones del perfil","giftUnavailable":"Sistema de regalos no disponible","userDoesNotExist":"El usuario no existe","unavailableBecauseUserNotFound":"No disponible porque el usuario no fue encontrado","actionUnavailable":"Acción no disponible","blockedPermError":"Bloqueado: permisos insuficientes para cambiar el estado de bloqueo","dataLoadingError":"Error al cargar datos","failed":"Falló","unfollowed":"Dejado de seguir","followed":"Siguiendo","friendRemoved":"Amigo eliminado","friendRequestAccepted":"Solicitud de amistad aceptada","friendRequestSent":"Solicitud de amistad enviada","userBlocked":"Usuario bloqueado","userUnblocked":"Usuario desbloqueado","alreadySentFriendRequest":"Ya enviaste una solicitud de amistad","blockedUnfollow":"Has bloqueado a este usuario. Desbloquéalo para seguir.","blockedSendRequest":"Has bloqueado a este usuario. Desbloquéalo para enviar la solicitud.","youAreAlreadyFriends":"Ya son amigos","requestAlreadyPending":"La solicitud ya está pendiente","actionFailed":"La acción falló","noBioAvailable":"No hay biografía disponible","noDisplayName":"Sin nombre visible","shareProfileText":"Mira el perfil de {name}, visítalo en {url}","role_admin_desc":"Administrador oficial de la plataforma, puede gestionar usuarios","role_member_desc":"Miembro normal de la plataforma","role_creator_en_desc":"Ayudó a traducir la app al inglés, ¡creador de la app!","role_german_desc":"Usuario que tradujo la app al alemán","role_spanish_desc":"Usuario que tradujo la app al español","role_japanese_desc":"Usuario que tradujo la app al japonés","role_russian_desc":"Usuario que tradujo la app al ruso","role_owner_desc":"El dueño del sitio DarkPurpleOF, cuenta oficial, ¡soy yo, DarkPurple!","role_tester_desc":"Usuario que probó la app antes de su lanzamiento oficial","role_legacy_desc":"Usuarios registrados en la plataforma antes de diciembre de 2024","role_system_desc":"¡Cuenta oficial del sistema!","role_elite_desc":"Usuarios cuyas acciones o aportes han sido muy conocidos en la plataforma","role_feedback_desc":"Usuarios cuyas aportaciones o ideas se añadieron a la app o al sitio web","role_verified_desc":"Usuarios que verificaron su identidad o correo, indicando autenticidad","role_furry_desc":"Oohh~ te gusta besar chicos, ¿verdad?","role_unbannable_desc":"Usuarios que no pueden ser baneados por las herramientas de moderación o el sistema"},"ja":{"pageTitle":"プロフィール","loading":"読み込み中…","loadingActions":"操作を読み込み中…","followers":"フォロワー","following":"フォロー中","friends":"友だち","bio":"自己紹介","rolesTab":"役割","postsTab":"投稿","creationsTab":"制作物","rolesInfo":"役割と情報","publicBadges":"公開バッジ","filterPosts":"投稿","filterWall":"ウォール","filterPinned":"固定投稿","filterReposted":"再投稿","publicCreationsTitle":"公開制作物","publicCreationsDesc":"このユーザーが投稿した最近の公開制作物です。","profileBanner":"プロフィールバナー","profilePicture":"プロフィール画像","verified":"認証済み","shareProfile":"プロフィールを共有","moreOptions":"その他の操作","editProfile":"プロフィールを編集","settings":"設定","sendGift":"ギフトを送る","chat":"チャット","follow":"フォロー","unfollow":"フォロー解除","addFriend":"友だち追加","removeFriend":"友だちを削除","acceptFriendRequest":"友だち申請を承認","requestPending":"申請保留中","block":"ブロック","unblock":"ブロック解除","report":"報告","loadingPosts":"投稿を読み込み中...","loadingPostsLater":"投稿を読み込めませんでした。あとでもう一度お試しください。","noPostsFound":"このフィルターでは投稿が見つかりませんでした。","unknownUser":"不明なユーザー","unknownDate":"不明な日時","userNotFound":"ユーザーが見つかりません","linkCopied":"リンクをコピーしました","copyFailed":"コピーに失敗しました","profileShared":"プロフィールを共有しました","blockedProfileWarningTitle":"ブロック済みプロフィールの警告","blockedProfileWarningText":"{name} をブロックしています。プロフィールは見られますが、解除するまで操作は無効です。","okay":"OK","shareDialogTitle":"プロフィールを共有","shareDialogText":"このブラウザでは共有できないため、下のリンクをコピーしてください。","copyLink":"リンクをコピー","close":"閉じる","signInViewMore":"さらに操作するにはサインインしてください","signInShare":"このプロフィールを共有するにはサインインしてください","signInInteract":"操作するにはサインインしてください","signInUseActions":"プロフィール操作を使うにはサインインしてください","giftUnavailable":"ギフト機能は利用できません","userDoesNotExist":"ユーザーが存在しません","unavailableBecauseUserNotFound":"ユーザーが見つからないため利用できません","actionUnavailable":"操作を利用できません","blockedPermError":"ブロック状態を変更する権限がありません","dataLoadingError":"データ読み込みエラー","failed":"失敗しました","unfollowed":"フォロー解除しました","followed":"フォロー中","friendRemoved":"友だちを削除しました","friendRequestAccepted":"友だち申請を承認しました","friendRequestSent":"友だち申請を送信しました","userBlocked":"ユーザーをブロックしました","userUnblocked":"ユーザーのブロックを解除しました","alreadySentFriendRequest":"すでに友だち申請を送っています","blockedUnfollow":"このユーザーをブロックしています。解除するとフォローできます。","blockedSendRequest":"このユーザーをブロックしています。解除すると申請できます。","youAreAlreadyFriends":"すでに友だちです","requestAlreadyPending":"申請はすでに保留中です","actionFailed":"操作に失敗しました","noBioAvailable":"自己紹介はありません","noDisplayName":"表示名なし","shareProfileText":"{name} のプロフィールはこちらです: {url}","role_admin_desc":"プラットフォームの公式管理者。ユーザーを管理できます。","role_member_desc":"通常のメンバーです。","role_creator_en_desc":"英語への翻訳を手伝った人。アプリの作者でもあります！","role_german_desc":"アプリのドイツ語翻訳を担当したユーザー","role_spanish_desc":"アプリのスペイン語翻訳を担当したユーザー","role_japanese_desc":"アプリの日本語翻訳を担当したユーザー","role_russian_desc":"アプリのロシア語翻訳を担当したユーザー","role_owner_desc":"DarkPurpleOF サイトのオーナー。公式アカウントです。DarkPurple は私です！","role_tester_desc":"正式リリース前にアプリをテストしたユーザー","role_legacy_desc":"2024年12月以前に登録したユーザー","role_system_desc":"公式システムアカウント！","role_elite_desc":"行動や貢献がプラットフォームで高く評価されているユーザー","role_feedback_desc":"アプリやサイトに反映された提案や貢献をしたユーザー","role_verified_desc":"身元またはメールを確認し、真正性が示されているユーザー","role_furry_desc":"おやおや、男の子にキスするのが好きなんだね？","role_unbannable_desc":"モデレーションやシステムでBANできないユーザー"},"de":{"pageTitle":"Profil","loading":"Wird geladen…","loadingActions":"Aktionen werden geladen…","followers":"Follower","following":"Folgend","friends":"Freunde","bio":"Bio","rolesTab":"Rollen","postsTab":"Beiträge","creationsTab":"Erstellungen","rolesInfo":"Rollen & Info","publicBadges":"Öffentliche Abzeichen","filterPosts":"Beiträge","filterWall":"Wand","filterPinned":"Angeheftete Beiträge","filterReposted":"Weitergeleitet","publicCreationsTitle":"Öffentliche Erstellungen","publicCreationsDesc":"Kürzliche öffentliche Erstellungen dieses Nutzers.","profileBanner":"Profilbanner","profilePicture":"Profilbild","verified":"Verifiziert","shareProfile":"Profil teilen","moreOptions":"Weitere Optionen","editProfile":"Profil bearbeiten","settings":"Einstellungen","sendGift":"Geschenk senden","chat":"Chat","follow":"Folgen","unfollow":"Nicht mehr folgen","addFriend":"Freund hinzufügen","removeFriend":"Freund entfernen","acceptFriendRequest":"Freundschaftsanfrage annehmen","requestPending":"Anfrage ausstehend","block":"Blockieren","unblock":"Entsperren","report":"Melden","loadingPosts":"Beiträge werden geladen...","loadingPostsLater":"Beiträge konnten nicht geladen werden. Bitte später erneut versuchen.","noPostsFound":"Für diesen Filter wurden keine Beiträge gefunden.","unknownUser":"Unbekannter Nutzer","unknownDate":"Unbekanntes Datum","userNotFound":"Nutzer nicht gefunden","linkCopied":"Link kopiert","copyFailed":"Kopieren fehlgeschlagen","profileShared":"Profil geteilt","blockedProfileWarningTitle":"Warnung für blockiertes Profil","blockedProfileWarningText":"Du hast {name} blockiert. Du kannst dieses Profil weiterhin ansehen, aber Profilaktionen sind deaktiviert, bis du die Blockierung aufhebst.","okay":"Okay","shareDialogTitle":"Profil teilen","shareDialogText":"Teilen wird von diesem Browser nicht unterstützt. Kopiere stattdessen den Link unten.","copyLink":"Link kopieren","close":"Schließen","signInViewMore":"Zum Anzeigen weiterer Aktionen anmelden","signInShare":"Zum Teilen dieses Profils anmelden","signInInteract":"Zum Interagieren anmelden","signInUseActions":"Zum Verwenden der Profilaktionen anmelden","giftUnavailable":"Geschenk-System nicht verfügbar","userDoesNotExist":"Nutzer existiert nicht","unavailableBecauseUserNotFound":"Nicht verfügbar, weil der Nutzer nicht gefunden wurde","actionUnavailable":"Aktion nicht verfügbar","blockedPermError":"Blockiert: unzureichende Berechtigungen zum Ändern des Blockierungsstatus","dataLoadingError":"Fehler beim Laden der Daten","failed":"Fehlgeschlagen","unfollowed":"Entfolgt","followed":"Folgt","friendRemoved":"Freund entfernt","friendRequestAccepted":"Freundschaftsanfrage angenommen","friendRequestSent":"Freundschaftsanfrage gesendet","userBlocked":"Nutzer blockiert","userUnblocked":"Nutzer entsperrt","alreadySentFriendRequest":"Du hast bereits eine Freundschaftsanfrage gesendet","blockedUnfollow":"Du hast diesen Nutzer blockiert. Entsperren, um ihm zu folgen.","blockedSendRequest":"Du hast diesen Nutzer blockiert. Entsperren, um eine Anfrage zu senden.","youAreAlreadyFriends":"Ihr seid bereits befreundet","requestAlreadyPending":"Anfrage ist bereits ausstehend","actionFailed":"Aktion fehlgeschlagen","noBioAvailable":"Keine Bio verfügbar","noDisplayName":"Kein Anzeigename","shareProfileText":"Schau dir das Profil von {name} an: {url}","role_admin_desc":"Offizieller Administrator der Plattform, kann Nutzer verwalten","role_member_desc":"Normales Mitglied der Plattform","role_creator_en_desc":"Hat geholfen, die App ins Englische zu übersetzen, Ersteller der App!","role_german_desc":"Nutzer, der die App ins Deutsche übersetzt hat","role_spanish_desc":"Nutzer, der die App ins Spanische übersetzt hat","role_japanese_desc":"Nutzer, der die App ins Japanische übersetzt hat","role_russian_desc":"Nutzer, der die App ins Russische übersetzt hat","role_owner_desc":"Der Besitzer der DarkPurpleOF-Website, offizieller Account, das bin ich, DarkPurple!","role_tester_desc":"Nutzer, der die App vor der offiziellen Veröffentlichung getestet hat","role_legacy_desc":"Nutzer, die sich vor Dezember 2024 registriert haben","role_system_desc":"Offizieller System-Account!","role_elite_desc":"Nutzer, deren Aktionen oder Beiträge in der Plattform stark bekannt sind","role_feedback_desc":"Nutzer, deren Beiträge oder Ideen in App oder Website eingeflossen sind","role_verified_desc":"Nutzer, die ihre Identität oder E-Mail bestätigt haben, was Authentizität zeigt","role_furry_desc":"Oohh~ du küsst also gern Jungs, nicht wahr?","role_unbannable_desc":"Nutzer, die von Moderation oder dem System nicht gesperrt werden können"},"ru":{"pageTitle":"Профиль","loading":"Загрузка…","loadingActions":"Загрузка действий…","followers":"Подписчики","following":"Подписки","friends":"Друзья","bio":"Био","rolesTab":"Роли","postsTab":"Публикации","creationsTab":"Создания","rolesInfo":"Роли и информация","publicBadges":"Публичные значки","filterPosts":"Публикации","filterWall":"Стена","filterPinned":"Закреплённые публикации","filterReposted":"Репосты","publicCreationsTitle":"Публичные создания","publicCreationsDesc":"Недавние публичные создания, опубликованные этим пользователем.","profileBanner":"Баннер профиля","profilePicture":"Фото профиля","verified":"Подтверждено","shareProfile":"Поделиться профилем","moreOptions":"Ещё","editProfile":"Редактировать профиль","settings":"Настройки","sendGift":"Отправить подарок","chat":"Чат","follow":"Подписаться","unfollow":"Отписаться","addFriend":"Добавить в друзья","removeFriend":"Удалить из друзей","acceptFriendRequest":"Принять заявку в друзья","requestPending":"Заявка в ожидании","block":"Заблокировать","unblock":"Разблокировать","report":"Пожаловаться","loadingPosts":"Загрузка публикаций...","loadingPostsLater":"Не удалось загрузить публикации. Попробуйте позже.","noPostsFound":"Для этого фильтра публикации не найдены.","unknownUser":"Неизвестный пользователь","unknownDate":"Неизвестная дата","userNotFound":"Пользователь не найден","linkCopied":"Ссылка скопирована","copyFailed":"Не удалось скопировать","profileShared":"Профиль отправлен","blockedProfileWarningTitle":"Профиль в блокировке","blockedProfileWarningText":"Вы заблокировали {name}. Профиль всё ещё можно просматривать, но действия с профилем отключены, пока вы не снимете блокировку.","okay":"ОК","shareDialogTitle":"Поделиться профилем","shareDialogText":"Этот браузер не поддерживает отправку, поэтому скопируйте ссылку ниже.","copyLink":"Скопировать ссылку","close":"Закрыть","signInViewMore":"Войдите, чтобы увидеть больше действий","signInShare":"Войдите, чтобы поделиться этим профилем","signInInteract":"Войдите, чтобы взаимодействовать","signInUseActions":"Войдите, чтобы использовать действия профиля","giftUnavailable":"Система подарков недоступна","userDoesNotExist":"Пользователь не существует","unavailableBecauseUserNotFound":"Недоступно, потому что пользователь не найден","actionUnavailable":"Действие недоступно","blockedPermError":"Блокировка: недостаточно прав для изменения состояния блокировки","dataLoadingError":"Ошибка загрузки данных","failed":"Ошибка","unfollowed":"Отписка выполнена","followed":"Подписка выполнена","friendRemoved":"Друг удалён","friendRequestAccepted":"Заявка в друзья принята","friendRequestSent":"Заявка в друзья отправлена","userBlocked":"Пользователь заблокирован","userUnblocked":"Блокировка пользователя снята","alreadySentFriendRequest":"Вы уже отправили заявку в друзья","blockedUnfollow":"Вы заблокировали этого пользователя. Разблокируйте, чтобы подписаться.","blockedSendRequest":"Вы заблокировали этого пользователя. Разблокируйте, чтобы отправить заявку.","youAreAlreadyFriends":"Вы уже друзья","requestAlreadyPending":"Заявка уже ожидает ответа","actionFailed":"Действие не удалось","noBioAvailable":"Био отсутствует","noDisplayName":"Без отображаемого имени","shareProfileText":"Посмотрите профиль {name}: {url}","role_admin_desc":"Официальный администратор платформы, может управлять пользователями","role_member_desc":"Обычный участник платформы","role_creator_en_desc":"Помогал переводить приложение на английский, создатель приложения!","role_german_desc":"Пользователь, переведший приложение на немецкий","role_spanish_desc":"Пользователь, переведший приложение на испанский","role_japanese_desc":"Пользователь, переведший приложение на японский","role_russian_desc":"Пользователь, переведший приложение на русский","role_owner_desc":"Владелец сайта DarkPurpleOF, официальный аккаунт, это я, DarkPurple!","role_tester_desc":"Пользователь, тестировавший приложение до официального релиза","role_legacy_desc":"Пользователи, зарегистрированные до декабря 2024 года","role_system_desc":"Официальный системный аккаунт!","role_elite_desc":"Пользователи, чьи действия или вклад широко известны на платформе","role_feedback_desc":"Пользователи, чьи идеи или вклад были добавлены в приложение или на сайт","role_verified_desc":"Пользователи, подтвердившие свою личность или email, что подтверждает подлинность","role_furry_desc":"Ооо~ тебе нравится целовать парней, да?","role_unbannable_desc":"Пользователей нельзя заблокировать инструментами модерации или системой"}};
+
+    let currentLang = 'en';
+
+    function normalizeLang(code) {
+      const raw = String(code || '').trim().toLowerCase();
+      if (!raw) return '';
+      const two = raw.slice(0, 2);
+      return SUPPORTED_LANGS.has(raw) ? raw : (SUPPORTED_LANGS.has(two) ? two : '');
+    }
+
+    function getBrowserLang() {
+      return normalizeLang(navigator.language || navigator.userLanguage || 'en') || 'en';
+    }
+
+    function t(key, vars = {}) {
+      const pack = I18N[currentLang] || I18N.en;
+      const fallback = I18N.en || {};
+      let out = pack[key] ?? fallback[key] ?? key;
+      return String(out).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
+    }
+
+    function postCountLabel(count) {
+      const n = Number(count) || 0;
+      if (currentLang === 'ru') {
+        const mod10 = n % 10;
+        const mod100 = n % 100;
+        const word = (mod10 === 1 && mod100 !== 11) ? 'пост' : ((mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) ? 'поста' : 'постов');
+        return `${n} ${word}`;
+      }
+      if (currentLang === 'ja') return `${n}件の投稿`;
+      if (currentLang === 'de') return `${n} ${n === 1 ? 'Beitrag' : 'Beiträge'}`;
+      if (currentLang === 'es') return `${n} ${n === 1 ? 'publicación' : 'publicaciones'}`;
+      return `${n} ${n === 1 ? 'post' : 'posts'}`;
+    }
+
+    async function resolvePreferredLang(email) {
+      const fallback = getBrowserLang();
+      if (!email) return fallback;
+      try {
+        const snap = await db.collection('user_data').doc(email).get();
+        const raw = snap.exists ? normalizeLang(snap.get('lang')) : '';
+        return raw || fallback;
+      } catch (err) {
+        return fallback;
+      }
+    }
+
+    function applyStaticTranslations() {
+      document.documentElement.lang = currentLang || 'en';
+      document.title = t('pageTitle');
+
+      const display = document.getElementById('display-name');
+      if (display && (!viewedData || /^Loading/i.test(display.textContent || ''))) {
+        display.textContent = t('loading');
+      }
+
+      const bio = document.getElementById('bio-text');
+      if (bio && (!viewedData || /^Loading/i.test(bio.textContent || ''))) {
+        bio.textContent = t('loading');
+      }
+
+      const loadingActions = document.querySelector('#interactionButtons > div');
+      if (loadingActions && /Loading actions/i.test(loadingActions.textContent || '')) {
+        loadingActions.textContent = t('loadingActions');
+      }
+
+      const labels = document.querySelectorAll('#counters .stat-item .k');
+      if (labels[0]) labels[0].textContent = t('followers');
+      if (labels[1]) labels[1].textContent = t('following');
+      if (labels[2]) labels[2].textContent = t('friends');
+
+      const bioLabel = document.querySelector('.bio-block .section-label');
+      if (bioLabel) bioLabel.textContent = t('bio');
+
+      const tabRoles = document.querySelector('.tab-btn[data-tab="roles"]');
+      const tabPosts = document.querySelector('.tab-btn[data-tab="posts"]');
+      const tabCreations = document.querySelector('.tab-btn[data-tab="activity"]');
+      if (tabRoles) tabRoles.textContent = t('rolesTab');
+      if (tabPosts) tabPosts.textContent = t('postsTab');
+      if (tabCreations) tabCreations.textContent = t('creationsTab');
+
+      const panels = document.querySelectorAll('.tab-panel .panel-card');
+      if (panels[0]) {
+        const h3 = panels[0].querySelector('.panel-title h3');
+        const muted = panels[0].querySelector('.panel-title .muted');
+        if (h3) h3.textContent = t('rolesInfo');
+        if (muted) muted.textContent = t('publicBadges');
+      }
+      if (panels[1]) {
+        const h3 = panels[1].querySelector('.panel-title h3');
+        if (h3) h3.textContent = t('postsTab');
+        const filters = panels[1].querySelectorAll('.post-filter');
+        if (filters[0]) filters[0].textContent = t('filterPosts');
+        if (filters[1]) filters[1].textContent = t('filterWall');
+        if (filters[2]) filters[2].textContent = t('filterPinned');
+        if (filters[3]) filters[3].textContent = t('filterReposted');
+      }
+      if (panels[2]) {
+        const h3 = panels[2].querySelector('.panel-title h3');
+        const muted = panels[2].querySelector('.panel-title .muted');
+        const desc = panels[2].querySelector('.subtle');
+        if (h3) h3.textContent = t('publicCreationsTitle');
+        if (muted) muted.textContent = t('creationsTab');
+        if (desc) desc.textContent = t('publicCreationsDesc');
+      }
+
+      if (bannerEl) bannerEl.title = t('profileBanner');
+      if (profilePicEl) profilePicEl.title = t('profilePicture');
+      if (verifiedEl) verifiedEl.title = t('verified');
+      if (shareBtnEl) shareBtnEl.title = t('shareProfile');
+      if (moreBtnEl) moreBtnEl.title = t('moreOptions');
+      if (ownerActionsEl) {
+        const btns = ownerActionsEl.querySelectorAll('button');
+        if (btns[0]) btns[0].textContent = t('editProfile');
+        if (btns[1]) btns[1].textContent = t('settings');
+      }
+    }
+
     const roleMap = {
-      "Administrador": { icon: "/assets/ic_admin.webp", desc: "プラットフォームの公式管理者。ユーザーを管理できます。" },
-      "Miembro": { icon: "/assets/ic_member.webp", desc: "プラットフォームの一般メンバーです。" },
-      "(Creador) Inglés": { icon: "/assets/us.png", desc: "アプリの英語翻訳を手伝った、アプリの作成者です。" },
-      "Ayudante de alemán": { icon: "/assets/de.png", desc: "アプリのドイツ語翻訳を行ったユーザーです。" },
-      "Ayudante de español": { icon: "/assets/es.png", desc: "アプリのスペイン語翻訳を行ったユーザーです。" },
-      "Ayudante de japonés": { icon: "/assets/jp.png", desc: "アプリの日本語翻訳を行ったユーザーです。" },
-      "Ayudante de ruso": { icon: "/assets/ru.png", desc: "アプリのロシア語翻訳を行ったユーザーです。" },
-      "Propietario": { icon: "/assets/ic_owner.webp", desc: "DarkPurpleOF サイトの所有者、公式アカウントです。" },
-      "Tester": { icon: "/assets/test.png", desc: "正式公開前にアプリをテストしたユーザーです。" },
-      "Usuario Legacy": { icon: "/assets/legacy.png", desc: "2024年12月以前にプラットフォームへ登録したユーザーです。" },
-      "Sistema": { icon: "/assets/ic_system.webp", desc: "システムの公式アカウントです。" },
-      "Usuario Elite": { icon: "/assets/elite.png", desc: "その行動や貢献がプラットフォーム内で広く知られているユーザーです。" },
-      "Contribuidor de Feedback": { icon: "/assets/feedback.png", desc: "アイデアや提案がアプリやサイトに採用されたユーザーです。" },
-      "Verificado": { icon: "/assets/verified.png", desc: "本人確認またはメール認証を完了したユーザーです。" },
-      "Furro": { icon: "/assets/boykisser.png", desc: "ふふっ、男の子にキスするのが好きなんだよね？" },
-      "No Bannable": { icon: "/assets/ic_unbannable.webp", desc: "モデレーション機能ではBANできないユーザーです。" }
+      "Administrator": { icon: "/assets/ic_admin.webp", descKey: "role_admin_desc" },
+      "Member": { icon: "/assets/ic_member.webp", descKey: "role_member_desc" },
+      "(Creator) English": { icon: "/assets/us.png", descKey: "role_creator_en_desc" },
+      "German helper": { icon: "/assets/de.png", descKey: "role_german_desc" },
+      "Spanish Helper": { icon: "/assets/es.png", descKey: "role_spanish_desc" },
+      "Japanese Helper": { icon: "/assets/jp.png", descKey: "role_japanese_desc" },
+      "Russian Helper": { icon: "/assets/ru.png", descKey: "role_russian_desc" },
+      "Owner": { icon: "/assets/ic_owner.webp", descKey: "role_owner_desc" },
+      "Tester": { icon: "/assets/test.png", descKey: "role_tester_desc" },
+      "Legacy User": { icon: "/assets/legacy.png", descKey: "role_legacy_desc" },
+      "System": { icon: "/assets/ic_system.webp", descKey: "role_system_desc" },
+      "Elite User": { icon: "/assets/elite.png", descKey: "role_elite_desc" },
+      "Feedback Contributor": { icon: "/assets/feedback.png", descKey: "role_feedback_desc" },
+      "Verified": { icon: "/assets/verified.png", descKey: "role_verified_desc" },
+      "Furry": { icon: "/assets/boykisser.png", descKey: "role_furry_desc" },
+      "Unbannable": { icon: "/assets/ic_unbannable.webp", descKey: "role_unbannable_desc" }
     };
 
     const bannerEl = document.getElementById('banner');
     const profilePicEl = document.getElementById('profile-pic');
     const pfpFrameEl = document.getElementById('pfp-frame');
+    const ownerActionsEl = document.getElementById('ownerActions');
     const displayNameEl = document.getElementById('display-name');
     const emailEl = document.getElementById('email');
     const verifiedEl = document.getElementById('verified');
     const bioTextEl = document.getElementById('bio-text');
     const rolesList = document.getElementById('rolesList');
-    const lastUpdatedEl = document.getElementById('last-updated');
     const toastEl = document.getElementById('toast');
     const interactionArea = document.getElementById('interactionArea');
     const interactionButtons = document.getElementById('interactionButtons');
+    const moreMenuEl = document.getElementById('moreMenu');
+    const moreBtnEl = document.getElementById('moreBtn');
+    const shareBtnEl = document.getElementById('shareBtn');
+    const profilePostsEl = document.getElementById('profile-posts');
+    const profilePostCountEl = document.getElementById('profile-post-count');
+
+    const ICONS = {
+      share: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M680-80q-50 0-85-35t-35-85q0-6 3-28L282-392q-16 15-37 23.5t-45 8.5q-50 0-85-35t-35-85q0-50 35-85t85-35q24 0 45 8.5t37 23.5l281-164q-2-7-2.5-13.5T560-760q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-24 0-45-8.5T598-672L317-508q2 7 2.5 13.5t.5 14.5q0 8-.5 14.5T317-452l281 164q16-15 37-23.5t45-8.5q50 0 85 35t35 85q0 50-35 85t-85 35Zm0-80q17 0 28.5-11.5T720-200q0-17-11.5-28.5T680-240q-17 0-28.5 11.5T640-200q0 17 11.5 28.5T680-160ZM200-440q17 0 28.5-11.5T240-480q0-17-11.5-28.5T200-520q-17 0-28.5 11.5T200-480q0 17 11.5 28.5T200-440Zm508.5-291.5Q720-743 720-760t-11.5-28.5Q697-800 680-800t-28.5 11.5Q640-777 640-760t11.5 28.5Q663-720 680-720t28.5-11.5ZM680-200ZM200-480Zm480-280Z"/></svg>',
+      post: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>',
+      gift: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-80v-440H80v-240h208q-5-9-6.5-19t-1.5-21q0-50 35-85t85-35q23 0 43 8.5t37 23.5q17-16 37-24t43-8q50 0 85 35t35 85q0 11-2 20.5t-6 19.5h208v240h-80v440H160Zm371.5-748.5Q520-817 520-800t11.5 28.5Q543-760 560-760t28.5-11.5Q600-783 600-800t-11.5-28.5Q577-840 560-840t-28.5 11.5ZM360-800q0 17 11.5 28.5T400-760q17 0 28.5-11.5T440-800q0-17-11.5-28.5T400-840q-17 0-28.5 11.5T360-800ZM160-680v80h280v-80H160Zm280 520v-360H240v360h200Zm80 0h200v-360H520v360Zm280-440v-80H520v80h280Z"/></svg>',
+      chat: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M240-400h320v-80H240v80Zm0-120h480v-80H240v80Zm0-120h480v-80H240v80ZM80-80v-720q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H240L80-80Zm126-240h594v-480H160v525l46-45Zm-46 0v-480 480Z"/></svg>',
+      follow: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-240Zm-320 80v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440h14q-11 18-16.5 38.5T472-360q-54 1-107.5 14.5T260-306q-9 5-14.5 14t-5.5 20v32h283l80 80H160Zm207-367q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47Zm169.5-56.5Q560-607 560-640t-23.5-56.5Q513-720 480-720t-56.5 23.5Q400-673 400-640t23.5 56.5Q447-560 480-560t56.5-23.5ZM480-640Zm236 480L576-300q-13-13-18.5-28t-5.5-30q0-32 23-57t59-25q28 0 44 13t38 35q20-20 36.5-34t45.5-14q37 0 59.5 25.5T880-357q0 15-6 30t-18 27L716-160Z"/></svg>',
+      unfollow: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M640-520v-80h240v80H640Zm-393-7q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q440-607 440-640t-23.5-56.5Q393-720 360-720t-56.5 23.5Q280-673 280-640t23.5 56.5Q327-560 360-560t56.5-23.5ZM360-640Zm0 400Z"/></svg>',
+      friend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+      friendAdd: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M720-400v-120H600v-80h120v-120h80v120h120v80H800v120h-80ZM247-527q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q440-607 440-640t-23.5-56.5Q393-720 360-720t-56.5 23.5Q280-673 280-640t23.5 56.5Q327-560 360-560t56.5-23.5ZM360-640Zm0 400Z"/></svg>',
+      friendRemove: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M640-520v-80h240v80H640Zm-393-7q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q440-607 440-640t-23.5-56.5Q393-720 360-720t-56.5 23.5Q280-673 280-640t23.5 56.5Q327-560 360-560t56.5-23.5ZM360-640Zm0 400Z"/></svg>',
+      friendPending: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="m612-292 56-56-148-148v-184h-80v216l172 172ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-400Zm0 320q133 0 226.5-93.5T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160Z"/></svg>',
+      friendAccept: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>',
+      block: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM480-160q54 0 104-17.5t92-50.5L228-676q-33 42-50.5 92T160-480q0 134 93 227t227 93Zm252-124q33-42 50.5-92T800-480q0-134-93-227t-227-93q-54 0-104 17.5T284-732l448 448ZM480-480Z"/></svg>',
+      report: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-120v-680h360l16 80h224v400H520l-16-80H280v280h-80Zm300-440Zm86 160h134v-240H510l-16-80H280v240h290l16 80Z"/></svg>'
+    };
+
+    function makeActionBtn({ icon, text, className = 'action-btn secondary' }){
+      const b = document.createElement('button');
+      b.className = className;
+      b.innerHTML = `${icon || ''}<span>${escapeHtml(text)}</span>`;
+      return b;
+    }
+
+    function disableGuestActionButton(btn, title = 'Sign in to use this action'){
+      btn.disabled = true;
+      btn.title = title;
+      btn.style.opacity = '0.6';
+      btn.style.filter = 'grayscale(0.7)';
+      btn.style.cursor = 'not-allowed';
+      return btn;
+    }
+
+    function renderOwnerQuickActions(){
+      if (!ownerActionsEl) return;
+      ownerActionsEl.innerHTML = '';
+      if (!currentUser || !viewedEmail || currentUser.email !== viewedEmail) {
+        ownerActionsEl.hidden = true;
+        return;
+      }
+
+      ownerActionsEl.hidden = false;
+
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'owner-action-btn';
+      editBtn.textContent = t('editProfile');
+      editBtn.addEventListener('click', () => {
+        window.location.href = '/editprofile';
+      });
+      ownerActionsEl.appendChild(editBtn);
+
+      const settingsBtn = document.createElement('button');
+      settingsBtn.type = 'button';
+      settingsBtn.className = 'owner-action-btn';
+      settingsBtn.textContent = t('settings');
+      settingsBtn.addEventListener('click', () => {
+        window.location.href = '/my/account';
+      });
+      ownerActionsEl.appendChild(settingsBtn);
+    }
+
     const followersCountEl = document.getElementById('followers-count');
     const followingCountEl = document.getElementById('following-count');
     const friendsCountEl = document.getElementById('friends-count');
-    const profileKindEl = document.getElementById('profile-kind');
-    const profileSummaryEl = document.getElementById('profile-summary');
-    const profileExtraEl = document.getElementById('profile-extra');
-    const statusChipEl = document.getElementById('status-chip');
 
     function showToast(msg, color='purple', duration=3000){
       toastEl.textContent = msg;
@@ -451,13 +760,13 @@
 
     function fallbackProfile(emailArg){
       return {
-        displayName: "表示名なし",
+        displayName: t('noDisplayName'),
         email: emailArg,
         profile_picture: '/org-owner.jpg',
         banner: '/assets/def_banner.png',
         bannedBanner: '/assets/def_banner.png',
         roles: ['Member'],
-        bio: "自己紹介はありません",
+        bio: t('noBioAvailable'),
         is_verified: false,
         profile_picture_frame: ''
       };
@@ -480,7 +789,12 @@
     let viewedEmail = null;
     let viewedData = null;
     let isFallbackProfile = false;
+    let hasShownBlockedProfileWarning = false;
     let unsubscribes = [];
+    let profilePosts = [];
+    let profilePostsEmail = '';
+    let profilePostsFilter = 'posts';
+    let profilePostsRequestId = 0;
 
     function clearUnsubscribes(){
       for(const u of unsubscribes){
@@ -502,14 +816,246 @@
       return String(s).replace(/[&<>\"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":"&#39;"}[m]));
     }
 
-    function updateOverviewBits(data, emailArg){
-      const hasRoles = Array.isArray(data.roles) && data.roles.length > 0;
-      const roleCount = hasRoles ? data.roles.length : 1;
-      const roleText = roleCount === 1 ? '1件の役割' : `${roleCount}件の役割`; 
-      profileKindEl.textContent = data.is_verified ? '認証済み公開プロフィール' : '公開プロフィール';
-      profileSummaryEl.textContent = `${data.displayName || emailArg} の公開面を、基本情報、つながり、表示中の役割とともに表示しています。`;
-      profileExtraEl.textContent = `表示中のバッジ: ${roleText}。`;
-      statusChipEl.textContent = data.is_verified ? '認証済みプロフィール' : '公開プロフィール';
+    function getProfileShareUrl(emailArg){
+      return `https://darkpurpleofswebsite.netlify.app/users/profile/${encodeURIComponent(emailArg)}`;
+    }
+
+    function getProfileShareText(nameArg, emailArg){
+      const displayName = String(nameArg || '').trim();
+      const profileName = displayName || (emailArg || t('pageTitle').toLowerCase());
+      const url = getProfileShareUrl(emailArg);
+      return t('shareProfileText', { name: profileName, url });
+    }
+
+    function ensureShareDialog(){
+      if (document.getElementById('shareDialogBackdrop')) return document.getElementById('shareDialogBackdrop');
+      const backdrop = document.createElement('div');
+      backdrop.id = 'shareDialogBackdrop';
+      backdrop.className = 'share-dialog-backdrop';
+      backdrop.innerHTML = `
+        <div class="share-dialog" role="dialog" aria-modal="true" aria-labelledby="shareDialogTitle">
+          <h3 id="shareDialogTitle">${t('shareDialogTitle')}</h3>
+          <p>${t('shareDialogText')}</p>
+          <input id="shareDialogInput" type="text" readonly />
+          <div class="share-dialog-actions">
+            <button id="shareDialogCopyBtn" class="primary" type="button">${t('copyLink')}</button>
+            <button id="shareDialogCloseBtn" type="button">${t('close')}</button>
+          </div>
+        </div>`;
+      document.body.appendChild(backdrop);
+      backdrop.querySelector('#shareDialogCopyBtn').addEventListener('click', async () => {
+        const input = backdrop.querySelector('#shareDialogInput');
+        const text = input.value;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            showToast(t('linkCopied'), 'purple');
+          } else {
+            input.select();
+            document.execCommand('copy');
+            showToast(t('linkCopied'), 'purple');
+          }
+        } catch (err) {
+          console.warn('Copy failed', err);
+          showToast(t('copyFailed'), 'red');
+        }
+      });
+      backdrop.querySelector('#shareDialogCloseBtn').addEventListener('click', () => {
+        backdrop.classList.remove('open');
+      });
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) backdrop.classList.remove('open');
+      });
+      return backdrop;
+    }
+
+    function showShareDialog(url){
+      const backdrop = ensureShareDialog();
+      const input = backdrop.querySelector('#shareDialogInput');
+      input.value = url;
+      backdrop.classList.add('open');
+    }
+
+    function maybeShowBlockedProfileWarning(){
+      if (hasShownBlockedProfileWarning || !currentUser || !viewedEmail || currentUser.email === viewedEmail) return;
+      if (!relationshipState.isBlockedByCurrent) return;
+
+      hasShownBlockedProfileWarning = true;
+      const profileName = (viewedData && viewedData.displayName) ? viewedData.displayName : viewedEmail;
+      if (window.DPDiag && typeof window.DPDiag.alert === 'function') {
+        window.DPDiag.alert({
+          title: t('blockedProfileWarningTitle'),
+          text: t('blockedProfileWarningText', { name: profileName }),
+          okText: t('okay'),
+          closeOnBackdrop: true,
+          closeOnEscape: true,
+        }).catch(() => {});
+      } else {
+        showToast(`You have blocked ${profileName}.`, 'yellow', 5000);
+      }
+    }
+
+    async function shareProfile(){
+      if (!viewedEmail) return;
+      const name = viewedData && viewedData.displayName ? viewedData.displayName : viewedEmail;
+      const url = getProfileShareUrl(viewedEmail);
+      const shareText = getProfileShareText(name, viewedEmail);
+      try {
+        if (navigator.share && navigator.canShare && navigator.canShare({ title: 'Profile', text: shareText, url })) {
+          await navigator.share({ title: `${name}'s profile`, text: shareText, url });
+          showToast(t('profileShared'), 'purple');
+          return;
+        }
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+      }
+      showShareDialog(url);
+    }
+
+    function postTimestampMillis(value){
+      if (value && typeof value.toMillis === 'function') return value.toMillis();
+      if (value && typeof value.seconds === 'number') return value.seconds * 1000;
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? numeric : 0;
+    }
+
+    function formatPostDate(value){
+      const millis = postTimestampMillis(value);
+      if (!millis) return '';
+      return new Date(millis).toLocaleString(currentLang || undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit'
+      });
+    }
+
+    function fieldContainsEmail(field, email){
+      if (Array.isArray(field)) return field.includes(email);
+      return typeof field === 'string' && field.includes(email);
+    }
+
+    function postsForFilter(filter, email){
+      return profilePosts.filter(post => {
+        const editor = String(post.editor || post.author || '');
+        if (filter === 'wall') return fieldContainsEmail(post.towall, email);
+        if (filter === 'pinned') return editor === email && post.pinnedByOwner === true;
+        if (filter === 'reposted') return editor !== email && fieldContainsEmail(post.repostedBy, email);
+        return editor === email;
+      });
+    }
+
+    async function getPostAuthorData(email){
+      if (!email || !db) return {};
+      try {
+        const snap = await db.collection('user_data').doc(email).get();
+        return snap.exists ? snap.data() || {} : {};
+      } catch (err) {
+        console.warn('Failed to load post author data', err);
+        return {};
+      }
+    }
+
+    async function renderProfilePosts(){
+      if (!profilePostsEl) return;
+      const requestId = ++profilePostsRequestId;
+      const filteredPosts = postsForFilter(profilePostsFilter, profilePostsEmail);
+      const authorData = {};
+      await Promise.all(filteredPosts.map(async post => {
+        const editor = String(post.editor || post.author || '');
+        if (!authorData[editor]) authorData[editor] = await getPostAuthorData(editor);
+      }));
+      if (requestId !== profilePostsRequestId) return;
+
+      profilePostsEl.innerHTML = '';
+      if (profilePostCountEl) {
+        profilePostCountEl.textContent = postCountLabel(filteredPosts.length);
+      }
+      if (!filteredPosts.length) {
+        const empty = document.createElement('div');
+        empty.className = 'profile-post-empty';
+        empty.textContent = t('noPostsFound');
+        profilePostsEl.appendChild(empty);
+        return;
+      }
+
+      filteredPosts.forEach(post => {
+        const editor = String(post.editor || post.author || '');
+        const data = authorData[editor] || {};
+        const card = document.createElement('article');
+        card.className = 'profile-post-card';
+        card.tabIndex = 0;
+
+        const head = document.createElement('div');
+        head.className = 'profile-post-head';
+        const author = document.createElement('div');
+        author.className = 'profile-post-author';
+        author.textContent = data['display name'] || editor || t('unknownUser');
+        if (data.is_verified) {
+          const badge = document.createElement('span');
+          badge.className = 'verified';
+          badge.title = t('verified');
+          author.appendChild(badge);
+        }
+        const date = document.createElement('time');
+        date.className = 'profile-post-date';
+        const dateMillis = postTimestampMillis(post.timestamp);
+        if (dateMillis) date.dateTime = new Date(dateMillis).toISOString();
+        date.textContent = formatPostDate(post.timestamp) || t('unknownDate');
+        head.appendChild(author);
+        head.appendChild(date);
+        card.appendChild(head);
+
+        const text = document.createElement('div');
+        text.className = 'profile-post-text';
+        text.textContent = String(post.text || '');
+        card.appendChild(text);
+
+        const images = Array.isArray(post.images) ? post.images : [];
+        if (images.length) {
+          const imageWrap = document.createElement('div');
+          imageWrap.className = 'profile-post-image-wrap';
+          const image = document.createElement('img');
+          image.className = 'profile-post-image';
+          image.src = images[0];
+          image.alt = '';
+          image.loading = 'lazy';
+          imageWrap.appendChild(image);
+          if (images.length > 1) {
+            const more = document.createElement('div');
+            more.className = 'profile-post-image-dim';
+            more.textContent = `+${images.length - 1}`;
+            imageWrap.appendChild(more);
+          }
+          card.appendChild(imageWrap);
+        }
+
+        const openPost = () => { window.location.href = `/posts?post=${encodeURIComponent(post.id)}`; };
+        card.addEventListener('click', openPost);
+        card.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openPost();
+          }
+        });
+        profilePostsEl.appendChild(card);
+      });
+    }
+
+    async function loadProfilePosts(email){
+      if (!profilePostsEl || !db || !email) return;
+      profilePostsEmail = email;
+      profilePosts = [];
+      profilePostsEl.innerHTML = `<div class="profile-post-empty">${t('loadingPosts')}</div>`;
+      try {
+        const snap = await db.collection('posts').get();
+        profilePosts = snap.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .sort((left, right) => postTimestampMillis(right.timestamp) - postTimestampMillis(left.timestamp));
+        await renderProfilePosts();
+      } catch (err) {
+        console.error('Failed to load profile posts:', err);
+        profilePostsEl.innerHTML = `<div class="profile-post-empty">${t('loadingPostsLater')}</div>`;
+        if (profilePostCountEl) profilePostCountEl.textContent = '';
+      }
     }
 
     function renderRoleList(roleArr){
@@ -521,14 +1067,14 @@
           const img = document.createElement('img');
           img.src = roleMap[r].icon;
           img.alt = r;
-          img.title = `${r} — ${roleMap[r].desc}`;
+          img.title = `${r} — ${t(roleMap[r].descKey || '')}`;
           el.appendChild(img);
           const wrap = document.createElement('div');
           const txt = document.createElement('strong');
           txt.textContent = r;
           const desc = document.createElement('div');
           desc.className = 'subtle';
-          desc.textContent = roleMap[r].desc;
+          desc.textContent = t(roleMap[r].descKey || '');
           wrap.appendChild(txt);
           wrap.appendChild(desc);
           el.appendChild(wrap);
@@ -557,10 +1103,8 @@
       bioTextEl.appendChild(richEl);
       verifiedEl.style.display = fb.is_verified ? 'inline-block' : 'none';
       pfpFrameEl.style.display = 'none';
-      lastUpdatedEl.textContent = '';
-      updateOverviewBits(fb, emailArg);
       renderRoleList(fb.roles);
-      showToast('ユーザーが見つかりません', 'yellow', 4500);
+      showToast(t('userNotFound'), 'yellow', 4500);
     }
 
     function handleFirestoreError(err, emailArg, key){
@@ -577,7 +1121,7 @@
         }
         renderInteractionButtons();
       } else {
-        showToast('データの読み込みエラー', 'red');
+        showToast(t('dataLoadingError'), 'red');
       }
     }
 
@@ -592,7 +1136,8 @@
       if (!emailArg) return;
 
       const fallback = fallbackProfile(emailArg);
-      interactionArea.style.display = (currentUser && currentUser.email === emailArg) ? 'none' : 'block';
+      interactionArea.style.display = (currentUser && currentUser.email === emailArg) ? 'none' : 'flex';
+      loadProfilePosts(emailArg);
 
       const viewedUserDocRef = db.collection('user_data').doc(docIdFromEmail(emailArg));
       const unsubViewedUser = viewedUserDocRef.onSnapshot(snap => {
@@ -624,7 +1169,6 @@
           pfpFrameEl.style.display = 'none';
         }
 
-        updateOverviewBits(viewedData, emailArg);
         renderRoleList(viewedData.roles);
 
         createAuthorUGCList("#ugc-list", {
@@ -632,14 +1176,6 @@
           firestore: firebase.firestore(),
           auth: firebase.auth()
         });
-
-        if (snap.exists && snap.data().last_updated) {
-          const lu = snap.data().last_updated;
-          const d = new Date(lu.seconds ? lu.seconds * 1000 : lu);
-          lastUpdatedEl.textContent = '更新: ' + d.toLocaleString();
-        } else {
-          lastUpdatedEl.textContent = '更新: なし';
-        }
 
         if (permissionDeniedFor.viewedUser) delete permissionDeniedFor.viewedUser;
         renderInteractionButtons();
@@ -676,6 +1212,9 @@
           relationshipState.isBlockedByCurrent = Array.isArray(data.blockedUsers) && data.blockedUsers.includes(emailArg);
           if (currentUser.email === emailArg) interactionArea.style.display = 'none';
           if (permissionDeniedFor.currentUser) delete permissionDeniedFor.currentUser;
+          if (relationshipState.isBlockedByCurrent) {
+            maybeShowBlockedProfileWarning();
+          }
           renderInteractionButtons();
         }, err => { handleFirestoreError(err, emailArg, 'currentUser'); });
         unsubscribes.push(unsubCurrentUser);
@@ -758,76 +1297,124 @@
     }
 
     function renderInteractionButtons(){
+      renderOwnerQuickActions();
       if (currentUser && viewedEmail && currentUser.email === viewedEmail) {
         interactionArea.style.display = 'none';
         return;
       }
-      interactionArea.style.display = 'block';
+      interactionArea.style.display = 'flex';
+
+      if (!currentUser) {
+        interactionButtons.innerHTML = '';
+        moreMenuEl.innerHTML = '';
+        moreMenuEl.classList.remove('open');
+        moreBtnEl.setAttribute('aria-expanded', 'false');
+        moreBtnEl.disabled = true;
+        moreBtnEl.title = t('signInViewMore');
+        moreBtnEl.style.opacity = '0.6';
+        moreBtnEl.style.filter = 'grayscale(0.7)';
+        moreBtnEl.style.cursor = 'not-allowed';
+        shareBtnEl.disabled = true;
+        shareBtnEl.title = t('signInShare');
+        shareBtnEl.style.opacity = '0.6';
+        shareBtnEl.style.filter = 'grayscale(0.7)';
+        shareBtnEl.style.cursor = 'not-allowed';
+
+        const guestHint = disableGuestActionButton(
+          makeActionBtn({ icon: ICONS.post, text: t('signInInteract'), className: 'action-btn secondary' }),
+          t('signInUseActions')
+        );
+        interactionButtons.appendChild(guestHint);
+        return;
+      }
+
+      shareBtnEl.disabled = false;
+      shareBtnEl.title = t('shareProfile');
+      shareBtnEl.style.opacity = '';
+      shareBtnEl.style.filter = '';
+      shareBtnEl.style.cursor = '';
+      moreBtnEl.disabled = false;
+      moreBtnEl.title = t('moreOptions');
+      moreBtnEl.style.opacity = '';
+      moreBtnEl.style.filter = '';
+      moreBtnEl.style.cursor = '';
       interactionButtons.innerHTML = '';
+      moreMenuEl.innerHTML = '';
+      moreMenuEl.classList.remove('open');
+      moreBtnEl.setAttribute('aria-expanded', 'false');
 
       const nameForButtons = (viewedData && viewedData.displayName) ? viewedData.displayName : viewedEmail;
       const otherEmailEsc = encodeURIComponent(viewedEmail);
 
-      const postBtn = document.createElement('button');
-      postBtn.className = 'btn';
-      postBtn.textContent = 'ウォールに投稿';
-      if (isActionDisabled('post')) {
+      const shareMenuBtn = makeActionBtn({ icon: ICONS.share, text: t('shareProfile'), className: 'action-btn secondary' });
+      shareMenuBtn.addEventListener('click', () => {
+        shareProfile();
+        moreMenuEl.classList.remove('open');
+        moreBtnEl.setAttribute('aria-expanded', 'false');
+      });
+      if (mobileMediaQuery.matches) {
+        moreMenuEl.appendChild(shareMenuBtn);
+      }
+
+      const postBtn = makeActionBtn({ icon: ICONS.post, text: t('filterWall'), className: 'action-btn secondary' });
+      if (relationshipState.isBlockedByCurrent) {
         postBtn.disabled = true;
-        postBtn.title = 'ユーザーが存在しません';
+        postBtn.title = t('userDoesNotExist');
         postBtn.style.opacity = 0.6;
       } else {
-        postBtn.addEventListener('click', () => { window.location.href = `./createpost?wall=${otherEmailEsc}`; });
+        postBtn.addEventListener('click', () => { window.location.href = `/createpost?wall=${otherEmailEsc}`; });
       }
-      interactionButtons.appendChild(postBtn);
+      moreMenuEl.appendChild(postBtn);
 
-      const giftBtn = document.createElement('button');
-      giftBtn.className = 'btn';
-      giftBtn.textContent = `${nameForButtons} にギフトを送る`;
-      if (isActionDisabled('post')) {
+      const giftBtn = makeActionBtn({ icon: ICONS.gift, text: t('sendGift'), className: 'action-btn secondary' });
+      giftBtn.title = `${t('sendGift')} ${nameForButtons}`;
+      if (relationshipState.isBlockedByCurrent) {
         giftBtn.disabled = true;
-        giftBtn.title = 'ユーザーが存在しません';
+        giftBtn.title = 'User does not exist';
         giftBtn.style.opacity = 0.6;
       } else if (!window.SendGiftSheet) {
         giftBtn.disabled = true;
-        giftBtn.title = 'ギフトシステムは利用できません';
+        giftBtn.title = t('giftUnavailable');
         giftBtn.style.opacity = 0.5;
       } else {
-        giftBtn.addEventListener('click', () => {
+        giftBtn.addEventListener("click", () => {
           if (!window.SendGiftSheet) {
-            showToast('ギフトシステムは利用できません', 'red');
+            showToast(t('giftUnavailable'), "red");
             return;
           }
+
           window.SendGiftSheet.open({
-            email: viewedEmail,
-            username: viewedData && viewedData.displayName
-          });
+              email: viewedEmail,
+              username: viewedData.displayName
+            });
         });
       }
-      interactionButtons.appendChild(giftBtn);
+      moreMenuEl.appendChild(giftBtn);
 
-      const chatBtn = document.createElement('button');
-      chatBtn.className = 'btn';
-      chatBtn.textContent = `${nameForButtons} とチャット`;
-      if (isActionDisabled('post')) {
+      const chatBtn = makeActionBtn({ icon: ICONS.chat, text: t('chat'), className: 'action-btn secondary' });
+      chatBtn.title = `${t('chat')} ${nameForButtons}`;
+      if (relationshipState.isBlockedByCurrent) {
         chatBtn.disabled = true;
-        chatBtn.title = 'ユーザーが存在しません';
+        chatBtn.title = 'User does not exist';
         chatBtn.style.opacity = 0.6;
       } else {
-        chatBtn.addEventListener('click', () => { window.location.href = `./chat?email=${otherEmailEsc}`; });
+        chatBtn.addEventListener('click', () => { window.location.href = `/chat?email=${otherEmailEsc}`; });
       }
-      interactionButtons.appendChild(chatBtn);
+      moreMenuEl.appendChild(chatBtn);
 
       const followBtn = document.createElement('button');
-      followBtn.className = 'btn';
+      followBtn.className = 'action-btn secondary';
       followBtn.id = 'followBtn';
-      followBtn.textContent = relationshipState.isFollowing ? `${nameForButtons} のフォローをやめる` : `${nameForButtons} をフォロー`;
+      followBtn.title = relationshipState.isFollowing ? `${t('unfollow')} ${nameForButtons}` : `${t('follow')} ${nameForButtons}`;
+      followBtn.innerHTML = `${relationshipState.isFollowing ? ICONS.unfollow : ICONS.follow}<span>${relationshipState.isFollowing ? t('unfollow') : t('follow')}</span>`;
+
       if (relationshipState.isBlockedByCurrent) {
         followBtn.disabled = true;
-        followBtn.title = 'このユーザーをブロックしています。フォローするには解除してください。';
+        followBtn.title = t('blockedUnfollow');
         followBtn.style.opacity = 0.6;
       } else if (isFallbackProfile) {
         followBtn.disabled = true;
-        followBtn.title = 'ユーザーが見つからないため使用できません';
+        followBtn.title = t('unavailableBecauseUserNotFound');
         followBtn.style.opacity = 0.6;
       } else {
         followBtn.addEventListener('click', async () => {
@@ -836,54 +1423,55 @@
             if (relationshipState.isFollowing) {
               await db.collection('followers').doc(viewedEmail).collection('usersWhoFollowMe').doc(currentUser.email).delete().catch(()=>{});
               await db.collection('following').doc(currentUser.email).collection('usersIFollow').doc(viewedEmail).delete().catch(()=>{});
-              showToast('フォロー解除しました', 'purple');
+              showToast(t('unfollowed'), 'purple');
             } else {
               await db.collection('followers').doc(viewedEmail).collection('usersWhoFollowMe').doc(currentUser.email).set({ email: currentUser.email, created: firebase.firestore.FieldValue.serverTimestamp() });
               await db.collection('following').doc(currentUser.email).collection('usersIFollow').doc(viewedEmail).set({ email: viewedEmail, created: firebase.firestore.FieldValue.serverTimestamp() });
-              showToast('フォローしました', 'purple');
+              showToast(t('followed'), 'purple');
             }
           } catch (err) {
             console.error('follow/unfollow', err);
             if (isFirestorePermissionError(err)) handleFirestoreError(err, viewedEmail, 'followAction');
-            else showToast('操作に失敗しました', 'red');
+            else showToast(t('actionFailed'), 'red');
           } finally {
             followBtn.disabled = false;
           }
         });
       }
-      interactionButtons.appendChild(followBtn);
+      moreMenuEl.appendChild(followBtn);
 
       const friendBtn = document.createElement('button');
-      friendBtn.className = 'btn';
+      friendBtn.className = 'action-btn secondary';
       friendBtn.id = 'friendBtn';
 
       if (relationshipState.friendExists) {
-        friendBtn.textContent = '友達を削除';
+        friendBtn.className = 'action-btn friend-remove';
+        friendBtn.innerHTML = `${ICONS.friendRemove}<span>${t('removeFriend')}</span>`;
         if (isActionDisabled('friend')) {
           friendBtn.disabled = true;
-          friendBtn.title = 'ユーザーが存在しません';
+          friendBtn.title = t('userDoesNotExist');
           friendBtn.style.opacity = 0.6;
         } else {
           friendBtn.addEventListener('click', async () => {
-            const confirmed = await DPDiag.confirm({ title: '友達を削除', text: `${nameForButtons} を友達から削除しますか？` });
+            const confirmed = await DPDiag.confirm({ title: t('removeFriend'), text: `${t('removeFriend')} ${nameForButtons}?` });
             if (!confirmed) return;
             try {
               await db.collection('friends').doc(currentUser.email).collection('friendlist').doc(viewedEmail).delete().catch(()=>{});
               await db.collection('friends').doc(viewedEmail).collection('friendlist').doc(currentUser.email).delete().catch(()=>{});
-              showToast('友達を削除しました', 'purple');
+              showToast(t('friendRemoved'), 'purple');
             } catch (err) {
               console.error('remove friend', err);
               if (isFirestorePermissionError(err)) handleFirestoreError(err, viewedEmail, 'friendAction');
-              else showToast('エラー', 'red');
+              else showToast(t('failed'), 'red');
             }
           });
         }
       } else if (relationshipState.requestReceived) {
-        friendBtn.className = 'btn primary';
-        friendBtn.textContent = '友達申請を承認';
+        friendBtn.className = 'action-btn primary';
+        friendBtn.innerHTML = `${ICONS.friendAccept}<span>${t('acceptFriendRequest')}</span>`;
         if (isActionDisabled('friend')) {
           friendBtn.disabled = true;
-          friendBtn.title = 'ユーザーが存在しません';
+          friendBtn.title = t('userDoesNotExist');
           friendBtn.style.opacity = 0.6;
         } else {
           friendBtn.addEventListener('click', async () => {
@@ -891,55 +1479,58 @@
               await db.collection('friends').doc(currentUser.email).collection('requests').doc(viewedEmail).delete().catch(()=>{});
               await db.collection('friends').doc(currentUser.email).collection('friendlist').doc(viewedEmail).set({ email: viewedEmail, created: firebase.firestore.FieldValue.serverTimestamp() });
               await db.collection('friends').doc(viewedEmail).collection('friendlist').doc(currentUser.email).set({ email: currentUser.email, created: firebase.firestore.FieldValue.serverTimestamp() });
-              showToast('友達申請を承認しました', 'purple');
+              showToast(t('friendRequestAccepted'), 'purple');
             } catch (err) {
               console.error('accept friend', err);
               if (isFirestorePermissionError(err)) handleFirestoreError(err, viewedEmail, 'friendAction');
-              else showToast('エラー', 'red');
+              else showToast(t('failed'), 'red');
             }
           });
         }
       } else if (relationshipState.requestSent) {
-        friendBtn.textContent = '申請送信済み';
+        friendBtn.innerHTML = `${ICONS.friendPending}<span>${t('requestPending')}</span>`;
         friendBtn.disabled = true;
-        friendBtn.title = 'すでに友達申請を送信しています';
+        friendBtn.title = t('alreadySentFriendRequest');
       } else {
-        friendBtn.textContent = '友達申請を送る';
+        friendBtn.className = 'action-btn primary';
+        friendBtn.innerHTML = `${ICONS.friendAdd}<span>${t('addFriend')}</span>`;
         if (relationshipState.isBlockedByCurrent) {
           friendBtn.disabled = true;
-          friendBtn.title = 'このユーザーをブロックしています。申請するには解除してください。';
+          friendBtn.title = t('blockedSendRequest');
           friendBtn.style.opacity = 0.6;
         } else if (isActionDisabled('friend')) {
           friendBtn.disabled = true;
-          friendBtn.title = 'ユーザーが存在しません';
+          friendBtn.title = t('userDoesNotExist');
           friendBtn.style.opacity = 0.6;
         } else {
           friendBtn.addEventListener('click', async () => {
             try {
               const friendExistsDoc = await db.collection('friends').doc(viewedEmail).collection('friendlist').doc(currentUser.email).get();
-              if (friendExistsDoc.exists) { showToast('すでに友達です', 'yellow'); return; }
+              if (friendExistsDoc.exists) { showToast(t('youAreAlreadyFriends'), 'yellow'); return; }
               const alreadySent = await db.collection('friends').doc(viewedEmail).collection('requests').doc(currentUser.email).get();
-              if (alreadySent.exists) { showToast('申請はすでに保留中です', 'yellow'); return; }
+              if (alreadySent.exists) { showToast(t('requestAlreadyPending'), 'yellow'); return; }
               await db.collection('friends').doc(viewedEmail).collection('requests').doc(currentUser.email).set({ from: currentUser.email, to: viewedEmail, created: firebase.firestore.FieldValue.serverTimestamp() });
-              showToast('友達申請を送信しました', 'purple');
+              showToast(t('friendRequestSent'), 'purple');
             } catch (err) {
               console.error('send request', err);
               if (isFirestorePermissionError(err)) handleFirestoreError(err, viewedEmail, 'friendAction');
-              else showToast('エラー', 'red');
+              else showToast(t('failed'), 'red');
             }
           });
         }
       }
       interactionButtons.appendChild(friendBtn);
 
-      const blockBtn = document.createElement('button');
-      blockBtn.className = 'btn red';
+      const blockBtn = makeActionBtn({
+        icon: ICONS.block,
+        text: relationshipState.isBlockedByCurrent ? `Unblock ${nameForButtons}` : `Block ${nameForButtons}`,
+        className: 'action-btn red'
+      });
       blockBtn.id = 'blockBtn';
-      blockBtn.textContent = relationshipState.isBlockedByCurrent ? `${nameForButtons} のブロックを解除` : `${nameForButtons} をブロック`;
       blockBtn.addEventListener('click', async () => {
         try {
           if (!relationshipState.isBlockedByCurrent) {
-            const confirmed = await DPDiag.confirm({ title: `${nameForButtons} をブロックしますか？`, text: `${nameForButtons} をブロックすると、メッセージ、フォロー、プロフィール閲覧ができなくなります。続行しますか？` });
+            const confirmed = await DPDiag.confirm({ title: `${t('block')} ${nameForButtons}?`, text: `${t('blockedUnfollow')} ${nameForButtons}.` });
             if (!confirmed) return;
             await db.collection('user_data').doc(currentUser.email).set({ blockedUsers: firebase.firestore.FieldValue.arrayUnion(viewedEmail) }, { merge: true });
             const ops = [
@@ -951,46 +1542,95 @@
               db.collection('friends').doc(viewedEmail).collection('requests').doc(currentUser.email).delete().catch(()=>{})
             ];
             await Promise.all(ops);
-            showToast('ユーザーをブロックしました', 'purple');
+            showToast(t('userBlocked'), 'purple');
           } else {
             await db.collection('user_data').doc(currentUser.email).set({ blockedUsers: firebase.firestore.FieldValue.arrayRemove(viewedEmail) }, { merge: true });
-            showToast('ユーザーのブロックを解除しました', 'purple');
+            showToast(t('userUnblocked'), 'purple');
           }
         } catch (err) {
           console.error('block/unblock', err);
-          if (isFirestorePermissionError(err)) showToast('ブロック: ブロック状態の変更に必要な権限がありません', 'red');
-          else showToast('エラー', 'red');
+          if (isFirestorePermissionError(err)) showToast(t('blockedPermError'), 'red');
+          else showToast('Failed', 'red');
         }
       });
-      interactionButtons.appendChild(blockBtn);
+      moreMenuEl.appendChild(blockBtn);
 
-      const reportBtn = document.createElement('button');
-      reportBtn.className = 'btn red';
-      reportBtn.textContent = `${nameForButtons} を報告`;
+      const reportBtn = makeActionBtn({ icon: ICONS.report, text: `${t('report')} ${nameForButtons}`, className: 'action-btn red' });
       reportBtn.addEventListener('click', () => {
-        window.location.href = `./reportabuse?email=${otherEmailEsc}`;
+        window.location.href = `/reportabuse?email=${otherEmailEsc}`;
       });
-      interactionButtons.appendChild(reportBtn);
+      moreMenuEl.appendChild(reportBtn);
 
       if (relationshipState.hasBlockedCurrent) {
         [postBtn, chatBtn, followBtn, friendBtn].forEach(b => {
           if (b) {
             b.disabled = true;
-            b.title = 'この操作は利用できません';
+            b.title = 'Action unavailable';
             b.style.opacity = 0.6;
           }
         });
       }
     }
 
-    auth.onAuthStateChanged(async (u) => {
-      if (!u) {
-        window.location.href = './login';
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-tab');
+        tabBtns.forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn ? 'true' : 'false'); });
+        tabPanels.forEach(p => p.classList.toggle('active', p.getAttribute('data-panel') === target));
+      });
+    });
+
+    document.querySelectorAll('.post-filter').forEach(filterButton => {
+      filterButton.addEventListener('click', () => {
+        profilePostsFilter = filterButton.getAttribute('data-post-filter') || 'posts';
+        document.querySelectorAll('.post-filter').forEach(button => {
+          button.classList.toggle('active', button === filterButton);
+        });
+        renderProfilePosts();
+      });
+    });
+
+    shareBtnEl.addEventListener('click', () => {
+      shareProfile();
+    });
+
+    const mobileMediaQuery = window.matchMedia('(max-width: 560px)');
+    function syncMobileHeaderActions(){
+      if (!mobileMediaQuery.matches) {
+        shareBtnEl.style.display = '';
         return;
       }
-      currentUser = u;
+      shareBtnEl.style.display = 'none';
+    }
+    mobileMediaQuery.addEventListener('change', syncMobileHeaderActions);
+    syncMobileHeaderActions();
+
+    moreBtnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = moreMenuEl.classList.toggle('open');
+      moreBtnEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    document.addEventListener('click', (e) => {
+      if (!moreMenuEl.classList.contains('open')) return;
+      if (moreMenuEl.contains(e.target) || moreBtnEl.contains(e.target)) return;
+      moreMenuEl.classList.remove('open');
+      moreBtnEl.setAttribute('aria-expanded', 'false');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && moreMenuEl.classList.contains('open')) {
+        moreMenuEl.classList.remove('open');
+        moreBtnEl.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    auth.onAuthStateChanged(async (u) => {
+      currentUser = u || null;
+      currentLang = await resolvePreferredLang(currentUser ? currentUser.email : null);
+      applyStaticTranslations();
       const emailArg = getProfileParam();
-      viewedEmail = emailArg || currentUser.email;
+      viewedEmail = emailArg || (currentUser ? currentUser.email : null);
 
       for (const k in permissionDeniedFor) delete permissionDeniedFor[k];
       clearUnsubscribes();
@@ -1000,7 +1640,28 @@
     window.addEventListener('load', () => {
       const uploadEls = document.querySelectorAll('input[type=file], .upload-box, #saveNameBtn, #saveBioBtn');
       uploadEls.forEach(e => e?.remove?.());
-      interactionArea.style.display = 'none';
+      if (interactionArea) interactionArea.style.display = 'flex';
+    });
+
+    // Open imageviewer on profile picture or banner click
+    bannerEl.style.cursor = 'pointer';
+    bannerEl.addEventListener('click', async () => {
+      const bgImage = bannerEl.style.backgroundImage || '';
+      const urlMatch = bgImage.match(/url\(["']?([^"')]+)["']?\)/);
+      const imageUrl = urlMatch ? urlMatch[1] : '';
+      if (imageUrl && viewedEmail) {
+        window.ImageViewer.open({ imageUrl, authorEmail: viewedEmail, advancedMode: true });
+      }
+    });
+
+    profilePicEl.style.cursor = 'pointer';
+    profilePicEl.addEventListener('click', async () => {
+      const bgImage = profilePicEl.style.backgroundImage || '';
+      const urlMatch = bgImage.match(/url\(["']?([^"')]+)["']?\)/);
+      const imageUrl = urlMatch ? urlMatch[1] : '';
+      if (imageUrl && viewedEmail) {
+        window.ImageViewer.open({ imageUrl, authorEmail: viewedEmail, advancedMode: false });
+      }
     });
 
     window.addEventListener('beforeunload', () => clearUnsubscribes());

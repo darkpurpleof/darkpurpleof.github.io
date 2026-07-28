@@ -17,7 +17,7 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    html, body { width: 100%; min-height: 100%; overflow-x: hidden; }
+    html, body { width: 100%; min-height: 100%; overflow-x: clip; }
     img { max-width: 100%; display: block; }
 
     :root{
@@ -913,7 +913,9 @@
           download_link: data.download_link || "",
           creator: data.creator || "",
           type: data.type || "",
-          version: data.version || ""
+          version: data.version || "",
+          file_hash: data.file_hash || data.filehash || "",
+          filehash: data.file_hash || data.filehash || ""
         };
       }
 
@@ -1212,6 +1214,7 @@
         const version = String(controls.version.value || "").trim();
         const desc = String(controls.description.value || "").trim();
         const onStock = String(controls.onStock.value) === "true";
+        const filehash = controls.filehash ? String(controls.filehash.value || "").trim() : "";
 
         if (!name) errs.push({ field: "name", msg: "Name is required" });
         if (mode === "create" && !idVal) errs.push({ field: "id", msg: "ID is required when creating" });
@@ -1256,8 +1259,22 @@
           if (!version) {
             errs.push({ field: "version", msg: "Version is required for downloadable items" });
           }
-          if (mode === "edit" && item.download_link && item.download_link !== downloadLink && item.version === version) {
-            errs.push({ field: "version", msg: "Version must be updated when download link changes" });
+          if (isDev && type === "Plugin" && !filehash) {
+            errs.push({ field: "filehash", msg: "Root hash is required for Plugins" });
+          }
+          if (isDev && filehash && !/^[a-fA-F0-9]{64}$/.test(filehash)) {
+            errs.push({ field: "filehash", msg: "Root hash must be a 64-character hexadecimal string" });
+          }
+          if (mode === "edit" && item.download_link && item.download_link !== downloadLink) {
+            if (item.version === version) {
+              errs.push({ field: "version", msg: "Version must be updated when download link changes" });
+            }
+            if (isDev) {
+              const oldHash = item.file_hash || item.filehash || "";
+              if (oldHash === filehash) {
+                errs.push({ field: "filehash", msg: "Root hash must be updated when download link changes" });
+              }
+            }
           }
 
           const hostname = extractHostname(downloadLink);
@@ -1327,6 +1344,7 @@
         if (state.errors.description) state.errors.description.textContent = byField.description || "";
         if (state.errors.downloadLink) state.errors.downloadLink.textContent = byField.downloadLink || "";
         if (state.errors.version) state.errors.version.textContent = byField.version || "";
+        if (state.errors.filehash) state.errors.filehash.textContent = byField.filehash || "";
         if (state.errors.coins) state.errors.coins.textContent = byField.coins || "";
 
         if (state.saveBtn) state.saveBtn.disabled = errs.length > 0;
@@ -1435,6 +1453,13 @@
                       <div class="field-error" id="err-dlg-download-link"></div>
                     </div>
 
+                    <div class="field hidden" id="filehash-wrap">
+                      <label class="field-label" for="dlg-filehash">Root Hash</label>
+                      <input class="input" id="dlg-filehash" type="text" value="${escapeHtml(item.file_hash || item.filehash || "")}" placeholder="b31f39534c2ef95c53afd6551548152effa948cec98bde9c5d1e39a71bc722d9" />
+                      <div class="field-note">Root hash provided when signing the plugin. Required for Plugins. Example: b31f39534c2ef95c53afd6551548152effa948cec98bde9c5d1e39a71bc722d9</div>
+                      <div class="field-error" id="err-dlg-filehash"></div>
+                    </div>
+
                     <div class="field-error" id="err-dlg-coins"></div>
                   </form>
                 </div>
@@ -1488,6 +1513,8 @@
         const type = portal.querySelector("#dlg-type");
         const downloadLinkWrap = portal.querySelector("#download-link-wrap");
         const downloadLink = portal.querySelector("#dlg-download-link");
+        const filehashWrap = portal.querySelector("#filehash-wrap");
+        const filehash = portal.querySelector("#dlg-filehash");
 
         state.controls = {
           name,
@@ -1499,6 +1526,8 @@
           type,
           downloadLink,
           downloadLinkWrap,
+          filehash,
+          filehashWrap,
           downloadable: portal.querySelector('input[name="downloadable"]:checked'),
           onStock: portal.querySelector('input[name="onstock"]:checked')
         };
@@ -1514,6 +1543,7 @@
           description: portal.querySelector("#err-dlg-description"),
           downloadLink: portal.querySelector("#err-dlg-download-link"),
           version: portal.querySelector("#err-dlg-version"),
+          filehash: portal.querySelector("#err-dlg-filehash"),
           coins: portal.querySelector("#err-dlg-coins")
         };
 
@@ -1552,6 +1582,9 @@
           refreshBinaryRefs();
           const downloadable = state.controls.downloadable && state.controls.downloadable.value === "true";
           downloadLinkWrap.classList.toggle("hidden", !downloadable);
+          if (filehashWrap) {
+            filehashWrap.classList.toggle("hidden", !(isDev && downloadable));
+          }
         };
 
         const onInput = () => {
@@ -1560,10 +1593,14 @@
           runValidationAndUpdateUI();
         };
 
-        [name, id, price, version, image, desc, type, downloadLink].forEach(el => {
-          el.addEventListener("input", onInput);
-          el.addEventListener("change", onInput);
+        [name, id, price, version, image, desc, type, downloadLink, filehash].forEach(el => {
+          if (el) {
+            el.addEventListener("input", onInput);
+            el.addEventListener("change", onInput);
+          }
         });
+
+
 
         portal.querySelectorAll('input[name="downloadable"], input[name="onstock"]').forEach(radio => {
           radio.addEventListener("change", () => {
@@ -1637,6 +1674,11 @@
             creator: currentUser.email,
             updated_at: new Date()
           };
+          if (state.isDev && downloadableVal && state.controls.filehash) {
+            const filehashVal = String(state.controls.filehash.value || "").trim();
+            payload.file_hash = filehashVal;
+            payload.filehash = filehashVal;
+          }
 
           if (idVal) {
             payload.id = idVal;
@@ -1688,7 +1730,8 @@
                     description: `Upload ${nameVal}`,
                     image: imageVal || null,
                     source: "system@darkpurpleof.github.io",
-                    type: "outgoing"
+                    type: "outgoing",
+                    transtype: "system"
                   };
                   const txId = idVal || (createdRef && createdRef.id);
                   if (txId) {
