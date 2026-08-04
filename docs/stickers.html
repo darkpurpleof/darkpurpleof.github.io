@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sticker Pack Developer Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; width: 100%; overflow-x: hidden; }
+  img { max-width: 100%; display: block; }
+
+  :root{
+    --bg: #171717;
+    --panel: #1b1b1b;
+    --card: #1f1f1f;
+    --card-2: #232323;
+    --muted: #a8a8a8;
+    --text: #eaeaea;
+    --accent: #6b21a8;
+    --accent-strong: #5b21b6;
+    --border: rgba(255,255,255,0.05);
+    --border-strong: rgba(255,255,255,0.08);
+    --soft: rgba(255,255,255,0.03);
+    --redeem: #2196f3;
+    --redeem-strong: #1c86dd;
+    --moderation: #564059;
+    --watchdog: #8b3a3a;
+    --community: #345cfb;
+    --community-hover: #4b7bf5;
+    --radius: 16px;
+    --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  }
+
+  body.light {
+    --bg: #f6f8fb;
+    --panel: #ffffff;
+    --card: #ffffff;
+    --card-2: #f8fafc;
+    --muted: #475569;
+    --text: #0f172a;
+    --border: rgba(0,0,0,0.06);
+    --border-strong: rgba(0,0,0,0.09);
+    --soft: rgba(0,0,0,0.025);
+  }
+
+  body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background .25s ease, color .25s ease;
+  }
+
+  a { color: inherit; }
+  code, pre, kbd { font-family: var(--mono); }
+
+  /* ---------- Layout ---------- */
+  main.container {
+    max-width: 1320px; width: 100%; margin: 0 auto; padding: 0 20px;
+    display: grid; grid-template-columns: 250px minmax(0,1fr) 220px;
+    gap: 0; align-items: start;
+  }
+  @media (max-width: 1180px) { main.container { grid-template-columns: 230px minmax(0,1fr); } .toc-col { display: none; } }
+  @media (max-width: 860px) { main.container { grid-template-columns: 1fr; padding: 0; } .side-col { display: none; } }
+
+  /* ---------- Left sidebar ---------- */
+  .side-col { position: sticky; top: 60px; align-self: start; height: calc(100vh - 60px); overflow-y: auto; padding: 22px 16px 40px 0; border-right: 1px solid var(--border); }
+  .side-col::-webkit-scrollbar { width: 5px; }
+  .side-col::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+  .side-search { display: flex; align-items: center; gap: 8px; background: var(--soft); border: 1px solid var(--border-strong); border-radius: 10px; padding: 8px 10px; margin-bottom: 18px; }
+  .side-search svg { width: 14px; height: 14px; color: var(--muted); flex-shrink: 0; }
+  .side-search input { background: none; border: none; outline: none; color: var(--text); font-size: 13px; width: 100%; font-family: inherit; }
+  .side-search input::placeholder { color: var(--muted); }
+
+  .nav-group { margin-bottom: 18px; }
+  .nav-group-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 0 10px; margin-bottom: 6px; }
+  .nav-group a { display: block; font-size: 13.5px; color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 8px; border-left: 2px solid transparent; margin-bottom: 1px; transition: background .12s ease, color .12s ease, border-color .12s ease; }
+  .nav-group a:hover { color: var(--text); background: var(--soft); }
+  .nav-group a.active { color: var(--text); background: var(--soft); border-left-color: var(--accent); font-weight: 600; }
+
+  /* ---------- Right mini-TOC ---------- */
+  .toc-col { position: sticky; top: 60px; align-self: start; height: calc(100vh - 60px); overflow-y: auto; padding: 22px 0 40px 18px; }
+  .toc-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+  .toc-col a { display: block; font-size: 12.5px; color: var(--muted); text-decoration: none; padding: 4px 0 4px 12px; border-left: 1px solid var(--border-strong); margin-bottom: 1px; }
+  .toc-col a:hover, .toc-col a.active { color: var(--text); border-left-color: var(--accent); }
+
+  /* ---------- Content ---------- */
+  .content { min-width: 0; padding: 0 26px 90px 26px; }
+  @media (max-width: 860px) { .content { padding: 0 16px 80px 16px; } }
+
+  .hero { padding: 46px 0 30px 0; border-bottom: 1px solid var(--border); margin-bottom: 34px; }
+  .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .07em; background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding: 6px 11px; border-radius: 999px; margin-bottom: 16px; }
+  .hero h1 { margin: 0 0 12px 0; font-size: 38px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
+  .hero p { margin: 0; font-size: 15.5px; line-height: 1.65; color: var(--muted); max-width: 640px; }
+  .hero-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .hero-tag { font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--muted); background: var(--card-2); border: 1px solid var(--border-strong); padding: 5px 9px; border-radius: 7px; }
+
+  section.doc-section { margin-bottom: 52px; scroll-margin-top: 76px; }
+  .doc-section h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 6px 0; display: flex; align-items: center; gap: 10px; }
+  .doc-section h2 .num { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent); }
+  .doc-kicker { color: var(--muted); font-size: 14px; margin: 0 0 22px 0; line-height: 1.6; max-width: 720px; }
+  .doc-section h3 { font-size: 16.5px; font-weight: 700; margin: 30px 0 10px 0; letter-spacing: -0.01em; }
+  .doc-section h4 { font-size: 14px; font-weight: 700; margin: 20px 0 8px 0; color: var(--text); }
+  .doc-section p { font-size: 14.5px; line-height: 1.72; color: var(--muted); margin: 0 0 14px 0; }
+  .doc-section p code, li code { background: var(--card-2); border: 1px solid var(--border-strong); border-radius: 5px; padding: 1.5px 6px; font-size: 12.5px; color: var(--text); }
+  .doc-section ul, .doc-section ol { font-size: 14.5px; line-height: 1.75; color: var(--muted); padding-left: 20px; margin: 0 0 16px 0; }
+  .doc-section li { margin-bottom: 5px; }
+  .doc-section li strong, .doc-section p strong { color: var(--text); font-weight: 700; }
+  .doc-section a.inline-link { color: var(--community); text-decoration: none; border-bottom: 1px dotted var(--community); }
+
+  /* callouts */
+  .callout { display: flex; gap: 12px; border-radius: 12px; padding: 14px 16px; margin: 18px 0; border: 1px solid var(--border-strong); }
+  .callout svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-title { font-weight: 700; font-size: 13.5px; margin-bottom: 3px; }
+  .callout-body { font-size: 13.5px; line-height: 1.6; color: var(--muted); }
+  .callout.info { background: color-mix(in srgb, var(--redeem) 10%, transparent); border-color: color-mix(in srgb, var(--redeem) 30%, transparent); }
+  .callout.info svg, .callout.info .callout-title { color: var(--redeem); }
+  .callout.warn { background: color-mix(in srgb, var(--watchdog) 12%, transparent); border-color: color-mix(in srgb, var(--watchdog) 35%, transparent); }
+  .callout.warn svg, .callout.warn .callout-title { color: #d98a8a; }
+  .callout.note { background: var(--soft); border-color: var(--border-strong); }
+  .callout.note svg, .callout.note .callout-title { color: var(--text); }
+
+  /* code blocks */
+  .code-block { position: relative; background: var(--card-2); border: 1px solid var(--border-strong); border-radius: 12px; margin: 16px 0; overflow: hidden; }
+  .code-block-head { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; border-bottom: 1px solid var(--border); }
+  .code-block-lang { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .copy-btn { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--muted); background: var(--soft); border: 1px solid var(--border-strong); border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+  .copy-btn:hover { color: var(--text); }
+  .code-block pre { margin: 0; padding: 16px; overflow-x: auto; font-size: 12.8px; line-height: 1.65; color: var(--text); }
+  .code-block pre::-webkit-scrollbar { height: 6px; }
+  .code-block pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+  .tok-key { color: #c9a0ff; } .tok-str { color: #7fd99a; } .tok-num { color: #f0b86e; } .tok-com { color: var(--muted); font-style: italic; } .tok-punc { color: var(--muted); }
+
+  /* tables */
+  .table-wrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--border-strong); border-radius: 12px; }
+  table.doc-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+  table.doc-table th { text-align: left; background: var(--card-2); color: var(--text); font-weight: 700; padding: 10px 14px; border-bottom: 1px solid var(--border-strong); white-space: nowrap; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  table.doc-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+  table.doc-table tr:last-child td { border-bottom: none; }
+  table.doc-table td:first-child, table.doc-table td code { color: var(--text); }
+  table.doc-table code { font-family: var(--mono); font-size: 12.2px; background: var(--soft); border: 1px solid var(--border-strong); padding: 1.5px 6px; border-radius: 5px; white-space: nowrap; }
+  .badge { display: inline-block; font-family: var(--mono); font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: .03em; }
+  .badge.req { background: color-mix(in srgb, var(--watchdog) 22%, transparent); color: #e6a3a3; }
+  .badge.opt { background: color-mix(in srgb, var(--redeem) 18%, transparent); color: #8fc6f8; }
+
+  /* pills / step list */
+  .steps { counter-reset: step; list-style: none; padding-left: 0; margin: 20px 0; }
+  .steps li { counter-increment: step; position: relative; padding-left: 40px; margin-bottom: 22px; font-size: 14.5px; color: var(--muted); line-height: 1.7; }
+  .steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--accent-strong)); color: #fff; font-weight: 800; font-size: 12.5px; display: grid; place-items: center; }
+  .steps li strong { color: var(--text); }
+
+  .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+  .pill { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text); background: var(--card-2); border: 1px solid var(--border-strong); padding: 5px 10px; border-radius: 999px; }
+
+  .image-placeholder { margin: 16px 0; border-radius: 14px; border: 1.5px dashed var(--border-strong); background: var(--card-2); overflow: hidden; }
+  .image-placeholder-frame { aspect-ratio: 16/8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--muted); padding: 20px; text-align: center; }
+  .image-placeholder-frame svg { width: 34px; height: 34px; opacity: .6; }
+  .image-placeholder-frame span { font-size: 12.5px; font-weight: 600; }
+  .image-placeholder-frame code { background: var(--soft); border: 1px solid var(--border-strong); border-radius: 5px; padding: 1.5px 6px; font-size: 12px; }
+
+  hr.sep { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  #toast { position: fixed; top: 74px; left: 50%; transform: translateX(-50%); padding: 10px 14px; border-radius: 11px; font-weight: 800; font-size: 13px; display: none; z-index: 999; box-shadow: 0 12px 28px rgba(0,0,0,0.22); background: var(--accent-strong); color: #fff; }
+
+  @media (max-width: 600px) { .hero h1 { font-size: 28px; } }
+</style>
+</head>
+<body>
+
+<!-- ================= TOPBAR ================= -->
+<dp-docs-topbar id="docsTopbar"></dp-docs-topbar>
+
+<div id="toast"></div>
+
+<!-- ================= LAYOUT ================= -->
+<main class="container">
+
+  <!-- LEFT NAV -->
+  <aside class="side-col" id="sideCol">
+    <div class="side-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" placeholder="Search docs…" data-i18n-placeholder="side-search-placeholder" onkeydown="if(event.key==='Enter'){filterNav(this.value)}">
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title" data-i18n="group-getting-started">Getting started</div>
+      <a href="#overview"><span data-i18n="side-overview">How sticker packs work</span></a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title" data-i18n="group-building">Building</div>
+      <a href="#structure"><span data-i18n="side-structure">.dpfstickers format</span></a>
+      <a href="#requirements"><span data-i18n="side-requirements">Sticker requirements</span></a>
+      <a href="#creating"><span data-i18n="side-creating">Creating a pack</span></a>
+      <a href="#importing"><span data-i18n="side-importing">Importing &amp; editing</span></a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title" data-i18n="group-reference">Reference</div>
+      <a href="#fields"><span data-i18n="side-fields">Field reference</span></a>
+      <a href="#validation"><span data-i18n="side-validation">Validation rules</span></a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title" data-i18n="group-publishing">Publishing</div>
+      <a href="#exporting"><span data-i18n="side-exporting">Exporting &amp; file naming</span></a>
+      <a href="#distribution"><span data-i18n="side-distribution">Sharing &amp; distribution</span></a>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <div class="hero">
+      <h1 data-i18n="hero-h1">Build sticker packs for DarkPurpleOF's Website</h1>
+      <p data-i18n="hero-p">A complete reference for the <code>.dpfstickers</code> pack format: how a pack is structured, what every sticker requires, how the built-in Sticker Pack Creator builds and imports packs, and how a finished pack gets shared.</p>
+    </div>
+
+    <!-- ============ OVERVIEW ============ -->
+    <section class="doc-section" id="overview">
+      <h2><span class="num">01</span> <span data-i18n="side-overview">How sticker packs work</span></h2>
+      <p class="doc-kicker" data-i18n="ov-kicker">A sticker pack is a single JSON file, exported with a <code>.dpfstickers</code> extension, that bundles pack metadata together with a list of individual stickers. It's built entirely client-side by the Sticker Pack Creator — no server upload is required just to create one.</p>
+
+      <p data-i18n="ov-p1">At a high level, three things happen when you build a pack:</p>
+      <ol>
+        <li data-i18n="ov-li1">You fill in the pack's identity — a <strong>Pack ID</strong>, a display <strong>Name</strong>, an <strong>Author</strong>, and an optional <strong>Description</strong> (up to 500 characters).</li>
+        <li data-i18n="ov-li2">You add stickers one at a time by pasting an <code>https://</code> image URL. Each image is checked as you add it, and again in the gallery, against the recommended sticker dimensions.</li>
+        <li data-i18n="ov-li3">Once every sticker has a unique, non-empty ID and at least two stickers are present, <strong>Export to Sticker Pack</strong> unlocks and downloads a single <code>&lt;packId&gt;.dpfstickers</code> file to your device.</li>
+      </ol>
+
+
+      <div class="callout note">
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F3F3F3"><path d="M440-280h80v-240h-80v240Zm68.5-331.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>        <div>
+        <div>
+          <div class="callout-title" data-i18n="ov-callout-title">Nothing is uploaded until you export</div>
+          <div class="callout-body" data-i18n="ov-callout-body">The tool builds your pack entirely in memory in the browser. Nothing is written anywhere until you press Export, at which point a single <code>.dpfstickers</code> file is generated and downloaded — there's no draft saved server-side unless you do that yourself.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STRUCTURE ============ -->
+    <section class="doc-section" id="structure">
+      <h2><span class="num">02</span> <span data-i18n="side-structure">.dpfstickers format</span></h2>
+      <p class="doc-kicker" data-i18n="st-kicker">Under the hood, a <code>.dpfstickers</code> file is just formatted JSON — readable, diffable, and easy to hand-edit or generate with a script if you'd rather not use the Creator's UI.</p>
+
+      <div class="code-block">
+        <div class="code-block-head"><span class="code-block-lang">json · example.dpfstickers</span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+        <pre><span class="tok-punc">{</span>
+  <span class="tok-key">"packId"</span><span class="tok-punc">:</span> <span class="tok-str">"sunday-mood"</span><span class="tok-punc">,</span>
+  <span class="tok-key">"name"</span><span class="tok-punc">:</span> <span class="tok-str">"Sunday Mood"</span><span class="tok-punc">,</span>
+  <span class="tok-key">"description"</span><span class="tok-punc">:</span> <span class="tok-str">"A small set of lazy weekend faces."</span><span class="tok-punc">,</span>
+  <span class="tok-key">"author"</span><span class="tok-punc">:</span> <span class="tok-str">"you@example.com"</span><span class="tok-punc">,</span>
+  <span class="tok-key">"date"</span><span class="tok-punc">:</span> <span class="tok-str">"2026-07-31T12:00:00.000Z"</span><span class="tok-punc">,</span>
+  <span class="tok-key">"stickers"</span><span class="tok-punc">:</span> <span class="tok-punc">[</span>
+    <span class="tok-punc">{</span> <span class="tok-key">"id"</span><span class="tok-punc">:</span> <span class="tok-str">"coffee"</span><span class="tok-punc">,</span> <span class="tok-key">"name"</span><span class="tok-punc">:</span> <span class="tok-str">"Coffee"</span><span class="tok-punc">,</span> <span class="tok-key">"resource"</span><span class="tok-punc">:</span> <span class="tok-str">"https://example.com/coffee.png"</span> <span class="tok-punc">},</span>
+    <span class="tok-punc">{</span> <span class="tok-key">"id"</span><span class="tok-punc">:</span> <span class="tok-str">"nap"</span><span class="tok-punc">,</span> <span class="tok-key">"name"</span><span class="tok-punc">:</span> <span class="tok-str">"Nap"</span><span class="tok-punc">,</span> <span class="tok-key">"resource"</span><span class="tok-punc">:</span> <span class="tok-str">"https://example.com/nap.png"</span> <span class="tok-punc">}</span>
+  <span class="tok-punc">]</span>
+<span class="tok-punc">}</span></pre>
+      </div>
+
+      <p data-i18n="st-p1"><code>date</code> is written automatically at export time as an ISO 8601 timestamp — you never set it by hand. Every other top-level field comes directly from the Creator's form.</p>
+
+      <div class="callout warn">
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#D16D6A"><path d="m40-120 440-760 440 760H40Zm138-80h604L480-720 178-200Zm330.5-51.5Q520-263 520-280t-11.5-28.5Q497-320 480-320t-28.5 11.5Q440-297 440-280t11.5 28.5Q463-240 480-240t28.5-11.5ZM440-360h80v-200h-80v200Zm40-100Z"/></svg>        <div>
+        <div>
+          <div class="callout-title" data-i18n="st-callout-title"><code style="background:none;border:none;padding:0;color:inherit">resource</code>, not <code style="background:none;border:none;padding:0;color:inherit">url</code></div>
+          <div class="callout-body" data-i18n="st-callout-body">The exported JSON key for each sticker's image is <code>resource</code> — different from the internal <code>url</code> field the tool uses in memory while you're editing. If you're hand-writing or generating a <code>.dpfstickers</code> file, make sure every sticker entry uses <code>resource</code>.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ REQUIREMENTS ============ -->
+    <section class="doc-section" id="requirements">
+      <h2><span class="num">03</span> <span data-i18n="side-requirements">Sticker requirements</span></h2>
+      <p class="doc-kicker" data-i18n="req-kicker">Every image you add is checked against the same rules the app enforces once a pack is actually installed and displayed.</p>
+      <ul>
+        <li data-i18n="req-li1"><strong>Count:</strong> a pack needs at least <strong>2</strong> stickers to export, and the Creator stops accepting new ones at <strong>50</strong>.</li>
+        <li data-i18n="req-li2"><strong>Dimensions:</strong> images are added at up to <strong>250×250</strong> — anything larger is rejected outright at add time. Once in the gallery, anything below <strong>200×200</strong> or above <strong>255×255</strong> is flagged so you can swap it before exporting.</li>
+        <li data-i18n="req-li3"><strong>Source:</strong> every image is added by <code>https://</code> URL only — there's no local file upload, so the URL must stay reachable for the sticker to keep working after import.</li>
+        <li data-i18n="req-li4"><strong>IDs:</strong> every sticker needs its own non-empty, unique <code>id</code>. Duplicate or missing IDs are called out per-sticker and block export until fixed.</li>
+      </ul>
+
+      <div class="callout warn">
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#D16D6A"><path d="m40-120 440-760 440 760H40Zm138-80h604L480-720 178-200Zm330.5-51.5Q520-263 520-280t-11.5-28.5Q497-320 480-320t-28.5 11.5Q440-297 440-280t11.5 28.5Q463-240 480-240t28.5-11.5ZM440-360h80v-200h-80v200Zm40-100Z"/></svg>        <div>
+        <div>
+          <div class="callout-title" data-i18n="req-callout-title">Stickers display at a fixed size in the app</div>
+          <div class="callout-body" data-i18n="req-callout-body">Images outside the 200–255px sweet spot may be cropped, scaled unpredictably, or fail to show once the pack is actually used. Aim for square, ~250×250 images for the safest result.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CREATING ============ -->
+    <section class="doc-section" id="creating">
+      <h2><span class="num">04</span> <span data-i18n="side-creating">Creating a pack</span></h2>
+      <p class="doc-kicker" data-i18n="cr-kicker">The whole flow lives on one page — the Sticker Tool — with no separate submit step; the finished file downloads straight to your device.</p>
+
+      <ol class="steps">
+        <li data-i18n="cr-step1">Open the Sticker Tool and fill in <strong>Pack ID</strong>, <strong>Pack Name</strong>, and <strong>Pack Author</strong> — these three fields lock once you import an existing pack, but stay editable while building a new one.</li>
+        <li data-i18n="cr-step2">Add a short <strong>Description</strong> if you want one (optional, 500 characters max).</li>
+        <li data-i18n="cr-step3">Click the <strong>+</strong> card to open the image dialog, paste an <code>https://</code> image URL, and confirm — the sticker is added to the gallery with a live dimension check.</li>
+        <li data-i18n="cr-step4">Give every sticker a unique <strong>ID</strong> and, optionally, a display <strong>Name</strong>. Click a sticker's image again to swap its URL, or use the delete icon to remove it.</li>
+        <li data-i18n="cr-step5">Once you have at least 2 valid, uniquely-IDed stickers, <strong>Export to Sticker Pack</strong> unlocks — click it to download <code>&lt;packId&gt;.dpfstickers</code>.</li>
+      </ol>
+    </section>
+
+    <!-- ============ IMPORTING ============ -->
+    <section class="doc-section" id="importing">
+      <h2><span class="num">05</span> <span data-i18n="side-importing">Importing &amp; editing</span></h2>
+      <p data-i18n="im-p1">Use <strong>Import from Pack</strong> to load a <code>.dpfstickers</code> file back into the tool for editing.</p>
+      <ul>
+        <li data-i18n="im-li1">The file must contain <code>packId</code>, <code>name</code>, <code>author</code>, and <code>stickers</code>, or the import is rejected with an "Invalid file format" message.</li>
+        <li data-i18n="im-li2">Once imported, <strong>Pack ID</strong>, <strong>Pack Name</strong>, and <strong>Pack Author</strong> are locked — you're editing the sticker set and description of an existing pack, not renaming it.</li>
+        <li data-i18n="im-li3">Every sticker from the file is loaded into the gallery with its stored <code>id</code>, <code>name</code>, and <code>resource</code> URL, ready to be edited or deleted like any other sticker.</li>
+      </ul>
+
+      <div class="callout note">
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#F3F3F3"><path d="M440-280h80v-240h-80v240Zm68.5-331.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>        <div>
+        <div>
+          <div class="callout-title" data-i18n="im-callout-title">Re-export overwrites the whole file</div>
+          <div class="callout-body" data-i18n="im-callout-body">There's no partial-update mode — editing an imported pack and exporting again produces a brand-new <code>&lt;packId&gt;.dpfstickers</code> containing the full, current sticker set.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FIELD REFERENCE ============ -->
+    <section class="doc-section" id="fields">
+      <h2><span class="num">06</span> <span data-i18n="side-fields">Field reference</span></h2>
+      <p class="doc-kicker" data-i18n="fl-kicker">Every field written into an exported <code>.dpfstickers</code> file, top to bottom.</p>
+
+      <div class="table-wrap">
+        <table class="doc-table">
+          <thead><tr><th data-i18n="th-field">Field</th><th data-i18n="th-type">Type</th><th data-i18n="th-description">Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>packId</code></td><td>string</td><td data-i18n="fl-row-packid">Unique identifier for the pack. Becomes the exported file's name: <code>&lt;packId&gt;.dpfstickers</code>.</td></tr>
+            <tr><td><code>name</code></td><td>string</td><td data-i18n="fl-row-name">Display name shown wherever the pack is listed.</td></tr>
+            <tr><td><code>description</code></td><td>string</td><td data-i18n="fl-row-description">Optional summary, up to 500 characters.</td></tr>
+            <tr><td><code>author</code></td><td>string</td><td data-i18n="fl-row-author">Author identifier entered in the form — free text, not validated against an account.</td></tr>
+            <tr><td><code>date</code></td><td>string (ISO 8601)</td><td data-i18n="fl-row-date">Export timestamp, generated automatically — not user-editable.</td></tr>
+            <tr><td><code>stickers</code></td><td>array</td><td data-i18n="fl-row-stickers">List of sticker objects, 2–50 entries, each described below.</td></tr>
+            <tr><td><code>stickers[].id</code></td><td>string</td><td data-i18n="fl-row-stickerid">Unique, non-empty ID for the sticker within this pack. Required to export.</td></tr>
+            <tr><td><code>stickers[].name</code></td><td>string</td><td data-i18n="fl-row-stickername">Optional display name for the individual sticker.</td></tr>
+            <tr><td><code>stickers[].resource</code></td><td>string (URL)</td><td data-i18n="fl-row-stickerresource"><code>https://</code> URL the sticker image is loaded from.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ VALIDATION ============ -->
+    <section class="doc-section" id="validation">
+      <h2><span class="num">07</span> <span data-i18n="side-validation">Validation rules</span></h2>
+      <p class="doc-kicker" data-i18n="va-kicker">The Export button only unlocks once every rule below passes — the tool checks continuously as you edit, not just at export time.</p>
+
+      <div class="table-wrap">
+        <table class="doc-table">
+          <thead><tr><th data-i18n="th-rule">Rule</th><th data-i18n="th-enforced">Enforced when</th></tr></thead>
+          <tbody>
+            <tr><td data-i18n="va-row1">At least 2 stickers in the pack</td><td data-i18n="va-enf1">On every add / remove</td></tr>
+            <tr><td data-i18n="va-row2">Every sticker has a non-empty <code>id</code></td><td data-i18n="va-enf2">On every edit</td></tr>
+            <tr><td data-i18n="va-row3">No two stickers share the same <code>id</code></td><td data-i18n="va-enf3">On every edit</td></tr>
+            <tr><td data-i18n="va-row4">Each image is 250×250 or smaller</td><td data-i18n="va-enf4">When adding or replacing an image</td></tr>
+            <tr><td data-i18n="va-row5">Image URL starts with <code>https://</code></td><td data-i18n="va-enf5">When adding or replacing an image</td></tr>
+            <tr><td data-i18n="va-row6">Imported file has <code>packId</code>, <code>name</code>, <code>author</code>, <code>stickers</code></td><td data-i18n="va-enf6">On import</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#D16D6A"><path d="m40-120 440-760 440 760H40Zm138-80h604L480-720 178-200Zm330.5-51.5Q520-263 520-280t-11.5-28.5Q497-320 480-320t-28.5 11.5Q440-297 440-280t11.5 28.5Q463-240 480-240t28.5-11.5ZM440-360h80v-200h-80v200Zm40-100Z"/></svg>        <div>
+        <div>
+          <div class="callout-title" data-i18n="va-callout-title">Size warnings don't block export</div>
+          <div class="callout-body" data-i18n="va-callout-body">The 200–255px dimension check only warns — a pack with a too-small or too-big sticker can still export. Only missing/duplicate IDs and having fewer than 2 stickers actually block the Export button.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ EXPORTING / DISTRIBUTION ============ -->
+    <section class="doc-section" id="exporting">
+      <h2><span class="num">08</span> <span data-i18n="side-exporting">Exporting &amp; file naming</span></h2>
+      <p data-i18n="ex-p1"><strong>Export to Sticker Pack</strong> serializes the current pack to JSON, wraps it as an <code>application/json</code> blob, and triggers a browser download named after the pack: <code>&lt;packId&gt;.dpfstickers</code>.</p>
+      <ul>
+        <li data-i18n="ex-li1">The filename is always <code>&lt;packId&gt;.dpfstickers</code> — pick a Pack ID you're comfortable seeing as the literal filename.</li>
+        <li data-i18n="ex-li2">The generated JSON is pretty-printed (2-space indent), so it's easy to open, diff, or hand-edit afterward.</li>
+        <li data-i18n="ex-li3">Because everything happens in the browser, exporting doesn't require you to be signed in or connected — only loading a language preference tied to your account does.</li>
+      </ul>
+
+      <h3 id="distribution" data-i18n="side-distribution">Sharing &amp; distribution</h3>
+      <p data-i18n="ex-dist-p1">A <code>.dpfstickers</code> file is a self-contained artifact — share it however you'd share any small file.</p>
+      <ul>
+        <li data-i18n="ex-dist-li1">Send the file directly (chat, email, file share) and the recipient can load it with <strong>Import from Pack</strong> to inspect or continue editing it.</li>
+        <li data-i18n="ex-dist-li2">For store or index distribution, the same file is what you'd submit — validate it against the field reference and validation rules above before sharing it widely.</li>
+        <li data-i18n="ex-dist-li3">Because every image is referenced by <code>https://</code> URL rather than embedded, a pack's stickers stay live only as long as those URLs do — use stable, long-lived hosting for anything you plan to distribute widely.</li>
+      </ul>
+    </section>
+
+  </div>
+
+  <!-- RIGHT MINI TOC -->
+  <aside class="toc-col">
+    <div class="toc-label">On this page</div>
+    <a href="#overview"><span data-i18n="toc-overview">How sticker packs work</span></a>
+    <a href="#structure"><span data-i18n="toc-structure">.dpfstickers format</span></a>
+    <a href="#requirements"><span data-i18n="toc-requirements">Sticker requirements</span></a>
+    <a href="#creating"><span data-i18n="toc-creating">Creating a pack</span></a>
+    <a href="#importing"><span data-i18n="toc-importing">Importing &amp; editing</span></a>
+    <a href="#fields"><span data-i18n="toc-fields">Field reference</span></a>
+    <a href="#validation"><span data-i18n="toc-validation">Validation rules</span></a>
+    <a href="#exporting"><span data-i18n="toc-exporting">Exporting &amp; file naming</span></a>
+  </aside>
+
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+<script src="/firebase-config.js"></script>
+<script src="/docs/docs-topbar.js"></script>
+<script>
+  // ---------- i18n ----------
+  // Dictionary covers every element tagged data-i18n="…" in the markup.
+  // Add a new language by adding a new top-level key here and a corresponding
+  // option wherever the language switcher lives; missing keys fall back to English.
+  const translations = {
+    en: {
+      'brand-sub': 'DOCS',
+      'group-getting-started': 'Getting started',
+      'group-building': 'Building',
+      'group-reference': 'Reference',
+      'group-publishing': 'Publishing',
+      'side-search-placeholder': 'Search docs…',
+      'side-overview': 'How sticker packs work',
+      'side-structure': '.dpfstickers format',
+      'side-requirements': 'Sticker requirements',
+      'side-creating': 'Creating a pack',
+      'side-importing': 'Importing &amp; editing',
+      'side-fields': 'Field reference',
+      'side-validation': 'Validation rules',
+      'side-exporting': 'Exporting &amp; file naming',
+      'side-distribution': 'Sharing &amp; distribution',
+      'toc-overview': 'How sticker packs work',
+      'toc-structure': '.dpfstickers format',
+      'toc-requirements': 'Sticker requirements',
+      'toc-creating': 'Creating a pack',
+      'toc-importing': 'Importing &amp; editing',
+      'toc-fields': 'Field reference',
+      'toc-validation': 'Validation rules',
+      'toc-exporting': 'Exporting &amp; file naming',
+      'hero-eyebrow': 'Sticker Pack Platform · Reference',
+      'hero-h1': "Build sticker packs for DarkPurpleOF's Website",
+      'hero-p': "A complete reference for the <code>.dpfstickers</code> pack format: how a pack is structured, what every sticker requires, how the built-in Sticker Pack Creator builds and imports packs, and how a finished pack gets shared.",
+      'hero-tag-json': '.dpfstickers',
+      'hero-tag-ext': 'JSON pack format',
+      'hero-tag-max': '2–50 stickers',
+      'ov-kicker': "A sticker pack is a single JSON file, exported with a <code>.dpfstickers</code> extension, that bundles pack metadata together with a list of individual stickers. It's built entirely client-side by the Sticker Pack Creator — no server upload is required just to create one.",
+      'ov-p1': 'At a high level, three things happen when you build a pack:',
+      'ov-li1': "You fill in the pack's identity — a <strong>Pack ID</strong>, a display <strong>Name</strong>, an <strong>Author</strong>, and an optional <strong>Description</strong> (up to 500 characters).",
+      'ov-li2': 'You add stickers one at a time by pasting an <code>https://</code> image URL. Each image is checked as you add it, and again in the gallery, against the recommended sticker dimensions.',
+      'ov-li3': 'Once every sticker has a unique, non-empty ID and at least two stickers are present, <strong>Export to Sticker Pack</strong> unlocks and downloads a single <code>&lt;packId&gt;.dpfstickers</code> file to your device.',
+      'ov-placeholder': 'Screenshot placeholder — the Sticker Pack Creator with a populated pack',
+      'ov-callout-title': 'Nothing is uploaded until you export',
+      'ov-callout-body': "The tool builds your pack entirely in memory in the browser. Nothing is written anywhere until you press Export, at which point a single <code>.dpfstickers</code> file is generated and downloaded — there's no draft saved server-side unless you do that yourself.",
+      'st-kicker': "Under the hood, a <code>.dpfstickers</code> file is just formatted JSON — readable, diffable, and easy to hand-edit or generate with a script if you'd rather not use the Creator's UI.",
+      'st-p1': "<code>date</code> is written automatically at export time as an ISO 8601 timestamp — you never set it by hand. Every other top-level field comes directly from the Creator's form.",
+      'st-callout-title': '<code style="background:none;border:none;padding:0;color:inherit">resource</code>, not <code style="background:none;border:none;padding:0;color:inherit">url</code>',
+      'st-callout-body': "The exported JSON key for each sticker's image is <code>resource</code> — different from the internal <code>url</code> field the tool uses in memory while you're editing. If you're hand-writing or generating a <code>.dpfstickers</code> file, make sure every sticker entry uses <code>resource</code>.",
+      'req-kicker': 'Every image you add is checked against the same rules the app enforces once a pack is actually installed and displayed.',
+      'req-li1': '<strong>Count:</strong> a pack needs at least <strong>2</strong> stickers to export, and the Creator stops accepting new ones at <strong>50</strong>.',
+      'req-li2': '<strong>Dimensions:</strong> images are added at up to <strong>250×250</strong> — anything larger is rejected outright at add time. Once in the gallery, anything below <strong>200×200</strong> or above <strong>255×255</strong> is flagged so you can swap it before exporting.',
+      'req-li3': "<strong>Source:</strong> every image is added by <code>https://</code> URL only — there's no local file upload, so the URL must stay reachable for the sticker to keep working after import.",
+      'req-li4': '<strong>IDs:</strong> every sticker needs its own non-empty, unique <code>id</code>. Duplicate or missing IDs are called out per-sticker and block export until fixed.',
+      'req-placeholder': 'Screenshot placeholder — size warnings on an out-of-range sticker',
+      'req-callout-title': 'Stickers display at a fixed size in the app',
+      'req-callout-body': 'Images outside the 200–255px sweet spot may be cropped, scaled unpredictably, or fail to show once the pack is actually used. Aim for square, ~250×250 images for the safest result.',
+      'cr-kicker': "The whole flow lives on one page — the Sticker Tool — with no separate submit step; the finished file downloads straight to your device.",
+      'cr-step1': '<strong>Open the Sticker Tool</strong> and fill in Pack ID, Pack Name, and Pack Author — these three fields lock once you import an existing pack, but stay editable while building a new one.',
+      'cr-step2': 'Add a short <strong>Description</strong> if you want one (optional, 500 characters max).',
+      'cr-step3': 'Click the <strong>+</strong> card to open the image dialog, paste an <code>https://</code> image URL, and confirm — the sticker is added to the gallery with a live dimension check.',
+      'cr-step4': "Give every sticker a unique <strong>ID</strong> and, optionally, a display <strong>Name</strong>. Click a sticker's image again to swap its URL, or use the delete icon to remove it.",
+      'cr-step5': 'Once you have at least 2 valid, uniquely-IDed stickers, <strong>Export to Sticker Pack</strong> unlocks — click it to download <code>&lt;packId&gt;.dpfstickers</code>.',
+      'im-p1': 'Use <strong>Import from Pack</strong> to load a <code>.dpfstickers</code> file back into the tool for editing.',
+      'im-li1': 'The file must contain <code>packId</code>, <code>name</code>, <code>author</code>, and <code>stickers</code>, or the import is rejected with an "Invalid file format" message.',
+      'im-li2': "Once imported, <strong>Pack ID</strong>, <strong>Pack Name</strong>, and <strong>Pack Author</strong> are locked — you're editing the sticker set and description of an existing pack, not renaming it.",
+      'im-li3': 'Every sticker from the file is loaded into the gallery with its stored <code>id</code>, <code>name</code>, and <code>resource</code> URL, ready to be edited or deleted like any other sticker.',
+      'im-callout-title': 'Re-export overwrites the whole file',
+      'im-callout-body': "There's no partial-update mode — editing an imported pack and exporting again produces a brand-new <code>&lt;packId&gt;.dpfstickers</code> containing the full, current sticker set.",
+      'fl-kicker': 'Every field written into an exported <code>.dpfstickers</code> file, top to bottom.',
+      'th-field': 'Field', 'th-type': 'Type', 'th-description': 'Description',
+      'fl-row-packid': "Unique identifier for the pack. Becomes the exported file's name: <code>&lt;packId&gt;.dpfstickers</code>.",
+      'fl-row-name': 'Display name shown wherever the pack is listed.',
+      'fl-row-description': 'Optional summary, up to 500 characters.',
+      'fl-row-author': 'Author identifier entered in the form — free text, not validated against an account.',
+      'fl-row-date': 'Export timestamp, generated automatically — not user-editable.',
+      'fl-row-stickers': 'List of sticker objects, 2–50 entries, each described below.',
+      'fl-row-stickerid': 'Unique, non-empty ID for the sticker within this pack. Required to export.',
+      'fl-row-stickername': 'Optional display name for the individual sticker.',
+      'fl-row-stickerresource': '<code>https://</code> URL the sticker image is loaded from.',
+      'va-kicker': "The Export button only unlocks once every rule below passes — the tool checks continuously as you edit, not just at export time.",
+      'th-rule': 'Rule', 'th-enforced': 'Enforced when',
+      'va-row1': 'At least 2 stickers in the pack', 'va-enf1': 'On every add / remove',
+      'va-row2': 'Every sticker has a non-empty <code>id</code>', 'va-enf2': 'On every edit',
+      'va-row3': 'No two stickers share the same <code>id</code>', 'va-enf3': 'On every edit',
+      'va-row4': 'Each image is 250×250 or smaller', 'va-enf4': 'When adding or replacing an image',
+      'va-row5': 'Image URL starts with <code>https://</code>', 'va-enf5': 'When adding or replacing an image',
+      'va-row6': 'Imported file has <code>packId</code>, <code>name</code>, <code>author</code>, <code>stickers</code>', 'va-enf6': 'On import',
+      'va-callout-title': "Size warnings don't block export",
+      'va-callout-body': 'The 200–255px dimension check only warns — a pack with a too-small or too-big sticker can still export. Only missing/duplicate IDs and having fewer than 2 stickers actually block the Export button.',
+      'ex-p1': '<strong>Export to Sticker Pack</strong> serializes the current pack to JSON, wraps it as an <code>application/json</code> blob, and triggers a browser download named after the pack: <code>&lt;packId&gt;.dpfstickers</code>.',
+      'ex-li1': "The filename is always <code>&lt;packId&gt;.dpfstickers</code> — pick a Pack ID you're comfortable seeing as the literal filename.",
+      'ex-li2': "The generated JSON is pretty-printed (2-space indent), so it's easy to open, diff, or hand-edit afterward.",
+      'ex-li3': "Because everything happens in the browser, exporting doesn't require you to be signed in or connected — only loading a language preference tied to your account does.",
+      'ex-dist-p1': "A <code>.dpfstickers</code> file is a self-contained artifact — share it however you'd share any small file.",
+      'ex-dist-li1': 'Send the file directly (chat, email, file share) and the recipient can load it with <strong>Import from Pack</strong> to inspect or continue editing it.',
+      'ex-dist-li2': "For store or index distribution, the same file is what you'd submit — validate it against the field reference and validation rules above before sharing it widely.",
+      'ex-dist-li3': "Because every image is referenced by <code>https://</code> URL rather than embedded, a pack's stickers stay live only as long as those URLs do — use stable, long-lived hosting for anything you plan to distribute widely.",
+      'signin-btn': 'Log in',
+      'menu-create': 'Create',
+      'menu-home': 'Main Home',
+      'menu-docs': 'Docs Home',
+      'menu-logout': 'Logout',
+      'tt-language': 'Language',
+      'tt-menu': 'Menu',
+      'tt-theme': 'Toggle theme',
+    },
+    ru: {
+      'group-getting-started': 'Начало работы',
+      'group-building': 'Разработка',
+      'group-reference': 'Справочник',
+      'group-publishing': 'Публикация',
+      'side-search-placeholder': 'Поиск по документации…',
+      'side-overview': 'Как работают наборы стикеров',
+      'side-structure': 'Формат .dpfstickers',
+      'side-requirements': 'Требования к стикерам',
+      'side-creating': 'Создание набора',
+      'side-importing': 'Импорт и редактирование',
+      'side-fields': 'Справочник полей',
+      'side-validation': 'Правила проверки',
+      'side-exporting': 'Экспорт и имя файла',
+      'side-distribution': 'Обмен и распространение',
+      'toc-overview': 'Как работают наборы стикеров',
+      'toc-structure': 'Формат .dpfstickers',
+      'toc-requirements': 'Требования к стикерам',
+      'toc-creating': 'Создание набора',
+      'toc-importing': 'Импорт и редактирование',
+      'toc-fields': 'Справочник полей',
+      'toc-validation': 'Правила проверки',
+      'toc-exporting': 'Экспорт и имя файла',
+      'hero-eyebrow': 'Платформа наборов стикеров · Справочник',
+      'hero-h1': "Создавайте наборы стикеров для DarkPurpleOF's Website",
+      'hero-p': 'Полный справочник по формату набора <code>.dpfstickers</code>: как устроен набор, что требуется от каждого стикера, как встроенный инструмент Sticker Pack Creator создаёт и импортирует наборы, и как готовый набор передаётся другим.',
+      'hero-tag-json': '.dpfstickers',
+      'hero-tag-ext': 'формат JSON',
+      'hero-tag-max': '2–50 стикеров',
+      'ov-kicker': 'Набор стикеров — это единый JSON-файл, экспортируемый с расширением <code>.dpfstickers</code>, который объединяет метаданные набора со списком отдельных стикеров. Он полностью собирается на стороне клиента инструментом Sticker Pack Creator — для его создания не требуется загрузка на сервер.',
+      'ov-p1': 'На высоком уровне при создании набора происходят три вещи:',
+      'ov-li1': 'Вы заполняете данные набора — <strong>Pack ID</strong>, отображаемое <strong>имя</strong>, <strong>автора</strong> и необязательное <strong>описание</strong> (до 500 символов).',
+      'ov-li2': 'Вы добавляете стикеры по одному, вставляя URL изображения по <code>https://</code>. Каждое изображение проверяется при добавлении и повторно в галерее на соответствие рекомендуемым размерам.',
+      'ov-li3': 'Как только у каждого стикера появляется уникальный непустой ID и присутствует хотя бы два стикера, кнопка <strong>Export to Sticker Pack</strong> становится активной и скачивает единый файл <code>&lt;packId&gt;.dpfstickers</code> на ваше устройство.',
+      'ov-placeholder': 'Место для скриншота — Sticker Pack Creator с заполненным набором',
+      'ov-callout-title': 'Ничего не загружается до экспорта',
+      'ov-callout-body': 'Инструмент собирает набор полностью в памяти браузера. Ничего никуда не записывается, пока вы не нажмёте «Экспорт» — тогда генерируется и скачивается единственный файл <code>.dpfstickers</code>; черновик на сервере не сохраняется, если вы не сделаете это сами.',
+      'st-kicker': 'По сути файл <code>.dpfstickers</code> — это просто отформатированный JSON: его легко читать, сравнивать и редактировать вручную или генерировать скриптом, если вы не хотите пользоваться интерфейсом Creator.',
+      'st-p1': 'Поле <code>date</code> записывается автоматически в момент экспорта как метка времени ISO 8601 — вы никогда не задаёте его вручную. Все остальные поля верхнего уровня берутся напрямую из формы Creator.',
+      'st-callout-title': '<code style="background:none;border:none;padding:0;color:inherit">resource</code>, а не <code style="background:none;border:none;padding:0;color:inherit">url</code>',
+      'st-callout-body': 'Ключ JSON для изображения каждого стикера в экспортированном файле — <code>resource</code>, а не внутреннее поле <code>url</code>, которое инструмент использует в памяти при редактировании. Если вы пишете или генерируете файл <code>.dpfstickers</code> вручную, убедитесь, что каждая запись стикера использует <code>resource</code>.',
+      'req-kicker': 'Каждое добавляемое изображение проверяется по тем же правилам, что применяет приложение, когда набор фактически установлен и отображается.',
+      'req-li1': '<strong>Количество:</strong> для экспорта набору нужно как минимум <strong>2</strong> стикера, а Creator перестаёт принимать новые после <strong>50</strong>.',
+      'req-li2': '<strong>Размеры:</strong> изображения добавляются с размером не более <strong>250×250</strong> — всё большее отклоняется сразу при добавлении. В галерее всё, что меньше <strong>200×200</strong> или больше <strong>255×255</strong>, помечается, чтобы вы могли заменить его перед экспортом.',
+      'req-li3': '<strong>Источник:</strong> каждое изображение добавляется только по URL <code>https://</code> — локальной загрузки файлов нет, поэтому URL должен оставаться доступным, чтобы стикер продолжал работать после импорта.',
+      'req-li4': '<strong>ID:</strong> каждому стикеру нужен собственный непустой уникальный <code>id</code>. Дублирующиеся или отсутствующие ID отмечаются для конкретного стикера и блокируют экспорт до исправления.',
+      'req-placeholder': 'Место для скриншота — предупреждения о размере у стикера вне диапазона',
+      'req-callout-title': 'В приложении стикеры отображаются фиксированного размера',
+      'req-callout-body': 'Изображения вне диапазона 200–255px могут обрезаться, непредсказуемо масштабироваться или вовсе не отображаться, когда набор реально используется. Для наиболее надёжного результата используйте квадратные изображения ~250×250.',
+      'cr-kicker': 'Весь процесс происходит на одной странице — Sticker Tool — без отдельного шага отправки; готовый файл скачивается прямо на ваше устройство.',
+      'cr-step1': 'Откройте Sticker Tool и заполните Pack ID, Pack Name и Pack Author — эти три поля блокируются после импорта существующего набора, но свободно редактируются при создании нового.',
+      'cr-step2': 'При желании добавьте короткое <strong>описание</strong> (необязательно, максимум 500 символов).',
+      'cr-step3': 'Нажмите на карточку <strong>+</strong>, чтобы открыть диалог изображения, вставьте URL изображения по <code>https://</code> и подтвердите — стикер добавится в галерею с проверкой размеров на лету.',
+      'cr-step4': 'Дайте каждому стикеру уникальный <strong>ID</strong> и, при желании, отображаемое <strong>имя</strong>. Нажмите на изображение стикера ещё раз, чтобы заменить URL, либо используйте значок удаления.',
+      'cr-step5': 'Как только у вас будет минимум 2 валидных стикера с уникальными ID, кнопка <strong>Export to Sticker Pack</strong> разблокируется — нажмите её, чтобы скачать <code>&lt;packId&gt;.dpfstickers</code>.',
+      'im-p1': 'Используйте <strong>Import from Pack</strong>, чтобы загрузить файл <code>.dpfstickers</code> обратно в инструмент для редактирования.',
+      'im-li1': 'Файл должен содержать <code>packId</code>, <code>name</code>, <code>author</code> и <code>stickers</code>, иначе импорт будет отклонён с сообщением «Invalid file format».',
+      'im-li2': 'После импорта <strong>Pack ID</strong>, <strong>Pack Name</strong> и <strong>Pack Author</strong> блокируются — вы редактируете набор стикеров и описание существующего набора, а не переименовываете его.',
+      'im-li3': 'Каждый стикер из файла загружается в галерею со своим сохранённым <code>id</code>, <code>name</code> и URL <code>resource</code>, готовый к редактированию или удалению, как и любой другой стикер.',
+      'im-callout-title': 'Повторный экспорт перезаписывает весь файл',
+      'im-callout-body': 'Режима частичного обновления нет — редактирование импортированного набора и повторный экспорт создают совершенно новый файл <code>&lt;packId&gt;.dpfstickers</code> с полным текущим набором стикеров.',
+      'fl-kicker': 'Все поля, записываемые в экспортированный файл <code>.dpfstickers</code>, сверху вниз.',
+      'th-field': 'Поле', 'th-type': 'Тип', 'th-description': 'Описание',
+      'fl-row-packid': 'Уникальный идентификатор набора. Становится именем экспортированного файла: <code>&lt;packId&gt;.dpfstickers</code>.',
+      'fl-row-name': 'Отображаемое имя, показываемое везде, где перечислен набор.',
+      'fl-row-description': 'Необязательное описание, до 500 символов.',
+      'fl-row-author': 'Идентификатор автора, введённый в форме — произвольный текст, не проверяется по учётной записи.',
+      'fl-row-date': 'Метка времени экспорта, генерируется автоматически — пользователь её не редактирует.',
+      'fl-row-stickers': 'Список объектов стикеров, от 2 до 50 записей, каждая описана ниже.',
+      'fl-row-stickerid': 'Уникальный непустой ID стикера внутри этого набора. Обязателен для экспорта.',
+      'fl-row-stickername': 'Необязательное отображаемое имя отдельного стикера.',
+      'fl-row-stickerresource': 'URL по <code>https://</code>, из которого загружается изображение стикера.',
+      'va-kicker': 'Кнопка экспорта разблокируется, только когда выполнены все правила ниже — инструмент проверяет их непрерывно по мере редактирования, а не только при экспорте.',
+      'th-rule': 'Правило', 'th-enforced': 'Когда применяется',
+      'va-row1': 'В наборе как минимум 2 стикера', 'va-enf1': 'При каждом добавлении/удалении',
+      'va-row2': 'У каждого стикера непустой <code>id</code>', 'va-enf2': 'При каждом изменении',
+      'va-row3': 'Ни у каких двух стикеров нет одинакового <code>id</code>', 'va-enf3': 'При каждом изменении',
+      'va-row4': 'Каждое изображение не больше 250×250', 'va-enf4': 'При добавлении или замене изображения',
+      'va-row5': 'URL изображения начинается с <code>https://</code>', 'va-enf5': 'При добавлении или замене изображения',
+      'va-row6': 'В импортируемом файле есть <code>packId</code>, <code>name</code>, <code>author</code>, <code>stickers</code>', 'va-enf6': 'При импорте',
+      'va-callout-title': 'Предупреждения о размере не блокируют экспорт',
+      'va-callout-body': 'Проверка размеров 200–255px только предупреждает — набор со слишком маленьким или большим стикером всё равно можно экспортировать. Экспорт блокируют только отсутствующие/дублирующиеся ID и наличие менее 2 стикеров.',
+      'ex-p1': '<strong>Export to Sticker Pack</strong> сериализует текущий набор в JSON, оборачивает его как blob <code>application/json</code> и запускает в браузере скачивание файла с именем набора: <code>&lt;packId&gt;.dpfstickers</code>.',
+      'ex-li1': 'Имя файла всегда <code>&lt;packId&gt;.dpfstickers</code> — выбирайте Pack ID так, чтобы вам было комфортно видеть его буквально в качестве имени файла.',
+      'ex-li2': 'Сгенерированный JSON отформатирован с отступом в 2 пробела, поэтому его удобно открывать, сравнивать или редактировать вручную.',
+      'ex-li3': 'Поскольку всё происходит в браузере, экспорт не требует входа в систему или подключения — в отличие от загрузки языковых настроек, привязанных к вашей учётной записи.',
+      'ex-dist-p1': 'Файл <code>.dpfstickers</code> — самодостаточный артефакт: делитесь им так же, как любым небольшим файлом.',
+      'ex-dist-li1': 'Отправьте файл напрямую (в чате, по почте, через файлообменник), и получатель сможет загрузить его через <strong>Import from Pack</strong>, чтобы посмотреть или продолжить редактирование.',
+      'ex-dist-li2': 'Для распространения через магазин или каталог отправляется тот же файл — перед широкой публикацией проверьте его по справочнику полей и правилам проверки выше.',
+      'ex-dist-li3': 'Поскольку каждое изображение указывается по URL <code>https://</code>, а не встраивается напрямую, стикеры набора остаются рабочими, только пока доступны эти URL — используйте стабильный, долгоживущий хостинг для всего, что планируете широко распространять.',
+      'signin-btn': 'Войти',
+      'menu-create': 'Создать',
+      'menu-home': 'Главная',
+      'menu-docs': 'Документы',
+      'menu-logout': 'Выйти',
+      'tt-language': 'Язык',
+      'tt-menu': 'Меню',
+      'tt-theme': 'Переключить тему',
+    },
+    ja: {
+      'group-getting-started': 'はじめに',
+      'group-building': '作成',
+      'group-reference': 'リファレンス',
+      'group-publishing': '公開',
+      'side-search-placeholder': 'ドキュメントを検索…',
+      'side-overview': 'スタンプパックの仕組み',
+      'side-structure': '.dpfstickers フォーマット',
+      'side-requirements': 'スタンプの要件',
+      'side-creating': 'パックの作成',
+      'side-importing': 'インポートと編集',
+      'side-fields': 'フィールドリファレンス',
+      'side-validation': '検証ルール',
+      'side-exporting': 'エクスポートとファイル名',
+      'side-distribution': '共有と配布',
+      'toc-overview': 'スタンプパックの仕組み',
+      'toc-structure': '.dpfstickers フォーマット',
+      'toc-requirements': 'スタンプの要件',
+      'toc-creating': 'パックの作成',
+      'toc-importing': 'インポートと編集',
+      'toc-fields': 'フィールドリファレンス',
+      'toc-validation': '検証ルール',
+      'toc-exporting': 'エクスポートとファイル名',
+      'hero-eyebrow': 'スタンプパックプラットフォーム・リファレンス',
+      'hero-h1': "DarkPurpleOF's Website 用のスタンプパックを作成する",
+      'hero-p': '<code>.dpfstickers</code> パック形式の完全なリファレンスです。パックの構造、各スタンプに必要な条件、内蔵の Sticker Pack Creator によるパックの作成・インポート方法、そして完成したパックの共有方法までを解説します。',
+      'hero-tag-json': '.dpfstickers',
+      'hero-tag-ext': 'JSON パック形式',
+      'hero-tag-max': '2〜50 個のスタンプ',
+      'ov-kicker': 'スタンプパックは <code>.dpfstickers</code> 拡張子でエクスポートされる単一の JSON ファイルで、パックのメタデータと個々のスタンプのリストをまとめたものです。すべて Sticker Pack Creator によってクライアント側で構築され、作成のためだけにサーバーへのアップロードは必要ありません。',
+      'ov-p1': '大まかに言うと、パックを作成する際には次の3つのことが行われます。',
+      'ov-li1': '<strong>Pack ID</strong>、表示用の<strong>名前</strong>、<strong>作者</strong>、そして任意の<strong>説明</strong>(最大500文字)といったパックの基本情報を入力します。',
+      'ov-li2': '<code>https://</code> の画像URLを貼り付けて、スタンプを1つずつ追加します。各画像は追加時、およびギャラリー内で再度、推奨サイズと照合されます。',
+      'ov-li3': 'すべてのスタンプに一意で空でないIDが付き、かつ2個以上のスタンプがある状態になると、<strong>Export to Sticker Pack</strong> が有効になり、単一の <code>&lt;packId&gt;.dpfstickers</code> ファイルが端末にダウンロードされます。',
+      'ov-placeholder': 'スクリーンショットのプレースホルダー — パックが入力された Sticker Pack Creator',
+      'ov-callout-title': 'エクスポートするまで何もアップロードされません',
+      'ov-callout-body': 'このツールはブラウザのメモリ上でのみパックを構築します。エクスポートを押すまでどこにも書き込まれず、押した時点で単一の <code>.dpfstickers</code> ファイルが生成・ダウンロードされます — 自分で保存しない限り、サーバー側に下書きは残りません。',
+      'st-kicker': '内部的には、<code>.dpfstickers</code> ファイルは単なる整形されたJSONです — 読みやすく、差分も取りやすく、Creator の UI を使わずに手動編集やスクリプトでの生成も簡単に行えます。',
+      'st-p1': '<code>date</code> はエクスポート時に ISO 8601 形式のタイムスタンプとして自動的に書き込まれ、手動で設定することはありません。それ以外のトップレベルのフィールドはすべて Creator のフォームから直接入力されます。',
+      'st-callout-title': '<code style="background:none;border:none;padding:0;color:inherit">url</code> ではなく <code style="background:none;border:none;padding:0;color:inherit">resource</code>',
+      'st-callout-body': 'エクスポートされたJSONで各スタンプ画像に使われるキーは <code>resource</code> です — 編集中にツールがメモリ上で使用する内部フィールド <code>url</code> とは異なります。<code>.dpfstickers</code> ファイルを手動で作成・生成する場合は、各スタンプのエントリで必ず <code>resource</code> を使用してください。',
+      'req-kicker': '追加する各画像は、パックが実際にインストールされ表示される際にアプリが適用するのと同じルールでチェックされます。',
+      'req-li1': '<strong>個数:</strong> エクスポートには最低 <strong>2個</strong> のスタンプが必要で、Creator は <strong>50個</strong> を超えると新規追加を受け付けなくなります。',
+      'req-li2': '<strong>サイズ:</strong> 画像は最大 <strong>250×250</strong> で追加され、それを超えるものは追加時点で拒否されます。ギャラリーに入った後は、<strong>200×200</strong> 未満または <strong>255×255</strong> 超のものにフラグが立ち、エクスポート前に差し替えることができます。',
+      'req-li3': '<strong>ソース:</strong> 画像は <code>https://</code> のURLでのみ追加され、ローカルファイルのアップロードはありません。そのため、インポート後もスタンプが機能し続けるにはURLが到達可能な状態を保つ必要があります。',
+      'req-li4': '<strong>ID:</strong> すべてのスタンプには固有で空でない <code>id</code> が必要です。重複または未入力のIDはスタンプごとに指摘され、修正されるまでエクスポートがブロックされます。',
+      'req-placeholder': 'スクリーンショットのプレースホルダー — 範囲外のスタンプに対するサイズ警告',
+      'req-callout-title': 'アプリ内でスタンプは固定サイズで表示されます',
+      'req-callout-body': '200〜255px の推奨範囲外の画像は、パックが実際に使用される際にトリミングされたり、予期しない拡大縮小をされたり、まったく表示されなかったりする可能性があります。最も安全な結果を得るには、正方形で約250×250の画像を目指してください。',
+      'cr-kicker': '一連の作業はすべて Sticker Tool という1つのページ上で行われ、別途の送信ステップはありません。完成したファイルはそのまま端末にダウンロードされます。',
+      'cr-step1': 'Sticker Tool を開き、Pack ID、Pack Name、Pack Author を入力します — これら3つのフィールドは既存パックをインポートするとロックされますが、新規作成中は自由に編集できます。',
+      'cr-step2': '必要であれば短い<strong>説明</strong>を追加します(任意、最大500文字)。',
+      'cr-step3': '<strong>+</strong> カードをクリックして画像ダイアログを開き、<code>https://</code> の画像URLを貼り付けて確定します — スタンプがリアルタイムのサイズチェックとともにギャラリーに追加されます。',
+      'cr-step4': '各スタンプに一意の<strong>ID</strong>と、必要に応じて表示用の<strong>名前</strong>を付けます。スタンプの画像を再度クリックするとURLを差し替えられ、削除アイコンで削除できます。',
+      'cr-step5': '有効で一意なIDを持つスタンプが2個以上そろうと、<strong>Export to Sticker Pack</strong> が有効になります — クリックして <code>&lt;packId&gt;.dpfstickers</code> をダウンロードしてください。',
+      'im-p1': '<strong>Import from Pack</strong> を使って、<code>.dpfstickers</code> ファイルをツールに読み込み、編集します。',
+      'im-li1': 'ファイルには <code>packId</code>、<code>name</code>、<code>author</code>、<code>stickers</code> が含まれている必要があります。含まれていない場合、「Invalid file format」というメッセージとともにインポートが拒否されます。',
+      'im-li2': 'インポート後は <strong>Pack ID</strong>、<strong>Pack Name</strong>、<strong>Pack Author</strong> がロックされます — 既存パックの名前を変更するのではなく、スタンプセットと説明を編集することになります。',
+      'im-li3': 'ファイル内の各スタンプは、保存されている <code>id</code>、<code>name</code>、<code>resource</code> のURLとともにギャラリーに読み込まれ、他のスタンプと同様に編集・削除できます。',
+      'im-callout-title': '再エクスポートするとファイル全体が上書きされます',
+      'im-callout-body': '部分更新モードはありません — インポートしたパックを編集して再度エクスポートすると、現在のスタンプセット全体を含む、まったく新しい <code>&lt;packId&gt;.dpfstickers</code> が作成されます。',
+      'fl-kicker': 'エクスポートされた <code>.dpfstickers</code> ファイルに書き込まれるすべてのフィールドを上から順に示します。',
+      'th-field': 'フィールド', 'th-type': '型', 'th-description': '説明',
+      'fl-row-packid': 'パックの一意な識別子。エクスポートされるファイル名 <code>&lt;packId&gt;.dpfstickers</code> になります。',
+      'fl-row-name': 'パックが表示される場所で示される表示名。',
+      'fl-row-description': '任意の概要説明、最大500文字。',
+      'fl-row-author': 'フォームに入力された作者の識別子 — 自由記述で、アカウントとの照合は行われません。',
+      'fl-row-date': '自動生成されるエクスポート時のタイムスタンプ — ユーザーによる編集はできません。',
+      'fl-row-stickers': 'スタンプオブジェクトのリスト、2〜50件。各項目は以下で説明します。',
+      'fl-row-stickerid': 'このパック内でのスタンプの一意で空でないID。エクスポートに必須です。',
+      'fl-row-stickername': '個々のスタンプの任意の表示名。',
+      'fl-row-stickerresource': 'スタンプ画像の読み込み元となる <code>https://</code> のURL。',
+      'va-kicker': 'エクスポートボタンは、以下のすべてのルールを満たしたときにのみ有効になります — ツールはエクスポート時だけでなく、編集中も継続的にチェックします。',
+      'th-rule': 'ルール', 'th-enforced': '適用されるタイミング',
+      'va-row1': 'パック内に最低2個のスタンプがある', 'va-enf1': '追加/削除のたび',
+      'va-row2': 'すべてのスタンプに空でない <code>id</code> がある', 'va-enf2': '編集のたび',
+      'va-row3': '2つのスタンプが同じ <code>id</code> を持たない', 'va-enf3': '編集のたび',
+      'va-row4': '各画像が250×250以下である', 'va-enf4': '画像を追加または差し替える時',
+      'va-row5': '画像URLが <code>https://</code> で始まる', 'va-enf5': '画像を追加または差し替える時',
+      'va-row6': 'インポートしたファイルに <code>packId</code>、<code>name</code>、<code>author</code>、<code>stickers</code> がある', 'va-enf6': 'インポート時',
+      'va-callout-title': 'サイズ警告はエクスポートをブロックしません',
+      'va-callout-body': '200〜255pxのサイズチェックは警告のみです — 小さすぎる、または大きすぎるスタンプがあってもパックはエクスポートできます。エクスポートボタンを実際にブロックするのは、IDの欠落・重複と、スタンプが2個未満であることだけです。',
+      'ex-p1': '<strong>Export to Sticker Pack</strong> は現在のパックをJSONにシリアライズし、<code>application/json</code> のblobとしてラップして、パック名にちなんだファイル <code>&lt;packId&gt;.dpfstickers</code> のブラウザダウンロードを実行します。',
+      'ex-li1': 'ファイル名は常に <code>&lt;packId&gt;.dpfstickers</code> です — そのまま実際のファイル名として表示されても問題のないPack IDを選んでください。',
+      'ex-li2': '生成されるJSONは2スペースインデントで整形されているため、後で開いたり、差分を取ったり、手動で編集したりしやすくなっています。',
+      'ex-li3': 'すべてブラウザ内で行われるため、エクスポート自体にサインインや接続は不要です — アカウントに紐づく言語設定の読み込みには必要になります。',
+      'ex-dist-p1': '<code>.dpfstickers</code> ファイルは自己完結型の成果物です — 他の小さなファイルと同じように共有できます。',
+      'ex-dist-li1': 'ファイルを直接送信すれば(チャット、メール、ファイル共有など)、受け取った側は <strong>Import from Pack</strong> で読み込んで確認したり、編集を続けたりできます。',
+      'ex-dist-li2': 'ストアやインデックスへの配布でも、提出するのは同じファイルです — 広く共有する前に、上記のフィールドリファレンスと検証ルールに照らして確認してください。',
+      'ex-dist-li3': 'すべての画像は埋め込みではなく <code>https://</code> のURLで参照されるため、パックのスタンプはそのURLが生きている限りしか動作しません — 広く配布する予定のものには、安定した長期的なホスティングを使用してください。',
+      'signin-btn': 'ログイン',
+      'menu-create': '作成',
+      'menu-home': 'メインホーム',
+      'menu-docs': 'ドキュメントホーム',
+      'menu-logout': 'ログアウト',
+      'tt-language': '言語',
+      'tt-menu': 'メニュー',
+      'tt-theme': 'テーマ切り替え',
+    },
+    de: {
+      'group-getting-started': 'Erste Schritte',
+      'group-building': 'Erstellung',
+      'group-reference': 'Referenz',
+      'group-publishing': 'Veröffentlichung',
+      'side-search-placeholder': 'Dokumentation durchsuchen…',
+      'side-overview': 'Wie Sticker-Pakete funktionieren',
+      'side-structure': 'Das .dpfstickers-Format',
+      'side-requirements': 'Anforderungen an Sticker',
+      'side-creating': 'Ein Paket erstellen',
+      'side-importing': 'Importieren &amp; bearbeiten',
+      'side-fields': 'Feldreferenz',
+      'side-validation': 'Validierungsregeln',
+      'side-exporting': 'Export &amp; Dateiname',
+      'side-distribution': 'Teilen &amp; Verbreitung',
+      'toc-overview': 'Wie Sticker-Pakete funktionieren',
+      'toc-structure': 'Das .dpfstickers-Format',
+      'toc-requirements': 'Anforderungen an Sticker',
+      'toc-creating': 'Ein Paket erstellen',
+      'toc-importing': 'Importieren &amp; bearbeiten',
+      'toc-fields': 'Feldreferenz',
+      'toc-validation': 'Validierungsregeln',
+      'toc-exporting': 'Export &amp; Dateiname',
+      'hero-eyebrow': 'Sticker-Paket-Plattform · Referenz',
+      'hero-h1': "Sticker-Pakete für DarkPurpleOF's Website erstellen",
+      'hero-p': "Eine vollständige Referenz für das <code>.dpfstickers</code>-Paketformat: wie ein Paket aufgebaut ist, welche Anforderungen jeder Sticker erfüllen muss, wie der integrierte Sticker Pack Creator Pakete erstellt und importiert, und wie ein fertiges Paket weitergegeben wird.",
+      'hero-tag-json': '.dpfstickers',
+      'hero-tag-ext': 'JSON-Paketformat',
+      'hero-tag-max': '2–50 Sticker',
+      'ov-kicker': 'Ein Sticker-Paket ist eine einzelne JSON-Datei, die mit der Endung <code>.dpfstickers</code> exportiert wird und die Metadaten des Pakets zusammen mit einer Liste einzelner Sticker enthält. Es wird vollständig clientseitig vom Sticker Pack Creator erstellt — für die Erstellung ist kein Server-Upload erforderlich.',
+      'ov-p1': 'Grob zusammengefasst passieren beim Erstellen eines Pakets drei Dinge:',
+      'ov-li1': 'Sie geben die Identität des Pakets ein — eine <strong>Pack-ID</strong>, einen angezeigten <strong>Namen</strong>, einen <strong>Autor</strong> und eine optionale <strong>Beschreibung</strong> (bis zu 500 Zeichen).',
+      'ov-li2': 'Sie fügen Sticker nacheinander hinzu, indem Sie eine <code>https://</code>-Bild-URL einfügen. Jedes Bild wird beim Hinzufügen und erneut in der Galerie anhand der empfohlenen Sticker-Maße geprüft.',
+      'ov-li3': 'Sobald jeder Sticker eine eindeutige, nicht leere ID hat und mindestens zwei Sticker vorhanden sind, wird <strong>Export to Sticker Pack</strong> aktiv und lädt eine einzelne <code>&lt;packId&gt;.dpfstickers</code>-Datei auf Ihr Gerät herunter.',
+      'ov-placeholder': 'Screenshot-Platzhalter — der Sticker Pack Creator mit einem gefüllten Paket',
+      'ov-callout-title': 'Nichts wird hochgeladen, bevor Sie exportieren',
+      'ov-callout-body': 'Das Tool erstellt Ihr Paket vollständig im Arbeitsspeicher des Browsers. Nichts wird irgendwo gespeichert, bis Sie auf Exportieren klicken — dann wird eine einzelne <code>.dpfstickers</code>-Datei erzeugt und heruntergeladen. Es wird kein Entwurf serverseitig gespeichert, es sei denn, Sie tun dies selbst.',
+      'st-kicker': 'Im Kern ist eine <code>.dpfstickers</code>-Datei einfach formatiertes JSON — lesbar, diff-fähig und leicht von Hand zu bearbeiten oder per Skript zu erzeugen, falls Sie die Oberfläche des Creators nicht nutzen möchten.',
+      'st-p1': '<code>date</code> wird beim Export automatisch als ISO-8601-Zeitstempel geschrieben — Sie setzen ihn nie manuell. Alle anderen Felder auf oberster Ebene stammen direkt aus dem Formular des Creators.',
+      'st-callout-title': '<code style="background:none;border:none;padding:0;color:inherit">resource</code>, nicht <code style="background:none;border:none;padding:0;color:inherit">url</code>',
+      'st-callout-body': 'Der JSON-Schlüssel für das Bild jedes Stickers in der exportierten Datei ist <code>resource</code> — anders als das interne Feld <code>url</code>, das das Tool während der Bearbeitung im Speicher verwendet. Wenn Sie eine <code>.dpfstickers</code>-Datei von Hand schreiben oder generieren, stellen Sie sicher, dass jeder Sticker-Eintrag <code>resource</code> verwendet.',
+      'req-kicker': 'Jedes hinzugefügte Bild wird nach denselben Regeln geprüft, die die App durchsetzt, sobald ein Paket tatsächlich installiert und angezeigt wird.',
+      'req-li1': '<strong>Anzahl:</strong> Ein Paket benötigt mindestens <strong>2</strong> Sticker zum Exportieren, und der Creator nimmt ab <strong>50</strong> keine weiteren mehr an.',
+      'req-li2': '<strong>Maße:</strong> Bilder werden mit bis zu <strong>250×250</strong> hinzugefügt — alles Größere wird beim Hinzufügen sofort abgelehnt. In der Galerie wird alles unter <strong>200×200</strong> oder über <strong>255×255</strong> markiert, damit Sie es vor dem Export austauschen können.',
+      'req-li3': '<strong>Quelle:</strong> Jedes Bild wird ausschließlich per <code>https://</code>-URL hinzugefügt — es gibt keinen lokalen Datei-Upload, daher muss die URL erreichbar bleiben, damit der Sticker nach dem Import weiterhin funktioniert.',
+      'req-li4': '<strong>IDs:</strong> Jeder Sticker benötigt eine eigene, nicht leere, eindeutige <code>id</code>. Doppelte oder fehlende IDs werden pro Sticker angezeigt und blockieren den Export, bis sie behoben sind.',
+      'req-placeholder': 'Screenshot-Platzhalter — Größenwarnungen bei einem Sticker außerhalb des zulässigen Bereichs',
+      'req-callout-title': 'Sticker werden in der App in fester Größe angezeigt',
+      'req-callout-body': 'Bilder außerhalb des optimalen Bereichs von 200–255px können beschnitten, unvorhersehbar skaliert werden oder gar nicht angezeigt werden, sobald das Paket tatsächlich verwendet wird. Streben Sie quadratische Bilder mit ca. 250×250 für das sicherste Ergebnis an.',
+      'cr-kicker': 'Der gesamte Ablauf findet auf einer einzigen Seite statt — dem Sticker Tool — ohne separaten Absende-Schritt; die fertige Datei wird direkt auf Ihr Gerät heruntergeladen.',
+      'cr-step1': 'Öffnen Sie das Sticker Tool und füllen Sie Pack ID, Pack Name und Pack Author aus — diese drei Felder werden gesperrt, sobald Sie ein bestehendes Paket importieren, bleiben aber beim Erstellen eines neuen frei editierbar.',
+      'cr-step2': 'Fügen Sie bei Bedarf eine kurze <strong>Beschreibung</strong> hinzu (optional, maximal 500 Zeichen).',
+      'cr-step3': 'Klicken Sie auf die <strong>+</strong>-Karte, um den Bilddialog zu öffnen, fügen Sie eine <code>https://</code>-Bild-URL ein und bestätigen Sie — der Sticker wird der Galerie mit einer Live-Maßprüfung hinzugefügt.',
+      'cr-step4': 'Geben Sie jedem Sticker eine eindeutige <strong>ID</strong> und optional einen angezeigten <strong>Namen</strong>. Klicken Sie erneut auf das Bild eines Stickers, um dessen URL auszutauschen, oder verwenden Sie das Lösch-Symbol, um ihn zu entfernen.',
+      'cr-step5': 'Sobald Sie mindestens 2 gültige Sticker mit eindeutigen IDs haben, wird <strong>Export to Sticker Pack</strong> aktiv — klicken Sie darauf, um <code>&lt;packId&gt;.dpfstickers</code> herunterzuladen.',
+      'im-p1': 'Verwenden Sie <strong>Import from Pack</strong>, um eine <code>.dpfstickers</code>-Datei zur Bearbeitung wieder in das Tool zu laden.',
+      'im-li1': 'Die Datei muss <code>packId</code>, <code>name</code>, <code>author</code> und <code>stickers</code> enthalten, sonst wird der Import mit der Meldung „Invalid file format" abgelehnt.',
+      'im-li2': 'Nach dem Import sind <strong>Pack ID</strong>, <strong>Pack Name</strong> und <strong>Pack Author</strong> gesperrt — Sie bearbeiten die Sticker-Sammlung und Beschreibung eines bestehenden Pakets, ohne es umzubenennen.',
+      'im-li3': 'Jeder Sticker aus der Datei wird mit seiner gespeicherten <code>id</code>, <code>name</code> und <code>resource</code>-URL in die Galerie geladen und kann wie jeder andere Sticker bearbeitet oder gelöscht werden.',
+      'im-callout-title': 'Ein erneuter Export überschreibt die gesamte Datei',
+      'im-callout-body': 'Es gibt keinen Modus für Teilaktualisierungen — das Bearbeiten eines importierten Pakets und erneutes Exportieren erzeugt eine völlig neue <code>&lt;packId&gt;.dpfstickers</code>-Datei mit der vollständigen, aktuellen Sticker-Sammlung.',
+      'fl-kicker': 'Alle Felder, die in eine exportierte <code>.dpfstickers</code>-Datei geschrieben werden, von oben nach unten.',
+      'th-field': 'Feld', 'th-type': 'Typ', 'th-description': 'Beschreibung',
+      'fl-row-packid': 'Eindeutiger Bezeichner des Pakets. Wird zum Dateinamen der exportierten Datei: <code>&lt;packId&gt;.dpfstickers</code>.',
+      'fl-row-name': 'Angezeigter Name, der überall gezeigt wird, wo das Paket aufgeführt ist.',
+      'fl-row-description': 'Optionale Zusammenfassung, bis zu 500 Zeichen.',
+      'fl-row-author': 'Im Formular eingegebener Autoren-Bezeichner — Freitext, wird nicht gegen ein Konto validiert.',
+      'fl-row-date': 'Automatisch generierter Export-Zeitstempel — nicht vom Nutzer bearbeitbar.',
+      'fl-row-stickers': 'Liste von Sticker-Objekten, 2–50 Einträge, jeweils unten beschrieben.',
+      'fl-row-stickerid': 'Eindeutige, nicht leere ID des Stickers innerhalb dieses Pakets. Für den Export erforderlich.',
+      'fl-row-stickername': 'Optionaler angezeigter Name für den einzelnen Sticker.',
+      'fl-row-stickerresource': '<code>https://</code>-URL, von der das Sticker-Bild geladen wird.',
+      'va-kicker': 'Der Export-Button wird erst aktiv, wenn alle unten genannten Regeln erfüllt sind — das Tool prüft dies fortlaufend während der Bearbeitung, nicht nur beim Export.',
+      'th-rule': 'Regel', 'th-enforced': 'Wird geprüft, wenn',
+      'va-row1': 'Mindestens 2 Sticker im Paket', 'va-enf1': 'Bei jedem Hinzufügen/Entfernen',
+      'va-row2': 'Jeder Sticker hat eine nicht leere <code>id</code>', 'va-enf2': 'Bei jeder Bearbeitung',
+      'va-row3': 'Keine zwei Sticker teilen sich dieselbe <code>id</code>', 'va-enf3': 'Bei jeder Bearbeitung',
+      'va-row4': 'Jedes Bild ist 250×250 oder kleiner', 'va-enf4': 'Beim Hinzufügen oder Ersetzen eines Bildes',
+      'va-row5': 'Bild-URL beginnt mit <code>https://</code>', 'va-enf5': 'Beim Hinzufügen oder Ersetzen eines Bildes',
+      'va-row6': 'Importierte Datei enthält <code>packId</code>, <code>name</code>, <code>author</code>, <code>stickers</code>', 'va-enf6': 'Beim Import',
+      'va-callout-title': 'Größenwarnungen blockieren den Export nicht',
+      'va-callout-body': 'Die Maßprüfung von 200–255px warnt nur — ein Paket mit einem zu kleinen oder zu großen Sticker lässt sich trotzdem exportieren. Nur fehlende/doppelte IDs und weniger als 2 Sticker blockieren den Export-Button tatsächlich.',
+      'ex-p1': '<strong>Export to Sticker Pack</strong> serialisiert das aktuelle Paket als JSON, verpackt es als <code>application/json</code>-Blob und löst einen Browser-Download aus, der nach dem Paket benannt ist: <code>&lt;packId&gt;.dpfstickers</code>.',
+      'ex-li1': 'Der Dateiname ist immer <code>&lt;packId&gt;.dpfstickers</code> — wählen Sie eine Pack-ID, die Sie auch als tatsächlichen Dateinamen sehen möchten.',
+      'ex-li2': 'Das erzeugte JSON ist übersichtlich formatiert (2 Leerzeichen Einrückung), sodass es sich leicht öffnen, vergleichen oder von Hand bearbeiten lässt.',
+      'ex-li3': 'Da alles im Browser abläuft, erfordert der Export weder eine Anmeldung noch eine Verbindung — nur das Laden einer an Ihr Konto gebundenen Spracheinstellung tut das.',
+      'ex-dist-p1': 'Eine <code>.dpfstickers</code>-Datei ist ein eigenständiges Artefakt — teilen Sie sie wie jede andere kleine Datei.',
+      'ex-dist-li1': 'Senden Sie die Datei direkt (Chat, E-Mail, Dateifreigabe), und der Empfänger kann sie mit <strong>Import from Pack</strong> laden, um sie anzusehen oder weiter zu bearbeiten.',
+      'ex-dist-li2': 'Für die Verbreitung über einen Store oder Index reichen Sie dieselbe Datei ein — prüfen Sie sie vorher anhand der Feldreferenz und der Validierungsregeln oben, bevor Sie sie breit teilen.',
+      'ex-dist-li3': 'Da jedes Bild per <code>https://</code>-URL referenziert und nicht eingebettet wird, bleiben die Sticker eines Pakets nur so lange funktionsfähig, wie diese URLs erreichbar sind — verwenden Sie ein stabiles, langlebiges Hosting für alles, was Sie breit verbreiten möchten.',
+      'signin-btn': 'Anmelden',
+      'menu-create': 'Erstellen',
+      'menu-home': 'Hauptseite',
+      'menu-docs': 'Dokumentations-Startseite',
+      'menu-logout': 'Abmelden',
+      'tt-language': 'Sprache',
+      'tt-menu': 'Menü',
+      'tt-theme': 'Design umschalten',
+    },
+    es: {
+      'group-getting-started': 'Primeros pasos',
+      'group-building': 'Creación',
+      'group-reference': 'Referencia',
+      'group-publishing': 'Publicación',
+      'side-search-placeholder': 'Buscar en la documentación…',
+      'side-overview': 'Cómo funcionan los packs de stickers',
+      'side-structure': 'Formato .dpfstickers',
+      'side-requirements': 'Requisitos de los stickers',
+      'side-creating': 'Crear un pack',
+      'side-importing': 'Importar y editar',
+      'side-fields': 'Referencia de campos',
+      'side-validation': 'Reglas de validación',
+      'side-exporting': 'Exportación y nombre de archivo',
+      'side-distribution': 'Compartir y distribuir',
+      'toc-overview': 'Cómo funcionan los packs de stickers',
+      'toc-structure': 'Formato .dpfstickers',
+      'toc-requirements': 'Requisitos de los stickers',
+      'toc-creating': 'Crear un pack',
+      'toc-importing': 'Importar y editar',
+      'toc-fields': 'Referencia de campos',
+      'toc-validation': 'Reglas de validación',
+      'toc-exporting': 'Exportación y nombre de archivo',
+      'hero-eyebrow': 'Plataforma de packs de stickers · Referencia',
+      'hero-h1': 'Crea packs de stickers para DarkPurpleOF\'s Website',
+      'hero-p': 'Una referencia completa del formato de pack <code>.dpfstickers</code>: cómo está estructurado un pack, qué requiere cada sticker, cómo el Sticker Pack Creator integrado crea e importa packs, y cómo se comparte un pack terminado.',
+      'hero-tag-json': '.dpfstickers',
+      'hero-tag-ext': 'formato JSON',
+      'hero-tag-max': '2–50 stickers',
+      'ov-kicker': 'Un pack de stickers es un único archivo JSON, exportado con la extensión <code>.dpfstickers</code>, que agrupa los metadatos del pack junto con una lista de stickers individuales. Se construye por completo en el cliente mediante el Sticker Pack Creator — no hace falta subirlo a ningún servidor solo para crearlo.',
+      'ov-p1': 'A grandes rasgos, ocurren tres cosas al construir un pack:',
+      'ov-li1': 'Completas la identidad del pack — un <strong>Pack ID</strong>, un <strong>nombre</strong> para mostrar, un <strong>autor</strong> y una <strong>descripción</strong> opcional (hasta 500 caracteres).',
+      'ov-li2': 'Agregas stickers uno por uno pegando una URL de imagen <code>https://</code>. Cada imagen se comprueba al agregarla, y de nuevo en la galería, según las dimensiones recomendadas.',
+      'ov-li3': 'En cuanto cada sticker tiene un ID único y no vacío y hay al menos dos stickers, se habilita <strong>Export to Sticker Pack</strong>, que descarga un único archivo <code>&lt;packId&gt;.dpfstickers</code> en tu dispositivo.',
+      'ov-placeholder': 'Marcador de captura de pantalla — el Sticker Pack Creator con un pack completo',
+      'ov-callout-title': 'Nada se sube hasta que exportas',
+      'ov-callout-body': 'La herramienta construye tu pack por completo en la memoria del navegador. No se escribe nada en ningún sitio hasta que pulsas Exportar, momento en el que se genera y descarga un único archivo <code>.dpfstickers</code>. No se guarda ningún borrador en el servidor a menos que lo hagas tú mismo.',
+      'st-kicker': 'Internamente, un archivo <code>.dpfstickers</code> es simplemente JSON con formato — legible, fácil de comparar y sencillo de editar a mano o generar con un script si prefieres no usar la interfaz del Creator.',
+      'st-p1': '<code>date</code> se escribe automáticamente en el momento de exportar como una marca de tiempo ISO 8601 — nunca la estableces a mano. Todos los demás campos de nivel superior provienen directamente del formulario del Creator.',
+      'st-callout-title': '<code style="background:none;border:none;padding:0;color:inherit">resource</code>, no <code style="background:none;border:none;padding:0;color:inherit">url</code>',
+      'st-callout-body': 'La clave JSON para la imagen de cada sticker en el archivo exportado es <code>resource</code> — distinta del campo interno <code>url</code> que la herramienta usa en memoria mientras editas. Si escribes o generas un archivo <code>.dpfstickers</code> a mano, asegúrate de que cada entrada de sticker use <code>resource</code>.',
+      'req-kicker': 'Cada imagen que agregas se comprueba con las mismas reglas que la app aplica una vez que un pack se instala y se muestra realmente.',
+      'req-li1': '<strong>Cantidad:</strong> un pack necesita al menos <strong>2</strong> stickers para exportarse, y el Creator deja de aceptar nuevos al llegar a <strong>50</strong>.',
+      'req-li2': '<strong>Dimensiones:</strong> las imágenes se agregan con un tamaño máximo de <strong>250×250</strong> — cualquier imagen mayor se rechaza directamente al agregarla. Una vez en la galería, todo lo que esté por debajo de <strong>200×200</strong> o por encima de <strong>255×255</strong> se marca para que puedas reemplazarlo antes de exportar.',
+      'req-li3': '<strong>Origen:</strong> cada imagen se agrega solo mediante una URL <code>https://</code> — no hay carga de archivos locales, por lo que la URL debe seguir siendo accesible para que el sticker funcione tras importarlo.',
+      'req-li4': '<strong>IDs:</strong> cada sticker necesita su propio <code>id</code> único y no vacío. Los IDs duplicados o faltantes se señalan por sticker y bloquean la exportación hasta corregirse.',
+      'req-placeholder': 'Marcador de captura de pantalla — avisos de tamaño en un sticker fuera de rango',
+      'req-callout-title': 'Los stickers se muestran a un tamaño fijo en la app',
+      'req-callout-body': 'Las imágenes fuera del rango óptimo de 200–255px pueden recortarse, escalarse de forma impredecible o no mostrarse en absoluto cuando el pack se usa realmente. Apunta a imágenes cuadradas de ~250×250 para el resultado más seguro.',
+      'cr-kicker': 'Todo el flujo ocurre en una sola página — la Sticker Tool — sin un paso de envío aparte; el archivo terminado se descarga directamente a tu dispositivo.',
+      'cr-step1': 'Abre la Sticker Tool y completa Pack ID, Pack Name y Pack Author — estos tres campos se bloquean en cuanto importas un pack existente, pero son editables libremente mientras creas uno nuevo.',
+      'cr-step2': 'Agrega una breve <strong>descripción</strong> si lo deseas (opcional, máximo 500 caracteres).',
+      'cr-step3': 'Haz clic en la tarjeta <strong>+</strong> para abrir el diálogo de imagen, pega una URL de imagen <code>https://</code> y confirma — el sticker se agrega a la galería con una comprobación de dimensiones en tiempo real.',
+      'cr-step4': 'Asigna a cada sticker un <strong>ID</strong> único y, opcionalmente, un <strong>nombre</strong> para mostrar. Haz clic de nuevo en la imagen de un sticker para cambiar su URL, o usa el icono de eliminar para quitarlo.',
+      'cr-step5': 'En cuanto tengas al menos 2 stickers válidos con IDs únicos, se habilita <strong>Export to Sticker Pack</strong> — haz clic para descargar <code>&lt;packId&gt;.dpfstickers</code>.',
+      'im-p1': 'Usa <strong>Import from Pack</strong> para cargar de nuevo un archivo <code>.dpfstickers</code> en la herramienta y editarlo.',
+      'im-li1': 'El archivo debe contener <code>packId</code>, <code>name</code>, <code>author</code> y <code>stickers</code>, o la importación se rechaza con el mensaje «Invalid file format».',
+      'im-li2': 'Una vez importado, <strong>Pack ID</strong>, <strong>Pack Name</strong> y <strong>Pack Author</strong> quedan bloqueados — estás editando el conjunto de stickers y la descripción de un pack existente, no renombrándolo.',
+      'im-li3': 'Cada sticker del archivo se carga en la galería con su <code>id</code>, <code>name</code> y URL de <code>resource</code> guardados, listo para editarse o eliminarse como cualquier otro sticker.',
+      'im-callout-title': 'Volver a exportar sobrescribe todo el archivo',
+      'im-callout-body': 'No existe un modo de actualización parcial — editar un pack importado y volver a exportarlo genera un nuevo archivo <code>&lt;packId&gt;.dpfstickers</code> con el conjunto completo y actual de stickers.',
+      'fl-kicker': 'Todos los campos que se escriben en un archivo <code>.dpfstickers</code> exportado, de arriba abajo.',
+      'th-field': 'Campo', 'th-type': 'Tipo', 'th-description': 'Descripción',
+      'fl-row-packid': 'Identificador único del pack. Se convierte en el nombre del archivo exportado: <code>&lt;packId&gt;.dpfstickers</code>.',
+      'fl-row-name': 'Nombre para mostrar dondequiera que se liste el pack.',
+      'fl-row-description': 'Resumen opcional, hasta 500 caracteres.',
+      'fl-row-author': 'Identificador del autor introducido en el formulario — texto libre, no se valida contra ninguna cuenta.',
+      'fl-row-date': 'Marca de tiempo de exportación, generada automáticamente — no editable por el usuario.',
+      'fl-row-stickers': 'Lista de objetos sticker, de 2 a 50 entradas, cada uno descrito a continuación.',
+      'fl-row-stickerid': 'ID único y no vacío del sticker dentro de este pack. Obligatorio para exportar.',
+      'fl-row-stickername': 'Nombre para mostrar opcional del sticker individual.',
+      'fl-row-stickerresource': 'URL <code>https://</code> desde la que se carga la imagen del sticker.',
+      'va-kicker': 'El botón de exportar solo se habilita cuando se cumplen todas las reglas siguientes — la herramienta las comprueba continuamente mientras editas, no solo al exportar.',
+      'th-rule': 'Regla', 'th-enforced': 'Se aplica cuando',
+      'va-row1': 'Al menos 2 stickers en el pack', 'va-enf1': 'En cada adición/eliminación',
+      'va-row2': 'Cada sticker tiene un <code>id</code> no vacío', 'va-enf2': 'En cada edición',
+      'va-row3': 'Ningún par de stickers comparte el mismo <code>id</code>', 'va-enf3': 'En cada edición',
+      'va-row4': 'Cada imagen mide 250×250 o menos', 'va-enf4': 'Al agregar o reemplazar una imagen',
+      'va-row5': 'La URL de la imagen empieza por <code>https://</code>', 'va-enf5': 'Al agregar o reemplazar una imagen',
+      'va-row6': 'El archivo importado tiene <code>packId</code>, <code>name</code>, <code>author</code>, <code>stickers</code>', 'va-enf6': 'Al importar',
+      'va-callout-title': 'Los avisos de tamaño no bloquean la exportación',
+      'va-callout-body': 'La comprobación de dimensiones de 200–255px solo avisa — un pack con un sticker demasiado pequeño o grande igualmente puede exportarse. Solo los IDs faltantes o duplicados, y tener menos de 2 stickers, bloquean realmente el botón de exportar.',
+      'ex-p1': '<strong>Export to Sticker Pack</strong> serializa el pack actual a JSON, lo envuelve como un blob <code>application/json</code> y activa una descarga del navegador con el nombre del pack: <code>&lt;packId&gt;.dpfstickers</code>.',
+      'ex-li1': 'El nombre de archivo siempre es <code>&lt;packId&gt;.dpfstickers</code> — elige un Pack ID que te resulte cómodo ver como nombre de archivo literal.',
+      'ex-li2': 'El JSON generado tiene formato legible (sangría de 2 espacios), por lo que es fácil abrirlo, compararlo o editarlo a mano después.',
+      'ex-li3': 'Como todo ocurre en el navegador, exportar no requiere iniciar sesión ni estar conectado — solo cargar una preferencia de idioma vinculada a tu cuenta sí lo requiere.',
+      'ex-dist-p1': 'Un archivo <code>.dpfstickers</code> es un artefacto autocontenido — compártelo como compartirías cualquier archivo pequeño.',
+      'ex-dist-li1': 'Envía el archivo directamente (chat, correo, uso compartido de archivos) y quien lo reciba podrá cargarlo con <strong>Import from Pack</strong> para revisarlo o seguir editándolo.',
+      'ex-dist-li2': 'Para distribuirlo en una tienda o índice, es ese mismo archivo el que se envía — valídalo con la referencia de campos y las reglas de validación anteriores antes de compartirlo ampliamente.',
+      'ex-dist-li3': 'Como cada imagen se referencia mediante una URL <code>https://</code> en lugar de incrustarse, los stickers de un pack solo siguen activos mientras esas URL lo estén — usa un alojamiento estable y duradero para cualquier cosa que planees distribuir ampliamente.',
+      'signin-btn': 'Iniciar sesión',
+      'menu-create': 'Crear',
+      'menu-home': 'Inicio principal',
+      'menu-docs': 'Inicio de la documentación',
+      'menu-logout': 'Cerrar sesión',
+      'tt-language': 'Idioma',
+      'tt-menu': 'Menú',
+      'tt-theme': 'Cambiar tema',
+    },
+  };
+
+  const supportedLangs = Object.keys(translations);
+  const firebaseConfig = window.DP_FIREBASE_CONFIG || {};
+  let currentLang = 'en';
+  let auth = null, db = null;
+  const docsTopbar = document.getElementById('docsTopbar');
+
+  if (window.firebase) {
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.firestore();
+    } catch (err) {
+      console.warn('Firebase initialization failed:', err);
+    }
+  }
+
+  function renderSignInButton(user, profileData) {
+    docsTopbar?.setUser(user, profileData);
+  }
+
+  function t(key) {
+    const dict = translations[currentLang] || translations.en;
+    return dict[key] ?? translations.en[key] ?? key;
+  }
+
+  function normalizeLang(lang) {
+    const raw = String(lang || '').trim().toLowerCase();
+    const short = raw.slice(0, 2);
+    return supportedLangs.includes(short) ? short : 'en';
+  }
+
+  function applyTranslations(lang) {
+    currentLang = normalizeLang(lang);
+    const dict = translations[currentLang] || translations.en;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const value = dict[key] ?? translations.en[key];
+      if (value != null) el.innerHTML = value;
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      const value = dict[key] ?? translations.en[key];
+      if (value != null) el.setAttribute('placeholder', value);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const key = el.getAttribute('data-i18n-title');
+      const value = dict[key] ?? translations.en[key];
+      if (value != null) el.setAttribute('title', value);
+    });
+    docsTopbar?.setLabels?.({
+      docs: dict['brand-sub'] ?? translations.en['brand-sub'],
+      login: dict['signin-btn'] ?? translations.en['signin-btn'],
+      create: dict['menu-create'] ?? translations.en['menu-create'],
+      home: dict['menu-home'] ?? translations.en['menu-home'],
+      docsHome: dict['menu-docs'] ?? translations.en['menu-docs'],
+      logout: dict['menu-logout'] ?? translations.en['menu-logout'],
+    });
+    document.documentElement.setAttribute('lang', currentLang);
+  }
+
+  function setLang(lang, persist = true) {
+    const nextLang = normalizeLang(lang);
+    if (persist) localStorage.setItem('docsLang', nextLang);
+    applyTranslations(nextLang);
+  }
+
+  function loadInitialLang() {
+    const saved = localStorage.getItem('docsLang');
+    const browserLang = normalizeLang((navigator.language || 'en').slice(0, 2));
+    const initial = normalizeLang(saved || browserLang);
+    applyTranslations(initial);
+    return initial;
+  }
+
+  // Fetches the signed-in user's saved language from Firestore (user_data/{email}.lang),
+  // falling back to localStorage, then the browser's language, then English.
+  async function loadUserLang() {
+    const fallbackLang = loadInitialLang();
+    renderSignInButton(null, null);
+
+    if (!auth || !db) {
+      return setLang(fallbackLang, true);
+    }
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user?.email) {
+        renderSignInButton(null, null);
+        return setLang(fallbackLang, true);
+      }
+      try {
+        const docId = user.email.toLowerCase();
+        const snap = await db.collection('user_data').doc(docId).get();
+        const data = snap.exists ? snap.data() : null;
+        renderSignInButton(user, data || null);
+        const stored = data?.lang || null;
+        setLang(stored || fallbackLang, true);
+      } catch (err) {
+        console.warn('Unable to load language from Firestore:', err);
+        renderSignInButton(user, null);
+        setLang(fallbackLang, true);
+      }
+    });
+  }
+
+  loadUserLang();
+
+  // Theme toggle (mirrors the site's light/dark class switch)
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+  }
+
+  // Mobile sidebar toggle
+  docsTopbar?.addEventListener?.('docs-menu-toggle', () => {
+      const side = document.getElementById('sideCol');
+      side.style.display = (side.style.display === 'block') ? 'none' : 'block';
+      if (side.style.display === 'block') {
+        side.style.position = 'fixed';
+        side.style.top = '60px'; side.style.left = '0'; side.style.height = 'calc(100vh - 60px)';
+        side.style.width = '260px'; side.style.background = 'var(--panel)'; side.style.zIndex = '150';
+        side.style.padding = '18px'; side.style.borderRight = '1px solid var(--border)';
+      }
+  });
+
+  // Copy-to-clipboard for code blocks
+  function copyBlock(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const text = pre.innerText;
+    navigator.clipboard?.writeText(text).then(() => {
+      const original = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = original; }, 1400);
+    });
+  }
+
+  // Scrollspy: highlight active nav link (both left sidebar + right toc)
+  const sections = Array.from(document.querySelectorAll('section.doc-section'));
+  const navLinks = Array.from(document.querySelectorAll('.nav-group a, .toc-col a'));
+  const byHash = {};
+  navLinks.forEach(a => { (byHash[a.getAttribute('href')] ||= []).push(a); });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = '#' + entry.target.id;
+        navLinks.forEach(a => a.classList.remove('active'));
+        (byHash[id] || []).forEach(a => a.classList.add('active'));
+      }
+    });
+  }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Simple sidebar filter
+  function filterNav(query) {
+    const q = query.trim().toLowerCase();
+    document.querySelectorAll('.nav-group a').forEach(a => {
+      a.style.display = (!q || a.textContent.toLowerCase().includes(q)) ? 'block' : 'none';
+    });
+  }
+</script>
+
+</body>
+</html>

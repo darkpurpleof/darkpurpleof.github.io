@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; width: 100%; overflow-x: hidden; }
+  img { max-width: 100%; display: block; }
+
+  :root{
+    --bg: #171717;
+    --panel: #1b1b1b;
+    --card: #1f1f1f;
+    --card-2: #232323;
+    --muted: #a8a8a8;
+    --text: #eaeaea;
+    --accent: #6b21a8;
+    --accent-strong: #5b21b6;
+    --border: rgba(255,255,255,0.05);
+    --border-strong: rgba(255,255,255,0.08);
+    --soft: rgba(255,255,255,0.03);
+    --redeem: #2196f3;
+    --redeem-strong: #1c86dd;
+    --moderation: #564059;
+    --watchdog: #8b3a3a;
+    --community: #345cfb;
+    --community-hover: #4b7bf5;
+    --radius: 16px;
+    --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  body.light {
+    --bg: #f6f8fb; --panel: #ffffff; --card: #ffffff; --card-2: #f8fafc;
+    --muted: #475569; --text: #0f172a;
+    --border: rgba(0,0,0,0.06); --border-strong: rgba(0,0,0,0.09); --soft: rgba(0,0,0,0.025);
+  }
+
+  body { margin: 0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background .25s ease, color .25s ease; }
+  code { font-family: var(--mono); }
+
+  /* ---------- Topbar ---------- */
+  .top-bar { position: sticky; top: 0; z-index: 200; display: flex; align-items: center; padding: 0 20px; height: 60px; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+  .top-bar-inner { max-width: 1180px; width: 100%; margin: 0 auto; display: flex; align-items: center; gap: 18px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15.5px; letter-spacing: -0.01em; flex-shrink: 0; cursor: pointer; }
+  .brand-mark { width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; background: linear-gradient(135deg, var(--accent), var(--accent-strong)); display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 800; }
+  .brand-sub { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; background: var(--soft); border: 1px solid var(--border-strong); padding: 3px 7px; border-radius: 6px; }
+  .top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .icon-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--soft); color: var(--text); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
+  .icon-btn:hover { background: rgba(255,255,255,0.06); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  /* ---------- Back link ---------- */
+  .back-row { max-width: 1180px; margin: 0 auto; padding: 18px 20px 0 20px; }
+  .back-link { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 700; color: var(--muted); text-decoration: none; padding: 7px 12px 7px 9px; border-radius: 10px; border: 1px solid transparent; transition: color .15s ease, border-color .15s ease, background .15s ease; }
+  .back-link:hover { color: var(--text); background: var(--soft); border-color: var(--border-strong); }
+  .back-link svg { width: 15px; height: 15px; transition: transform .15s ease; flex-shrink: 0; }
+  .back-link:hover svg { transform: translateX(-3px); }
+
+  /* ---------- Layout ---------- */
+  main.wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 90px 20px; }
+
+  .hero { padding: 46px 0 30px 0; text-align: center; }
+  .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .07em; background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding: 6px 11px; border-radius: 999px; margin-bottom: 16px; }
+  .hero h1 { margin: 0 0 12px 0; font-size: 36px; font-weight: 800; letter-spacing: -0.03em; }
+  .hero p { margin: 0 auto; font-size: 15px; line-height: 1.6; color: var(--muted); max-width: 520px; }
+
+  .search-wrap { max-width: 560px; margin: 28px auto 0 auto; position: relative; }
+  .search-box { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border-strong); border-radius: 14px; padding: 13px 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.18); }
+  .search-box svg { width: 17px; height: 17px; color: var(--muted); flex-shrink: 0; }
+  .search-box input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 14.5px; font-family: inherit; }
+  .search-box input::placeholder { color: var(--muted); }
+  .search-clear { background: var(--soft); border: 1px solid var(--border-strong); color: var(--muted); border-radius: 7px; padding: 3px 8px; font-size: 11px; cursor: pointer; display: none; }
+  .search-kbd { font-family: var(--mono); font-size: 10.5px; color: var(--muted); background: var(--soft); border: 1px solid var(--border-strong); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; }
+
+  .chip-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 20px 0 8px 0; }
+  .chip { font-size: 12.5px; font-weight: 700; color: var(--muted); background: var(--card-2); border: 1px solid var(--border-strong); padding: 7px 13px; border-radius: 999px; cursor: pointer; }
+  .chip:hover { color: var(--text); }
+  .chip.active { color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-strong)); border-color: transparent; }
+
+  .result-meta { text-align: center; font-size: 12.5px; color: var(--muted); margin: 24px 0 18px 0; }
+  .result-meta strong { color: var(--text); }
+
+  /* ---------- Card grid ---------- */
+  .doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+
+  .doc-card { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--border-strong); border-radius: 16px; overflow: hidden; text-decoration: none; color: inherit; transition: transform .15s ease, border-color .15s ease; }
+  .doc-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong)); }
+
+  .doc-thumb { width: 100%; aspect-ratio: 16/9; background: var(--card-2); position: relative; overflow: hidden; flex-shrink: 0; }
+  .doc-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .doc-thumb .fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; color: #fff; }
+
+  .doc-card-body { padding: 14px 16px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .doc-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .doc-tag { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 8px; border-radius: 999px; background: color-mix(in srgb, var(--redeem) 18%, transparent); color: #8fc6f8; flex-shrink: 0; }
+  .doc-date { font-size: 11.5px; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+  .doc-title { font-size: 15.5px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.35; }
+  .doc-desc { font-size: 13px; color: var(--muted); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; flex: 1; }
+
+  .doc-langs { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 2px; }
+  .doc-langs .lang-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-right: 2px; }
+  .lang-pill { font-size: 10px; font-weight: 700; letter-spacing: .02em; color: var(--muted); background: var(--soft); border: 1px solid var(--border-strong); padding: 2px 6px; border-radius: 6px; }
+  .lang-pill.current { color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-strong)); border-color: transparent; }
+
+  .doc-card-foot { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--community); margin-top: 4px; }
+  .doc-card-foot svg { width: 13px; height: 13px; transition: transform .15s ease; }
+  .doc-card:hover .doc-card-foot svg { transform: translateX(3px); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state svg { width: 40px; height: 40px; margin-bottom: 14px; opacity: .5; }
+  .empty-state p { margin: 0; font-size: 14px; }
+
+  @media (max-width: 600px) { .hero h1 { font-size: 27px; } }
+</style>
+</head>
+<body>
+
+<dp-docs-topbar id="docsTopbar"></dp-docs-topbar>
+
+<div class="back-row">
+  <a class="back-link" id="backLink" href="/creator/dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+    <span id="backLinkText">Back to Create</span>
+  </a>
+</div>
+
+<main class="wrap">
+
+  <div class="hero">
+    <h1 id="heroTitle">How can we help?</h1>
+    <p id="heroSub">Guides, references, and tools for building on DarkPurpleOF's Website.</p>
+
+    <div class="search-wrap">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="searchInput" placeholder="Search docs…" oninput="renderDocs()" autocomplete="off">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()">Clear</button>
+        <span class="search-kbd" id="searchKbd">/</span>
+      </div>
+    </div>
+
+    <div class="chip-row" id="chipRow"></div>
+  </div>
+
+  <div class="result-meta" id="resultMeta"></div>
+
+  <div class="doc-grid" id="docGrid"></div>
+
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <p id="emptyStateText">No docs match your search.</p>
+  </div>
+
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+<script src="/firebase-config.js"></script>
+<script src="/docs/docs-topbar.js"></script>
+<script>
+/* ============================================================================
+   UI TRANSLATIONS — interface strings for each supported language.
+   Supported: en (English), ru (Russian), ja (Japanese), es (Spanish).
+   The user's language is read from Firestore at user_data/{email}.lang and
+   falls back to "en" if missing, not signed in, or not one of the 4 above.
+============================================================================ */
+const SUPPORTED_LANGS = ["en", "ru", "ja", "es"];
+const DEFAULT_LANG = "en";
+
+const LANG_NAMES = {
+  en: "English",
+  ru: "Русский",
+  ja: "日本語",
+  es: "Español",
+};
+
+const UI_STRINGS = {
+  en: {
+    backToCreate: "Back to Create",
+    heroTitle: "How can we help?",
+    heroSub: "Guides, references, and tools for building on DarkPurpleOF's Website.",
+    searchPlaceholder: "Search docs…",
+    clear: "Clear",
+    all: "All",
+    showingPrefix: "Showing",
+    of: "of",
+    docsWord: "docs",
+    noResults: "No docs match your search.",
+    openDoc: "Open doc",
+    availableIn: "Available in",
+  },
+  ru: {
+    backToCreate: "Назад к созданию",
+    heroTitle: "Чем мы можем помочь?",
+    heroSub: "Руководства, справочники и инструменты для разработки на DarkPurpleOF's Website.",
+    searchPlaceholder: "Поиск в документации…",
+    clear: "Очистить",
+    all: "Все",
+    showingPrefix: "Показано",
+    of: "из",
+    docsWord: "документов",
+    noResults: "По вашему запросу ничего не найдено.",
+    openDoc: "Открыть документ",
+    availableIn: "Доступно на",
+  },
+  ja: {
+    backToCreate: "作成に戻る",
+    heroTitle: "どのようにお手伝いできますか?",
+    heroSub: "DarkPurpleOF's Website で開発するためのガイド、リファレンス、ツール。",
+    searchPlaceholder: "ドキュメントを検索…",
+    clear: "クリア",
+    all: "すべて",
+    showingPrefix: "表示中",
+    of: "/",
+    docsWord: "件のドキュメント",
+    noResults: "該当するドキュメントが見つかりませんでした。",
+    openDoc: "ドキュメントを開く",
+    availableIn: "対応言語",
+  },
+  es: {
+    backToCreate: "Volver a Crear",
+    heroTitle: "¿Cómo podemos ayudarte?",
+    heroSub: "Guías, referencias y herramientas para desarrollar en DarkPurpleOF's Website.",
+    searchPlaceholder: "Buscar documentos…",
+    clear: "Borrar",
+    all: "Todos",
+    showingPrefix: "Mostrando",
+    of: "de",
+    docsWord: "documentos",
+    noResults: "No hay documentos que coincidan con tu búsqueda.",
+    openDoc: "Abrir documento",
+    availableIn: "Disponible en",
+  },
+};
+
+let currentLang = DEFAULT_LANG;
+
+/* ============================================================================
+   DOC ENTRIES — this is the only part you need to touch to add a new doc.
+   Just copy an object below and fill in the fields:
+
+     translations — one entry per language you have content for. Each entry
+                    needs a `title` and `description`. You do NOT need to fill
+                    in all 4 languages — only add the ones you have. The card
+                    will show whichever language matches the viewer (falling
+                    back to English), and will list which languages are
+                    available as small badges on the card.
+     image        — path/URL to a thumbnail (optional — leave "" for an
+                    auto-generated colored placeholder using initials)
+     href         — where the card links to (a page, an anchor, an external URL)
+     date         — post date as "YYYY-MM-DD" (used for sorting + display)
+     tag          — short category label shown as a badge (also powers the
+                    filter chips above the grid — reuse an existing tag to
+                    group docs together, or introduce a new one freely).
+                    Tags are shown as-is and are not translated.
+
+   Cards are sorted newest-first automatically — no need to reorder this list.
+============================================================================ */
+const DOCS = [
+  {
+    translations: {
+      en: {
+        title: "Plugin Developer Docs",
+        description: "Full reference for building plugins: package structure, the manifest, the PluginAPI bridge, signing, and installation.",
+      },
+      ru: {
+        title: "Документация для разработчиков плагинов",
+        description: "Полное руководство по созданию плагинов: структура пакета, манифест, мост PluginAPI, подпись и установка.",
+      },
+      ja: {
+        title: "プラグイン開発者向けドキュメント",
+        description: "プラグイン開発の完全なリファレンス：パッケージ構造、マニフェスト、PluginAPI ブリッジ、署名、インストール方法について。",
+      },
+      es: {
+        title: "Documentación para desarrolladores de plugins",
+        description: "Referencia completa para crear plugins: estructura del paquete, el manifiesto, el puente PluginAPI, la firma y la instalación.",
+      },
+    },
+    image: "/assets/dev/sdk-icon.png",
+    href: "plugins",
+    date: "2026-07-31",
+    tag: "Guide",
+  },
+  {
+    translations: {
+      en: {
+        title: "Sticker Pack Developer Docs",
+        description: "Reference for the .dpfstickers format, sticker requirements, pack creation, and sharing workflows.",
+      },
+      ru: {
+        title: "Документация для разработчиков стикер-паков",
+        description: "Справочник по формату .dpfstickers, требованиям к стикерам, созданию пакетов и распространению.",
+      },
+      ja: {
+        title: "ステッカーパック開発者向けドキュメント",
+        description: ".dpfstickers 形式、ステッカー要件、パック作成、共有ワークフローのリファレンス。",
+      },
+      es: {
+        title: "Documentación para desarrolladores de packs de stickers",
+        description: "Referencia del formato .dpfstickers, requisitos de stickers, creación de packs y flujos de compartición.",
+      },
+    },
+    image: "/assets/dev/sticker-hero.png",
+    href: "stickers",
+    date: "2026-08-04",
+    tag: "Guide",
+  },
+
+  // Copy the block below to add another entry:
+  // {
+  //   translations: {
+  //     en: { title: "Your Doc Title", description: "A short one or two sentence summary." },
+  //     ru: { title: "...", description: "..." },
+  //     ja: { title: "...", description: "..." },
+  //     es: { title: "...", description: "..." },
+  //   },
+  //   image: "thumbnails/your-image.png",
+  //   href: "your-page.html",
+  //   date: "2026-08-05",
+  //   tag: "Guide",
+  // },
+];
+
+/* ============================================================================
+   Rendering — no need to edit below this line.
+============================================================================ */
+const TAG_COLORS = {}; // filled in dynamically, one accent per tag
+const PALETTE = ["#6b21a8", "#2196f3", "#345cfb", "#8b3a3a", "#564059", "#1c86dd"];
+
+function colorForTag(tag) {
+  if (!TAG_COLORS[tag]) {
+    const used = Object.keys(TAG_COLORS).length;
+    TAG_COLORS[tag] = PALETTE[used % PALETTE.length];
+  }
+  return TAG_COLORS[tag];
+}
+
+function formatDate(iso) {
+  const d = new Date(iso + "T00:00:00");
+  if (isNaN(d)) return iso;
+  const localeMap = { en: "en-US", ru: "ru-RU", ja: "ja-JP", es: "es-ES" };
+  return d.toLocaleDateString(localeMap[currentLang] || "en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function initials(title) {
+  return title.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+}
+
+function docText(doc) {
+  return doc.translations[currentLang] || doc.translations[DEFAULT_LANG] || Object.values(doc.translations)[0];
+}
+
+function docAvailableLangs(doc) {
+  return SUPPORTED_LANGS.filter(l => doc.translations[l] && doc.translations[l].title);
+}
+
+let activeTag = "All";
+
+function t(key) {
+  return (UI_STRINGS[currentLang] && UI_STRINGS[currentLang][key]) || UI_STRINGS[DEFAULT_LANG][key];
+}
+
+function applyStaticTranslations() {
+  document.getElementById("backLinkText").textContent = t("backToCreate");
+  document.getElementById("heroTitle").textContent = t("heroTitle");
+  document.getElementById("heroSub").textContent = t("heroSub");
+  document.getElementById("searchInput").placeholder = t("searchPlaceholder");
+  document.getElementById("searchClear").textContent = t("clear");
+  document.getElementById("emptyStateText").textContent = t("noResults");
+}
+
+function buildChips() {
+  const tags = ["All", ...new Set(DOCS.map(d => d.tag).filter(Boolean))];
+  const row = document.getElementById("chipRow");
+  row.innerHTML = "";
+  tags.forEach(tag => {
+    const el = document.createElement("div");
+    el.className = "chip" + (tag === activeTag ? " active" : "");
+    el.textContent = tag === "All" ? t("all") : tag;
+    el.onclick = () => { activeTag = tag; buildChips(); renderDocs(); };
+    row.appendChild(el);
+  });
+}
+
+function renderDocs() {
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  document.getElementById("searchClear").style.display = q ? "block" : "none";
+  document.getElementById("searchKbd").style.display = q ? "none" : "block";
+
+  const filtered = DOCS
+    .filter(d => activeTag === "All" || d.tag === activeTag)
+    .filter(d => {
+      if (!q) return true;
+      const text = docText(d);
+      return text.title.toLowerCase().includes(q) || text.description.toLowerCase().includes(q) || (d.tag || "").toLowerCase().includes(q);
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const grid = document.getElementById("docGrid");
+  const empty = document.getElementById("emptyState");
+  const meta = document.getElementById("resultMeta");
+
+  meta.innerHTML = `${t("showingPrefix")} <strong>${filtered.length}</strong> ${t("of")} <strong>${DOCS.length}</strong> ${t("docsWord")}`;
+
+  if (filtered.length === 0) {
+    grid.style.display = "none";
+    empty.style.display = "block";
+    return;
+  }
+  grid.style.display = "grid";
+  empty.style.display = "none";
+
+  grid.innerHTML = filtered.map(d => {
+    const color = colorForTag(d.tag || "Doc");
+    const text = docText(d);
+    const thumb = d.image
+      ? `<img src="${d.image}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+         <div class="fallback" style="display:none; background: linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 70%, black));">${initials(text.title)}</div>`
+      : `<div class="fallback" style="background: linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 70%, black));">${initials(text.title)}</div>`;
+
+    const availableLangs = docAvailableLangs(d);
+    const langsHtml = availableLangs.length
+      ? `<div class="doc-langs">
+           <span class="lang-label">${t("availableIn")}:</span>
+           ${availableLangs.map(l => `<span class="lang-pill${l === currentLang ? ' current' : ''}">${l.toUpperCase()}</span>`).join("")}
+         </div>`
+      : "";
+
+    return `
+      <a class="doc-card" href="${d.href}">
+        <div class="doc-thumb">${thumb}</div>
+        <div class="doc-card-body">
+          <div class="doc-card-top">
+            <span class="doc-tag" style="background: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">${d.tag || "Doc"}</span>
+            <span class="doc-date">${formatDate(d.date)}</span>
+          </div>
+          <div class="doc-title">${text.title}</div>
+          <div class="doc-desc">${text.description}</div>
+          ${langsHtml}
+          <div class="doc-card-foot">
+            ${t("openDoc")}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </div>
+        </div>
+      </a>`;
+  }).join("");
+}
+
+function clearSearch() {
+  document.getElementById("searchInput").value = "";
+  renderDocs();
+  document.getElementById("searchInput").focus();
+}
+
+// "/" focuses search, like most docs sites
+document.addEventListener("keydown", (e) => {
+  if (e.key === "/" && document.activeElement.id !== "searchInput") {
+    e.preventDefault();
+    document.getElementById("searchInput").focus();
+  }
+  if (e.key === "Escape" && document.activeElement.id === "searchInput") {
+    clearSearch();
+  }
+});
+
+function setLang(lang) {
+  currentLang = SUPPORTED_LANGS.includes(lang) ? lang : DEFAULT_LANG;
+  document.documentElement.lang = currentLang;
+  applyStaticTranslations();
+  buildChips();
+  renderDocs();
+}
+
+const docsTopbar = document.getElementById('docsTopbar');
+if (window.firebase) {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(window.DP_FIREBASE_CONFIG || {});
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    auth.onAuthStateChanged(async user => {
+      if (!user?.email) { docsTopbar?.setUser(null, null); setLang(DEFAULT_LANG); return; }
+      try {
+        const profile = await db.collection('user_data').doc(user.email.toLowerCase()).get();
+        const data = profile.exists ? profile.data() : null;
+        docsTopbar?.setUser(user, data);
+        setLang(data && data.lang ? data.lang : DEFAULT_LANG);
+      } catch (err) {
+        console.warn('Unable to load user profile:', err);
+        docsTopbar?.setUser(user, null);
+        setLang(DEFAULT_LANG);
+      }
+    });
+  } catch (err) {
+    console.warn('Firebase initialization failed:', err);
+    setLang(DEFAULT_LANG);
+  }
+} else {
+  setLang(DEFAULT_LANG);
+}
+
+// Render immediately with the default language so the page isn't blank
+// while Firebase auth resolves; setLang() above re-renders once it's known.
+buildChips();
+renderDocs();
+</script>
+
+</body>
+</html>

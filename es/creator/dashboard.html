@@ -131,6 +131,26 @@
       color: var(--muted);
     }
 
+    .hero-actions{
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .docs-link{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .docs-link::after{
+      content: "↗";
+      font-size: 13px;
+      opacity: .9;
+    }
+
     .profile{
       width: 58px;
       height: 58px;
@@ -1938,6 +1958,9 @@
     <section class="hero" aria-label="Resumen del panel">
       <div class="hero-copy">
         <h1>Panel de creador</h1>
+      </div>
+      <div class="hero-actions">
+        <a href="/docs/" class="button primary docs-link">Abrir documentación</a>
       </div>
     </section>
 
