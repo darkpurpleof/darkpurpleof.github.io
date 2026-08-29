@@ -516,7 +516,7 @@ PluginAPI.getLicenseStatus(<span class="tok-str">'onLicense'</span>);</pre>
       </div>
       <div class="method-card">
         <div class="method-head"><span class="method-sig"><span class="fn">resetApp</span>()</span><span class="method-tag sync">sync</span></div>
-        <div class="method-body"><p data-i18n="api-resetApp">Restarts the host app at its launcher screen. Use sparingly — this affects the whole app, not just your plugin.</p></div>
+        <div class="method-body"><p data-i18n="api-resetApp">Restarts the host app at its launcher screen. Non-system signed plugins now get a confirmation prompt before restarting. Use sparingly — this affects the whole app, not just your plugin.</p></div>
       </div>
 
       <h3 data-i18n="api-h3-state">State &amp; environment</h3>
@@ -560,7 +560,7 @@ PluginAPI.getLicenseStatus(<span class="tok-str">'onLicense'</span>);</pre>
       </div>
       <div class="method-card">
         <div class="method-head"><span class="method-sig"><span class="fn">getUserEmail</span>(callback)</span><span class="method-tag async">async</span></div>
-        <div class="method-body"><p data-i18n="api-getUserEmail">Callback receives the signed-in user's email, or an empty string if signed out.</p></div>
+        <div class="method-body"><p data-i18n="api-getUserEmail">Callback receives the signed-in user's email, or an empty string if signed out. Unsigned plugins show a confirmation prompt before the email is returned.</p></div>
       </div>
       <div class="method-card">
         <div class="method-head"><span class="method-sig"><span class="fn">getUserProfile</span>(callback)</span><span class="method-tag async">async</span></div>
@@ -616,6 +616,10 @@ PluginAPI.getLicenseStatus(<span class="tok-str">'onLicense'</span>);</pre>
         <div class="method-body"><p data-i18n="api-saveFile">Write or read a file in your data directory as Base64. Subfolders in <code>filename</code> are created automatically on save.</p></div>
       </div>
       <div class="method-card">
+        <div class="method-head"><span class="method-sig"><span class="fn">saveFileToGeneral</span>(filename, base64Data, callback)</span><span class="method-tag async">async</span></div>
+        <div class="method-body"><p data-i18n="api-saveFileToGeneral">Privileged: save Base64-encoded bytes into the shared host general directory. Only available to system-signed plugins.</p></div>
+      </div>
+      <div class="method-card">
         <div class="method-head"><span class="method-sig"><span class="fn">listFiles</span>(callback) / <span class="fn">deleteFile</span>(filename, callback)</span><span class="method-tag async">async</span></div>
         <div class="method-body"><p data-i18n="api-listFiles">List <code>{ name, path, size }</code> for every stored file, or delete one by name.</p></div>
       </div>
@@ -632,6 +636,10 @@ PluginAPI.getLicenseStatus(<span class="tok-str">'onLicense'</span>);</pre>
       <div class="method-card">
         <div class="method-head"><span class="method-sig"><span class="fn">showDialog</span>(title, description, confirmJS, confirmText)</span><span class="method-tag sync">sync</span></div>
         <div class="method-body"><p data-i18n="api-showDialog">Shows a native alert dialog. <code>confirmJS</code> (optional) is JS evaluated back into your page if the user taps confirm.</p></div>
+      </div>
+      <div class="method-card">
+        <div class="method-head"><span class="method-sig"><span class="fn">getMaterialYouColors</span>(callback)</span><span class="method-tag async">async</span></div>
+        <div class="method-body"><p data-i18n="api-getMaterialYouColors">Returns the app theme palette as JSON, including primary/secondary/tertiary and surface/error colors.</p></div>
       </div>
       <div class="method-card">
         <div class="method-head"><span class="method-sig"><span class="fn">hideDialog</span>() / <span class="fn">showToast</span>(message)</span><span class="method-tag sync">sync</span></div>
@@ -1220,7 +1228,7 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-reload": "Перезагружает текущую страницу. Оба имени делают одно и то же; <code>reloadFirst</code> существует только для старых плагинов.",
       "api-exit": "Закрывает экран плагина и возвращается к хост-приложению.",
       "api-uninstallMyself": "Запускает поток удаления хоста для этого плагина и закрывает экран по его завершении.",
-      "api-resetApp": "Перезапускает хост-приложение на экране запуска. Используйте экономно — это влияет на всё приложение, а не только на ваш плагин.",
+      "api-resetApp": "Перезапускает хост-приложение на экране запуска. Несистемно подписанные плагины теперь получают запрос подтверждения перед перезапуском. Используйте экономно — это влияет на всё приложение, а не только на ваш плагин.",
       "api-h3-state": "Состояние и окружение",
       "api-getPluginState": "Callback получает <code>{ installed, enabled, version }</code> для любого id плагина, не только вашего.",
       "api-getPluginVersion": "Возвращает строку установленной версии для любого id плагина или <code>null</code>.",
@@ -1232,7 +1240,7 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-getOwnAssets": "Перечисляет относительные пути всех упакованных файлов внутри папки установки вашего плагина.",
       "api-h3-licensing": "Лицензирование и идентичность",
       "api-getLicenseStatus": "Callback получает <code>{ licensed, purchased, isAuthor }</code>. <code>isAuthor</code> равно true, если email вошедшего пользователя совпадает с полем <code>author</code> вашего манифеста.",
-      "api-getUserEmail": "Callback получает email вошедшего пользователя или пустую строку, если пользователь не вошёл.",
+      "api-getUserEmail": "Callback получает email вошедшего пользователя или пустую строку, если пользователь не вошёл. Несистемно подписанные плагины теперь видят диалог подтверждения перед возвратом email.",
       "api-getUserProfile": "Callback получает <code>{ display_name, profile_picture, banner, profile_picture_frame, is_verified }</code> для вошедшего пользователя.",
       "api-reauth": "Открывает лист повторной аутентификации хоста; callback срабатывает с <code>\"true\"</code>, как только пользователь повторно аутентифицируется.",
       "api-readDatabase": "Читает одно поле из облачного профиля вошедшего пользователя. <strong>Ограничено 10 вызовами за скользящее 60-секундное окно</strong> на сессию плагина — дальнейшие вызовы возвращают <code>null</code> до сброса окна.",
@@ -1246,11 +1254,13 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-readInbox": "Читает все ожидающие сообщения, адресованные вам, каждое в виде <code>{ from, message, timestamp }</code>. Передайте <code>true</code>, чтобы поглотить их.",
       "api-storage-p1": "Каждый плагин получает приватный каталог данных. Имена файлов указываются относительно него — вам никогда не нужен и не виден абсолютный путь.",
       "api-saveFile": "Записывает или читает файл в вашем каталоге данных как Base64. Подпапки в <code>filename</code> создаются автоматически при сохранении.",
+      "api-saveFileToGeneral": "Привилегированно: сохраняет Base64-энкодированные байты в общий каталог хоста general. Доступно только для системно подписанных плагинов.",
       "api-listFiles": "Список <code>{ name, path, size }</code> для каждого сохранённого файла или удаление одного по имени.",
       "api-openFile": "Открывает сохранённый файл в обработчике системы по умолчанию через content URI (например, для просмотра сгенерированного вами PDF).",
       "api-getOwnDataSize": "Общий объём использованных байт или очистка всего вашего каталога данных.",
       "api-h3-ui": "Интерфейс",
       "api-showDialog": "Показывает нативный диалог оповещения. <code>confirmJS</code> (необязательно) — это JS, вычисляемый обратно в вашей странице, если пользователь нажимает подтверждение.",
+      "api-getMaterialYouColors": "Возвращает палитру темы приложения в JSON, включая primary/secondary/tertiary и surface/error цвета.",
       "api-hideDialog": "Закрывает текущий диалог или показывает короткий нативный тост.",
       "api-addAction": "Добавляет кнопку в верхнюю панель плагина (до <strong>3</strong> одновременно; имена должны быть уникальны). Нажатие вычисляет <code>jsCode</code> обратно в вашей странице. Опустите <code>imageUrl</code> для текстовой кнопки.",
       "api-openLocal": "Переводит WebView на другую страницу в вашем собственном пакете (см. §03 · Точка входа и экраны).",
@@ -1478,7 +1488,7 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-reload": "現在のページを再読み込みします。両方の名前は同じ動作をします。<code>reloadFirst</code> は古いプラグインのためだけに存在します。",
       "api-exit": "プラグインの画面を閉じ、ホストアプリに戻ります。",
       "api-uninstallMyself": "このプラグインのホストのアンインストールフローを開始し、完了すると画面を閉じます。",
-      "api-resetApp": "ホストアプリをランチャー画面で再起動します。控えめに使用してください — これはあなたのプラグインだけでなくアプリ全体に影響します。",
+      "api-resetApp": "ホストアプリをランチャー画面で再起動します。非サイン済みのプラグインは、再起動前に確認プロンプトを表示します。控えめに使用してください — これはあなたのプラグインだけでなくアプリ全体に影響します。",
       "api-h3-state": "状態と環境",
       "api-getPluginState": "コールバックは、あなた自身のものだけでなく任意のプラグイン id について <code>{ installed, enabled, version }</code> を受け取ります。",
       "api-getPluginVersion": "任意のプラグイン id のインストール済みバージョン文字列、または <code>null</code> を返します。",
@@ -1490,7 +1500,7 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-getOwnAssets": "プラグインのインストールフォルダー内にあるパッケージ済みファイルすべての相対パスを一覧表示します。",
       "api-h3-licensing": "ライセンスと識別情報",
       "api-getLicenseStatus": "コールバックは <code>{ licensed, purchased, isAuthor }</code> を受け取ります。サインイン中のユーザーのメールがマニフェストの <code>author</code> フィールドと一致する場合、<code>isAuthor</code> は true になります。",
-      "api-getUserEmail": "コールバックはサインイン中のユーザーのメール、またはサインアウトしている場合は空文字列を受け取ります。",
+      "api-getUserEmail": "コールバックはサインイン中のユーザーのメール、またはサインアウトしている場合は空文字列を受け取ります。非サイン済みのプラグインは、メールが返される前に確認プロンプトを表示します。",
       "api-getUserProfile": "コールバックはサインイン中のユーザーの <code>{ display_name, profile_picture, banner, profile_picture_frame, is_verified }</code> を受け取ります。",
       "api-reauth": "ホストの再認証シートを開きます。ユーザーが再認証すると、コールバックは <code>\"true\"</code> で発火します。",
       "api-readDatabase": "サインイン中のユーザーのクラウドプロフィールドキュメントから単一のフィールドを読み取ります。プラグインセッションごとに<strong>ローリング60秒ウィンドウあたり10回の呼び出しに制限</strong>されます — ウィンドウがリセットされるまで、それ以上の呼び出しは <code>null</code> を返します。",
@@ -1504,11 +1514,13 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-readInbox": "あなた宛のすべての保留中メッセージを、それぞれ <code>{ from, message, timestamp }</code> の形で読み取ります。<code>true</code> を渡すとそれらを消費します。",
       "api-storage-p1": "すべてのプラグインは専用のプライベートデータディレクトリを取得します。ファイル名はそれに対する相対パスです — 絶対パスを見たり必要としたりすることはありません。",
       "api-saveFile": "データディレクトリ内のファイルを Base64 として書き込みまたは読み取ります。<code>filename</code> 内のサブフォルダーは保存時に自動的に作成されます。",
+      "api-saveFileToGeneral": "特権: Base64 エンコードされたバイトを共有ホスト general ディレクトリに保存します。システム署名済みプラグインのみ利用可能です。",
       "api-listFiles": "保存されているすべてのファイルについて <code>{ name, path, size }</code> を一覧表示するか、名前を指定して1つ削除します。",
       "api-openFile": "コンテンツ URI を介して、保存されたファイルをシステムの既定のハンドラーで開きます（例：生成した PDF をプレビューするため）。",
       "api-getOwnDataSize": "使用されている合計バイト数を返すか、データディレクトリ全体を消去します。",
       "api-h3-ui": "UI",
       "api-showDialog": "ネイティブのアラートダイアログを表示します。<code>confirmJS</code>（任意）は、ユーザーが確認をタップした場合にページに評価される JS です。",
+      "api-getMaterialYouColors": "primary/secondary/tertiary と surface/error の色を含む、アプリのテーマパレットを JSON で返します。",
       "api-hideDialog": "現在のダイアログを閉じるか、短いネイティブのトーストを表示します。",
       "api-addAction": "プラグインの上部バーにボタンを追加します（一度に最大<strong>3個</strong>まで、名前は一意である必要があります）。タップすると <code>jsCode</code> がページに評価されます。テキストボタンにする場合は <code>imageUrl</code> を省略してください。",
       "api-openLocal": "あなた自身のパッケージ内の別のページに WebView を移動します（§03「エントリーポイントと画面」を参照）。",
@@ -1736,7 +1748,7 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-reload": "Lädt die aktuelle Seite neu. Beide Namen tun dasselbe; <code>reloadFirst</code> existiert nur für ältere Plugins.",
       "api-exit": "Schließt den Bildschirm des Plugins und kehrt zur Host-App zurück.",
       "api-uninstallMyself": "Startet den Deinstallationsablauf des Hosts für dieses Plugin und schließt den Bildschirm, sobald er abgeschlossen ist.",
-      "api-resetApp": "Startet die Host-App auf ihrem Startbildschirm neu. Sparsam verwenden — dies betrifft die gesamte App, nicht nur dein Plugin.",
+      "api-resetApp": "Startet die Host-App auf ihrem Startbildschirm neu. Nicht signierte Plugins erhalten vor dem Neustart eine Bestätigungsaufforderung. Sparsam verwenden — dies betrifft die gesamte App, nicht nur dein Plugin.",
       "api-h3-state": "Zustand & Umgebung",
       "api-getPluginState": "Der Callback erhält <code>{ installed, enabled, version }</code> für jede Plugin-id, nicht nur für deine eigene.",
       "api-getPluginVersion": "Gibt den installierten Versionsstring für jede Plugin-id zurück, oder <code>null</code>.",
@@ -1748,7 +1760,7 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-getOwnAssets": "Listet die relativen Pfade aller in deinem Plugin-Installationsordner enthaltenen Paketdateien auf.",
       "api-h3-licensing": "Lizenzierung & Identität",
       "api-getLicenseStatus": "Der Callback erhält <code>{ licensed, purchased, isAuthor }</code>. <code>isAuthor</code> ist true, wenn die E-Mail des angemeldeten Nutzers mit dem Feld <code>author</code> deines Manifests übereinstimmt.",
-      "api-getUserEmail": "Der Callback erhält die E-Mail des angemeldeten Nutzers, oder einen leeren String, wenn abgemeldet.",
+      "api-getUserEmail": "Der Callback erhält die E-Mail des angemeldeten Nutzers, oder einen leeren String, wenn abgemeldet. Nicht signierte Plugins erhalten vor der Rückgabe der E-Mail eine Bestätigungsaufforderung.",
       "api-getUserProfile": "Der Callback erhält <code>{ display_name, profile_picture, banner, profile_picture_frame, is_verified }</code> für den angemeldeten Nutzer.",
       "api-reauth": "Öffnet das Re-Authentifizierungs-Sheet des Hosts; der Callback feuert mit <code>\"true\"</code>, sobald sich der Nutzer erneut authentifiziert hat.",
       "api-readDatabase": "Liest ein einzelnes Feld aus dem Cloud-Profildokument des angemeldeten Nutzers. <strong>Auf 10 Aufrufe pro rollierendem 60-Sekunden-Fenster begrenzt</strong> pro Plugin-Sitzung — weitere Aufrufe geben <code>null</code> zurück, bis das Fenster zurückgesetzt wird.",
@@ -1762,11 +1774,13 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-readInbox": "Liest jede an dich adressierte ausstehende Nachricht, jeweils in der Form <code>{ from, message, timestamp }</code>. Übergib <code>true</code>, um sie zu konsumieren.",
       "api-storage-p1": "Jedes Plugin erhält ein privates Datenverzeichnis. Dateinamen sind relativ dazu — du siehst oder benötigst den absoluten Pfad nie.",
       "api-saveFile": "Schreibt oder liest eine Datei in deinem Datenverzeichnis als Base64. Unterordner in <code>filename</code> werden beim Speichern automatisch erstellt.",
+      "api-saveFileToGeneral": "Privilegiert: speichert Base64-codierte Bytes im gemeinsamen Host-Verzeichnis general. Nur für systemsignierte Plugins verfügbar.",
       "api-listFiles": "Listet <code>{ name, path, size }</code> für jede gespeicherte Datei auf, oder löscht eine anhand ihres Namens.",
       "api-openFile": "Öffnet eine gespeicherte Datei im systemeigenen Standard-Handler über eine Content-URI (z. B. um eine von dir erzeugte PDF-Datei anzuzeigen).",
       "api-getOwnDataSize": "Gesamtzahl der verwendeten Bytes, oder löscht dein gesamtes Datenverzeichnis.",
       "api-h3-ui": "UI",
       "api-showDialog": "Zeigt einen nativen Warndialog an. <code>confirmJS</code> (optional) ist JS, das zurück in deine Seite ausgewertet wird, wenn der Nutzer auf Bestätigen tippt.",
+      "api-getMaterialYouColors": "Gibt die App-Themenpalette als JSON zurück, einschließlich primary/secondary/tertiary und surface/error Farben.",
       "api-hideDialog": "Schließt den aktuellen Dialog oder zeigt einen kurzen nativen Toast an.",
       "api-addAction": "Fügt der oberen Leiste des Plugins eine Schaltfläche hinzu (bis zu <strong>3</strong> gleichzeitig; Namen müssen eindeutig sein). Ein Tippen darauf wertet <code>jsCode</code> zurück in deine Seite aus. Lasse <code>imageUrl</code> weg für eine Textschaltfläche.",
       "api-openLocal": "Navigiert die WebView zu einer anderen Seite in deinem eigenen Paket (siehe §03 · Einstiegspunkt & Bildschirme).",
@@ -1994,7 +2008,7 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-reload": "Recarga la página actual. Ambos nombres hacen lo mismo; <code>reloadFirst</code> existe solo para plugins antiguos.",
       "api-exit": "Cierra la pantalla del plugin y vuelve a la app anfitriona.",
       "api-uninstallMyself": "Inicia el flujo de desinstalación del anfitrión para este plugin y cierra la pantalla cuando termine.",
-      "api-resetApp": "Reinicia la app anfitriona en su pantalla inicial. Úsalo con cuidado: afecta a toda la app, no solo a tu plugin.",
+      "api-resetApp": "Reinicia la app anfitriona en su pantalla inicial. Los plugins no firmados reciben un aviso de confirmación antes de reiniciar. Úsalo con cuidado: afecta a toda la app, no solo a tu plugin.",
       "api-h3-state": "Estado y entorno",
       "api-getPluginState": "El callback recibe <code>{ installed, enabled, version }</code> para cualquier id de plugin, no solo para el tuyo.",
       "api-getPluginVersion": "Devuelve la cadena de versión instalada para cualquier id de plugin, o <code>null</code>.",
@@ -2006,7 +2020,7 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-getOwnAssets": "Enumera las rutas relativas de todos los archivos del paquete incluidos en la carpeta de instalación de tu plugin.",
       "api-h3-licensing": "Licencia e identidad",
       "api-getLicenseStatus": "El callback recibe <code>{ licensed, purchased, isAuthor }</code>. <code>isAuthor</code> es true cuando el correo del usuario conectado coincide con el campo <code>author</code> de tu manifiesto.",
-      "api-getUserEmail": "El callback recibe el correo del usuario conectado, o una cadena vacía si no ha iniciado sesión.",
+      "api-getUserEmail": "El callback recibe el correo del usuario conectado, o una cadena vacía si no ha iniciado sesión. Los plugins no firmados ven un aviso de confirmación antes de que se devuelva el correo.",
       "api-getUserProfile": "El callback recibe <code>{ display_name, profile_picture, banner, profile_picture_frame, is_verified }</code> para el usuario conectado.",
       "api-reauth": "Abre la hoja de reautenticación del anfitrión; el callback se dispara con <code>\"true\"</code> en cuanto el usuario se vuelve a autenticar.",
       "api-readDatabase": "Lee un solo campo del documento de perfil en la nube del usuario conectado. <strong>Limitado a 10 llamadas por ventana móvil de 60 segundos</strong> por sesión de plugin; las llamadas extra devuelven <code>null</code> hasta que la ventana se reinicia.",
@@ -2020,11 +2034,13 @@ base64 -w0 signature.bin > signature.b64</pre></div>
       "api-readInbox": "Lee cualquier mensaje pendiente dirigido a ti, cada uno con la forma <code>{ from, message, timestamp }</code>. Pasa <code>true</code> para consumirlos.",
       "api-storage-p1": "Cada plugin obtiene un directorio de datos privado. Los nombres de archivo son relativos a él; nunca ves ni necesitas la ruta absoluta.",
       "api-saveFile": "Escribe o lee un archivo en tu directorio de datos como Base64. Las subcarpetas dentro de <code>filename</code> se crean automáticamente al guardar.",
+      "api-saveFileToGeneral": "Privilegiado: guarda bytes codificados en Base64 en el directorio general compartido del host. Solo está disponible para plugins firmados por el sistema.",
       "api-listFiles": "Enumera <code>{ name, path, size }</code> para cada archivo guardado, o elimina uno por su nombre.",
       "api-openFile": "Abre un archivo guardado en el manejador predeterminado del sistema mediante una content-URI (por ejemplo, para mostrar un PDF que generaste).",
       "api-getOwnDataSize": "Cantidad total de bytes usados, o borra por completo tu directorio de datos.",
       "api-h3-ui": "IU",
       "api-showDialog": "Muestra un diálogo nativo de advertencia. <code>confirmJS</code> (opcional) es JS que se evalúa de vuelta en tu página cuando el usuario pulsa Confirmar.",
+      "api-getMaterialYouColors": "Devuelve la paleta de tema de la app en JSON, incluyendo colores primary/secondary/tertiary y surface/error.",
       "api-hideDialog": "Cierra el diálogo actual o muestra un toast nativo breve.",
       "api-addAction": "Añade un botón a la barra superior del plugin (hasta <strong>3</strong> a la vez; los nombres deben ser únicos). Al tocarlo, se evalúa <code>jsCode</code> de vuelta en tu página. Omite <code>imageUrl</code> para un botón de texto.",
       "api-openLocal": "Navega la WebView a otra página dentro de tu propio paquete (ver §03 · Punto de entrada y pantallas).",
