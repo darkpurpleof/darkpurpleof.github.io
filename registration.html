@@ -10,9 +10,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-  <!-- reCAPTCHA -->
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
+  <!-- hCaptcha -->
+  <script src="https://js.hcaptcha.com/1/api.js?render=explicit" async defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
@@ -40,9 +39,14 @@
     *{ box-sizing:border-box; }
 
     html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background-color: var(--bg); color:var(--text); transition: background .25s, color .25s; }
-    body { display:flex; flex-direction:column; min-height:100vh; }
+    body {
+      display:flex; flex-direction:column; min-height:100vh;
+      background-image:
+        radial-gradient(circle at 12% -10%, rgba(107,33,168,0.16), transparent 45%),
+        radial-gradient(circle at 100% 0%, rgba(91,33,182,0.10), transparent 40%);
+      background-attachment: fixed;
+    }
 
-    /* dp-topbar */
     dp-topbar { display:block; position:sticky; top:0; z-index:100; }
 
     main.wrapper {
@@ -54,14 +58,49 @@
     }
 
     .card {
+      position:relative;
       background: linear-gradient(180deg, var(--card), var(--card) 60%, var(--card-2));
-      border-radius:18px;
-      padding:36px;
+      border-radius:24px;
+      padding:0;
       border:1px solid var(--border);
       color:var(--text);
-      box-shadow:0 20px 50px rgba(2,6,23,0.5), 0 2px 0 rgba(255,255,255,0.02) inset;
+      box-shadow:0 25px 60px rgba(2,6,23,0.55), 0 2px 0 rgba(255,255,255,0.03) inset;
       max-width:440px;
       width:100%;
+      overflow:hidden;
+      animation: cardIn .4s ease both;
+    }
+    @keyframes cardIn {
+      from { opacity:0; transform: translateY(10px) scale(.99); }
+      to   { opacity:1; transform: translateY(0) scale(1); }
+    }
+    /* thin accent rule along the very top of the card */
+    .card::before {
+      content:"";
+      position:absolute; top:0; left:0; right:0; height:3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-strong), var(--accent));
+    }
+
+    .card-inner { padding:30px 32px 28px; }
+
+    /* ---------- Progress ---------- */
+    .step-progress { display:flex; align-items:center; gap:8px; padding:20px 32px 0; }
+    .step-progress .seg { flex:1; height:4px; border-radius:99px; background: var(--border); overflow:hidden; }
+    .step-progress .seg .fill { height:100%; width:0%; background: linear-gradient(90deg, var(--accent), var(--accent-strong)); transition: width .3s ease; }
+    .step-progress .seg.done .fill { width:100%; }
+    .step-progress .seg.active .fill { width:100%; }
+    .step-progress .step-count { font-size:11.5px; font-weight:700; color:var(--muted); white-space:nowrap; letter-spacing:0.02em; }
+
+    /* ---------- Avatar preview ---------- */
+    .avatar-row { display:flex; justify-content:center; margin: 4px 0 18px; }
+    .avatar-preview {
+      width:76px; height:76px; border-radius:50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-size:27px; font-weight:800;
+      box-shadow: 0 0 0 4px var(--accent-soft), 0 12px 28px rgba(107,33,168,0.35);
+      user-select:none;
+      transition: box-shadow .2s ease;
     }
 
     .badge {
@@ -77,18 +116,22 @@
       border:1px solid rgba(107,33,168,0.25);
       padding:5px 10px;
       border-radius:999px;
-      margin-bottom:16px;
+      margin-bottom:14px;
     }
 
-    h1 { margin:0 0 6px 0; font-size:24px; font-weight:800; letter-spacing:-0.01em; }
-    p.lead { margin:0 0 28px 0; color:var(--muted); font-size:14px; line-height:1.5; }
+    h1 { margin:0 0 6px 0; font-size:23px; font-weight:800; letter-spacing:-0.01em; text-align:center; }
+    p.lead { margin:0 0 24px 0; color:var(--muted); font-size:13.5px; line-height:1.5; text-align:center; }
 
-    form { display:flex; flex-direction:column; gap:18px; }
+    .step { display:none; flex-direction:column; gap:16px; }
+    .step.active { display:flex; animation: stepIn .28s ease both; }
+    @keyframes stepIn {
+      from { opacity:0; transform: translateX(6px); }
+      to   { opacity:1; transform: translateX(0); }
+    }
 
     .field { display:flex; flex-direction:column; gap:7px; }
     label { font-size:13px; font-weight:600; color:var(--muted); }
 
-    /* username + fixed domain suffix combo */
     .username-combo {
       display:flex;
       align-items:stretch;
@@ -117,7 +160,7 @@
       display:flex;
       align-items:center;
       padding:0 12px;
-      font-size:13px;
+      font-size:12.5px;
       color:var(--muted);
       background:rgba(255,255,255,0.03);
       border-left:1px solid var(--border);
@@ -136,113 +179,107 @@
       font-size:14px;
       outline:none;
       transition: border-color .15s, box-shadow .15s;
+      font-family:inherit;
     }
     body.light .input { background:rgba(0,0,0,0.02); }
     .input:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 3px var(--accent-soft);
     }
+    /* native date input icon tint on dark bg */
+    input[type="date"].input::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor:pointer; }
 
     .hint { font-size:12px; color:var(--muted); }
 
-    .recaptcha-wrap {
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      padding-top:4px;
+    .captcha-note {
+      display:flex; align-items:center; gap:8px;
+      font-size:12px; color:var(--muted);
+      padding:8px 2px 0;
     }
-    .recaptcha-wrap .label-row { font-size:13px; color:var(--muted); font-weight:600; }
+    .captcha-note svg { flex:0 0 14px; width:14px; height:14px; color:var(--accent); }
 
-    .register-button {
+    .step-actions { display:flex; gap:10px; padding-top:4px; }
+    .step-actions.single { justify-content:flex-end; }
+
+    .btn {
+      border:none; border-radius:10px; font-weight:700; font-size:14.5px; cursor:pointer;
+      padding:13px; transition: transform .12s ease, filter .15s ease, box-shadow .15s ease;
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .btn.primary {
+      flex:1;
       background: linear-gradient(135deg, var(--accent), var(--accent-strong));
       color:#fff;
-      border:none;
-      padding:13px;
-      border-radius:10px;
-      font-weight:700;
-      font-size:15px;
-      cursor:pointer;
-      transition: transform .12s ease, filter .15s ease;
       box-shadow: 0 8px 20px rgba(107,33,168,0.35);
     }
-    .register-button:hover { filter:brightness(1.08); transform:translateY(-1px); }
-    .register-button:active { transform:translateY(0); }
+    .btn.primary:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    .btn.primary:active { transform:translateY(0); }
+    .btn.primary:disabled { opacity:0.55; cursor:not-allowed; transform:none; filter:none; }
+    .btn.ghost {
+      flex:0 0 auto;
+      background:transparent;
+      color:var(--muted);
+      border:1px solid var(--border);
+    }
+    .btn.ghost:hover { color:var(--text); border-color: var(--muted); }
 
-    .small-note { font-size:12.5px; color:var(--muted); line-height:1.5; }
+    .spinner {
+      width:14px; height:14px; border-radius:50%;
+      border:2px solid rgba(255,255,255,0.4); border-top-color:#fff;
+      animation: spin .7s linear infinite;
+      display:none;
+    }
+    .btn.loading .spinner { display:inline-block; }
+    .btn.loading .btn-label { opacity:0.85; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .small-note { font-size:12.5px; color:var(--muted); line-height:1.5; text-align:center; margin-top:16px; }
     .small-note a { color:var(--accent); text-decoration:none; font-weight:600; }
     .small-note a:hover { text-decoration:underline; }
 
-    .divider {
-      height:1px;
-      background:var(--border);
-      margin:6px 0 2px;
-      border:none;
-    }
+    .divider { height:1px; background:var(--border); margin:18px 0 0; border:none; }
 
-    .footer-row {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .login-link {
-      font-size:13.5px;
-      color:var(--muted);
-    }
+    .login-link { font-size:13.5px; color:var(--muted); text-align:center; margin-top:14px; }
     .login-link a { color:var(--accent); text-decoration:none; font-weight:700; }
     .login-link a:hover { text-decoration:underline; }
 
-    /* toast (matches /home) */
     #toast {
-      position: fixed;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-weight: 700;
-      display: none;
-      z-index: 99999;
-      color: #fff;
-      box-sizing: border-box;
+      position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+      padding: 10px 14px; border-radius: 10px; font-weight: 700;
+      display: none; z-index: 99999; color: #fff; box-sizing: border-box;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.25);
     }
     #toast.purple { background: var(--accent-strong); color:#fff; }
     #toast.yellow { background: #e6b800; color:#222; }
     #toast.red { background: #c00; color:#fff; }
 
-    .muted { color:var(--muted); }
-
-    /* Inline error banner */
     .error-banner {
-      display:none;
-      align-items:flex-start;
-      gap:10px;
-      padding:12px 14px;
-      border-radius:10px;
-      background: rgba(185,28,28,0.1);
-      border:1px solid rgba(185,28,28,0.25);
-      font-size:13px;
-      color:#ef4444;
-      line-height:1.5;
-      animation: banner-in .18s ease-out;
+      display:none; align-items:flex-start; gap:10px;
+      padding:12px 14px; border-radius:10px;
+      background: rgba(185,28,28,0.1); border:1px solid rgba(185,28,28,0.25);
+      font-size:13px; color:#ef4444; line-height:1.5;
     }
     body.light .error-banner { background:rgba(185,28,28,0.07); }
-    .error-banner.visible { display:flex; }
+    .error-banner.visible { display:flex; animation: shake .3s ease; }
     .error-banner svg { flex:0 0 16px; width:16px; height:16px; margin-top:1px; }
-    @keyframes banner-in {
-      from { opacity:0; transform:translateY(-4px); }
-      to   { opacity:1; transform:translateY(0); }
+    @keyframes shake {
+      10%, 90% { transform: translateX(-1px); }
+      20%, 80% { transform: translateX(2px); }
+      30%, 50%, 70% { transform: translateX(-3px); }
+      40%, 60% { transform: translateX(3px); }
     }
 
     @media (max-width:600px){
       main.wrapper { padding:20px 14px; }
-      .card { padding:24px 20px; }
+      .card-inner { padding:24px 20px 22px; }
+      .step-progress { padding:16px 20px 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card, .step.active, .error-banner.visible, .spinner { animation: none; }
     }
   </style>
 
-  <!-- dp-topbar -->
   <script type="module" src="/dp-topbar.js"></script>
 </head>
 <body>
@@ -250,54 +287,103 @@
 
   <main class="wrapper" role="main" aria-label="Register area">
     <div class="card" role="region" aria-label="Register form">
-      <span class="badge">Create account</span>
-      <h1>Join the platform</h1>
-      <p class="lead">Pick a username below — admin and reserved addresses can't be registered here.</p>
 
-      <form id="registerForm" autocomplete="on" novalidate>
-        <div class="field">
-          <label for="username">Username</label>
-          <div class="username-combo">
-            <input id="username" type="text" placeholder="yourname" required autocomplete="username" inputmode="email" spellcheck="false">
-            <span class="domain-suffix">@users.darkpurpleof.github.io</span>
+      <div class="step-progress">
+        <div class="seg active" id="segStep1"><div class="fill"></div></div>
+        <div class="seg" id="segStep2"><div class="fill"></div></div>
+        <span class="step-count" id="stepCount">1 / 2</span>
+      </div>
+
+      <div class="card-inner">
+        <div class="avatar-row">
+          <div class="avatar-preview" id="avatarPreview">?</div>
+        </div>
+
+        <form id="registerForm" autocomplete="on" novalidate>
+
+          <!-- ---------- Step 1: About you ---------- -->
+          <div class="step active" id="step1">
+            <span class="badge" style="align-self:center;">Step 1 of 2</span>
+            <h1>Tell us about you</h1>
+            <p class="lead">This is how people will see you — you can change it later.</p>
+
+            <div class="field">
+              <label for="displayName">Display name</label>
+              <input id="displayName" class="input" type="text" placeholder="e.g. Alex Rivera" maxlength="50" required autocomplete="name">
+              <span class="hint">Shown on your profile and in tickets.</span>
+            </div>
+
+            <div class="field">
+              <label for="birthDate">Birthday</label>
+              <input id="birthDate" class="input" type="date" required autocomplete="bday">
+            </div>
+
+            <div class="field">
+              <label for="recoveryEmail">Recovery email</label>
+              <input id="recoveryEmail" class="input" type="email" placeholder="you@example.com" required autocomplete="email">
+              <span class="hint">Used to recover your account — never shown publicly.</span>
+            </div>
+
+            <div class="error-banner" id="errorBanner1" role="alert" aria-live="assertive">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4M12 15.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span id="errorBannerText1"></span>
+            </div>
+
+            <div class="step-actions single">
+              <button type="button" class="btn primary" id="toStep2Btn"><span class="btn-label">Continue</span></button>
+            </div>
           </div>
-          <span class="hint">Letters, numbers, dots and underscores only.</span>
-        </div>
 
-        <div class="field">
-          <label for="password">Password</label>
-          <input id="password" class="input" type="password" placeholder="Choose a strong password" required autocomplete="new-password">
-        </div>
+          <!-- ---------- Step 2: Secure the account ---------- -->
+          <div class="step" id="step2">
+            <span class="badge" style="align-self:center;">Step 2 of 2</span>
+            <h1>Secure your account</h1>
+            <p class="lead">Pick a username below — admin and reserved addresses can't be registered here.</p>
 
-        <div class="recaptcha-wrap">
-          <div class="label-row">Verify you're human</div>
-          <div class="g-recaptcha" data-sitekey="6Lddwd8qAAAAAC0OUZ7iOrKFGEeu--_-1XvjU0et"></div>
-        </div>
+            <div class="field">
+              <label for="username">Username</label>
+              <div class="username-combo">
+                <input id="username" type="text" placeholder="yourname" required autocomplete="username" inputmode="email" spellcheck="false">
+                <span class="domain-suffix">@users.darkpurpleof.github.io</span>
+              </div>
+              <span class="hint">Letters, numbers, dots and underscores only.</span>
+            </div>
 
-        <div class="error-banner" id="errorBanner" role="alert" aria-live="assertive">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4M12 15.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          <span id="errorBannerText"></span>
-        </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input id="password" class="input" type="password" placeholder="Choose a strong password" required autocomplete="new-password">
+            </div>
 
-        <button type="submit" class="register-button">Register</button>
+            <div id="signupCaptcha"></div>
+            <div class="captcha-note">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 10-4-1.6-7-5.5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>Protected by hCaptcha — you won't see a challenge unless something looks off.</span>
+            </div>
 
-        <hr class="divider">
+            <div class="error-banner" id="errorBanner2" role="alert" aria-live="assertive">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4M12 15.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span id="errorBannerText2"></span>
+            </div>
 
-        <div class="footer-row">
-          <div class="small-note">
-            By registering you agree to our <a href="/terms.md">Terms of Service</a>.
+            <div class="step-actions">
+              <button type="button" class="btn ghost" id="backToStep1Btn">Back</button>
+              <button type="submit" class="btn primary" id="submitBtn">
+                <span class="spinner"></span><span class="btn-label">Create account</span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div class="login-link">Already have an account? <a href="/login.html">Log in</a></div>
-      </form>
+          <hr class="divider">
+          <div class="small-note">By registering you agree to our <a href="/terms.md">Terms of Service</a>.</div>
+          <div class="login-link">Already have an account? <a href="/login.html">Log in</a></div>
+        </form>
+      </div>
     </div>
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    // ensure firebase compat is initialized
     const firebaseConfig = {
       apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
       authDomain: "darkpurpleof-s-website.firebaseapp.com",
@@ -314,56 +400,69 @@
     const ALLOWED_DOMAIN = "@users.darkpurpleof.github.io";
     const ADMIN_DOMAIN   = "@darkpurpleof.github.io";
     const USERNAME_REGEX = /^[a-zA-Z0-9._]{3,30}$/;
+    const SUPPORTED_LANGS = ["es", "en", "ru", "ja", "de"];
+    const HCAPTCHA_SITEKEY = "2712615e-1a18-4aae-a516-05160402d4ac";
 
-    // Get ?returnto= param safely
-    function getReturnToUrl() {
-      const params = new URLSearchParams(window.location.search);
-      const returnTo = params.get("returnto");
+    // ---------- Step navigation ----------
+    const step1 = document.getElementById("step1");
+    const step2 = document.getElementById("step2");
+    const segStep1 = document.getElementById("segStep1");
+    const segStep2 = document.getElementById("segStep2");
+    const stepCount = document.getElementById("stepCount");
 
-      if (!returnTo) return "/";
-
-      try {
-        const url = new URL(returnTo, window.location.origin);
-
-        // Optional safety: only allow same-origin redirects
-        if (url.origin === window.location.origin) {
-          return url.pathname + url.search + url.hash;
-        }
-
-        return "/";
-      } catch {
-        return "/";
-      }
+    function goToStep2() {
+      if (!validateStep1()) return;
+      step1.classList.remove("active");
+      step2.classList.add("active");
+      segStep1.classList.add("done");
+      segStep2.classList.add("active");
+      stepCount.textContent = "2 / 2";
     }
+    function goToStep1() {
+      step2.classList.remove("active");
+      step1.classList.add("active");
+      segStep2.classList.remove("active");
+      segStep1.classList.remove("done");
+      stepCount.textContent = "1 / 2";
+    }
+    document.getElementById("toStep2Btn").addEventListener("click", goToStep2);
+    document.getElementById("backToStep1Btn").addEventListener("click", goToStep1);
 
-    // Toast helper (consistent with /home)
+    // ---------- Avatar preview ----------
+    const avatarPreview = document.getElementById("avatarPreview");
+    document.getElementById("displayName").addEventListener("input", (e) => {
+      const v = (e.target.value || "").trim();
+      avatarPreview.textContent = v ? v[0].toUpperCase() : "?";
+    });
+
+    // ---------- Toast / error helpers ----------
     function showToast(message, color = "purple", duration = 3500) {
       const toast = document.getElementById("toast");
       toast.textContent = message;
-      toast.className = color + " show";
+      toast.className = color;
       toast.style.display = "block";
-      setTimeout(() => {
-        toast.className = color + " hide";
-        setTimeout(() => {
-          toast.style.display = "none";
-          toast.className = "";
-        }, 400);
-      }, duration);
+      setTimeout(() => { toast.style.display = "none"; toast.className = ""; }, duration);
     }
-
-    // Inline error banner helpers
-    function showError(msg) {
-      const banner = document.getElementById("errorBanner");
-      document.getElementById("errorBannerText").textContent = msg;
+    function showError(step, msg) {
+      const banner = document.getElementById("errorBanner" + step);
+      document.getElementById("errorBannerText" + step).textContent = msg;
+      banner.classList.remove("visible");
+      // restart the shake animation even if already visible
+      void banner.offsetWidth;
       banner.classList.add("visible");
       banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
-    function clearError() {
-      const banner = document.getElementById("errorBanner");
-      banner.classList.remove("visible");
+    function clearError(step) {
+      document.getElementById("errorBanner" + step).classList.remove("visible");
     }
 
-    // Friendly Firebase error map
+    function setSubmitLoading(loading) {
+      const submitBtn = document.getElementById("submitBtn");
+      submitBtn.disabled = loading;
+      submitBtn.classList.toggle("loading", loading);
+      submitBtn.querySelector(".btn-label").textContent = loading ? "Creating account..." : "Create account";
+    }
+
     function friendlyAuthError(err) {
       const code = (err && err.code) || "";
       const map = {
@@ -378,39 +477,115 @@
       return map[code] || "Registration failed. Please try again or contact support if this persists.";
     }
 
-    // Check if a username is taken on either domain
+    // ---------- hCaptcha (invisible) ----------
+    let signupCaptchaWidget = null;
+    let hcaptchaReady = false;
+
+    function initSignupCaptcha() {
+      if (typeof hcaptcha === "undefined") { console.warn("hCaptcha API has not loaded yet."); return; }
+      if (signupCaptchaWidget !== null) return; // already rendered
+
+      signupCaptchaWidget = hcaptcha.render("signupCaptcha", {
+        sitekey: HCAPTCHA_SITEKEY,
+        size: "invisible",
+        callback: (token) => {
+          completeRegistration(token);
+        },
+        "error-callback": () => {
+          console.error("hCaptcha error");
+          setSubmitLoading(false);
+          showError(2, "hCaptcha failed. Please try again.");
+        },
+        "expired-callback": () => {
+          console.warn("hCaptcha token expired");
+          setSubmitLoading(false);
+          showError(2, "Verification expired. Please try again.");
+        }
+      });
+      hcaptchaReady = true;
+    }
+
+    // Load hCaptcha as soon as its script is ready, whether that happens
+    // before or after this script runs.
+    (function waitForHcaptcha() {
+      if (typeof hcaptcha !== "undefined") { initSignupCaptcha(); return; }
+      const poll = setInterval(() => {
+        if (typeof hcaptcha !== "undefined") {
+          clearInterval(poll);
+          initSignupCaptcha();
+        }
+      }, 100);
+    })();
+
+    // ---------- Step 1 validation ----------
+    function validateStep1() {
+      clearError(1);
+      const name = (document.getElementById("displayName").value || "").trim();
+      const birth = document.getElementById("birthDate").value;
+      const recovery = (document.getElementById("recoveryEmail").value || "").trim();
+
+      if (!name) { showError(1, "Enter a display name."); return false; }
+      if (!birth) { showError(1, "Enter your birthday."); return false; }
+      if (!recovery || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recovery)) {
+        showError(1, "Enter a valid recovery email."); return false;
+      }
+      return true;
+    }
+
+    // birthDate input value is YYYY-MM-DD -> stored as DD/MM/YYYY
+    function formatBirthDate(isoDate) {
+      const [y, m, d] = isoDate.split("-");
+      return `${d}/${m}/${y}`;
+    }
+
+    // joined_on format: YYYY-DD-MM HH:mm:ss (as specified)
+    function formatJoinedOn(date) {
+      const pad = (n) => String(n).padStart(2, "0");
+      const y = date.getFullYear();
+      const mo = pad(date.getMonth() + 1);
+      const d = pad(date.getDate());
+      const h = pad(date.getHours());
+      const mi = pad(date.getMinutes());
+      const s = pad(date.getSeconds());
+      return `${y}-${d}-${mo} ${h}:${mi}:${s}`;
+    }
+
+    function detectLang() {
+      const raw = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+      const code = raw.split("-")[0];
+      return SUPPORTED_LANGS.includes(code) ? code : "en";
+    }
+
     async function checkUsernameAvailability(username) {
-      const emails = [
-        username + ALLOWED_DOMAIN,
-        username + ADMIN_DOMAIN
-      ];
+      const emails = [username + ALLOWED_DOMAIN, username + ADMIN_DOMAIN];
       const results = await Promise.all(
         emails.map(e => auth.fetchSignInMethodsForEmail(e).catch(() => []))
       );
-      // If either email has sign-in methods registered, it's taken
       return results.every(methods => methods.length === 0);
     }
 
-    // onAuthStateChanged: if already signed in redirect (and check bans)
+    function getReturnToUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get("returnto");
+      if (!returnTo) return "/";
+      try {
+        const url = new URL(returnTo, window.location.origin);
+        if (url.origin === window.location.origin) return url.pathname + url.search + url.hash;
+        return "/";
+      } catch { return "/"; }
+    }
+
     auth.onAuthStateChanged(async (user) => {
       if (!user) return;
-
       const email = user.email || "";
       try {
         const bannedSnap = await db.collection("banned_users").doc(email).get();
-        if (bannedSnap.exists) {
-          window.location.href = "/not-approved";
-          return;
-        }
+        if (bannedSnap.exists) { window.location.href = "/not-approved"; return; }
       } catch (e) {
         console.warn("Failed banned check on auth state:", e);
       }
-
-      // If already logged in and not banned:
-      // Do nothing. No redirect.
     });
 
-    // fetch IP info (ipinfo). If you have a token, append ?token=...
     async function fetchUserIpInfo() {
       try {
         const r = await fetch("https://ipinfo.io/json");
@@ -431,83 +606,135 @@
         return (emailDoc.exists || ipDoc.exists);
       } catch (e) {
         console.warn("checkBans error", e);
-        return false; // fail open-ish (we also notify)
+        return false;
       }
     }
 
     const bannedRegions = ["United Kingdom","Australia","Turkiye","Turkey","Argentina","Brazil","China"];
 
-    document.getElementById("registerForm").addEventListener("submit", async (ev) => {
+    // Holds the values collected at submit time, used once the invisible
+    // hCaptcha challenge resolves and calls back with a token.
+    let pendingSignup = null;
+
+    document.getElementById("registerForm").addEventListener("submit", (ev) => {
       ev.preventDefault();
-      clearError();
+      clearError(2);
+
+      // Step 1 fields (re-validated in case of back/forward edits)
+      if (!validateStep1()) { goToStep1(); return; }
+      const displayName = (document.getElementById("displayName").value || "").trim();
+      const birthDateIso = document.getElementById("birthDate").value;
+      const recoveryEmail = (document.getElementById("recoveryEmail").value || "").trim();
+
       const rawUsername = (document.getElementById("username").value || "").trim();
       const password = document.getElementById("password").value || "";
 
-      if (!rawUsername || !password) { showError("Username and password are required."); return; }
+      if (!rawUsername || !password) { showError(2, "Username and password are required."); return; }
 
-      // strip the domain if the user pasted a full address, then validate the local part
       const username = rawUsername.split("@")[0].toLowerCase();
-
       if (!USERNAME_REGEX.test(username)) {
-        showError("Username must be 3–30 characters and contain only letters, numbers, dots, or underscores.");
+        showError(2, "Username must be 3–30 characters and contain only letters, numbers, dots, or underscores.");
         return;
       }
 
+      if (signupCaptchaWidget === null) {
+        showError(2, "hCaptcha is unavailable. Please refresh and try again.");
+        return;
+      }
+
+      pendingSignup = { displayName, birthDateIso, recoveryEmail, username, password };
+      setSubmitLoading(true);
+      hcaptcha.execute(signupCaptchaWidget);
+    });
+
+    // Runs once the invisible hCaptcha widget has produced a token.
+    async function completeRegistration(captchaToken) {
+      if (!pendingSignup) { setSubmitLoading(false); return; }
+      const { displayName, birthDateIso, recoveryEmail, username, password } = pendingSignup;
       const email = username + ALLOWED_DOMAIN;
 
-      // reCAPTCHA
-      try {
-        const token = (typeof grecaptcha !== "undefined") ? grecaptcha.getResponse() : "";
-        if (!token) { showError("Please complete the reCAPTCHA before registering."); return; }
-      } catch (e) {
-        showError("reCAPTCHA is unavailable. Please refresh and try again.");
+      const ipInfo = await fetchUserIpInfo();
+      if (!ipInfo) {
+        showError(2, "Could not verify your network. Please try again.");
+        setSubmitLoading(false);
+        resetCaptcha();
         return;
       }
 
-      showToast("Checking registration details...", "purple", 2500);
-
-      // IP & region checks
-      const ipInfo = await fetchUserIpInfo();
-      if (!ipInfo) { showError("Could not verify your network. Please try again."); return; }
-
       if (bannedRegions.includes(ipInfo.region)) {
-        showError("Registration from your region is not currently available."); return;
+        showError(2, "Registration from your region is not currently available.");
+        setSubmitLoading(false);
+        resetCaptcha();
+        return;
       }
-
       if (ipInfo.privacy && ipInfo.privacy.vpn) {
-        showError("VPN detected. Please disable your VPN and try again."); return;
+        showError(2, "VPN detected. Please disable your VPN and try again.");
+        setSubmitLoading(false);
+        resetCaptcha();
+        return;
       }
 
-      // check email/ip bans
       const isBanned = await checkBans(email, ipInfo.ip);
-      if (isBanned) { showError("Your account or network has been restricted."); return; }
+      if (isBanned) {
+        showError(2, "Your account or network has been restricted.");
+        setSubmitLoading(false);
+        resetCaptcha();
+        return;
+      }
 
-      // Check username availability on both domains
       showToast("Checking username availability...", "purple", 2000);
       let available;
       try {
         available = await checkUsernameAvailability(username);
       } catch (e) {
-        showError("Could not verify username availability. Please try again.");
+        showError(2, "Could not verify username availability. Please try again.");
+        setSubmitLoading(false);
+        resetCaptcha();
         return;
       }
       if (!available) {
-        showError("That username is already taken. Please choose a different one.");
+        showError(2, "That username is already taken. Please choose a different one.");
+        setSubmitLoading(false);
+        resetCaptcha();
         return;
       }
 
-      // attempt create user
       try {
-        await auth.createUserWithEmailAndPassword(email, password);
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+
+        const countryCode = ipInfo.country || "";
+
+        await db.collection("user_data").doc(email).set({
+          "display name": displayName,
+          birth_date: formatBirthDate(birthDateIso),
+          "recovery-email": recoveryEmail,
+          region: countryCode,
+          locked_region: countryCode,
+          roles: ["Member"],
+          joined_on: formatJoinedOn(new Date()),
+          lang: detectLang()
+        });
+
         showToast("Registration successful — redirecting...", "purple", 1800);
         const redirectUrl = getReturnToUrl();
         setTimeout(() => { window.location.href = redirectUrl; }, 1400);
       } catch (err) {
         console.warn("registration failed", err);
-        showError(friendlyAuthError(err));
-        if (typeof grecaptcha !== "undefined") grecaptcha.reset();
+        showError(2, friendlyAuthError(err));
+        setSubmitLoading(false);
+        resetCaptcha();
+      } finally {
+        pendingSignup = null;
       }
-    });
+    }
+
+    function resetCaptcha() {
+      try {
+        if (signupCaptchaWidget !== null) hcaptcha.reset(signupCaptchaWidget);
+      } catch (e) {
+        console.warn("Failed to reset hCaptcha:", e);
+      }
+    }
   </script>
 </body>
 </html>

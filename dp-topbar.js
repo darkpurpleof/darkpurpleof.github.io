@@ -849,7 +849,7 @@ template.innerHTML = `
             <span class="migrate-badge">!</span>
           </a>
           <a id="connections-link" href="/connections">Connections</a>
-          <a id="support-link" href="/support-feedback" class="disabled">Support (Coming Soon)</a>
+          <a id="support-link" href="/support">Support</a>
           <a id="manage-blocked" href="/manageblockedusers">Manage Blocked Users</a>
           <a id="beta-link" href="/creator/beta-features">Beta Program</a>
           <div id="profile-separator" class="separator" style="display:none;"></div>
@@ -897,7 +897,7 @@ const LOCALE_STRINGS = {
     settings: 'Settings',
     migrateAccount: 'Migrate Account',
     connections: 'Connections',
-    support: 'Support (Coming Soon)',
+    support: 'Support',
     manageBlocked: 'Manage Blocked Users',
     beta: 'Beta Program',
     editProfile: 'Edit Profile',
@@ -940,7 +940,7 @@ const LOCALE_STRINGS = {
     settings: 'Ajustes',
     migrateAccount: 'Migrar cuenta',
     connections: 'Conexiones',
-    support: 'Soporte (Próximamente)',
+    support: 'Soporte',
     manageBlocked: 'Gestionar usuarios bloqueados',
     beta: 'Programa beta',
     editProfile: 'Editar perfil',
@@ -983,7 +983,7 @@ const LOCALE_STRINGS = {
     settings: 'Настройки',
     migrateAccount: 'Перенести аккаунт',
     connections: 'Связи',
-    support: 'Поддержка (скоро)',
+    support: 'Поддержка',
     manageBlocked: 'Управление заблокированными',
     beta: 'Бета-программа',
     editProfile: 'Редактировать профиль',
@@ -1026,7 +1026,7 @@ const LOCALE_STRINGS = {
     settings: 'Einstellungen',
     migrateAccount: 'Konto migrieren',
     connections: 'Verbindungen',
-    support: 'Support (demnächst)',
+    support: 'Support',
     manageBlocked: 'Blockierte Benutzer verwalten',
     beta: 'Beta-Programm',
     editProfile: 'Profil bearbeiten',
@@ -1069,7 +1069,7 @@ const LOCALE_STRINGS = {
     settings: '設定',
     migrateAccount: 'アカウントを移行',
     connections: 'つながり',
-    support: 'サポート（近日公開）',
+    support: 'サポート',
     manageBlocked: 'ブロックユーザー管理',
     beta: 'ベータプログラム',
     editProfile: 'プロフィール編集',
@@ -1425,7 +1425,14 @@ class DPTopbar extends HTMLElement {
       e.preventDefault();
       window.location.href = this._localizePath('/connections');
     });
-    if (this.$support) this.$support.addEventListener('click', e => e.preventDefault());
+    if (this.$support) {
+  this.$support.addEventListener("click", e => {
+    if (this._pageLocked) return;
+
+    e.preventDefault();
+    window.location.href = this._localizePath("/support");
+  });
+}
 
     if (this.$manageBlocked) this.$manageBlocked.addEventListener('click', e => {
       if (this._pageLocked) return;
@@ -2121,7 +2128,7 @@ class DPTopbar extends HTMLElement {
     }
     if (this.$support) {
       this.$support.textContent = strings.support;
-      this.$support.href = this._localizePath('/support-feedback');
+      this.$support.href = this._localizePath('/support');
     }
     if (this.$manageBlocked) {
       this.$manageBlocked.textContent = strings.manageBlocked;
@@ -2659,7 +2666,9 @@ class DPTopbar extends HTMLElement {
       this.$trans.textContent = this._getStrings().transactions;
     }
 
-    if (this.$support) this.$support.classList.add('disabled');
+    if (this.$support) {
+    this.$support.classList.remove('disabled');
+  }
 
     this._updateMigrationNotice(this._currentUserEmail);
   }

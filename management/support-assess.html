@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Support Console</title>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* Deliberately plain, low-chroma console palette — distinct from the
+         purple/gradient consumer theme so agents can tell at a glance they're
+         in the internal tool, not the public site. */
+      --bg: #111214;
+      --panel: #17181b;
+      --panel-alt: #1d1e22;
+      --line: #2a2b30;
+      --text: #e7e7ea;
+      --muted: #8b8d94;
+      --muted-2: #5f6169;
+      --accent: #9b8cff;
+      --accent-dim: #2c2947;
+      --danger: #e0645a;
+      --ok: #8c5ec9;
+      --warn: #d6a94f;
+      --radius: 6px;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ---------- Top bar ---------- */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      flex: 0 0 auto;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .topbar-left .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+    .topbar-left h1 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.01em; }
+    .topbar-left .env-tag {
+      font: 500 11px var(--mono); color: var(--muted); border: 1px solid var(--line);
+      border-radius: 4px; padding: 1px 6px;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    .staff-email { font: 400 12.5px var(--mono); color: var(--muted); }
+    .back-home-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 12px;
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: var(--radius);
+      font-size: 12.5px; font-weight: 500;
+      cursor: pointer;
+    }
+    .back-home-btn:hover { border-color: var(--muted-2); background: var(--panel-alt); }
+    .back-home-btn svg { width: 14px; height: 14px; }
+
+    /* ---------- Gate screens ---------- */
+    .gate-wrap {
+      flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px;
+    }
+    .gate-box {
+      max-width: 380px; width: 100%; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .gate-box .gate-icon {
+      width: 44px; height: 44px; border-radius: var(--radius);
+      background: var(--panel-alt); border: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: center; color: var(--muted);
+    }
+    .gate-box .gate-icon svg { width: 20px; height: 20px; }
+    .gate-box h2 { margin: 0; font-size: 15.5px; font-weight: 600; }
+    .gate-box p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .gate-box code { font: 400 12px var(--mono); background: var(--panel-alt); border: 1px solid var(--line); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+    .gate-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .gate-btn {
+      padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .gate-btn.primary { background: var(--accent); border: 1px solid var(--accent); color: #14131c; }
+    .gate-btn.secondary { background: transparent; border: 1px solid var(--line); color: var(--text); }
+
+    /* ---------- Layout ---------- */
+    #consoleWrap { display: none; flex: 1; min-height: 0; flex-direction: column; }
+    .console-body { flex: 1; min-height: 0; display: flex; }
+
+    /* ---------- Queue (left) ---------- */
+    .queue {
+      flex: 0 0 320px;
+      border-right: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      background: var(--panel);
+      min-height: 0;
+    }
+    .queue-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+    .queue-head h2 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+    .queue-tabs { display: flex; gap: 4px; }
+    .queue-tab {
+      flex: 1; padding: 6px 0; text-align: center;
+      background: transparent; border: 1px solid var(--line); color: var(--muted);
+      font-size: 11.5px; font-weight: 600; cursor: pointer; border-radius: 4px;
+    }
+    .queue-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+    .queue-search { padding: 10px 16px; border-bottom: 1px solid var(--line); }
+    .queue-search input {
+      width: 100%; background: var(--panel-alt); border: 1px solid var(--line); color: var(--text);
+      border-radius: 4px; padding: 7px 10px; font-size: 12.5px; outline: none;
+    }
+    .queue-search input:focus { border-color: var(--muted-2); }
+    .queue-list { flex: 1; overflow-y: auto; }
+    .queue-row {
+      width: 100%; text-align: left; display: block;
+      padding: 11px 16px; border-bottom: 1px solid var(--line);
+      background: transparent; cursor: pointer;
+    }
+    .queue-row:hover { background: var(--panel-alt); }
+    .queue-row.active { background: var(--accent-dim); border-left: 2px solid var(--accent); padding-left: 14px; }
+    .queue-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .queue-subject { font-weight: 600; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .queue-time { font: 400 11px var(--mono); color: var(--muted-2); flex: 0 0 auto; }
+    .queue-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+    .status-tag { font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: 0.03em; padding: 1px 6px; border-radius: 3px; }
+    .status-tag.open { color: var(--accent); background: var(--accent-dim); }
+    .status-tag.pending { color: var(--warn); background: rgba(214,169,79,0.12); }
+    .status-tag.closed { color: var(--muted); background: rgba(255,255,255,0.05); }
+    .queue-email { font: 400 11.5px var(--mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .queue-empty { padding: 30px 16px; text-align: center; color: var(--muted); font-size: 12.5px; }
+
+    /* ---------- Thread (right) ---------- */
+    .thread-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .thread-empty {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: var(--muted-2); gap: 10px; font-size: 13px;
+    }
+    .thread-empty svg { width: 34px; height: 34px; opacity: 0.4; }
+
+    .thread-view { flex: 1; display: none; flex-direction: column; min-height: 0; }
+    .thread-view-head {
+      padding: 14px 20px; border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .thread-view-head h2 { margin: 0 0 3px; font-size: 14.5px; font-weight: 600; }
+    .thread-view-meta { font: 400 12px var(--mono); color: var(--muted); }
+    .thread-actions { display: flex; gap: 6px; }
+    .status-btn {
+      padding: 6px 11px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer;
+      background: transparent; border: 1px solid var(--line); color: var(--muted);
+    }
+    .status-btn:hover { color: var(--text); border-color: var(--muted-2); }
+    .status-btn.active-state { color: var(--text); border-color: var(--muted-2); background: var(--panel-alt); }
+
+    .thread-messages { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .day-sep { text-align: center; color: var(--muted-2); font: 400 11px var(--mono); margin: 10px 0 2px; }
+    .msg-line { display: flex; flex-direction: column; max-width: 74%; gap: 3px; }
+    .msg-line.from-support { align-self: flex-end; align-items: flex-end; }
+    .msg-line.from-user { align-self: flex-start; align-items: flex-start; }
+    .msg-tag { font: 500 10.5px var(--mono); color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.03em; }
+    .msg-box { padding: 9px 12px; border-radius: var(--radius); font-size: 13px; line-height: 1.55; }
+    .msg-line.from-user .msg-box { background: var(--panel-alt); border: 1px solid var(--line); }
+    .msg-line.from-support .msg-box { background: var(--accent-dim); border: 1px solid var(--accent); color: var(--text); }
+    .msg-stamp { font: 400 10.5px var(--mono); color: var(--muted-2); }
+
+    .thread-composer { border-top: 1px solid var(--line); padding: 12px 20px; }
+    .thread-composer.closed-state { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 12.5px; }
+    .composer-row { display: flex; gap: 10px; align-items: flex-end; }
+    .composer-row textarea {
+      flex: 1; min-height: 40px; max-height: 130px; resize: none;
+      background: var(--panel-alt); border: 1px solid var(--line); color: var(--text);
+      border-radius: var(--radius); padding: 9px 12px; font: 400 13px 'Inter', sans-serif; outline: none;
+    }
+    .composer-row textarea:focus { border-color: var(--muted-2); }
+    .composer-send {
+      padding: 9px 16px; border-radius: var(--radius); border: 1px solid var(--accent);
+      background: var(--accent); color: #14131c; font-weight: 700; font-size: 12.5px; cursor: pointer;
+    }
+    .composer-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    @media (max-width: 800px) {
+      .console-body { flex-direction: column; }
+      .queue { flex: 0 0 auto; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="dot"></span>
+      <h1>Support</h1>
+    </div>
+    <div class="topbar-right">
+      <span class="staff-email" id="staffEmailLabel"></span>
+      <button type="button" class="back-home-btn" id="backHomeBtn">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 19V13a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        Back to home
+      </button>
+    </div>
+  </div>
+
+  <!-- Access gates -->
+  <div class="gate-wrap" id="gateSignedOut" style="display:none;">
+    <div class="gate-box">
+      <div class="gate-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+      <h2>Staff sign-in required</h2>
+      <p>This console is limited to support staff. Sign in to continue.</p>
+      <div class="gate-actions">
+        <a class="gate-btn primary" href="/login.html">Sign in</a>
+        <a class="gate-btn secondary" href="/">Back to home</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="gate-wrap" id="gateWrongDomain" style="display:none;">
+    <div class="gate-box">
+      <div class="gate-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4m0 4h.01M10.3 3.9 2.6 17.5a1.8 1.8 0 0 0 1.6 2.7h15.6a1.8 1.8 0 0 0 1.6-2.7L13.7 3.9a1.8 1.8 0 0 0-3.4 0z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+      <h2>Access restricted</h2>
+      <p>This console only accepts administration accounts. You're signed in as <code id="wrongDomainEmail"></code>.</p>
+      <div class="gate-actions">
+        <button type="button" class="gate-btn secondary" id="signOutBtn">Sign out</button>
+        <a class="gate-btn secondary" href="/">Back to home</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="gate-wrap" id="gateNotStaff" style="display:none;">
+    <div class="gate-box">
+      <div class="gate-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 16v.01M12 8a2.2 2.2 0 0 1 2.2 2.2c0 1.6-2.2 1.8-2.2 3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+      <h2>Not enrolled as staff</h2>
+      <p>Your account isn't in the admins list yet. Ask an admin to add <code id="notStaffEmail"></code> before you can access tickets.</p>
+      <div class="gate-actions">
+        <button type="button" class="gate-btn secondary" id="signOutBtn2">Sign out</button>
+        <a class="gate-btn secondary" href="/">Back to home</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="gate-wrap" id="gateLoading">
+    <div class="gate-box">
+      <p>Please Wait…</p>
+    </div>
+  </div>
+
+  <!-- Console -->
+  <div id="consoleWrap">
+    <div class="console-body">
+      <div class="queue">
+        <div class="queue-head">
+          <h2>Queue</h2>
+          <div class="queue-tabs" id="queueTabs">
+            <button type="button" class="queue-tab active" data-filter="open">Open</button>
+            <button type="button" class="queue-tab" data-filter="pending">Pending</button>
+            <button type="button" class="queue-tab" data-filter="closed">Closed</button>
+            <button type="button" class="queue-tab" data-filter="all">All</button>
+          </div>
+        </div>
+        <div class="queue-search">
+          <input type="text" id="queueSearch" placeholder="Search subject or email…" autocomplete="off">
+        </div>
+        <div class="queue-list" id="queueList"></div>
+      </div>
+
+      <div class="thread-pane">
+        <div class="thread-empty" id="threadEmpty">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          Select a ticket from the queue.
+        </div>
+
+        <div class="thread-view" id="threadView">
+          <div class="thread-view-head">
+            <div>
+              <h2 id="tSubject">Subject</h2>
+              <div class="thread-view-meta" id="tMeta">email · category · opened —</div>
+            </div>
+            <div class="thread-actions">
+              <button type="button" class="status-btn" data-set="open">Open</button>
+              <button type="button" class="status-btn" data-set="pending">Pending</button>
+              <button type="button" class="status-btn" data-set="closed">Closed</button>
+            </div>
+          </div>
+
+          <div class="thread-messages" id="tMessages"></div>
+
+          <div class="thread-composer" id="tComposerWrap">
+            <form class="composer-row" id="tReplyForm">
+              <textarea id="tReplyText" placeholder="Reply as support…" required rows="1"></textarea>
+              <button type="submit" class="composer-send" id="tReplyBtn">Send</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+      authDomain: "darkpurpleof-s-website.firebaseapp.com",
+      projectId: "darkpurpleof-s-website",
+      storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+      messagingSenderId: "520651082420",
+      appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+    };
+    if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const STAFF_DOMAIN = "darkpurpleof.github.io";
+
+    const CATEGORY_LABELS = {
+      account: "Account & login", billing: "Billing & purchases", bug: "Bug report",
+      plugin_store: "Plugin store", minecraft_mod: "Minecraft mod", suggestion: "Suggestion", other: "Other"
+    };
+
+    document.getElementById("backHomeBtn").addEventListener("click", () => { window.location.href = "/"; });
+    document.getElementById("signOutBtn").addEventListener("click", () => auth.signOut());
+    document.getElementById("signOutBtn2").addEventListener("click", () => auth.signOut());
+
+    function toDate(ts) { return ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date(); }
+    function shortTime(ts) { return toDate(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); }
+    function fullDateTime(ts) {
+      const d = toDate(ts);
+      return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) + " " + shortTime(ts);
+    }
+    function relTime(ts) {
+      const mins = Math.round((Date.now() - toDate(ts).getTime()) / 60000);
+      if (mins < 1) return "now";
+      if (mins < 60) return mins + "m";
+      const hrs = Math.round(mins / 60);
+      if (hrs < 24) return hrs + "h";
+      return Math.round(hrs / 24) + "d";
+    }
+    function dayLabel(ts) {
+      const d = toDate(ts), today = new Date(), y = new Date(today); y.setDate(today.getDate() - 1);
+      const same = (a, b) => a.toDateString() === b.toDateString();
+      if (same(d, today)) return "Today";
+      if (same(d, y)) return "Yesterday";
+      return d.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+    }
+
+    // ---------- Gates ----------
+    const gates = {
+      loading: document.getElementById("gateLoading"),
+      signedOut: document.getElementById("gateSignedOut"),
+      wrongDomain: document.getElementById("gateWrongDomain"),
+      notStaff: document.getElementById("gateNotStaff")
+    };
+    const consoleWrap = document.getElementById("consoleWrap");
+
+    function showGate(name) {
+      Object.values(gates).forEach(g => g.style.display = "none");
+      consoleWrap.style.display = "none";
+      if (name) gates[name].style.display = "flex";
+    }
+    function showConsole() {
+      Object.values(gates).forEach(g => g.style.display = "none");
+      consoleWrap.style.display = "flex";
+    }
+
+    let staffEmail = null;
+    let ticketsUnsub = null;
+    let messagesUnsub = null;
+    let ticketsCache = new Map();
+    let currentTicketId = null;
+    let currentStatus = null;
+    let activeFilter = "open";
+
+    auth.onAuthStateChanged(async (user) => {
+      if (ticketsUnsub) { ticketsUnsub(); ticketsUnsub = null; }
+      if (messagesUnsub) { messagesUnsub(); messagesUnsub = null; }
+      ticketsCache.clear();
+      currentTicketId = null;
+
+      if (!user || !user.email) {
+        showGate("signedOut");
+        return;
+      }
+
+      const email = user.email.toLowerCase();
+
+      // Enforcement lives in Firestore rules (support_staff membership).
+      // This is an extra front-door check: only staff with a
+      // @darkpurpleof.github.io address should be enrolled at all.
+      if (!email.endsWith("@" + STAFF_DOMAIN)) {
+        document.getElementById("wrongDomainEmail").textContent = email;
+        showGate("wrongDomain");
+        return;
+      }
+
+      showGate("loading");
+      try {
+        const staffDoc = await db.collection("support_staff").doc(email).get();
+        if (!staffDoc.exists) {
+          document.getElementById("notStaffEmail").textContent = email;
+          showGate("notStaff");
+          return;
+        }
+      } catch (err) {
+        console.error("Staff check failed:", err);
+        document.getElementById("notStaffEmail").textContent = email;
+        showGate("notStaff");
+        return;
+      }
+
+      staffEmail = email;
+      document.getElementById("staffEmailLabel").textContent = email;
+      showConsole();
+      subscribeQueue();
+    });
+
+    // ---------- Queue ----------
+    document.getElementById("queueTabs").addEventListener("click", (e) => {
+      const btn = e.target.closest(".queue-tab");
+      if (!btn) return;
+      activeFilter = btn.dataset.filter;
+      Array.from(document.getElementById("queueTabs").children).forEach(c => c.classList.toggle("active", c === btn));
+      renderQueue();
+    });
+    document.getElementById("queueSearch").addEventListener("input", renderQueue);
+
+    function subscribeQueue() {
+      const queueList = document.getElementById("queueList");
+      queueList.innerHTML = '<div class="queue-empty">Loading…</div>';
+
+      // No where() clause — rules filter results to what isStaff() can see,
+      // and a plain orderBy uses Firestore's automatic single-field index,
+      // so no composite index is needed here either.
+      ticketsUnsub = db.collection("support_tickets")
+        .orderBy("updatedAt", "desc")
+        .onSnapshot((snap) => {
+          ticketsCache.clear();
+          snap.forEach(doc => ticketsCache.set(doc.id, doc.data()));
+          renderQueue();
+          if (currentTicketId && ticketsCache.has(currentTicketId)) {
+            syncThreadHeader(ticketsCache.get(currentTicketId));
+          }
+        }, (err) => {
+          console.error("Queue load failed:", err);
+          queueList.innerHTML = '<div class="queue-empty">Couldn\'t load the queue. Refresh to retry.</div>';
+        });
+    }
+
+    function renderQueue() {
+      const queueList = document.getElementById("queueList");
+      let rows = Array.from(ticketsCache.entries());
+
+      if (activeFilter !== "all") rows = rows.filter(([, t]) => (t.status || "open") === activeFilter);
+      const term = (document.getElementById("queueSearch").value || "").trim().toLowerCase();
+      if (term) rows = rows.filter(([, t]) => (t.subject || "").toLowerCase().includes(term) || (t.email || "").toLowerCase().includes(term));
+
+      if (rows.length === 0) {
+        queueList.innerHTML = '<div class="queue-empty">Nothing here.</div>';
+        return;
+      }
+
+      queueList.innerHTML = "";
+      rows.forEach(([id, t]) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "queue-row" + (id === currentTicketId ? " active" : "");
+        row.innerHTML = `
+          <div class="queue-row-top">
+            <div class="queue-subject">${escapeHtml(t.subject || "(no subject)")}</div>
+            <div class="queue-time">${relTime(t.updatedAt || t.createdAt)}</div>
+          </div>
+          <div class="queue-meta">
+            <span class="status-tag ${t.status || "open"}">${t.status || "open"}</span>
+            <span class="queue-email">${escapeHtml(t.email || "")}</span>
+          </div>
+        `;
+        row.addEventListener("click", () => openTicket(id, t));
+        queueList.appendChild(row);
+      });
+    }
+
+    function escapeHtml(s) {
+      return (s || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    // ---------- Thread ----------
+    const threadEmpty = document.getElementById("threadEmpty");
+    const threadView = document.getElementById("threadView");
+
+    function openTicket(id, data) {
+      currentTicketId = id;
+      currentStatus = data.status || "open";
+      threadEmpty.style.display = "none";
+      threadView.style.display = "flex";
+      syncThreadHeader(data);
+      renderQueue();
+      subscribeMessages(id);
+    }
+
+    function syncThreadHeader(t) {
+      currentStatus = t.status || "open";
+      document.getElementById("tSubject").textContent = t.subject || "(no subject)";
+      document.getElementById("tMeta").textContent =
+        (t.email || "") + " · " + (CATEGORY_LABELS[t.category] || t.category || "Other") + " · opened " + fullDateTime(t.createdAt);
+      Array.from(document.querySelectorAll(".status-btn")).forEach(b => b.classList.toggle("active-state", b.dataset.set === currentStatus));
+      const closed = currentStatus === "closed";
+      const composerWrap = document.getElementById("tComposerWrap");
+      composerWrap.className = "thread-composer" + (closed ? " closed-state" : "");
+      composerWrap.innerHTML = closed
+        ? '<span>This ticket is closed.</span>'
+        : document.getElementById("tComposerWrap").innerHTML; // no-op branch kept for clarity
+      if (closed) {
+        composerWrap.innerHTML = '<span>This ticket is closed — reopen it above to reply.</span>';
+      } else if (!composerWrap.querySelector("#tReplyForm")) {
+        composerWrap.innerHTML = `
+          <form class="composer-row" id="tReplyForm">
+            <textarea id="tReplyText" placeholder="Reply as support…" required rows="1"></textarea>
+            <button type="submit" class="composer-send" id="tReplyBtn">Send</button>
+          </form>`;
+        bindReplyForm();
+      }
+    }
+
+    function bindReplyForm() {
+      const form = document.getElementById("tReplyForm");
+      if (!form) return;
+      const textarea = document.getElementById("tReplyText");
+      textarea.addEventListener("input", () => {
+        textarea.style.height = "auto";
+        textarea.style.height = Math.min(textarea.scrollHeight, 130) + "px";
+      });
+      textarea.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+      });
+      form.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        if (!currentTicketId || !staffEmail) return;
+        const body = (textarea.value || "").trim();
+        if (!body) return;
+        const btn = document.getElementById("tReplyBtn");
+        btn.disabled = true;
+        try {
+          const now = firebase.firestore.FieldValue.serverTimestamp();
+          const preview = body.length > 140 ? body.slice(0, 140) + "…" : body;
+          const ticketRef = db.collection("support_tickets").doc(currentTicketId);
+          const batch = db.batch();
+          batch.set(ticketRef.collection("messages").doc(), {
+            sender: "support", authorEmail: staffEmail, body, createdAt: now
+          });
+          batch.update(ticketRef, { updatedAt: now, lastMessagePreview: preview, lastMessageSender: "support" });
+          await batch.commit();
+          textarea.value = "";
+          textarea.style.height = "auto";
+        } catch (err) {
+          console.error("Reply failed:", err);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
+
+    Array.from(document.querySelectorAll(".status-btn")).forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!currentTicketId) return;
+        try {
+          await db.collection("support_tickets").doc(currentTicketId).update({
+            status: btn.dataset.set,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (err) {
+          console.error("Status update failed:", err);
+        }
+      });
+    });
+
+    function subscribeMessages(ticketId) {
+      if (messagesUnsub) messagesUnsub();
+      const box = document.getElementById("tMessages");
+      box.innerHTML = '<div class="queue-empty">Loading…</div>';
+      messagesUnsub = db.collection("support_tickets").doc(ticketId).collection("messages")
+        .orderBy("createdAt", "asc")
+        .onSnapshot((snap) => renderMessages(snap.docs), (err) => {
+          console.error("Messages load failed:", err);
+          box.innerHTML = '<div class="queue-empty">Couldn\'t load this thread.</div>';
+        });
+    }
+
+    function renderMessages(docs) {
+      const box = document.getElementById("tMessages");
+      box.innerHTML = "";
+      let lastDay = null;
+      docs.forEach(doc => {
+        const m = doc.data();
+        const day = dayLabel(m.createdAt);
+        if (day !== lastDay) {
+          const sep = document.createElement("div");
+          sep.className = "day-sep";
+          sep.textContent = day;
+          box.appendChild(sep);
+          lastDay = day;
+        }
+        const line = document.createElement("div");
+        line.className = "msg-line " + (m.sender === "support" ? "from-support" : "from-user");
+        line.innerHTML = `
+          <div class="msg-tag">${m.sender === "support" ? "Support" : escapeHtml(m.authorEmail || "User")}</div>
+          <div class="msg-box">${escapeHtml(m.body || "")}</div>
+          <div class="msg-stamp">${shortTime(m.createdAt)}</div>
+        `;
+        box.appendChild(line);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    bindReplyForm();
+  </script>
+</body>
+</html>

@@ -1,0 +1,322 @@
+/* ============================================================
+   MATERIAL 3 TOKENS — generated from seed 0xFF9300FF, matching
+   ru.darkpurpleof.darkpurpleofswebsite.theme.Color.kt 1:1.
+   Shared across site pages. Dark scheme is default; body.light
+   overrides. Import with:
+   <link rel="stylesheet" href="/assets/theme.css">
+   ============================================================ */
+:root{
+  --md-background: #151218;
+  --md-on-background: #E8E0E8;
+  --md-surface: #151218;
+  --md-on-surface: #E8E0E8;
+  --md-surface-dim: #151218;
+  --md-surface-bright: #3C383E;
+  --md-surface-container-lowest: #100D12;
+  --md-surface-container-low: #1E1A20;
+  --md-surface-container: #221E24;
+  --md-surface-container-high: #2C292E;
+  --md-surface-container-highest: #373339;
+  --md-surface-variant: #4A454E;
+  --md-on-surface-variant: #CCC4CF;
+  --md-surface-tint: #DCB8FF;
+  --md-outline: #968E98;
+  --md-outline-variant: #4A454E;
+  --md-inverse-surface: #E8E0E8;
+  --md-inverse-on-surface: #332F35;
+  --md-scrim: #000000;
+
+  --md-primary: #DCB8FF;
+  --md-on-primary: #480082;
+  --md-primary-container: #6700B5;
+  --md-on-primary-container: #EFDBFF;
+  --md-inverse-primary: #8800EC;
+  --md-primary-fixed: #EFDBFF;
+  --md-primary-fixed-dim: #DCB8FF;
+  --md-on-primary-fixed: #2B0052;
+  --md-on-primary-fixed-variant: #6700B5;
+
+  --md-secondary: #D0C1DA;
+  --md-on-secondary: #362D3F;
+  --md-secondary-container: #4D4357;
+  --md-on-secondary-container: #EDDDF6;
+  --md-secondary-fixed: #EDDDF6;
+  --md-secondary-fixed-dim: #D0C1DA;
+  --md-on-secondary-fixed: #21182A;
+  --md-on-secondary-fixed-variant: #4D4357;
+
+  --md-tertiary: #F3B7BE;
+  --md-on-tertiary: #4B252B;
+  --md-tertiary-container: #653A41;
+  --md-on-tertiary-container: #FFD9DD;
+  --md-tertiary-fixed: #FFD9DD;
+  --md-tertiary-fixed-dim: #F3B7BE;
+  --md-on-tertiary-fixed: #321017;
+  --md-on-tertiary-fixed-variant: #653A41;
+
+  --md-error: #FFB4AB;
+  --md-on-error: #690005;
+  --md-error-container: #93000A;
+  --md-on-error-container: #FFDAD6;
+
+  /* Mode-independent vivid pairs */
+  --brand-vivid: #8800EC;
+  --brand-deep:  #6700B5;
+  --brand-pale:  #EFDBFF;
+  --brand-tint:  #DCB8FF;
+  --secondary-deep: #4D4357;
+  --secondary-pale: #EDDDF6;
+  --tertiary-deep:  #653A41;
+  --tertiary-pale:  #FFD9DD;
+  --error-deep:     #93000A;
+  --error-pale:     #FFDAD6;
+
+  /* Shape scale */
+  --shape-xs: 4px;
+  --shape-sm: 8px;
+  --shape-md: 12px;
+  --shape-lg: 16px;
+  --shape-xl: 28px;
+  --shape-full: 999px;
+
+  /* Elevation */
+  --elev-1: 0 1px 2px rgba(0,0,0,.30), 0 1px 3px 1px rgba(0,0,0,.15);
+  --elev-2: 0 1px 2px rgba(0,0,0,.30), 0 2px 6px 2px rgba(0,0,0,.15);
+  --elev-3: 0 1px 3px rgba(0,0,0,.30), 0 4px 8px 3px rgba(0,0,0,.15);
+
+  /* Type scale */
+  --type-headline-small: 700 24px/30px Inter;
+  --type-title-large: 600 20px/26px Inter;
+  --type-title-medium: 600 16px/24px Inter;
+  --type-title-small: 600 14px/20px Inter;
+  --type-body-large: 400 16px/24px Inter;
+  --type-body-medium: 400 14px/20px Inter;
+  --type-body-small: 400 13px/19px Inter;
+  --type-label-large: 600 14.5px/20px Inter;
+  --type-label-medium: 700 12px/16px Inter;
+  --type-label-small: 700 10.5px/14px Inter;
+
+  /* Legacy aliases kept for readability */
+  --bg: var(--md-background);
+  --card: var(--md-surface-container-low);
+  --card-2: var(--md-surface-container-high);
+  --muted: var(--md-on-surface-variant);
+  --text: var(--md-on-surface);
+  --accent: var(--brand-vivid);
+  --accent-strong: var(--brand-deep);
+  --accent-soft: color-mix(in srgb, var(--brand-vivid) 16%, transparent);
+  --border: var(--md-outline-variant);
+  --warning-bg: color-mix(in srgb, var(--tertiary-deep) 22%, transparent);
+  --warning-border: color-mix(in srgb, var(--tertiary-deep) 45%, transparent);
+}
+body.light {
+  --md-background: #FFF7FF;
+  --md-on-background: #1E1A20;
+  --md-surface: #FFF7FF;
+  --md-on-surface: #1E1A20;
+  --md-surface-dim: #DFD8DF;
+  --md-surface-bright: #FFF7FF;
+  --md-surface-container-lowest: #FFFFFF;
+  --md-surface-container-low: #F9F1F9;
+  --md-surface-container: #F3EBF3;
+  --md-surface-container-high: #EEE6EE;
+  --md-surface-container-highest: #E8E0E8;
+  --md-surface-variant: #E9E0EB;
+  --md-on-surface-variant: #4A454E;
+  --md-surface-tint: #8800EC;
+  --md-outline: #7B757E;
+  --md-outline-variant: #CCC4CF;
+  --md-inverse-surface: #332F35;
+  --md-inverse-on-surface: #F6EEF6;
+
+  --md-primary: #8800EC;
+  --md-on-primary: #FFFFFF;
+  --md-primary-container: #EFDBFF;
+  --md-on-primary-container: #6700B5;
+  --md-inverse-primary: #DCB8FF;
+  --md-primary-fixed: #EFDBFF;
+  --md-primary-fixed-dim: #DCB8FF;
+  --md-on-primary-fixed: #2B0052;
+  --md-on-primary-fixed-variant: #6700B5;
+
+  --md-secondary: #655A6F;
+  --md-on-secondary: #FFFFFF;
+  --md-secondary-container: #EDDDF6;
+  --md-on-secondary-container: #4D4357;
+  --md-secondary-fixed: #EDDDF6;
+  --md-secondary-fixed-dim: #D0C1DA;
+  --md-on-secondary-fixed: #21182A;
+  --md-on-secondary-fixed-variant: #4D4357;
+
+  --md-tertiary: #805158;
+  --md-on-tertiary: #FFFFFF;
+  --md-tertiary-container: #FFD9DD;
+  --md-on-tertiary-container: #653A41;
+  --md-tertiary-fixed: #FFD9DD;
+  --md-tertiary-fixed-dim: #F3B7BE;
+  --md-on-tertiary-fixed: #321017;
+  --md-on-tertiary-fixed-variant: #653A41;
+
+  --md-error: #BA1A1A;
+  --md-on-error: #FFFFFF;
+  --md-error-container: #FFDAD6;
+  --md-on-error-container: #93000A;
+
+  --accent-soft: color-mix(in srgb, var(--brand-vivid) 10%, transparent);
+  --warning-bg: color-mix(in srgb, var(--tertiary-deep) 8%, transparent);
+  --warning-border: color-mix(in srgb, var(--tertiary-deep) 22%, transparent);
+}
+
+*{ box-sizing:border-box; }
+
+html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background-color: var(--bg); color:var(--text); transition: background .25s, color .25s; }
+body { display:flex; flex-direction:column; min-height:100vh; }
+
+dp-topbar { display:block; position:sticky; top:0; z-index:100; }
+
+/* State layer: M3 interactive elements overlay currentColor at low opacity */
+.m3-state { position: relative; isolation: isolate; overflow: hidden; }
+.m3-state::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: currentColor; opacity: 0; pointer-events: none;
+  transition: opacity .15s ease;
+}
+.m3-state:hover::before { opacity: .08; }
+.m3-state:active::before { opacity: .12; }
+.m3-state:active { transform: scale(.98); }
+.m3-state { transition: transform .1s ease; }
+
+/* M3 card, Adobe-flavored: tight radius, border, light shadow */
+.card {
+  background: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: var(--shape-lg);
+  padding:32px;
+  color:var(--text);
+  box-shadow: var(--elev-1);
+  box-sizing:border-box;
+}
+
+.badge {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font: var(--type-label-medium);
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color: var(--brand-pale);
+  background: var(--brand-deep);
+  padding:6px 12px;
+  border-radius: var(--shape-full);
+}
+
+h1 { margin:0 0 6px 0; font: var(--type-headline-small); letter-spacing:-0.01em; color: var(--text); }
+p.lead { margin:0 0 24px 0; color:var(--muted); font: var(--type-body-medium); }
+.hint { font: var(--type-body-small); color:var(--muted); }
+
+.field { display:flex; flex-direction:column; gap:7px; }
+.field label { font: var(--type-body-small); font-weight:600; color:var(--muted); }
+
+.input, input[type="text"], input[type="email"], input[type="password"], textarea, select {
+  width:100%;
+  padding:12px 14px;
+  border-radius: var(--shape-xs);
+  border:1px solid var(--md-outline-variant);
+  background: transparent;
+  color:var(--text);
+  font: var(--type-body-large);
+  font-family: inherit;
+  outline:none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.input:focus, input:focus, textarea:focus, select:focus {
+  border-color: var(--brand-vivid);
+  border-width: 2px;
+  padding: 11px 13px;
+}
+::placeholder { color: var(--muted); opacity:0.7; }
+
+.adobe-btn {
+  min-width:120px;
+  padding:11px 26px;
+  background: var(--brand-vivid);
+  color:#fff;
+  border:none;
+  border-radius: var(--shape-xs);
+  font: var(--type-label-large);
+  font-size:14px;
+  cursor:pointer;
+  text-align:center;
+}
+.adobe-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+.ghost-btn {
+  background:transparent;
+  border:1px solid var(--md-outline-variant);
+  color:var(--muted);
+  padding:11px 22px;
+  border-radius: var(--shape-xs);
+  font: var(--type-label-large);
+  font-size:14px;
+  cursor:pointer;
+}
+.ghost-btn:hover { color:var(--text); border-color: var(--brand-vivid); }
+
+.text-link-btn {
+  background:none;
+  border:none;
+  color: var(--brand-vivid);
+  font: var(--type-body-medium);
+  font-size:13.5px;
+  font-weight:600;
+  cursor:pointer;
+  padding:0;
+  text-align:left;
+  display:inline-block;
+}
+body.light .text-link-btn { color: var(--md-primary); }
+.text-link-btn:hover { text-decoration:underline; }
+
+.back-link {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:none;
+  border:none;
+  color:var(--muted);
+  font: var(--type-body-small);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  padding:0;
+  margin-bottom:18px;
+}
+.back-link:hover { color:var(--text); }
+
+a.plain-link { color: var(--brand-vivid); text-decoration:none; font-weight:600; }
+body.light a.plain-link { color: var(--md-primary); }
+a.plain-link:hover { text-decoration:underline; }
+
+/* M3 Snackbar */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  padding: 14px 18px;
+  border-radius: var(--shape-xs);
+  font: var(--type-body-medium);
+  font-weight: 600;
+  display: none;
+  z-index: 99999;
+  box-shadow: var(--elev-3);
+  max-width: min(92vw, 420px);
+  text-align: center;
+  box-sizing: border-box;
+}
+#toast.purple { background: var(--md-inverse-surface); color: var(--md-inverse-on-surface); border-left: 4px solid var(--brand-vivid); }
+#toast.yellow { background: var(--md-inverse-surface); color: var(--md-inverse-on-surface); border-left: 4px solid var(--md-tertiary); }
+#toast.red { background: var(--md-inverse-surface); color: var(--md-inverse-on-surface); border-left: 4px solid var(--md-error); }
+
+button { transition: transform .1s ease, filter .15s ease, background .15s ease, border-color .15s ease; }
+button:active { transform: translateY(0) scale(.98); }
