@@ -1,1114 +1,2608 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+<html lang="en"><head>
+
+  <meta charset="utf-8">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
   <title>Support</title>
 
+
+
   <!-- Firebase (compat) -->
+
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="/assets/theme.css">
 
+
+
   <style>
+
     main.wrapper {
+
       flex:1;
+
       display:flex;
+
       justify-content:center;
+
       padding:0 20px 0;
+
     }
+
+
 
     .support-shell { width:100%; max-width:1040px; display:flex; flex-direction:column; }
 
+
+
     /* ---------- Hero ---------- */
+
     .support-hero {
+
       padding:44px 4px 30px;
+
       text-align:center;
+
       display:flex;
+
       flex-direction:column;
+
       align-items:center;
+
       gap:14px;
+
     }
+
     .support-hero .hero-badge {
+
       width:52px; height:52px; border-radius: var(--shape-lg, var(--shape-md));
+
       background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep));
+
       display:flex; align-items:center; justify-content:center;
+
       box-shadow: var(--elev-2);
+
       margin-bottom:4px;
+
     }
+
     .support-hero .hero-badge img { width:26px; height:26px; filter: brightness(0) invert(1); }
+
     .support-hero h1 { margin:0; font-size:30px; letter-spacing:-0.01em; }
+
     .support-hero p.lead { margin:0; font-size:14.5px; color:var(--muted); max-width:480px; }
 
+
+
     .support-search {
+
       width:100%; max-width:520px;
+
       display:flex; align-items:center; gap:10px;
+
       margin-top:10px;
+
       padding:12px 18px;
+
       border-radius: var(--shape-full);
+
       background: var(--md-surface-container);
+
       border:1px solid var(--md-outline-variant);
+
     }
+
     .support-search:focus-within { border-color: var(--brand-vivid); }
+
     .support-search svg { width:18px; height:18px; color:var(--muted); flex:0 0 auto; }
+
     .support-search input {
+
       border:none; background:transparent; flex:1; font: var(--type-body-medium); font-size:14.5px;
+
       padding:0; outline:none;
+
     }
+
     .support-search input::placeholder { color:var(--muted); }
 
+
+
     /* ---------- Quick topics ---------- */
+
     .quick-topics {
+
       display:grid;
+
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+
       gap:10px;
+
       padding:0 4px 30px;
+
     }
+
     .topic-tile {
+
       display:flex; flex-direction:column; align-items:flex-start; gap:10px;
+
       padding:16px 16px 15px;
+
       border-radius: var(--shape-md);
+
        color:#fff; 
+
       background: var(--md-surface-container-low);
+
       border:1px solid var(--md-outline-variant);
+
       cursor:pointer;
+
       text-align:left;
+
     }
+
     .topic-tile:hover { border-color: var(--brand-vivid); background: var(--md-surface-container); }
+
     .topic-tile .topic-icon {
+
       width:34px; height:34px; border-radius: var(--shape-md);
+
       display:flex; align-items:center; justify-content:center; color:#fff; flex:0 0 34px;
+
     }
+
     .topic-tile .topic-icon svg { width:17px; height:17px; }
+
     .topic-tile .topic-icon.cat-account { background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep)); }
+
     .topic-tile .topic-icon.cat-billing { background: linear-gradient(135deg, #C99A2E, #8C6494); }
+
     .topic-tile .topic-icon.cat-bug { background: linear-gradient(135deg, #E05A5A, #8C2E2E); }
+
     .topic-tile .topic-icon.cat-plugin_store { background: linear-gradient(135deg, var(--secondary-deep), var(--brand-deep)); }
+
     .topic-tile .topic-icon.cat-other { background: linear-gradient(135deg, var(--md-outline), var(--md-surface-variant)); }
+
     .topic-tile .topic-name { font: var(--type-title-medium); font-size:14px; font-weight:600; }
+
     .topic-tile .topic-desc { font: var(--type-body-small); font-size:12px; color:var(--muted); line-height:1.4; }
 
+
+
     /* ---------- Section headers ---------- */
+
     .section-heading {
+
       display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+
       margin:0 4px 12px;
+
     }
+
     .section-heading h2 { margin:0; font: var(--type-title-large); font-size:16px; }
+
     .section-heading .section-note { font: var(--type-body-small); font-size:12px; color:var(--muted); }
 
+
+
     /* ---------- FAQ ---------- */
+
     .faq-section { padding-bottom:32px; }
+
     .faq-list { display:flex; flex-direction:column; gap:8px; }
+
     .faq-item {
+
       border-radius: var(--shape-md);
+
       background: var(--md-surface-container-low);
+
       border:1px solid var(--md-outline-variant);
+
       overflow:hidden;
+
     }
+
     .faq-question {
+
       width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px;
+
       padding:14px 16px;
+
       background:none; border:none; cursor:pointer; text-align:left;
+
       font: var(--type-body-medium); font-size:14px; font-weight:600; color:var(--text);
+
     }
+
     .faq-question .faq-chevron { width:16px; height:16px; flex:0 0 auto; color:var(--muted); transition: transform 0.15s ease; }
+
     .faq-item.open .faq-chevron { transform: rotate(180deg); }
+
     .faq-answer { max-height:0; overflow:hidden; transition: max-height 0.2s ease; }
+
     .faq-item.open .faq-answer { max-height:240px; }
+
     .faq-answer-inner { padding:0 16px 15px; font: var(--type-body-medium); font-size:13.5px; color:var(--muted); line-height:1.6; }
+
     .faq-empty { padding:20px; text-align:center; color:var(--muted); font: var(--type-body-small); }
 
+
+
     /* ---------- Still need help divider ---------- */
+
     .still-need-help {
+
       display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+
       padding:18px 20px;
+
       border-radius: var(--shape-md);
+
       background: var(--accent-soft);
+
       border:1px solid var(--md-outline-variant);
+
       margin:0 4px 32px;
+
     }
+
     .still-need-help .snh-text h3 { margin:0 0 3px; font: var(--type-title-medium); font-size:15px; }
+
     .still-need-help .snh-text p { margin:0; font: var(--type-body-small); font-size:12.5px; color:var(--muted); }
+
     .new-ticket-btn {
+
       display:flex; align-items:center; gap:8px;
+
       padding:10px 18px;
+
       background: var(--brand-vivid);
+
       color:#fff;
+
       border:none;
+
       border-radius: var(--shape-full);
+
       font: var(--type-label-large);
+
       font-size:14px;
+
       cursor:pointer;
+
       white-space:nowrap;
+
       flex:0 0 auto;
+
     }
+
     .new-ticket-btn svg { width:16px; height:16px; }
 
+
+
     /* ---------- New ticket panel (collapsible) ---------- */
+
     #newTicketCard { display:none; margin:0 4px 32px; }
+
     #newTicketCard .panel-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+
     #newTicketCard h2 { margin:0; font: var(--type-title-large); font-size:17px; }
+
     #newTicketCloseBtn { background:none; border:none; color:var(--muted); cursor:pointer; padding:4px; display:flex; }
+
     #newTicketCloseBtn svg { width:18px; height:18px; }
+
     .ticket-form-grid { display:flex; flex-direction:column; gap:14px; }
+
     .ticket-form-row { display:flex; gap:14px; flex-wrap:wrap; }
+
     .ticket-form-row .field { flex:1; min-width:200px; }
+
     textarea#ticketMessage { min-height:110px; resize:vertical; font-family: inherit; }
+
     .ticket-form-actions { display:flex; justify-content:flex-end; align-items:center; gap:12px; }
+
     .guest-note { font: var(--type-body-small); color:var(--muted); margin-right:auto; }
 
+
+
     /* ---------- Two-column ticket browser ---------- */
+
     .support-columns { display:flex; flex-direction:column; gap:14px; padding:0 4px 40px; }
 
+
+
     #ticketListCard { display:flex; flex-direction:column; padding:16px; }
+
     .ticket-list-head { display:flex; align-items:center; justify-content:space-between; margin:2px 6px 12px; gap:8px; }
+
     #ticketListCard h2 { margin:0; font: var(--type-title-large); font-size:13px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); }
 
+
+
     .filter-chips { display:flex; gap:6px; margin:0 6px 12px; flex-wrap:wrap; }
+
     .filter-chip {
+
       padding:5px 12px; border-radius: var(--shape-full);
+
       border:1px solid var(--md-outline-variant); background:none; color:var(--muted);
+
       font: var(--type-body-small); font-size:12px; font-weight:600; cursor:pointer;
+
     }
+
     .filter-chip.active { background: var(--brand-vivid); border-color: var(--brand-vivid); color:#fff; }
 
+
+
     .ticket-search {
+
       display:flex; align-items:center; gap:8px;
+
       margin:0 6px 12px;
+
       padding:8px 12px;
+
       border-radius: var(--shape-full);
+
       background: var(--md-surface-container);
+
       border:1px solid var(--md-outline-variant);
+
     }
+
     .ticket-search svg { width:14px; height:14px; color:var(--muted); flex:0 0 auto; }
+
     .ticket-search input { border:none; background:transparent; flex:1; outline:none; font-size:13px; color:var(--text); }
+
     .ticket-search input::placeholder { color:var(--muted); }
 
+
+
     .ticket-list { display:flex; flex-direction:column; gap:2px; }
+
     .ticket-row {
+
       display:flex;
+
       align-items:flex-start;
+
       gap:12px;
+
       padding:11px 10px;
+
       border-radius: var(--shape-md);
+
       border:1px solid transparent;
+
       background: transparent;
+
       cursor:pointer;
+
       text-align:left;
+
       width:100%;
+
     }
+
     .ticket-row:hover { background: var(--md-surface-container); }
+
     .ticket-row.active { background: var(--accent-soft); border-color: var(--brand-vivid); }
 
+
+
     .ticket-avatar {
+
       width:36px; height:36px; border-radius: var(--shape-full);
+
       display:flex; align-items:center; justify-content:center;
+
       color:#fff; font-weight:700; font-size:14px; flex:0 0 36px;
+
     }
+
     .ticket-avatar.cat-account { background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep)); }
+
     .ticket-avatar.cat-billing { background: linear-gradient(135deg, #C99A2E, #8C6494); }
+
     .ticket-avatar.cat-bug { background: linear-gradient(135deg, #E05A5A, #8C2E2E); }
+
     .ticket-avatar.cat-plugin_store { background: linear-gradient(135deg, var(--secondary-deep), var(--brand-deep)); }
+
     .ticket-avatar.cat-other { background: linear-gradient(135deg, var(--md-outline), var(--md-surface-variant)); }
 
+
+
     .ticket-row-body { flex:1; min-width:0; }
+
     .ticket-row-top { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+
     .ticket-subject { font: var(--type-body-medium); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
     .ticket-time { font: var(--type-body-small); font-size:11.5px; color:var(--muted); flex:0 0 auto; }
+
     .ticket-snippet { font: var(--type-body-small); color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+
     .ticket-row-bottom { display:flex; align-items:center; gap:6px; margin-top:4px; }
 
+
+
     .status-dot { width:7px; height:7px; border-radius:50%; flex:0 0 auto; }
+
     .status-dot.open { background: var(--brand-vivid); }
+
     .status-dot.pending { background: var(--md-tertiary); }
+
     .status-dot.closed { background: var(--md-outline); }
+
     .status-label { font: var(--type-body-small); font-size:11px; color:var(--muted); text-transform:capitalize; }
 
+
+
     .empty-state { padding:28px 12px; text-align:center; color:var(--muted); font: var(--type-body-small); }
+
     .empty-state.small { padding:18px 10px; }
 
+
+
     /* ---------- Thread ---------- */
+
     #ticketThreadCard { display:none; flex-direction:column; padding:0; overflow:hidden; }
 
+
+
     .thread-header {
+
       display:flex; align-items:center; justify-content:space-between; gap:12px;
+
       padding:14px 20px; border-bottom:1px solid var(--md-outline-variant);
+
       background: var(--md-surface-container-low);
+
     }
+
     .thread-header-left { display:flex; align-items:center; gap:12px; min-width:0; }
+
     .thread-header h2 { margin:0; font: var(--type-title-medium); font-size:15.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
     .thread-meta { font: var(--type-body-small); font-size:12px; color:var(--muted); margin-top:2px; }
+
     .thread-header-actions { display:flex; align-items:center; gap:10px; flex:0 0 auto; }
 
+
+
     .status-pill {
+
       font: var(--type-label-small);
+
       letter-spacing:0.04em;
+
       text-transform:uppercase;
+
       padding:4px 10px;
+
       border-radius: var(--shape-full);
+
       flex:0 0 auto;
+
       white-space:nowrap;
+
     }
+
     .status-pill.open    { background: var(--brand-deep); color: var(--brand-pale); }
+
     .status-pill.pending { background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); }
+
     .status-pill.closed  { background: var(--md-surface-container-highest); color: var(--muted); }
 
+
+
     .thread-status-btn {
+
       background:none; border:1px solid var(--md-outline-variant); color:var(--muted);
+
       font: var(--type-body-small); font-size:12px; font-weight:600;
+
       padding:6px 12px; border-radius: var(--shape-full); cursor:pointer;
+
     }
+
     .thread-status-btn:hover { color:var(--text); border-color: var(--brand-vivid); }
+
+
 
     .thread-scroll { flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:2px; min-height:280px; max-height:min(60vh, 560px); }
 
+
+
     .date-divider { display:flex; align-items:center; gap:10px; margin:18px 0 12px; color:var(--muted); font: var(--type-body-small); font-size:11.5px; }
+
     .date-divider::before, .date-divider::after { content:''; flex:1; height:1px; background:var(--md-outline-variant); }
+
     .date-divider:first-child { margin-top:0; }
 
+
+
     .msg-group { display:flex; gap:10px; margin-top:14px; }
+
     .msg-group:first-child { margin-top:0; }
+
     .msg-group.mine { flex-direction:row-reverse; }
 
+
+
     .msg-avatar {
+
       width:28px; height:28px; border-radius: var(--shape-full); flex:0 0 28px;
+
       display:flex; align-items:center; justify-content:center;
+
       color:#fff; font-weight:700; font-size:11px;
+
     }
+
     .msg-group.mine .msg-avatar { background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep)); }
+
     .msg-group.support .msg-avatar { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
 
+
+
     .msg-bubbles { display:flex; flex-direction:column; gap:3px; max-width:72%; }
+
     .msg-group.mine .msg-bubbles { align-items:flex-end; }
+
     .msg-author-row { font: var(--type-body-small); font-size:11.5px; color:var(--muted); font-weight:600; margin-bottom:2px; }
+
     .msg-group.mine .msg-author-row { text-align:right; }
 
+
+
     .msg-bubble { padding:9px 13px; border-radius: var(--shape-md); font: var(--type-body-medium); line-height:1.5; word-break:break-word; }
+
     .msg-group.support .msg-bubble { background: var(--md-surface-container-high); color:var(--text); border-bottom-left-radius: var(--shape-xs); }
+
     .msg-group.mine .msg-bubble { background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep)); color:#fff; border-bottom-right-radius: var(--shape-xs); }
 
+
+
     .msg-time { font: var(--type-body-small); font-size:10.5px; color:var(--muted); padding:0 4px; }
+
     .msg-group.mine .msg-time { text-align:right; }
 
+
+
     /* ---------- Composer ---------- */
+
     .composer-wrap { border-top:1px solid var(--md-outline-variant); padding:14px 20px; background: var(--md-surface-container-low); }
+
     .reply-row { display:flex; gap:10px; align-items:flex-end; }
+
     .reply-row textarea {
+
       flex:1; min-height:40px; max-height:120px; resize:none;
+
       border-radius: var(--shape-full); padding:10px 18px;
+
     }
+
     .reply-row textarea:focus { padding:9px 17px; }
+
     .send-btn {
+
       width:40px; height:40px; flex:0 0 40px;
+
       border-radius:50%; border:none; cursor:pointer;
+
       background: var(--brand-vivid); color:#fff;
+
       display:flex; align-items:center; justify-content:center;
+
     }
+
     .send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
     .send-btn svg { width:18px; height:18px; }
 
+
+
     .closed-notice {
+
       display:flex; align-items:center; justify-content:space-between; gap:12px;
+
       color:var(--muted); font: var(--type-body-small);
+
     }
+
     .closed-notice button { flex:0 0 auto; }
 
+
+
     .thread-placeholder-wrap {
+
       display:none; align-items:center; justify-content:center; text-align:center;
+
       color:var(--muted); font: var(--type-body-medium); min-height:400px; flex-direction:column; gap:10px;
+
     }
+
     .thread-placeholder-wrap svg { width:40px; height:40px; opacity:0.4; }
 
+
+
     @media (min-width:860px){
+
       .quick-topics { grid-template-columns: repeat(6, 1fr); }
+
       .support-columns { flex-direction:row; align-items:stretch; }
+
       #ticketListCard { flex:0 0 300px; max-height:640px; overflow-y:auto; }
+
       #ticketThreadCard { flex:1; min-width:0; }
+
       .thread-placeholder-wrap.desktop-visible { display:flex; }
+
     }
+
+
 
     @media (max-width:600px){
+
       main.wrapper { padding:0; }
+
       .support-hero { padding:32px 20px 24px; }
+
       .quick-topics { padding:0 16px 26px; }
+
       .section-heading, .faq-section, .still-need-help { margin-left:16px; margin-right:16px; }
+
       .faq-section { padding-left:0; padding-right:0; }
+
       #newTicketCard, #ticketListCard, #ticketThreadCard {
+
         border:none; border-radius:0; box-shadow:none; border-top:1px solid var(--md-outline-variant);
+
         margin-left:0; margin-right:0;
+
       }
+
       .support-columns { padding:0 0 24px; }
+
       .thread-scroll { max-height:none; min-height:calc(100vh - 260px); }
+
     }
+
   </style>
 
+
+
   <!-- dp-topbar -->
+
   <script type="module" src="/dp-topbar.js"></script>
+
 </head>
+
 <body>
+
   <dp-topbar></dp-topbar>
 
+
+
   <main class="wrapper" role="main" aria-label="Support">
+
     <div class="support-shell">
 
+
+
       <!-- Hero -->
+
       <div class="support-hero">
+
         <div class="hero-badge" aria-hidden="true">
+
           <img src="/assets/help_24px.svg" alt="">
+
         </div>
+
         <h1>How can we help?</h1>
+
         <p class="lead">Search common questions below, or open a ticket and we'll get back to you.</p>
+
         <div class="support-search">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+
           <input type="text" id="faqSearch" placeholder="Search help articles…" autocomplete="off">
+
         </div>
+
       </div>
+
+
 
       <!-- Quick topics -->
-      <div class="quick-topics" id="quickTopics"></div>
+
+      <div class="quick-topics" id="quickTopics"><button type="button" class="topic-tile m3-state">
+
+          <div class="topic-icon cat-account"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+
+          <div class="topic-name">Account &amp; login</div>
+
+          <div class="topic-desc">2 articles</div>
+
+        </button><button type="button" class="topic-tile m3-state">
+
+          <div class="topic-icon cat-billing"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"></rect><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+
+          <div class="topic-name">Billing &amp; purchases</div>
+
+          <div class="topic-desc">2 articles</div>
+
+        </button><button type="button" class="topic-tile m3-state">
+
+          <div class="topic-icon cat-bug"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5a3 3 0 1 1 6 0M6 10h12M4 14h3M17 14h3M5 19l2.5-2.5M19 19l-2.5-2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><rect x="7" y="8" width="10" height="10" rx="5" stroke="currentColor" stroke-width="1.8"></rect></svg></div>
+
+          <div class="topic-name">Bug report</div>
+
+          <div class="topic-desc">1 article</div>
+
+        </button><button type="button" class="topic-tile m3-state">
+
+          <div class="topic-icon cat-plugin_store"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"></rect><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"></rect><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"></rect><path d="M16.5 13v7M13 16.5h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+
+          <div class="topic-name">Plugin store</div>
+
+          <div class="topic-desc">2 articles</div>
+
+        </button><button type="button" class="topic-tile m3-state">
+
+          <div class="topic-icon cat-other"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle><path d="M12 16v.01M12 8a2.2 2.2 0 0 1 2.2 2.2c0 1.6-2.2 1.8-2.2 3.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+
+          <div class="topic-name">Other</div>
+
+          <div class="topic-desc">1 article</div>
+
+        </button></div>
+
+
 
       <!-- FAQ -->
+
       <div class="faq-section">
+
         <div class="section-heading">
+
           <h2>Frequently asked</h2>
-          <span class="section-note" id="faqCount"></span>
+
+          <span class="section-note" id="faqCount">9 articles</span>
+
         </div>
-        <div class="faq-list" id="faqList"></div>
+
+        <div class="faq-list" id="faqList"><div class="faq-item">
+
+          <button type="button" class="faq-question">
+
+            <span>How do I reset my password?</span>
+
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+          </button>
+
+          <div class="faq-answer"><div class="faq-answer-inner">You must be logged in to reset your password, alternatively, if you've forgotten it, you can request a reset link.</div></div>
+
+        </div><div class="faq-item">
+
+          <button type="button" class="faq-question">
+
+            <span>Can I change the email on my account?</span>
+
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+          </button>
+
+          <div class="faq-answer"><div class="faq-answer-inner">No, you cannot change the email on your account. You can create a new account with the desired email, emails are being discontinued soon, so consider migrating to a username.</div></div>
+
+        </div><div class="faq-item">
+
+          <button type="button" class="faq-question">
+
+            <span>Where can I see my past purchases?</span>
+
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+          </button>
+
+          <div class="faq-answer"><div class="faq-answer-inner">You can find your purchase history under Transactions.</div></div>
+
+        </div><div class="faq-item">
+
+          <button type="button" class="faq-question">
+
+            <span>Can I get a refund on a purchase?</span>
+
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+          </button>
+
+          <div class="faq-answer"><div class="faq-answer-inner">No, refunds are not available as stated on the Terms of Service, since DF$ does not posess any real world monetary value, items purchased with DF$ are non-refundable.</div></div>
+
+        </div><div class="faq-item">
+
+          <button type="button" class="faq-question">
+
+            <span>A plugin I installed isn't showing up</span>
+
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+          </button>
+
+          <div class="faq-answer"><div class="faq-answer-inner">You may need to restart the app for the plugin to be usable, if the issue persists, try updating the app or installing the plugin again. You might need to personally contact the plugin developer if the issue is not resolved, as we can't resolve that issue</div></div>
+
+        </div><div class="faq-item">
+
+          <button type="button" class="faq-question">
+
+            <span>How do I publish my own plugin?</span>
+
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+          </button>
+
+          <div class="faq-answer"><div class="faq-answer-inner">Check the developer docs for packaging and signing requirements, then submit it for review from the Plugin Store dashboard.</div></div>
+
+        </div><div class="faq-item">
+
+          <button type="button" class="faq-question">
+
+            <span>I have a suggestion, not a problem</span>
+
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+          </button>
+
+          <div class="faq-answer"><div class="faq-answer-inner">We read every ticket, feature ideas included — open one under "Suggestion or feedback" and tell us what you'd like to see.</div></div>
+
+        </div><div class="faq-item">
+
+          <button type="button" class="faq-question">
+
+            <span>How do I report a bug effectively?</span>
+
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+          </button>
+
+          <div class="faq-answer"><div class="faq-answer-inner">Include your app version, OS, and clear steps to reproduce. Screenshots or logs speed things up a lot.</div></div>
+
+        </div><div class="faq-item">
+
+          <button type="button" class="faq-question">
+
+            <span>I have a suggestion, not a problem</span>
+
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+
+          </button>
+
+          <div class="faq-answer"><div class="faq-answer-inner">We read every ticket, feature ideas included — open one under "Other" and tell us what you'd like to see.</div></div>
+
+        </div></div>
+
       </div>
+
+
 
       <!-- Still need help -->
+
       <div class="still-need-help">
+
         <div class="snh-text">
+
           <h3>Still need help?</h3>
+
           <p>Open a ticket and a real person will follow up by email.</p>
+
         </div>
-        <button type="button" class="new-ticket-btn m3-state" id="newTicketToggleBtn">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-          New ticket
-        </button>
+
+        <button type="button" class="new-ticket-btn m3-state" id="newTicketToggleBtn"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path></svg> New ticket</button>
+
       </div>
+
+
 
       <!-- New ticket -->
+
       <div class="card" id="newTicketCard">
+
         <div class="panel-head">
+
           <h2>New ticket</h2>
+
           <button type="button" id="newTicketCloseBtn" aria-label="Close">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+
           </button>
+
         </div>
 
-        <form id="newTicketForm" class="ticket-form-grid" novalidate>
+
+
+        <form id="newTicketForm" class="ticket-form-grid" novalidate="">
+
           <div class="ticket-form-row">
+
             <div class="field">
+
               <label for="ticketEmail">Email</label>
-              <input id="ticketEmail" type="email" placeholder="you@example.com" required autocomplete="email">
+
+              <input id="ticketEmail" type="email" placeholder="you@example.com" required="" autocomplete="email">
+
               <span class="hint" id="ticketEmailHint">We'll reply to this address.</span>
+
             </div>
+
             <div class="field">
+
               <label for="ticketCategory">Category</label>
+
               <select id="ticketCategory">
+
                 <option value="account">Account &amp; login</option>
+
                 <option value="billing">Billing &amp; purchases</option>
+
                 <option value="bug">Bug report</option>
+
                 <option value="plugin_store">Plugin store</option>
+
                 <option value="other">Other</option>
+
               </select>
+
             </div>
+
           </div>
 
+
+
           <div class="field">
+
             <label for="ticketSubject">Subject</label>
-            <input id="ticketSubject" type="text" placeholder="Short summary of the issue" maxlength="120" required>
+
+            <input id="ticketSubject" type="text" placeholder="Short summary of the issue" maxlength="120" required="">
+
           </div>
 
+
+
           <div class="field">
+
             <label for="ticketMessage">Message</label>
-            <textarea id="ticketMessage" placeholder="Describe what's going on, steps to reproduce, anything that helps." required></textarea>
+
+            <textarea id="ticketMessage" placeholder="Describe what's going on, steps to reproduce, anything that helps." required=""></textarea>
+
           </div>
+
+
 
           <div class="ticket-form-actions">
+
             <span class="guest-note" id="guestNote" style="display:none;">Signed in</span>
+
             <button type="submit" id="submitTicketBtn" class="adobe-btn m3-state">Submit ticket</button>
+
           </div>
+
         </form>
+
       </div>
 
+
+
       <!-- Ticket browser -->
+
       <div class="support-columns" id="supportColumns">
-        <div class="card" id="ticketListCard">
+
+        <div class="card" id="ticketListCard" style="display: block;">
+
           <div class="ticket-list-head">
+
             <h2>Your tickets</h2>
+
           </div>
-          <p class="hint" id="signInHint" style="margin:0 6px 12px; display:none;">
-            <a class="plain-link" href="/login.html">Log in</a> to see your ticket history here.
-          </p>
+
+          <p class="hint" id="signInHint" style="margin: 0px 6px 12px; display: block;"><a class="plain-link" href="/login.html">Log in</a> to see your ticket history here.</p>
+
           <div class="filter-chips" id="filterChips" style="display:none;">
+
             <button type="button" class="filter-chip active" data-filter="all">All</button>
+
             <button type="button" class="filter-chip" data-filter="open">Open</button>
+
             <button type="button" class="filter-chip" data-filter="pending">Pending</button>
+
             <button type="button" class="filter-chip" data-filter="closed">Closed</button>
+
           </div>
+
           <div class="ticket-search" id="ticketSearchWrap" style="display:none;">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+
             <input type="text" id="ticketSearchInput" placeholder="Filter your tickets…" autocomplete="off">
+
           </div>
+
           <div class="ticket-list" id="ticketList"></div>
+
         </div>
+
+
 
         <div class="card thread-placeholder-wrap" id="threadPlaceholder">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+
           Select a ticket to view the conversation.
+
         </div>
 
-        <div class="card" id="ticketThreadCard">
+
+
+        <div class="card" id="ticketThreadCard" style="display: none;">
+
           <div class="thread-header">
+
             <div class="thread-header-left">
-              <button type="button" class="back-link" id="threadBackBtn" style="margin:0;">&larr;</button>
+
+              <button type="button" class="back-link" id="threadBackBtn" style="margin:0;">←</button>
+
               <div>
-                <h2 id="threadSubject">Subject</h2>
-                <div class="thread-meta" id="threadMeta">Category · Opened —</div>
+
+                <h2 id="threadSubject">(no subject)</h2>
+
+                <div class="thread-meta" id="threadMeta">Other · Opened —</div>
+
               </div>
+
             </div>
+
             <div class="thread-header-actions">
+
               <span class="status-pill" id="threadStatusPill">Open</span>
+
               <button type="button" class="thread-status-btn m3-state" id="closeTicketBtn">Mark resolved</button>
+
               <button type="button" class="thread-status-btn m3-state" id="reopenBtn" style="display:none;">Reopen</button>
+
             </div>
+
           </div>
+
+
 
           <div class="thread-scroll" id="threadScroll"></div>
 
+
+
           <div class="composer-wrap">
+
             <form id="replyForm" class="reply-row">
-              <textarea id="replyText" placeholder="Write a reply…" required rows="1"></textarea>
+
+              <textarea id="replyText" placeholder="Write a reply…" required="" rows="1"></textarea>
+
               <button type="submit" class="send-btn m3-state" id="replyBtn" aria-label="Send">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
+
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"></path></svg>
+
               </button>
+
             </form>
+
             <div class="closed-notice" id="closedNotice" style="display:none;">
+
               <span>This ticket is closed — reopen it to keep the conversation going.</span>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
+
+
     </div>
+
   </main>
+
+
 
   <div id="toast" role="status" aria-live="polite"></div>
 
+
+
   <script>
+
     const firebaseConfig = {
+
       apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+
       authDomain: "darkpurpleof-s-website.firebaseapp.com",
+
       projectId: "darkpurpleof-s-website",
+
       storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+
       messagingSenderId: "520651082420",
+
       appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+
     };
+
     if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-    const auth = firebase.auth();
-    const db = firebase.firestore();
 
-    const CATEGORY_LABELS = {
-      account: "Account & login",
-      billing: "Billing & purchases",
-      bug: "Bug report",
-      plugin_store: "Plugin store",
-      other: "Other"
+
+    const auth = firebase.auth();
+
+  const db = firebase.firestore();
+
+  // Language is read from user_data/{email}.lang. English is the fallback.
+  let currentLang = "en";
+  let languageLoadVersion = 0;
+  let authStateVersion = 0;
+  const LANGUAGE_LOCALES = { en: "en-US", es: "es", ru: "ru", ja: "ja", de: "de" };
+  const I18N = {
+    en: {
+      pageTitle:"Support", support:"Support", heroTitle:"How can we help?", heroLead:"Search common questions below, or open a ticket and we'll get back to you.",
+      faqSearch:"Search help articles…", faqHeading:"Frequently asked", articleOne:"article", articleMany:"articles", faqEmpty:"Nothing matches that search — try a different term, or open a ticket below.",
+      stillNeedHelp:"Still need help?", ticketEmailFollowUp:"Open a ticket and a real person will follow up by email.", newTicket:"New ticket", close:"Close",
+      email:"Email", category:"Category", subject:"Subject", subjectPlaceholder:"Short summary of the issue", message:"Message", messagePlaceholder:"Describe what's going on, steps to reproduce, anything that helps.",
+      emailReplyHint:"Replies also show up in your ticket history below.", emailHint:"We'll reply to this address.", signedIn:"Signed in", submitTicket:"Submit ticket", yourTickets:"Your tickets", logIn:"Log in", ticketHistoryHint:"to see your ticket history here.",
+      filterAll:"All", filterOpen:"Open", filterPending:"Pending", filterClosed:"Closed", ticketSearch:"Filter your tickets…", selectTicket:"Select a ticket to view the conversation.",
+      noSubject:"(no subject)", opened:"Opened", markResolved:"Mark resolved", reopen:"Reopen", replyPlaceholder:"Write a reply…", send:"Send", closedNotice:"This ticket is closed — reopen it to keep the conversation going.",
+      categoryAccount:"Account & login", categoryBilling:"Billing & purchases", categoryBug:"Bug report", categoryPluginStore:"Plugin store", categoryOther:"Other",
+      statusOpen:"Open", statusPending:"Pending", statusClosed:"Closed", supportAuthor:"Support", you:"You", today:"Today", yesterday:"Yesterday",
+      noTickets:"No tickets yet — search above or open a new one.", noTicketsFilter:"No tickets match that filter.", loading:"Loading…", loadTicketsError:"Couldn't load your tickets. Try refreshing.", loadConversationError:"Couldn't load this conversation.",
+      enterEmail:"Enter a valid email address.", enterSubject:"Give your ticket a short subject.", enterMessage:"Describe your issue before submitting.", ticketSubmitted:"Ticket submitted — we'll be in touch.", submitError:"Couldn't submit your ticket. Try again.", replyError:"Couldn't send your reply. Try again.", updateError:"Couldn't update the ticket. Try again.",
+      timeNow:"now", minuteShort:"m", hourShort:"h", dayShort:"d",
+      faq:[
+        ["How do I reset my password?","You must be logged in to reset your password, alternatively, if you've forgotten it, you can request a reset link."],
+        ["Can I change the email on my account?","No, you cannot change the email on your account. You can create a new account with the desired email, emails are being discontinued soon, so consider migrating to a username."],
+        ["Where can I see my past purchases?","You can find your purchase history under Transactions."],
+        ["Can I get a refund on a purchase?","No, refunds are not available as stated on the Terms of Service, since DF$ does not posess any real world monetary value, items purchased with DF$ are non-refundable."],
+        ["A plugin I installed isn't showing up","You may need to restart the app for the plugin to be usable, if the issue persists, try updating the app or installing the plugin again. You might need to personally contact the plugin developer if the issue is not resolved, as we can't resolve that issue"],
+        ["How do I publish my own plugin?","Check the developer docs for packaging and signing requirements, then submit it for review from the Plugin Store dashboard."],
+        ["I have a suggestion, not a problem","We read every ticket, feature ideas included — open one under \"Suggestion or feedback\" and tell us what you'd like to see."],
+        ["How do I report a bug effectively?","Include your app version, OS, and clear steps to reproduce. Screenshots or logs speed things up a lot."],
+        ["I have a suggestion, not a problem","We read every ticket, feature ideas included — open one under \"Other\" and tell us what you'd like to see."]
+      ]
+    },
+    es: {
+      pageTitle:"Soporte", support:"Soporte", heroTitle:"¿Cómo podemos ayudarte?", heroLead:"Busca respuestas a preguntas frecuentes o abre un ticket y te responderemos.",
+      faqSearch:"Buscar artículos de ayuda…", faqHeading:"Preguntas frecuentes", articleOne:"artículo", articleMany:"artículos", faqEmpty:"No hay resultados. Prueba con otros términos o abre un ticket.",
+      stillNeedHelp:"¿Sigues necesitando ayuda?", ticketEmailFollowUp:"Abre un ticket y una persona real te responderá por correo electrónico.", newTicket:"Nuevo ticket", close:"Cerrar",
+      email:"Correo electrónico", category:"Categoría", subject:"Asunto", subjectPlaceholder:"Resumen breve del problema", message:"Mensaje", messagePlaceholder:"Describe qué sucede, cómo reproducirlo y cualquier otro detalle útil.",
+      emailReplyHint:"También verás las respuestas en el historial de tus tickets.", emailHint:"Responderemos a esta dirección.", signedIn:"Sesión iniciada", submitTicket:"Enviar ticket", yourTickets:"Tus tickets", logIn:"Iniciar sesión", ticketHistoryHint:"para ver aquí el historial de tus tickets.",
+      filterAll:"Todos", filterOpen:"Abiertos", filterPending:"Pendientes", filterClosed:"Cerrados", ticketSearch:"Filtrar tus tickets…", selectTicket:"Selecciona un ticket para ver la conversación.",
+      noSubject:"(sin asunto)", opened:"Abierto", markResolved:"Marcar como resuelto", reopen:"Reabrir", replyPlaceholder:"Escribe una respuesta…", send:"Enviar", closedNotice:"Este ticket está cerrado. Vuelve a abrirlo para continuar la conversación.",
+      categoryAccount:"Cuenta e inicio de sesión", categoryBilling:"Pagos y compras", categoryBug:"Informe de errores", categoryPluginStore:"Tienda de plugins", categoryOther:"Otro",
+      statusOpen:"Abierto", statusPending:"Pendiente", statusClosed:"Cerrado", supportAuthor:"Soporte", you:"Tú", today:"Hoy", yesterday:"Ayer",
+      noTickets:"Todavía no tienes tickets. Busca arriba o crea uno nuevo.", noTicketsFilter:"Ningún ticket coincide con ese filtro.", loading:"Cargando…", loadTicketsError:"No se pudieron cargar tus tickets. Inténtalo de nuevo.", loadConversationError:"No se pudo cargar esta conversación.",
+      enterEmail:"Introduce una dirección de correo válida.", enterSubject:"Escribe un asunto breve para el ticket.", enterMessage:"Describe el problema antes de enviarlo.", ticketSubmitted:"Ticket enviado. Nos pondremos en contacto contigo.", submitError:"No se pudo enviar el ticket. Inténtalo de nuevo.", replyError:"No se pudo enviar la respuesta. Inténtalo de nuevo.", updateError:"No se pudo actualizar el ticket. Inténtalo de nuevo.",
+      timeNow:"ahora", minuteShort:" min", hourShort:" h", dayShort:" d",
+      faq:[
+        ["¿Cómo restablezco mi contraseña?","Debes iniciar sesión para restablecer tu contraseña. Si la olvidaste, puedes solicitar un enlace de restablecimiento."],
+        ["¿Puedo cambiar el correo de mi cuenta?","No puedes cambiar el correo de tu cuenta. Puedes crear otra cuenta con el correo deseado. Los correos dejarán de usarse pronto, así que considera migrar a un nombre de usuario."],
+        ["¿Dónde puedo ver mis compras anteriores?","Encontrarás tu historial de compras en Transacciones."],
+        ["¿Puedo recibir un reembolso?","No se ofrecen reembolsos, tal como se indica en las Condiciones del servicio. DF$ no tiene valor monetario real y las compras realizadas con DF$ no son reembolsables."],
+        ["Un plugin que instalé no aparece","Es posible que debas reiniciar la aplicación. Si el problema continúa, actualiza la aplicación o vuelve a instalar el plugin. Si no se resuelve, contacta directamente con su desarrollador."],
+        ["¿Cómo publico mi propio plugin?","Consulta la documentación para desarrolladores sobre cómo empaquetar y firmar plugins; después, envíalo a revisión desde el panel de la Tienda de plugins."],
+        ["Tengo una sugerencia, no un problema","Leemos todos los tickets, incluidas las ideas para funciones. Abre uno en «Sugerencias o comentarios» y cuéntanos qué te gustaría ver."],
+        ["¿Cómo informo de un error de forma eficaz?","Incluye la versión de la aplicación, el sistema operativo y pasos claros para reproducir el error. Las capturas de pantalla y los registros ayudan mucho."],
+        ["Tengo una sugerencia, no un problema","Leemos todos los tickets, incluidas las ideas para funciones. Abre uno en «Otro» y cuéntanos qué te gustaría ver."]
+      ]
+    },
+    ru: {
+      pageTitle:"Поддержка", support:"Поддержка", heroTitle:"Чем мы можем помочь?", heroLead:"Найдите ответ на частый вопрос или создайте заявку — мы ответим вам.",
+      faqSearch:"Поиск по справке…", faqHeading:"Часто задаваемые вопросы", articleOne:"статья", articleMany:"статей", faqEmpty:"Ничего не найдено. Попробуйте другой запрос или создайте заявку.",
+      stillNeedHelp:"Нужна дополнительная помощь?", ticketEmailFollowUp:"Создайте заявку, и сотрудник поддержки ответит вам по электронной почте.", newTicket:"Новая заявка", close:"Закрыть",
+      email:"Электронная почта", category:"Категория", subject:"Тема", subjectPlaceholder:"Кратко опишите проблему", message:"Сообщение", messagePlaceholder:"Опишите проблему, шаги для её воспроизведения и другие полезные подробности.",
+      emailReplyHint:"Ответы также будут отображаться в истории ваших заявок ниже.", emailHint:"Мы ответим на этот адрес.", signedIn:"Вы вошли в аккаунт", submitTicket:"Отправить заявку", yourTickets:"Ваши заявки", logIn:"Войти", ticketHistoryHint:", чтобы увидеть здесь историю заявок.",
+      filterAll:"Все", filterOpen:"Открытые", filterPending:"Ожидают ответа", filterClosed:"Закрытые", ticketSearch:"Фильтр заявок…", selectTicket:"Выберите заявку, чтобы просмотреть переписку.",
+      noSubject:"(без темы)", opened:"Создана", markResolved:"Отметить решённой", reopen:"Открыть снова", replyPlaceholder:"Напишите ответ…", send:"Отправить", closedNotice:"Заявка закрыта — откройте её снова, чтобы продолжить переписку.",
+      categoryAccount:"Аккаунт и вход", categoryBilling:"Платежи и покупки", categoryBug:"Сообщить об ошибке", categoryPluginStore:"Магазин плагинов", categoryOther:"Другое",
+      statusOpen:"Открыта", statusPending:"Ожидает ответа", statusClosed:"Закрыта", supportAuthor:"Поддержка", you:"Вы", today:"Сегодня", yesterday:"Вчера",
+      noTickets:"Заявок пока нет — воспользуйтесь поиском выше или создайте новую.", noTicketsFilter:"Нет заявок, соответствующих фильтру.", loading:"Загрузка…", loadTicketsError:"Не удалось загрузить заявки. Попробуйте обновить страницу.", loadConversationError:"Не удалось загрузить переписку.",
+      enterEmail:"Введите действительный адрес электронной почты.", enterSubject:"Укажите краткую тему заявки.", enterMessage:"Опишите проблему перед отправкой.", ticketSubmitted:"Заявка отправлена — скоро мы свяжемся с вами.", submitError:"Не удалось отправить заявку. Попробуйте ещё раз.", replyError:"Не удалось отправить ответ. Попробуйте ещё раз.", updateError:"Не удалось обновить заявку. Попробуйте ещё раз.",
+      timeNow:"сейчас", minuteShort:" мин", hourShort:" ч", dayShort:" д",
+      faq:[
+        ["Как сбросить пароль?","Чтобы сбросить пароль, нужно войти в аккаунт. Если вы забыли пароль, запросите ссылку для его сброса."],
+        ["Можно ли изменить адрес почты аккаунта?","Нет, изменить адрес почты нельзя. Вы можете создать новый аккаунт с нужным адресом. Поддержка электронной почты скоро прекратится, поэтому рекомендуем перейти на имя пользователя."],
+        ["Где посмотреть историю покупок?","История покупок находится в разделе «Транзакции»."],
+        ["Можно ли вернуть покупку?","Возврат средств не предусмотрен Условиями использования: DF$ не имеет реальной денежной стоимости, а покупки за DF$ не подлежат возврату."],
+        ["Установленный плагин не отображается","Возможно, потребуется перезапустить приложение. Если проблема останется, обновите приложение или переустановите плагин. Если это не поможет, обратитесь к разработчику плагина."],
+        ["Как опубликовать собственный плагин?","Изучите документацию разработчика о требованиях к упаковке и подписи, затем отправьте плагин на проверку через панель магазина плагинов."],
+        ["У меня есть предложение, а не проблема","Мы читаем все заявки, включая идеи новых функций. Создайте заявку в категории «Предложения и отзывы» и расскажите, что хотели бы увидеть."],
+        ["Как правильно сообщить об ошибке?","Укажите версию приложения, операционную систему и чёткие шаги для воспроизведения ошибки. Скриншоты и журналы очень помогают."],
+        ["У меня есть предложение, а не проблема","Мы читаем все заявки, включая идеи новых функций. Создайте заявку в категории «Другое» и расскажите, что хотели бы увидеть."]
+      ]
+    },
+    ja: {
+      pageTitle:"サポート", support:"サポート", heroTitle:"どのようなご用件ですか？", heroLead:"よくある質問を検索するか、お問い合わせチケットを作成してください。担当者が返信します。",
+      faqSearch:"ヘルプ記事を検索…", faqHeading:"よくある質問", articleOne:"件の記事", articleMany:"件の記事", faqEmpty:"一致する結果がありません。別の語句で検索するか、チケットを作成してください。",
+      stillNeedHelp:"まだお困りですか？", ticketEmailFollowUp:"チケットを作成すると、担当者がメールで返信します。", newTicket:"新しいチケット", close:"閉じる",
+      email:"メールアドレス", category:"カテゴリ", subject:"件名", subjectPlaceholder:"問題の概要を入力", message:"メッセージ", messagePlaceholder:"問題の内容、再現手順、その他の参考情報を記入してください。",
+      emailReplyHint:"返信は下のチケット履歴にも表示されます。", emailHint:"このアドレスに返信します。", signedIn:"ログイン中", submitTicket:"チケットを送信", yourTickets:"自分のチケット", logIn:"ログイン", ticketHistoryHint:"すると、ここでチケット履歴を確認できます。",
+      filterAll:"すべて", filterOpen:"未解決", filterPending:"保留中", filterClosed:"終了", ticketSearch:"チケットを絞り込む…", selectTicket:"チケットを選択して会話を表示します。",
+      noSubject:"(件名なし)", opened:"作成日", markResolved:"解決済みにする", reopen:"再開", replyPlaceholder:"返信を入力…", send:"送信", closedNotice:"このチケットは終了しています。会話を続けるには再開してください。",
+      categoryAccount:"アカウントとログイン", categoryBilling:"請求と購入", categoryBug:"不具合の報告", categoryPluginStore:"プラグインストア", categoryOther:"その他",
+      statusOpen:"未解決", statusPending:"保留中", statusClosed:"終了", supportAuthor:"サポート", you:"自分", today:"今日", yesterday:"昨日",
+      noTickets:"チケットはまだありません。上で検索するか、新しく作成してください。", noTicketsFilter:"条件に一致するチケットはありません。", loading:"読み込み中…", loadTicketsError:"チケットを読み込めませんでした。ページを再読み込みしてください。", loadConversationError:"会話を読み込めませんでした。",
+      enterEmail:"有効なメールアドレスを入力してください。", enterSubject:"チケットの件名を入力してください。", enterMessage:"送信する前に問題の内容を記入してください。", ticketSubmitted:"チケットを送信しました。折り返しご連絡します。", submitError:"チケットを送信できませんでした。もう一度お試しください。", replyError:"返信を送信できませんでした。もう一度お試しください。", updateError:"チケットを更新できませんでした。もう一度お試しください。",
+      timeNow:"たった今", minuteShort:"分前", hourShort:"時間前", dayShort:"日前",
+      faq:[
+        ["パスワードをリセットするには？","パスワードのリセットにはログインが必要です。忘れた場合は、リセット用リンクをリクエストできます。"],
+        ["アカウントのメールアドレスは変更できますか？","メールアドレスは変更できません。希望するアドレスで新しいアカウントを作成できます。メールのサポートはまもなく終了するため、ユーザー名への移行をご検討ください。"],
+        ["過去の購入履歴はどこで確認できますか？","購入履歴は「取引」セクションで確認できます。"],
+        ["購入したアイテムの返金はできますか？","利用規約に記載のとおり、返金には対応していません。DF$に現実の金銭的価値はなく、DF$で購入したアイテムは返金対象外です。"],
+        ["インストールしたプラグインが表示されません","アプリの再起動が必要な場合があります。解決しない場合はアプリを更新するか、プラグインを再インストールしてください。それでも解決しない場合はプラグインの開発者にお問い合わせください。"],
+        ["自分のプラグインを公開するには？","開発者向けドキュメントでパッケージ化と署名の要件を確認し、プラグインストアのダッシュボードから審査に提出してください。"],
+        ["問題ではなく、提案があります","新機能のアイデアを含め、すべてのチケットを確認しています。「提案・フィードバック」でチケットを作成し、追加してほしい機能を教えてください。"],
+        ["効果的に不具合を報告するには？","アプリのバージョン、OS、再現手順を明記してください。スクリーンショットやログも役立ちます。"],
+        ["問題ではなく、提案があります","新機能のアイデアを含め、すべてのチケットを確認しています。「その他」でチケットを作成し、追加してほしい機能を教えてください。"]
+      ]
+    },
+    de: {
+      pageTitle:"Support", support:"Support", heroTitle:"Wie können wir helfen?", heroLead:"Suche unten nach häufigen Fragen oder erstelle ein Ticket. Wir melden uns bei dir.",
+      faqSearch:"Hilfeartikel suchen…", faqHeading:"Häufig gestellte Fragen", articleOne:"Artikel", articleMany:"Artikel", faqEmpty:"Keine Treffer. Versuche einen anderen Suchbegriff oder erstelle unten ein Ticket.",
+      stillNeedHelp:"Brauchst du weitere Hilfe?", ticketEmailFollowUp:"Erstelle ein Ticket. Eine echte Person meldet sich per E-Mail bei dir.", newTicket:"Neues Ticket", close:"Schließen",
+      email:"E-Mail", category:"Kategorie", subject:"Betreff", subjectPlaceholder:"Kurze Zusammenfassung des Problems", message:"Nachricht", messagePlaceholder:"Beschreibe das Problem, die Schritte zur Reproduktion und weitere hilfreiche Details.",
+      emailReplyHint:"Antworten erscheinen auch unten in deinem Ticketverlauf.", emailHint:"Wir antworten an diese Adresse.", signedIn:"Angemeldet", submitTicket:"Ticket senden", yourTickets:"Deine Tickets", logIn:"Anmelden", ticketHistoryHint:", um deinen Ticketverlauf hier zu sehen.",
+      filterAll:"Alle", filterOpen:"Offen", filterPending:"Ausstehend", filterClosed:"Geschlossen", ticketSearch:"Tickets filtern…", selectTicket:"Wähle ein Ticket aus, um den Verlauf anzuzeigen.",
+      noSubject:"(kein Betreff)", opened:"Erstellt", markResolved:"Als gelöst markieren", reopen:"Wieder öffnen", replyPlaceholder:"Antwort schreiben…", send:"Senden", closedNotice:"Dieses Ticket ist geschlossen. Öffne es erneut, um das Gespräch fortzusetzen.",
+      categoryAccount:"Konto und Anmeldung", categoryBilling:"Abrechnung und Käufe", categoryBug:"Fehler melden", categoryPluginStore:"Plugin-Store", categoryOther:"Sonstiges",
+      statusOpen:"Offen", statusPending:"Ausstehend", statusClosed:"Geschlossen", supportAuthor:"Support", you:"Du", today:"Heute", yesterday:"Gestern",
+      noTickets:"Noch keine Tickets. Nutze die Suche oben oder erstelle ein neues Ticket.", noTicketsFilter:"Keine Tickets entsprechen diesem Filter.", loading:"Wird geladen…", loadTicketsError:"Tickets konnten nicht geladen werden. Versuche, die Seite neu zu laden.", loadConversationError:"Der Gesprächsverlauf konnte nicht geladen werden.",
+      enterEmail:"Gib eine gültige E-Mail-Adresse ein.", enterSubject:"Gib deinem Ticket einen kurzen Betreff.", enterMessage:"Beschreibe das Problem, bevor du es sendest.", ticketSubmitted:"Ticket gesendet. Wir melden uns bei dir.", submitError:"Das Ticket konnte nicht gesendet werden. Versuche es erneut.", replyError:"Deine Antwort konnte nicht gesendet werden. Versuche es erneut.", updateError:"Das Ticket konnte nicht aktualisiert werden. Versuche es erneut.",
+      timeNow:"jetzt", minuteShort:" Min.", hourShort:" Std.", dayShort:" Tg.",
+      faq:[
+        ["Wie setze ich mein Passwort zurück?","Du musst angemeldet sein, um dein Passwort zurückzusetzen. Wenn du es vergessen hast, kannst du einen Link zum Zurücksetzen anfordern."],
+        ["Kann ich die E-Mail-Adresse meines Kontos ändern?","Nein, du kannst die E-Mail-Adresse deines Kontos nicht ändern. Du kannst ein neues Konto mit der gewünschten Adresse erstellen. E-Mail-Adressen werden bald eingestellt; erwäge daher den Wechsel zu einem Benutzernamen."],
+        ["Wo finde ich meine vergangenen Käufe?","Deinen Kaufverlauf findest du unter Transaktionen."],
+        ["Kann ich einen Kauf erstatten lassen?","Wie in den Nutzungsbedingungen angegeben, sind Erstattungen nicht möglich. DF$ hat keinen realen Geldwert und mit DF$ gekaufte Artikel sind nicht erstattungsfähig."],
+        ["Ein installiertes Plugin wird nicht angezeigt","Möglicherweise musst du die App neu starten. Falls das Problem weiterhin besteht, aktualisiere die App oder installiere das Plugin erneut. Andernfalls wende dich direkt an den Plugin-Entwickler."],
+        ["Wie veröffentliche ich ein eigenes Plugin?","Sieh in der Entwicklerdokumentation die Anforderungen an Paketierung und Signierung nach und reiche es anschließend über das Plugin-Store-Dashboard zur Prüfung ein."],
+        ["Ich habe einen Vorschlag, kein Problem","Wir lesen alle Tickets, auch Ideen für neue Funktionen. Erstelle ein Ticket unter „Vorschläge oder Feedback“ und teile uns mit, was du gerne sehen würdest."],
+        ["Wie melde ich einen Fehler möglichst hilfreich?","Gib die App-Version, das Betriebssystem und klare Schritte zur Reproduktion an. Screenshots oder Protokolle helfen sehr."],
+        ["Ich habe einen Vorschlag, kein Problem","Wir lesen alle Tickets, auch Ideen für neue Funktionen. Erstelle ein Ticket unter „Sonstiges“ und teile uns mit, was du gerne sehen würdest."]
+      ]
+    }
+  };
+
+  function tr(key) {
+    return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key;
+  }
+
+  function translatedStatus(status) {
+    return ({ open: tr("statusOpen"), pending: tr("statusPending"), closed: tr("statusClosed") })[status] || status || tr("statusOpen");
+  }
+
+  function categoryTranslation(key) {
+    return ({
+      account: tr("categoryAccount"), billing: tr("categoryBilling"), bug: tr("categoryBug"),
+      plugin_store: tr("categoryPluginStore"), other: tr("categoryOther"), suggestion: tr("categoryOther")
+    })[key] || tr("categoryOther");
+  }
+
+  function replaceStaticText(selector, oldText, newText) {
+    const root = document.querySelector(selector);
+    if (!root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      const original = node.__i18nOriginal || node.nodeValue;
+      node.__i18nOriginal = original;
+      if (original.includes(oldText)) node.nodeValue = original.replace(oldText, newText);
+    });
+  }
+
+  function applyTranslations() {
+    document.documentElement.lang = currentLang;
+    document.title = tr("pageTitle");
+    const setText = (selector, value) => { const el = document.querySelector(selector); if (el) el.textContent = value; };
+    const setPlaceholder = (selector, value) => { const el = document.querySelector(selector); if (el) el.placeholder = value; };
+    const setLabel = (selector, value) => { const el = document.querySelector(selector); if (el) el.textContent = value; };
+    const setButtonLabel = (selector, value) => {
+      const el = document.querySelector(selector);
+      if (!el) return;
+      const svg = el.querySelector("svg");
+      el.replaceChildren();
+      if (svg) { el.appendChild(svg); el.appendChild(document.createTextNode(" " + value)); }
+      else el.textContent = value;
     };
+
+    
+    document.querySelector("main.wrapper")?.setAttribute("aria-label", tr("support"));
+    setText(".support-hero h1", tr("heroTitle"));
+    setText(".support-hero p.lead", tr("heroLead"));
+    setPlaceholder("#faqSearch", tr("faqSearch"));
+    setText(".section-heading h2", tr("faqHeading"));
+    setText(".snh-text h3", tr("stillNeedHelp"));
+    setText(".snh-text p", tr("ticketEmailFollowUp"));
+    setButtonLabel("#newTicketToggleBtn", tr("newTicket"));
+    setText("#newTicketCard .panel-head h2", tr("newTicket"));
+    document.getElementById("newTicketCloseBtn")?.setAttribute("aria-label", tr("close"));
+    setLabel('label[for="ticketEmail"]', tr("email"));
+    setLabel('label[for="ticketCategory"]', tr("category"));
+    setLabel('label[for="ticketSubject"]', tr("subject"));
+    setLabel('label[for="ticketMessage"]', tr("message"));
+    setPlaceholder("#ticketSubject", tr("subjectPlaceholder"));
+    setPlaceholder("#ticketMessage", tr("messagePlaceholder"));
+    setText("#submitTicketBtn", tr("submitTicket"));
+    setText("#ticketListCard h2", tr("yourTickets"));
+    const signInLink = document.querySelector("#signInHint a");
+    if (signInLink) signInLink.textContent = tr("logIn");
+    if (document.getElementById("signInHint")) {
+      const hint = document.getElementById("signInHint");
+      const link = hint.querySelector("a");
+      hint.innerHTML = "";
+      if (link) { hint.appendChild(link); hint.appendChild(document.createTextNode(" " + tr("ticketHistoryHint"))); }
+    }
+    const filterLabels = { all: "filterAll", open: "filterOpen", pending: "filterPending", closed: "filterClosed" };
+    document.querySelectorAll(".filter-chip").forEach(btn => { btn.textContent = tr(filterLabels[btn.dataset.filter] || "filterAll"); });
+    setPlaceholder("#ticketSearchInput", tr("ticketSearch"));
+    replaceStaticText("#threadPlaceholder", "Select a ticket to view the conversation.", tr("selectTicket"));
+    setText("#threadSubject", tr("noSubject"));
+    setText("#threadMeta", tr("categoryOther") + " · " + tr("opened") + " —");
+    setText("#threadStatusPill", tr("statusOpen"));
+    setText("#closeTicketBtn", tr("markResolved"));
+    setText("#reopenBtn", tr("reopen"));
+    setPlaceholder("#replyText", tr("replyPlaceholder"));
+    document.getElementById("replyBtn")?.setAttribute("aria-label", tr("send"));
+    replaceStaticText("#closedNotice", "This ticket is closed — reopen it to keep the conversation going.", tr("closedNotice"));
+
+    const categoryLabels = {
+      account: tr("categoryAccount"), billing: tr("categoryBilling"), bug: tr("categoryBug"),
+      plugin_store: tr("categoryPluginStore"), other: tr("categoryOther")
+    };
+    Object.assign(CATEGORY_LABELS, categoryLabels);
+    document.querySelectorAll("#ticketCategory option").forEach(option => {
+      if (categoryLabels[option.value]) option.textContent = categoryLabels[option.value];
+    });
+    if (faqList) renderFaqList(null, faqSearch.value);
+    if (quickTopics) renderQuickTopics();
+    if (ticketList && ticketsCache) renderTicketList();
+    if (currentTicketId && ticketsCache.has(currentTicketId)) {
+      const ticket = ticketsCache.get(currentTicketId);
+      threadSubject.textContent = ticket.subject || tr("noSubject");
+      threadMeta.textContent = (CATEGORY_LABELS[ticket.category] || tr("categoryOther")) + " · " + tr("opened") + " " + fullDateTime(ticket.createdAt);
+      threadStatusPill.textContent = translatedStatus(currentTicketStatus);
+    }
+  }
+
+  async function loadLanguage(email) {
+    const requestVersion = ++languageLoadVersion;
+    let language = "en";
+    if (email) {
+      try {
+        const userDoc = await db.collection("user_data").doc(email).get();
+        const storedLanguage = userDoc.exists ? userDoc.data().lang : null;
+        if (typeof storedLanguage === "string") {
+          const candidate = storedLanguage.trim().toLowerCase();
+          if (["en", "es", "ru", "ja", "de"].includes(candidate)) language = candidate;
+        }
+      } catch (error) {
+        console.warn("Could not load the user's language preference; using English.", error);
+      }
+    }
+    if (requestVersion !== languageLoadVersion) return;
+    currentLang = language;
+    applyTranslations();
+  }
+
+  const CATEGORY_LABELS = {
+
+      account: "Account & login",
+
+      billing: "Billing & purchases",
+
+      bug: "Bug report",
+
+      plugin_store: "Plugin store",
+
+      other: "Other"
+
+    };
+
+
 
     const CATEGORY_ICONS = {
+
       account: '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
+
       billing: '<rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+
       bug: '<path d="M9 5a3 3 0 1 1 6 0M6 10h12M4 14h3M17 14h3M5 19l2.5-2.5M19 19l-2.5-2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="7" y="8" width="10" height="10" rx="5" stroke="currentColor" stroke-width="1.8"/>',
+
       plugin_store: '<rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M16.5 13v7M13 16.5h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+
       other: '<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 16v.01M12 8a2.2 2.2 0 0 1 2.2 2.2c0 1.6-2.2 1.8-2.2 3.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
+
     };
 
+
+
     // ---------- FAQ content ----------
+
     const FAQS = [
+
       { category: "account", q: "How do I reset my password?", a: "You must be logged in to reset your password, alternatively, if you've forgotten it, you can request a reset link." },
+
       { category: "account", q: "Can I change the email on my account?", a: "No, you cannot change the email on your account. You can create a new account with the desired email, emails are being discontinued soon, so consider migrating to a username." },
-      { category: "billing", q: "Where can I see my past purchases?", a: "Your purchase history lives under on transactions." },
+
+      { category: "billing", q: "Where can I see my past purchases?", a: "You can find your purchase history under Transactions." },
+
       { category: "billing", q: "Can I get a refund on a purchase?", a: "No, refunds are not available as stated on the Terms of Service, since DF$ does not posess any real world monetary value, items purchased with DF$ are non-refundable." },
+
       { category: "plugin_store", q: "A plugin I installed isn't showing up", a: "You may need to restart the app for the plugin to be usable, if the issue persists, try updating the app or installing the plugin again. You might need to personally contact the plugin developer if the issue is not resolved, as we can't resolve that issue" },
+
       { category: "plugin_store", q: "How do I publish my own plugin?", a: "Check the developer docs for packaging and signing requirements, then submit it for review from the Plugin Store dashboard." },
+
       { category: "suggestion", q: "I have a suggestion, not a problem", a: "We read every ticket, feature ideas included — open one under \"Suggestion or feedback\" and tell us what you'd like to see." },
+
       { category: "bug", q: "How do I report a bug effectively?", a: "Include your app version, OS, and clear steps to reproduce. Screenshots or logs speed things up a lot." },
+
       { category: "other", q: "I have a suggestion, not a problem", a: "We read every ticket, feature ideas included — open one under \"Other\" and tell us what you'd like to see." }
+
     ];
 
+
+
     const faqList = document.getElementById("faqList");
+
     const faqCount = document.getElementById("faqCount");
+
     const faqSearch = document.getElementById("faqSearch");
+
     const quickTopics = document.getElementById("quickTopics");
 
+
+
     function renderQuickTopics() {
+
       quickTopics.innerHTML = "";
+
       Object.entries(CATEGORY_LABELS).forEach(([key, label]) => {
+
         const count = FAQS.filter(f => f.category === key).length;
+
         const tile = document.createElement("button");
+
         tile.type = "button";
+
         tile.className = "topic-tile m3-state";
+
         tile.innerHTML = `
+
           <div class="topic-icon cat-${key}"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">${CATEGORY_ICONS[key]}</svg></div>
+
           <div class="topic-name">${label}</div>
-          <div class="topic-desc">${count} article${count === 1 ? "" : "s"}</div>
+
+          <div class="topic-desc">${count} ${count === 1 ? tr("articleOne") : tr("articleMany")}</div>
+
         `;
+
         tile.addEventListener("click", () => {
+
           faqSearch.value = "";
+
           renderFaqList(key);
+
           document.querySelector(".faq-section").scrollIntoView({ behavior: "smooth", block: "start" });
+
         });
+
         quickTopics.appendChild(tile);
+
       });
+
     }
+
+
 
     let openFaqIndex = -1;
 
+
+
     function renderFaqList(categoryFilter, searchTerm) {
+
       const term = (searchTerm || "").trim().toLowerCase();
+
       const filtered = FAQS
-        .map((f, i) => ({ ...f, i }))
+        .map((f, i) => ({ ...f, q: (I18N[currentLang].faq[i] || I18N.en.faq[i])[0], a: (I18N[currentLang].faq[i] || I18N.en.faq[i])[1], i }))
+
         .filter(f => !categoryFilter || f.category === categoryFilter)
+
         .filter(f => !term || f.q.toLowerCase().includes(term) || f.a.toLowerCase().includes(term));
 
-      faqCount.textContent = filtered.length + " article" + (filtered.length === 1 ? "" : "s");
+
+
+      faqCount.textContent = filtered.length + " " + (filtered.length === 1 ? tr("articleOne") : tr("articleMany"));
+
+
 
       if (filtered.length === 0) {
-        faqList.innerHTML = '<div class="faq-empty">Nothing matches that search — try a different term, or open a ticket below.</div>';
+
+        faqList.innerHTML = `<div class="faq-empty">${tr("faqEmpty")}</div>`;
+
         return;
+
       }
 
+
+
       faqList.innerHTML = "";
+
       filtered.forEach((f) => {
+
         const item = document.createElement("div");
+
         item.className = "faq-item" + (f.i === openFaqIndex ? " open" : "");
+
         item.innerHTML = `
+
           <button type="button" class="faq-question">
+
             <span>${f.q}</span>
+
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+
           </button>
+
           <div class="faq-answer"><div class="faq-answer-inner">${f.a}</div></div>
+
         `;
+
         item.querySelector(".faq-question").addEventListener("click", () => {
+
           openFaqIndex = openFaqIndex === f.i ? -1 : f.i;
+
           renderFaqList(categoryFilter, searchTerm);
+
         });
+
         faqList.appendChild(item);
+
       });
+
     }
+
+
 
     faqSearch.addEventListener("input", () => renderFaqList(null, faqSearch.value));
 
+
+
     renderQuickTopics();
+
     renderFaqList(null, "");
 
+
+
     function showToast(message, color = "purple", duration = 3500) {
+
       const toast = document.getElementById("toast");
+
       toast.textContent = message;
+
       toast.className = color;
+
       toast.style.display = "block";
+
       setTimeout(() => {
+
         toast.style.display = "none";
+
         toast.className = "";
+
       }, duration);
+
     }
+
+
 
     function toDate(ts) {
+
       if (!ts) return new Date();
+
       return ts.toDate ? ts.toDate() : new Date(ts);
+
     }
+
+
 
     // Compact relative time for list rows ("2m", "3h", "5d", then a date)
+
     function relativeTime(ts) {
+
       const d = toDate(ts);
+
       const diffMs = Date.now() - d.getTime();
+
       const mins = Math.round(diffMs / 60000);
-      if (mins < 1) return "now";
-      if (mins < 60) return mins + "m";
+
+      if (mins < 1) return tr("timeNow");
+      if (mins < 60) return mins + tr("minuteShort");
       const hours = Math.round(mins / 60);
-      if (hours < 24) return hours + "h";
+      if (hours < 24) return hours + tr("hourShort");
       const days = Math.round(hours / 24);
-      if (days < 7) return days + "d";
-      return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      if (days < 7) return days + tr("dayShort");
+      return d.toLocaleDateString(LANGUAGE_LOCALES[currentLang], { month: "short", day: "numeric" });
+
     }
+
+
 
     function fullDateTime(ts) {
+
       const d = toDate(ts);
-      return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) +
-        " " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+      return d.toLocaleDateString(LANGUAGE_LOCALES[currentLang], { month: "short", day: "numeric", year: "numeric" }) +
+      " " + d.toLocaleTimeString(LANGUAGE_LOCALES[currentLang], { hour: "numeric", minute: "2-digit" });
+
     }
+
+
 
     function shortTime(ts) {
-      return toDate(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+      return toDate(ts).toLocaleTimeString(LANGUAGE_LOCALES[currentLang], { hour: "numeric", minute: "2-digit" });
+
     }
+
+
 
     function dayLabel(ts) {
+
       const d = toDate(ts);
+
       const today = new Date();
+
       const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+
       const sameDay = (a, b) => a.toDateString() === b.toDateString();
-      if (sameDay(d, today)) return "Today";
-      if (sameDay(d, yesterday)) return "Yesterday";
-      return d.toLocaleDateString(undefined, { month: "long", day: "numeric", year: d.getFullYear() !== today.getFullYear() ? "numeric" : undefined });
+
+      if (sameDay(d, today)) return tr("today");
+
+      if (sameDay(d, yesterday)) return tr("yesterday");
+
+      return d.toLocaleDateString(LANGUAGE_LOCALES[currentLang], { month: "long", day: "numeric", year: d.getFullYear() !== today.getFullYear() ? "numeric" : undefined });
+
     }
+
+
 
     function initialFor(email) {
+
       return (email && email[0] ? email[0] : "?").toUpperCase();
+
     }
 
+
+
     // ---------- DOM refs ----------
+
     const ticketEmailInput = document.getElementById("ticketEmail");
+
     const ticketEmailHint = document.getElementById("ticketEmailHint");
+
     const guestNote = document.getElementById("guestNote");
+
     const signInHint = document.getElementById("signInHint");
+
     const ticketList = document.getElementById("ticketList");
+
     const ticketListCard = document.getElementById("ticketListCard");
+
     const ticketThreadCard = document.getElementById("ticketThreadCard");
+
     const threadPlaceholder = document.getElementById("threadPlaceholder");
+
     const threadBackBtn = document.getElementById("threadBackBtn");
+
     const threadSubject = document.getElementById("threadSubject");
+
     const threadMeta = document.getElementById("threadMeta");
+
     const threadStatusPill = document.getElementById("threadStatusPill");
+
     const threadScroll = document.getElementById("threadScroll");
+
     const replyForm = document.getElementById("replyForm");
+
     const replyText = document.getElementById("replyText");
+
     const replyBtn = document.getElementById("replyBtn");
+
     const closedNotice = document.getElementById("closedNotice");
+
     const reopenBtn = document.getElementById("reopenBtn");
+
     const closeTicketBtn = document.getElementById("closeTicketBtn");
+
     const newTicketCard = document.getElementById("newTicketCard");
+
     const newTicketToggleBtn = document.getElementById("newTicketToggleBtn");
+
     const newTicketCloseBtn = document.getElementById("newTicketCloseBtn");
+
     const filterChips = document.getElementById("filterChips");
+
     const ticketSearchWrap = document.getElementById("ticketSearchWrap");
+
     const ticketSearchInput = document.getElementById("ticketSearchInput");
 
+
+
     let currentUserEmail = null;
+
     let currentTicketId = null;
+
     let currentTicketStatus = null;
+
     let ticketsCache = new Map();
+
     let ticketsUnsub = null;
+
     let messagesUnsub = null;
+
     let activeStatusFilter = "all";
+
+
 
     const isDesktop = () => window.matchMedia("(min-width: 860px)").matches;
 
+
+
     // ---------- New ticket panel toggle ----------
+
     function openNewTicketPanel(prefillCategory) {
+
       if (prefillCategory) document.getElementById("ticketCategory").value = prefillCategory;
+
       newTicketCard.style.display = "block";
+
       newTicketCard.scrollIntoView({ behavior: "smooth", block: "start" });
+
     }
+
     function closeNewTicketPanel() { newTicketCard.style.display = "none"; }
+
     newTicketToggleBtn.addEventListener("click", () => openNewTicketPanel());
+
     newTicketCloseBtn.addEventListener("click", closeNewTicketPanel);
 
+
+
     function refreshDesktopPlaceholder() {
+
       if (isDesktop() && !currentTicketId) {
+
         threadPlaceholder.classList.add("desktop-visible");
+
       } else {
+
         threadPlaceholder.classList.remove("desktop-visible");
+
       }
+
     }
+
     window.addEventListener("resize", refreshDesktopPlaceholder);
 
+
+
     // auto-grow the composer textarea
+
     replyText.addEventListener("input", () => {
+
       replyText.style.height = "auto";
+
       replyText.style.height = Math.min(replyText.scrollHeight, 120) + "px";
+
     });
+
     replyText.addEventListener("keydown", (e) => {
+
       if (e.key === "Enter" && !e.shiftKey) {
+
         e.preventDefault();
+
         replyForm.requestSubmit();
+
       }
+
     });
+
+
 
     // ---------- Filter chips + search ----------
+
     filterChips.addEventListener("click", (e) => {
+
       const btn = e.target.closest(".filter-chip");
+
       if (!btn) return;
+
       activeStatusFilter = btn.dataset.filter;
+
       Array.from(filterChips.children).forEach(c => c.classList.toggle("active", c === btn));
+
       renderTicketList();
+
     });
+
     ticketSearchInput.addEventListener("input", renderTicketList);
 
+
+
     // ---------- Auth state ----------
-    auth.onAuthStateChanged((user) => {
+
+    auth.onAuthStateChanged(async (user) => {
+      const stateVersion = ++authStateVersion;
+      const emailForLanguage = user && user.email ? user.email.toLowerCase() : null;
+      await loadLanguage(emailForLanguage);
+      if (stateVersion !== authStateVersion) return;
+
       if (user && user.email) {
+
         currentUserEmail = user.email.toLowerCase();
+
         ticketEmailInput.value = currentUserEmail;
+
         ticketEmailInput.disabled = true;
-        ticketEmailHint.textContent = "Replies also show up in your ticket history below.";
+
+        ticketEmailHint.textContent = tr("emailReplyHint");
+
         guestNote.style.display = "inline";
+
         signInHint.style.display = "none";
+
         filterChips.style.display = "flex";
+
         ticketSearchWrap.style.display = "flex";
+
         subscribeToTickets(currentUserEmail);
+
       } else {
+
         currentUserEmail = null;
+
         ticketEmailInput.disabled = false;
+
         ticketEmailInput.value = "";
-        ticketEmailHint.textContent = "We'll reply to this address.";
+
+        ticketEmailHint.textContent = tr("emailHint");
+
         guestNote.style.display = "none";
+
         signInHint.style.display = "block";
+
         filterChips.style.display = "none";
+
         ticketSearchWrap.style.display = "none";
+
         ticketList.innerHTML = "";
+
         ticketsCache.clear();
+
         if (ticketsUnsub) { ticketsUnsub(); ticketsUnsub = null; }
+
         backToList();
+
       }
+
     });
 
+
+
     // ---------- Ticket list ----------
+
     function renderTicketList() {
+
       let tickets = Array.from(ticketsCache.entries());
 
+
+
       if (activeStatusFilter !== "all") {
+
         tickets = tickets.filter(([, t]) => (t.status || "open") === activeStatusFilter);
+
       }
+
       const term = (ticketSearchInput.value || "").trim().toLowerCase();
+
       if (term) {
+
         tickets = tickets.filter(([, t]) => (t.subject || "").toLowerCase().includes(term));
+
       }
+
+
 
       if (tickets.length === 0) {
+
         const msg = ticketsCache.size === 0
-          ? "No tickets yet — search above or open a new one."
-          : "No tickets match that filter.";
+
+          ? tr("noTickets")
+
+          : tr("noTicketsFilter");
+
         ticketList.innerHTML = `<div class="empty-state small">${msg}</div>`;
+
         return;
+
       }
+
       tickets.sort((a, b) => toDate(b[1].updatedAt).getTime() - toDate(a[1].updatedAt).getTime());
 
+
+
       ticketList.innerHTML = "";
+
       tickets.forEach(([id, t]) => {
+
         const row = document.createElement("button");
+
         row.type = "button";
+
         row.className = "ticket-row m3-state" + (id === currentTicketId ? " active" : "");
 
+
+
         const avatar = document.createElement("div");
+
         avatar.className = "ticket-avatar cat-" + (t.category || "other");
+
         avatar.textContent = initialFor(CATEGORY_LABELS[t.category] || "?");
 
+
+
         const bodyEl = document.createElement("div");
+
         bodyEl.className = "ticket-row-body";
 
+
+
         const top = document.createElement("div");
+
         top.className = "ticket-row-top";
+
         const subject = document.createElement("div");
+
         subject.className = "ticket-subject";
-        subject.textContent = t.subject || "(no subject)";
+
+        subject.textContent = t.subject || tr("noSubject");
+
         const time = document.createElement("div");
+
         time.className = "ticket-time";
+
         time.textContent = relativeTime(t.updatedAt || t.createdAt);
+
         top.appendChild(subject);
+
         top.appendChild(time);
 
+
+
         const snippet = document.createElement("div");
+
         snippet.className = "ticket-snippet";
-        const senderPrefix = t.lastMessageSender === "support" ? "Support: " : "";
+
+        const senderPrefix = t.lastMessageSender === "support" ? tr("supportAuthor") + ": " : "";
+
         snippet.textContent = senderPrefix + (t.lastMessagePreview || "");
 
+
+
         const bottom = document.createElement("div");
+
         bottom.className = "ticket-row-bottom";
+
         const dot = document.createElement("span");
+
         dot.className = "status-dot " + (t.status || "open");
+
         const label = document.createElement("span");
+
         label.className = "status-label";
-        label.textContent = t.status || "open";
+
+        label.textContent = translatedStatus(t.status || "open");
+
         bottom.appendChild(dot);
+
         bottom.appendChild(label);
 
+
+
         bodyEl.appendChild(top);
+
         if (t.lastMessagePreview) bodyEl.appendChild(snippet);
+
         bodyEl.appendChild(bottom);
 
+
+
         row.appendChild(avatar);
+
         row.appendChild(bodyEl);
 
+
+
         row.addEventListener("click", () => openTicket(id, t));
+
         ticketList.appendChild(row);
+
       });
+
     }
+
+
 
     function subscribeToTickets(email) {
+
       if (ticketsUnsub) ticketsUnsub();
-      ticketList.innerHTML = '<div class="empty-state small">Loading…</div>';
+
+      ticketList.innerHTML = `<div class="empty-state small">${tr("loading")}</div>`;
+
+
 
       // Note: sorting is done client-side in renderTicketList(), so this query
+
       // stays a single-field "where" — no composite index required.
+
       ticketsUnsub = db.collection("support_tickets")
+
         .where("email", "==", email)
+
         .onSnapshot((snap) => {
+
           ticketsCache.clear();
+
           snap.forEach((doc) => ticketsCache.set(doc.id, doc.data()));
+
           renderTicketList();
 
+
+
           // keep an open thread's header in sync (status changes, etc.)
+
           if (currentTicketId && ticketsCache.has(currentTicketId)) {
+
             const t = ticketsCache.get(currentTicketId);
+
             currentTicketStatus = t.status || "open";
+
             threadStatusPill.className = "status-pill " + currentTicketStatus;
-            threadStatusPill.textContent = currentTicketStatus;
+
+            threadStatusPill.textContent = translatedStatus(currentTicketStatus);
+
             updateReplyAvailability();
+
           }
+
         }, (err) => {
+
           console.warn("Failed to load tickets:", err);
-          ticketList.innerHTML = '<div class="empty-state small">Couldn\'t load your tickets. Try refreshing.</div>';
+
+          ticketList.innerHTML = `<div class="empty-state small">${tr("loadTicketsError")}</div>`;
+
         });
+
     }
+
+
 
     // ---------- Thread view ----------
+
     function openTicket(ticketId, ticketData) {
+
       currentTicketId = ticketId;
+
       currentTicketStatus = ticketData.status || "open";
 
-      threadSubject.textContent = ticketData.subject || "(no subject)";
-      threadMeta.textContent = (CATEGORY_LABELS[ticketData.category] || ticketData.category || "Other") +
-        " · Opened " + fullDateTime(ticketData.createdAt);
+
+
+      threadSubject.textContent = ticketData.subject || tr("noSubject");
+
+      threadMeta.textContent = (CATEGORY_LABELS[ticketData.category] || tr("categoryOther")) +
+        " · " + tr("opened") + " " + fullDateTime(ticketData.createdAt);
+
       threadStatusPill.className = "status-pill " + currentTicketStatus;
-      threadStatusPill.textContent = currentTicketStatus;
+
+      threadStatusPill.textContent = translatedStatus(currentTicketStatus);
+
+
 
       updateReplyAvailability();
+
       renderTicketList();
 
+
+
       if (!isDesktop()) {
+
         ticketListCard.style.display = "none";
+
       }
+
       threadPlaceholder.classList.remove("desktop-visible");
+
       ticketThreadCard.style.display = "flex";
 
+
+
       subscribeToMessages(ticketId);
+
     }
+
+
 
     function backToList() {
+
       currentTicketId = null;
+
       currentTicketStatus = null;
+
       ticketThreadCard.style.display = "none";
+
       ticketListCard.style.display = "block";
+
       if (messagesUnsub) { messagesUnsub(); messagesUnsub = null; }
+
       refreshDesktopPlaceholder();
+
     }
+
     threadBackBtn.addEventListener("click", backToList);
 
+
+
     function updateReplyAvailability() {
+
       const isClosed = currentTicketStatus === "closed";
+
       replyForm.style.display = isClosed ? "none" : "flex";
+
       closedNotice.style.display = isClosed ? "flex" : "none";
+
       closeTicketBtn.style.display = isClosed ? "none" : "inline-block";
+
       reopenBtn.style.display = isClosed ? "inline-block" : "none";
+
     }
 
+
+
     function renderMessages(docs) {
+
       threadScroll.innerHTML = "";
+
       let lastDay = null;
+
       let lastGroup = null; // { sender, wrapEl, bubblesEl }
+
       const GROUP_GAP_MS = 5 * 60 * 1000;
+
       let lastTime = 0;
 
+
+
       docs.forEach((doc) => {
+
         const m = doc.data();
+
         const t = toDate(m.createdAt);
+
         const day = dayLabel(m.createdAt);
 
+
+
         if (day !== lastDay) {
+
           const divider = document.createElement("div");
+
           divider.className = "date-divider";
+
           divider.textContent = day;
+
           threadScroll.appendChild(divider);
+
           lastDay = day;
+
           lastGroup = null;
+
         }
+
+
 
         const sameSenderRecently = lastGroup && lastGroup.sender === m.sender && (t.getTime() - lastTime) < GROUP_GAP_MS;
 
+
+
         if (!sameSenderRecently) {
+
           const group = document.createElement("div");
+
           group.className = "msg-group " + (m.sender === "support" ? "support" : "mine");
 
+
+
           const avatar = document.createElement("div");
+
           avatar.className = "msg-avatar";
+
           avatar.textContent = m.sender === "support" ? "S" : initialFor(m.authorEmail || currentUserEmail);
 
+
+
           const bubbles = document.createElement("div");
+
           bubbles.className = "msg-bubbles";
 
+
+
           const authorRow = document.createElement("div");
+
           authorRow.className = "msg-author-row";
-          authorRow.textContent = m.sender === "support" ? "Support" : "You";
+
+          authorRow.textContent = m.sender === "support" ? tr("supportAuthor") : tr("you");
+
           bubbles.appendChild(authorRow);
 
+
+
           group.appendChild(avatar);
+
           group.appendChild(bubbles);
+
           threadScroll.appendChild(group);
 
+
+
           lastGroup = { sender: m.sender, bubblesEl: bubbles };
+
         }
+
+
 
         const bubble = document.createElement("div");
+
         bubble.className = "msg-bubble";
+
         bubble.textContent = m.body || "";
+
         lastGroup.bubblesEl.appendChild(bubble);
 
+
+
         const timeEl = document.createElement("div");
+
         timeEl.className = "msg-time";
+
         timeEl.textContent = shortTime(m.createdAt);
+
         lastGroup.bubblesEl.appendChild(timeEl);
+
         // only the most recent timestamp in a group needs to stay visible;
+
         // drop earlier ones in the same group to avoid clutter
+
         Array.from(lastGroup.bubblesEl.querySelectorAll(".msg-time")).slice(0, -1).forEach((el) => el.remove());
 
+
+
         lastTime = t.getTime();
+
       });
 
+
+
       threadScroll.scrollTop = threadScroll.scrollHeight;
+
     }
+
+
 
     function subscribeToMessages(ticketId) {
+
       if (messagesUnsub) messagesUnsub();
-      threadScroll.innerHTML = '<div class="empty-state">Loading…</div>';
+
+      threadScroll.innerHTML = `<div class="empty-state">${tr("loading")}</div>`;
+
+
 
       messagesUnsub = db.collection("support_tickets").doc(ticketId).collection("messages")
+
         .orderBy("createdAt", "asc")
+
         .onSnapshot((snap) => {
+
           renderMessages(snap.docs);
+
         }, (err) => {
+
           console.warn("Failed to load messages:", err);
-          threadScroll.innerHTML = '<div class="empty-state">Couldn\'t load this conversation.</div>';
+
+          threadScroll.innerHTML = `<div class="empty-state">${tr("loadConversationError")}</div>`;
+
         });
+
     }
 
+
+
     // ---------- New ticket submission ----------
+
     document.getElementById("newTicketForm").addEventListener("submit", async (ev) => {
+
       ev.preventDefault();
+
+
 
       const email = (ticketEmailInput.value || "").trim().toLowerCase();
+
       const category = document.getElementById("ticketCategory").value;
+
       const subject = (document.getElementById("ticketSubject").value || "").trim();
+
       const message = (document.getElementById("ticketMessage").value || "").trim();
 
-      if (!email || !email.includes("@")) { showToast("Enter a valid email address.", "yellow"); return; }
-      if (!subject) { showToast("Give your ticket a short subject.", "yellow"); return; }
-      if (!message) { showToast("Describe your issue before submitting.", "yellow"); return; }
+
+
+      if (!email || !email.includes("@")) { showToast(tr("enterEmail"), "yellow"); return; }
+
+      if (!subject) { showToast(tr("enterSubject"), "yellow"); return; }
+
+      if (!message) { showToast(tr("enterMessage"), "yellow"); return; }
+
+
 
       const submitBtn = document.getElementById("submitTicketBtn");
+
       submitBtn.disabled = true;
 
+
+
       try {
+
         const now = firebase.firestore.FieldValue.serverTimestamp();
+
         const preview = message.length > 140 ? message.slice(0, 140) + "…" : message;
+
         const ticketRef = db.collection("support_tickets").doc();
+
         const messageRef = ticketRef.collection("messages").doc();
 
+
+
         const batch = db.batch();
+
         batch.set(ticketRef, {
+
           email: email,
+
           category: category,
+
           subject: subject.slice(0, 120),
+
           status: "open",
+
           createdAt: now,
+
           updatedAt: now,
+
           lastMessagePreview: preview,
+
           lastMessageSender: "user"
+
         });
+
         batch.set(messageRef, {
+
           sender: "user",
+
           authorEmail: email,
+
           body: message,
+
           createdAt: now
+
         });
+
         await batch.commit();
 
-        showToast("Ticket submitted — we'll be in touch.", "purple");
+
+
+        showToast(tr("ticketSubmitted"), "purple");
+
         document.getElementById("ticketSubject").value = "";
+
         document.getElementById("ticketMessage").value = "";
+
         closeNewTicketPanel();
 
+
+
         if (currentUserEmail) {
+
           openTicket(ticketRef.id, {
+
             email, category, subject, status: "open",
+
             createdAt: new Date(), updatedAt: new Date(),
+
             lastMessagePreview: preview, lastMessageSender: "user"
+
           });
+
         }
+
       } catch (err) {
+
         console.error("Failed to submit ticket:", err);
-        showToast("Couldn't submit your ticket. Try again.", "red");
+
+        showToast(tr("submitError"), "red");
+
       } finally {
+
         submitBtn.disabled = false;
+
       }
+
     });
 
+
+
     // ---------- Reply ----------
+
     replyForm.addEventListener("submit", async (ev) => {
+
       ev.preventDefault();
+
       if (!currentUserEmail || !currentTicketId) return;
 
+
+
       const body = (replyText.value || "").trim();
+
       if (!body) return;
+
+
 
       replyBtn.disabled = true;
 
+
+
       try {
+
         const now = firebase.firestore.FieldValue.serverTimestamp();
+
         const preview = body.length > 140 ? body.slice(0, 140) + "…" : body;
+
         const ticketRef = db.collection("support_tickets").doc(currentTicketId);
+
         const batch = db.batch();
+
         batch.set(ticketRef.collection("messages").doc(), {
+
           sender: "user",
+
           authorEmail: currentUserEmail,
+
           body: body,
+
           createdAt: now
+
         });
+
         batch.update(ticketRef, {
+
           updatedAt: now,
+
           lastMessagePreview: preview,
+
           lastMessageSender: "user",
+
           // a user reply on a ticket support marked "pending" bumps it back to "open"
+
           status: currentTicketStatus === "pending" ? "open" : currentTicketStatus
+
         });
+
         await batch.commit();
+
         replyText.value = "";
+
         replyText.style.height = "auto";
+
       } catch (err) {
+
         console.error("Failed to send reply:", err);
-        showToast("Couldn't send your reply. Try again.", "red");
+
+        showToast(tr("replyError"), "red");
+
       } finally {
+
         replyBtn.disabled = false;
+
       }
+
     });
 
+
+
     // ---------- Close / reopen ----------
+
     async function setTicketStatus(newStatus) {
+
       if (!currentTicketId) return;
+
       try {
+
         await db.collection("support_tickets").doc(currentTicketId).update({
+
           status: newStatus,
+
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+
         });
+
         currentTicketStatus = newStatus;
+
         threadStatusPill.className = "status-pill " + newStatus;
-        threadStatusPill.textContent = newStatus;
+
+        threadStatusPill.textContent = translatedStatus(newStatus);
+
         updateReplyAvailability();
+
       } catch (err) {
+
         console.error("Failed to update ticket status:", err);
-        showToast("Couldn't update the ticket. Try again.", "red");
+
+        showToast(tr("updateError"), "red");
+
       }
+
     }
+
     closeTicketBtn.addEventListener("click", () => setTicketStatus("closed"));
+
     reopenBtn.addEventListener("click", () => setTicketStatus("open"));
 
+
+
     refreshDesktopPlaceholder();
+
   </script>
+
 </body>
 </html>
