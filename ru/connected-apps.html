@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Connected apps</title>
+
+  <!-- Firebase: loaded AND initialized first, so dp-topbar.js finds a ready app -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (!firebase.apps.length) {
+      firebase.initializeApp({
+        apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+        authDomain: "darkpurpleof-s-website.firebaseapp.com",
+        projectId: "darkpurpleof-s-website",
+        storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+        messagingSenderId: "520651082420",
+        appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+      });
+    }
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* Same M3 tokens as login.html (dark default, body.light overrides) */
+    :root{
+      --md-background:#151218; --md-on-background:#E8E0E8;
+      --md-surface-container-low:#1E1A20; --md-surface-container:#221E24;
+      --md-surface-container-high:#2C292E;
+      --md-on-surface:#E8E0E8; --md-on-surface-variant:#CCC4CF;
+      --md-outline:#968E98; --md-outline-variant:#4A454E;
+      --md-primary:#DCB8FF; --md-primary-container:#6700B5; --md-on-primary-container:#EFDBFF;
+      --md-tertiary-container:#653A41; --md-on-tertiary-container:#FFD9DD;
+      --md-error:#FFB4AB; --md-on-error:#690005; --md-error-container:#93000A; --md-on-error-container:#FFDAD6;
+      --md-inverse-surface:#E8E0E8; --md-inverse-on-surface:#332F35; --md-scrim:#000;
+      --brand-vivid:#8800EC; --brand-deep:#6700B5; --md-tertiary:#F3B7BE;
+      --shape-xs:4px; --shape-sm:8px; --shape-md:12px; --shape-lg:16px; --shape-xl:28px; --shape-full:999px;
+      --elev-1:0 1px 2px rgba(0,0,0,.30),0 1px 3px 1px rgba(0,0,0,.15);
+      --elev-2:0 2px 6px rgba(0,0,0,.30),0 8px 24px -6px rgba(136,0,236,.28);
+      --elev-3:0 1px 3px rgba(0,0,0,.30),0 4px 8px 3px rgba(0,0,0,.15);
+      --bg:var(--md-background); --card:var(--md-surface-container-low);
+      --muted:var(--md-on-surface-variant); --text:var(--md-on-surface); --border:var(--md-outline-variant);
+      --risk-low:#7CD9A6; --risk-moderate:#F3B7BE; --risk-high:#FFB4AB;
+      --glow-a:rgba(136,0,236,.28); --glow-b:rgba(243,183,190,.12);
+    }
+    body.light{
+      --md-background:#FFF7FF; --md-on-background:#1E1A20;
+      --md-surface-container-low:#F9F1F9; --md-surface-container:#F3EBF3; --md-surface-container-high:#EEE6EE;
+      --md-on-surface:#1E1A20; --md-on-surface-variant:#4A454E;
+      --md-outline:#7B757E; --md-outline-variant:#CCC4CF;
+      --md-primary:#8800EC; --md-primary-container:#EFDBFF; --md-on-primary-container:#6700B5;
+      --md-tertiary-container:#FFD9DD; --md-on-tertiary-container:#653A41;
+      --md-error:#BA1A1A; --md-on-error:#fff; --md-error-container:#FFDAD6; --md-on-error-container:#93000A;
+      --md-inverse-surface:#332F35; --md-inverse-on-surface:#F6EEF6; --md-tertiary:#805158;
+      --elev-2:0 2px 6px rgba(60,20,90,.10),0 10px 28px -8px rgba(136,0,236,.25);
+      --risk-low:#1B8A55; --risk-moderate:#A8505B; --risk-high:#BA1A1A;
+      --glow-a:rgba(136,0,236,.14); --glow-b:rgba(243,120,140,.12);
+    }
+
+    *{ box-sizing:border-box; min-width:0; }
+    html,body{ margin:0; min-height:100%; background:var(--bg); color:var(--text);
+      font:400 14px/20px Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial; transition:background .25s,color .25s; }
+    html{ overflow-x:hidden; }
+    body{ display:flex; flex-direction:column; min-height:100vh; overflow-wrap:anywhere; position:relative; }
+    /* ambient glow */
+    body::before{ content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:
+        radial-gradient(60% 40% at 15% -5%, var(--glow-a), transparent 70%),
+        radial-gradient(50% 40% at 100% 10%, var(--glow-b), transparent 70%); }
+    dp-topbar{ display:block; position:sticky; top:0; z-index:100; }
+
+    main{ position:relative; z-index:1; flex:1; width:100%; max-width:780px; margin:0 auto; padding:40px 20px 64px; }
+
+    /* header */
+    .head{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:28px; }
+    .head-main{ display:flex; align-items:center; gap:16px; flex:1 1 320px; }
+    .head-icon{ width:56px; height:56px; flex:0 0 56px; border-radius:18px; display:grid; place-items:center; color:#fff;
+      background:linear-gradient(135deg,var(--brand-vivid),var(--brand-deep)); box-shadow:var(--elev-2); }
+    .head-icon svg{ width:28px; height:28px; }
+    h1{ margin:0 0 4px; font:800 28px/34px Inter; letter-spacing:-.02em;
+      background:linear-gradient(90deg,var(--text),var(--md-primary)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+    .sub{ margin:0; color:var(--muted); max-width:46ch; }
+    .count{ display:inline-flex; align-items:center; gap:6px; margin-top:10px; font:600 12px/16px Inter; padding:4px 10px;
+      border-radius:var(--shape-full); background:color-mix(in srgb,var(--md-primary) 14%,transparent); color:var(--md-primary);
+      border:1px solid color-mix(in srgb,var(--md-primary) 30%,transparent); }
+    .count:empty{ display:none; }
+
+    /* buttons */
+    .btn{ font:600 14px/20px Inter; border-radius:var(--shape-full); padding:10px 18px; cursor:pointer;
+      border:1px solid var(--md-outline-variant); background:transparent; color:var(--text);
+      transition:transform .1s,background .15s,border-color .15s,box-shadow .15s; text-align:center; }
+    .btn:hover:not(:disabled){ background:color-mix(in srgb,var(--text) 6%,transparent); }
+    .btn:active{ transform:scale(.97); }
+    .btn:focus-visible,summary:focus-visible{ outline:2px solid var(--md-primary); outline-offset:2px; }
+    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+    .btn.danger{ color:var(--md-error); border-color:color-mix(in srgb,var(--md-error) 45%,transparent); }
+    .btn.danger:hover:not(:disabled){ background:color-mix(in srgb,var(--md-error) 10%,transparent); border-color:var(--md-error); }
+    .btn.filled{ background:linear-gradient(135deg,var(--brand-vivid),var(--brand-deep)); color:#fff; border:none; box-shadow:var(--elev-1); }
+    .btn.filled:hover{ box-shadow:var(--elev-2); background:linear-gradient(135deg,var(--brand-vivid),var(--brand-deep)); }
+    .btn.filled-danger{ background:var(--md-error); color:var(--md-on-error); border:none; }
+    .btn.filled-danger:hover{ background:var(--md-error); filter:brightness(1.08); }
+
+    /* app cards */
+    .list{ display:flex; flex-direction:column; gap:14px; }
+    .app{ position:relative; overflow:hidden; background:var(--card); border:1px solid var(--border); border-radius:20px;
+      padding:18px 18px 18px 22px; box-shadow:var(--elev-1);
+      transition:transform .18s,box-shadow .18s,border-color .18s; animation:rise .4s ease-out both; animation-delay:calc(var(--i,0) * 60ms); }
+    .app:hover{ transform:translateY(-2px); box-shadow:var(--elev-2); border-color:color-mix(in srgb,var(--md-primary) 45%,var(--border)); }
+    .app::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--accent,var(--risk-low)); }
+    .app.r-high{ --accent:var(--risk-high); } .app.r-moderate{ --accent:var(--risk-moderate); } .app.r-low{ --accent:var(--risk-low); }
+    @keyframes rise{ from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+
+    .app-row{ display:flex; align-items:center; gap:16px; }
+    .app-icon{ width:56px; height:56px; flex:0 0 56px; border-radius:16px; object-fit:cover; background:var(--md-surface-container-high);
+      border:1px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,.25); }
+    .app-info{ flex:1 1 auto; }
+    .app-name{ font:700 17px/24px Inter; letter-spacing:-.005em; }
+    .app-meta{ color:var(--muted); font-size:12.5px; line-height:18px; margin-top:2px; display:flex; align-items:center; gap:6px; }
+    .app-meta svg{ width:13px; height:13px; flex:0 0 13px; opacity:.8; }
+    .dot{ width:7px; height:7px; border-radius:50%; background:var(--risk-low); flex:0 0 7px; box-shadow:0 0 0 3px color-mix(in srgb,var(--risk-low) 22%,transparent); }
+    .dot.idle{ background:var(--md-outline); box-shadow:none; }
+    .app-action{ flex:0 0 auto; }
+
+    .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .chip{ font:600 11.5px/16px Inter; padding:4px 10px; border-radius:var(--shape-full);
+      background:color-mix(in srgb,var(--text) 7%,transparent); color:var(--muted); }
+    .chip.risk-high{ background:var(--md-error-container); color:var(--md-on-error-container); }
+    .chip.risk-moderate{ background:var(--md-tertiary-container); color:var(--md-on-tertiary-container); }
+    .chip.risk-low{ background:var(--md-primary-container); color:var(--md-on-primary-container); }
+
+    details{ margin-top:14px; padding-top:12px; border-top:1px solid color-mix(in srgb,var(--text) 8%,transparent); }
+    summary{ cursor:pointer; font:600 13px/20px Inter; color:var(--muted); list-style:none; display:flex; align-items:center; gap:6px; border-radius:var(--shape-sm); }
+    summary:hover{ color:var(--text); }
+    summary::-webkit-details-marker{ display:none; }
+    summary::before{ content:"›"; display:inline-block; font-size:18px; line-height:1; transition:transform .15s; }
+    details[open] summary::before{ transform:rotate(90deg); }
+    .perms{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+    .perm{ display:flex; align-items:center; gap:10px; font-size:13px; padding:9px 12px; border-radius:var(--shape-md);
+      background:var(--md-surface-container); border:1px solid color-mix(in srgb,var(--text) 6%,transparent); }
+    .perm svg{ width:16px; height:16px; flex:0 0 16px; color:var(--risk-low); }
+    .perm.high svg{ color:var(--risk-high); } .perm.moderate svg{ color:var(--risk-moderate); }
+    .perm span.l{ flex:1 1 auto; }
+    .pill{ font:700 10px/14px Inter; letter-spacing:.05em; text-transform:uppercase; padding:3px 8px; border-radius:var(--shape-full); flex:0 0 auto; white-space:nowrap; }
+    .pill.low{ background:var(--md-primary-container); color:var(--md-on-primary-container); }
+    .pill.moderate{ background:var(--md-tertiary-container); color:var(--md-on-tertiary-container); }
+    .pill.high{ background:var(--md-error-container); color:var(--md-on-error-container); }
+
+    /* empty / signed-out / loading */
+    .state{ text-align:center; padding:56px 24px; background:var(--card); border:1px dashed var(--border); border-radius:24px; animation:rise .4s ease-out both; }
+    .state .s-icon{ width:64px; height:64px; margin:0 auto 18px; border-radius:20px; display:grid; place-items:center;
+      background:color-mix(in srgb,var(--md-primary) 14%,transparent); color:var(--md-primary); }
+    .state .s-icon svg{ width:30px; height:30px; }
+    .state h2{ margin:0 0 8px; font:700 20px/26px Inter; }
+    .state p{ margin:0 0 22px; color:var(--muted); }
+    .state p:last-child{ margin-bottom:0; }
+    .state .btn{ min-width:160px; }
+
+    .skeleton{ height:92px; border-radius:20px; border:1px solid var(--border);
+      background:linear-gradient(100deg,var(--card) 30%,var(--md-surface-container-high) 50%,var(--card) 70%);
+      background-size:200% 100%; animation:shimmer 1.3s linear infinite; }
+    @keyframes shimmer{ from{background-position:200% 0} to{background-position:-200% 0} }
+
+    /* dialog + toast */
+    .overlay{ position:fixed; inset:0; background:color-mix(in srgb,var(--md-scrim) 55%,transparent); backdrop-filter:blur(4px);
+      display:none; align-items:center; justify-content:center; z-index:10000; padding:20px; }
+    .overlay.on{ display:flex; }
+    .sheet{ background:var(--md-surface-container-high); border-radius:var(--shape-xl); max-width:400px; width:100%; padding:28px; box-shadow:var(--elev-3); text-align:center; animation:in .18s ease-out; }
+    @keyframes in{ from{opacity:0;transform:translateY(10px) scale(.98)} to{opacity:1;transform:none} }
+    .sheet .d-icon{ width:52px; height:52px; margin:0 auto 14px; border-radius:50%; display:grid; place-items:center;
+      background:var(--md-error-container); color:var(--md-on-error-container); }
+    .sheet .d-icon svg{ width:26px; height:26px; }
+    .sheet h2{ margin:0 0 8px; font:600 18px/24px Inter; }
+    .sheet p{ margin:0 0 22px; color:var(--muted); font-size:13px; line-height:1.55; }
+    .sheet .acts{ display:flex; flex-direction:column; gap:10px; }
+    #toast{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%); padding:14px 18px; border-radius:var(--shape-md);
+      font:600 14px/20px Inter; display:none; z-index:99999; box-shadow:var(--elev-3); max-width:min(92vw,420px); text-align:center;
+      background:var(--md-inverse-surface); color:var(--md-inverse-on-surface); border-left:4px solid var(--brand-vivid); }
+    #toast.red{ border-left-color:var(--md-error); }
+
+    @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+
+    @media (max-width:600px){
+      main{ padding:24px 14px 48px; }
+      h1{ font-size:24px; line-height:30px; }
+      .head-icon{ width:48px; height:48px; flex-basis:48px; border-radius:15px; }
+      .head .btn{ width:100%; }
+      .app{ padding:16px 14px 16px 18px; }
+      .app-row{ flex-wrap:wrap; }
+      .app-icon{ width:48px; height:48px; flex-basis:48px; }
+      .app-info{ flex:1 1 0; }
+      .app-action{ flex:1 1 100%; width:100%; }
+      .perms{ grid-template-columns:1fr; }
+    }
+  </style>
+  <script type="module" src="/dp-topbar.js"></script>
+  <script src="/login-i18n.js"></script>
+</head>
+<body>
+  <dp-topbar></dp-topbar>
+
+  <main>
+    <div class="head" id="head" style="display:none">
+      <div class="head-main">
+        <div class="head-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v5c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <div class="head-text">
+          <h1>Connected apps</h1>
+          <p class="sub">Apps and services that can access your account. Revoke access at any time.</p>
+          <span class="count" id="count"></span>
+        </div>
+      </div>
+      <button type="button" class="btn danger" id="revokeAllBtn" style="display:none">Revoke all</button>
+    </div>
+
+    <div id="content"><div class="list"><div class="skeleton"></div><div class="skeleton"></div></div></div>
+  </main>
+
+  <div class="overlay" id="dlg" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <div class="d-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+      </div>
+      <h2 id="dlgTitle"></h2>
+      <p id="dlgBody"></p>
+      <div class="acts">
+        <button type="button" class="btn filled-danger" id="dlgOk">Revoke access</button>
+        <button type="button" class="btn" id="dlgCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const auth = firebase.auth();
+    const OAUTH_BASE = "http://darkpurpleofswebsite.netlify.app/oauth";
+    const T = (s) => (window.tr ? window.tr(s) : s);
+    const $ = (id) => document.getElementById(id);
+
+    // scope id -> [English description (translated via login-i18n.js), risk]
+    const SCOPES = {
+      "profile:read":["View your public profile information","low"],"profile:write":["Edit your public profile","moderate"],
+      "profile:badge":["View your badges and verification status","low"],"profile:bio":["View and edit your biography","moderate"],
+      "email:read":["View your email address","moderate"],"username:read":["View your username","low"],
+      "avatar:read":["View your profile picture","low"],"avatar:write":["Change your profile picture","moderate"],
+      "connections:read":["View your connections list","low"],"connections:write":["Manage your connections","high"],
+      "connections:request":["Send connection requests","moderate"],"connections:block":["Block or unblock users","high"],
+      "messages:read":["Read your private messages","high"],"messages:write":["Send messages on your behalf","high"],
+      "messages:history":["Access your message history","high"],"typing:write":["Send typing indicators","low"],
+      "admin:run":["Run actions with admin permissions","high"],"admin:status":["Check whether you're an admin","low"],
+      "admin:actionsexecutor":["Act as a client to run administrative actions","moderate"],
+      "notifications:read":["View your notifications","low"],"settings:read":["View your account settings","moderate"],
+      "settings:write":["Modify your account settings","high"],"posts:read":["View your posts","low"],
+      "posts:write":["Create posts on your behalf","high"],"posts:delete":["Delete your posts","high"],
+      "comments:read":["View comments on your posts","low"],"comments:write":["Post comments on your behalf","moderate"],
+      "reactions:write":["React to posts and comments","low"],"gifts:read":["View your gifts","low"],
+      "gifts:send":["Send gifts on your behalf","high"],"gifts:claim":["Claim gifts for your account","moderate"],
+      "inventory:read":["View your inventory","moderate"],"marketplace:read":["Browse marketplace listings","low"],
+      "marketplace:purchase":["Purchase items on your behalf","high"],"sessions:read":["View your active sessions","moderate"],
+      "security:read":["View your security settings","moderate"],"files:read":["Access your uploaded files","moderate"],
+      "offline_access":["Maintain access when you are offline","high"],
+      "token:create":["Create a token to log in without your password, only once","moderate"]
+    };
+    const RISK_LABEL = { low: "Low", moderate: "Moderate", high: "High" };
+    const RANK = { high: 3, moderate: 2, low: 1 };
+
+    const ICONS = {
+      clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+      calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+      puzzle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4a2 2 0 1 1 4 0v2h4a1 1 0 0 1 1 1v4h-2a2 2 0 1 0 0 4h2v4a1 1 0 0 1-1 1h-4v-2a2 2 0 1 0-4 0v2H6a1 1 0 0 1-1-1v-4h2a2 2 0 1 0 0-4H5V7a1 1 0 0 1 1-1h4V4Z"/></svg>',
+      lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+      check: '<svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    };
+
+    function toast(msg, color) {
+      const t = $("toast"); t.textContent = T(msg); t.className = color || ""; t.style.display = "block";
+      clearTimeout(toast._t); toast._t = setTimeout(() => (t.style.display = "none"), 3500);
+    }
+    const fmtDate = (ms) => new Date(ms).toLocaleDateString(window.LANG || "en", { year: "numeric", month: "short", day: "numeric" });
+    const loginUrl = () => ((window.LANG && window.LANG !== "en") ? "/" + window.LANG : "") + "/login";
+
+    function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+    function state(title, body, btn, icon) {
+      const d = el("div", "state");
+      if (icon) { const i = el("div", "s-icon"); i.innerHTML = icon; d.appendChild(i); }
+      if (title) d.appendChild(el("h2", "", T(title)));
+      d.appendChild(el("p", "", T(body)));
+      if (btn) { const b = el("button", "btn filled", T(btn.label)); b.type = "button"; b.onclick = btn.onClick; d.appendChild(b); }
+      return d;
+    }
+
+    // ---- confirm dialog ----
+    let dlgAction = null;
+    function confirmDlg(title, body, okLabel, action) {
+      $("dlgTitle").textContent = title; $("dlgBody").textContent = body; $("dlgOk").textContent = T(okLabel);
+      dlgAction = action; $("dlg").classList.add("on");
+    }
+    $("dlgCancel").onclick = () => { $("dlg").classList.remove("on"); dlgAction = null; };
+    $("dlg").addEventListener("click", (e) => { if (e.target === $("dlg")) $("dlgCancel").click(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("dlg").classList.contains("on")) $("dlgCancel").click(); });
+    $("dlgOk").onclick = async () => {
+      const act = dlgAction; $("dlg").classList.remove("on"); dlgAction = null;
+      if (act) await act();
+    };
+
+    // ---- API ----
+    async function api(method, query) {
+      const tok = await auth.currentUser.getIdToken();
+      const res = await fetch(OAUTH_BASE + "/grants" + (query || ""), { method, headers: { Authorization: "Bearer " + tok } });
+      if (!res.ok) throw new Error("http " + res.status);
+      return res.json();
+    }
+
+    async function revoke(query) {
+      try { await api("DELETE", query); toast("Access revoked."); await load(); }
+      catch (e) { console.error(e); toast("Couldn't revoke access. Try again.", "red"); }
+    }
+
+    function renderApp(g, index) {
+      const scopes = g.scopes || [];
+      let top = "low";
+      scopes.forEach((s) => { const r = (SCOPES[s] || [])[1]; if (r && RANK[r] > RANK[top]) top = r; });
+
+      const card = el("div", "app r-" + top);
+      card.style.setProperty("--i", index);
+      const row = el("div", "app-row");
+      const img = el("img", "app-icon"); img.alt = ""; img.src = g.client_image || "/assets/default_client.png";
+      img.onerror = function () { this.onerror = null; this.src = "/assets/default_client.png"; };
+      const info = el("div", "app-info");
+      info.appendChild(el("div", "app-name", g.client_name));
+
+      const m1 = el("div", "app-meta"); m1.innerHTML = ICONS.calendar;
+      m1.appendChild(el("span", "", T("Authorized {0}").replace("{0}", fmtDate(g.created_at))));
+      info.appendChild(m1);
+
+      const used = g.last_used && g.last_used > g.created_at + 1000;
+      const m2 = el("div", "app-meta");
+      m2.appendChild(el("span", used ? "dot" : "dot idle"));
+      m2.appendChild(el("span", "", used ? T("Last used {0}").replace("{0}", fmtDate(g.last_used)) : T("Never used")));
+      info.appendChild(m2);
+
+      const act = el("div", "app-action");
+      const btn = el("button", "btn danger", T("Revoke access")); btn.type = "button"; btn.style.width = "100%";
+      btn.onclick = () => confirmDlg(
+        T("Revoke access for {0}?").replace("{0}", g.client_name),
+        T("The app will be signed out and can no longer use your account. You can authorize it again later."),
+        "Revoke access", () => revoke("?id=" + encodeURIComponent(g.id)));
+      act.appendChild(btn);
+      row.append(img, info, act);
+      card.appendChild(row);
+
+      if (scopes.length) {
+        const chips = el("div", "chips");
+        const c1 = el("span", "chip"); c1.textContent = scopes.length + " " + T(scopes.length === 1 ? "permission" : "permissions");
+        chips.appendChild(c1);
+        chips.appendChild(el("span", "chip risk-" + top, T(RISK_LABEL[top]) + " " + T("risk")));
+        card.appendChild(chips);
+      }
+
+      const det = el("details"); det.appendChild(el("summary", "", T("Permissions")));
+      const perms = el("div", "perms");
+      scopes.slice().sort((a, b) => (RANK[(SCOPES[b] || [])[1]] || 0) - (RANK[(SCOPES[a] || [])[1]] || 0)).forEach((s) => {
+        const [desc, risk] = SCOPES[s] || [s, null];
+        const p = el("div", "perm" + (risk ? " " + risk : ""));
+        p.innerHTML = ICONS.check;
+        p.appendChild(el("span", "l", T(desc)));
+        if (risk) p.appendChild(el("span", "pill " + risk, T(RISK_LABEL[risk])));
+        perms.appendChild(p);
+      });
+      det.appendChild(perms); card.appendChild(det);
+      return card;
+    }
+
+    async function load() {
+      const c = $("content");
+      try {
+        const { grants } = await api("GET");
+        c.innerHTML = "";
+        $("head").style.display = "flex";
+        $("revokeAllBtn").style.display = grants.length > 1 ? "" : "none";
+        $("count").textContent = grants.length
+          ? grants.length + " " + T(grants.length === 1 ? "connected app" : "connected apps") : "";
+        if (!grants.length) {
+          c.appendChild(state("No connected apps", "Apps you authorize will show up here.", null, ICONS.puzzle));
+          return;
+        }
+        grants.sort((a, b) => (b.last_used || 0) - (a.last_used || 0));
+        const list = el("div", "list");
+        grants.forEach((g, i) => list.appendChild(renderApp(g, i)));
+        c.appendChild(list);
+      } catch (e) {
+        console.error(e);
+        c.innerHTML = "";
+        c.appendChild(state("", "Couldn't load your apps. Try again.", { label: "Continue", onClick: load }, ICONS.puzzle));
+      }
+    }
+
+    $("revokeAllBtn").onclick = () => confirmDlg(
+      T("Revoke access for all apps?"), T("Every connected app will be signed out."), "Revoke all", () => revoke("?all=1"));
+
+    auth.onAuthStateChanged((user) => {
+      const c = $("content");
+      if (!user) {
+        $("head").style.display = "none";
+        c.innerHTML = "";
+        c.appendChild(state("Connected apps", "Sign in to manage your connected apps.",
+          { label: "Sign in", onClick: () => (location.href = loginUrl()) }, ICONS.lock));
+        return;
+      }
+      load();
+    });
+  </script>
+</body>
+</html>

@@ -1,2001 +1,564 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ersteller-Dashboard</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
-  <script type="module" src="/dp-topbar.js"></script>
-  <script src="/dp-diag.js"></script>
-
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body { width: 100%; min-height: 100%; overflow-x: clip; }
-    img { max-width: 100%; display: block; }
-
-    :root{
-      --bg: #171717;
-      --bg-2: #111111;
-      --panel: #1b1b1b;
-      --panel-2: #1f1f1f;
-      --card: #202020;
-      --card-2: #242424;
-      --text: #e9e9e9;
-      --muted: #a9a9a9;
-      --muted-2: #7d7d7d;
-      --accent: #6b21a8;
-      --accent-2: #5b21b6;
-      --accent-strong: #5b21b6;
-      --border: rgba(255,255,255,.06);
-      --border-2: rgba(255,255,255,.1);
-      --soft: rgba(255,255,255,.03);
-      --shadow: 0 16px 40px rgba(0,0,0,.24);
-      --shadow-strong: 0 26px 70px rgba(0,0,0,.34);
-      --radius: 18px;
-      --radius-sm: 14px;
-      --radius-lg: 24px;
-      color-scheme: dark;
-    }
-
-    body.light{
-      --bg: #f5f7fb;
-      --bg-2: #eef2f7;
-      --panel: #ffffff;
-      --panel-2: #f8fafc;
-      --card: #ffffff;
-      --card-2: #fbfcfe;
-      --text: #0f172a;
-      --muted: #475569;
-      --muted-2: #64748b;
-      --border: rgba(15,23,42,.07);
-      --border-2: rgba(15,23,42,.12);
-      --soft: rgba(15,23,42,.03);
-      --shadow: 0 14px 32px rgba(15,23,42,.08);
-      --shadow-strong: 0 22px 48px rgba(15,23,42,.12);
-      color-scheme: light;
-    }
-
-    body{
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-      background: #1f1f1f;
-      color: var(--text);
-      transition: background .25s ease, color .25s ease;
-    }
-
-    dp-topbar{
-      display: block;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .page{
-      width: min(1240px, calc(100% - 24px));
-      margin: 18px auto 28px;
-      display: grid;
-      gap: 16px;
-    }
-
-    .hero{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      padding: 18px 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      min-width: 0;
-    }
-
-    .hero-copy{
-      min-width: 0;
-      display: grid;
-      gap: 8px;
-    }
-
-    .eyebrow{
-      width: fit-content;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: var(--soft);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
-    h1{
-      margin: 0;
-      font-size: 28px;
-      line-height: 1.08;
-      letter-spacing: -0.04em;
-    }
-
-    .hero p{
-      margin: 0;
-      max-width: 68ch;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--muted);
-    }
-
-    .hero-actions{
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
-    }
-
-    .docs-link{
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    .docs-link::after{
-      content: "↗";
-      font-size: 13px;
-      opacity: .9;
-    }
-
-    .profile{
-      width: 58px;
-      height: 58px;
-      flex: 0 0 auto;
-      border-radius: 18px;
-      background-color: var(--soft);
-      background-size: cover;
-      background-position: center;
-      border: 1px solid var(--border-2);
-      box-shadow: 0 10px 24px rgba(0,0,0,.22);
-    }
-
-    .notice{
-      padding: 14px 16px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--text);
-      box-shadow: var(--shadow);
-      line-height: 1.5;
-      font-size: 14px;
-    }
-
-    .tabs{
-      display: flex;
-      gap: 10px;
-      padding: 8px;
-      border-radius: var(--radius-lg);
-      background: rgba(255,255,255,.015);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .tabs::-webkit-scrollbar{ display:none; }
-
-    .tab{
-      appearance: none;
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--muted);
-      font: inherit;
-      font-weight: 800;
-      letter-spacing: -.01em;
-      padding: 11px 15px;
-      border-radius: 14px;
-      cursor: pointer;
-      transition: background .16s ease, color .16s ease, transform .16s ease, border-color .16s ease;
-      white-space: nowrap;
-    }
-    .tab:hover{
-      transform: translateY(-1px);
-      background: rgba(255,255,255,.03);
-    }
-    .tab.active{
-      color: #fff;
-      background: linear-gradient(135deg, rgba(107,33,168,.28), rgba(91,33,182,.16));
-      border-color: rgba(167,139,250,.18);
-    }
-    body.light .tab.active{ color: #fff; }
-
-    .panel{
-      display: grid;
-      gap: 14px;
-      min-width: 0;
-      padding: 18px;
-      border-radius: var(--radius-lg);
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012));
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-    }
-
-    .panel-head{
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .panel-title{
-      margin: 0;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: -.03em;
-    }
-
-    .panel-actions{
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .button{
-      appearance: none;
-      border: 1px solid var(--border);
-      background: var(--soft);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 10px 14px;
-      font: inherit;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform .16s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
-    }
-    .button:hover{
-      transform: translateY(-1px);
-      border-color: var(--border-2);
-      background: rgba(255,255,255,.05);
-    }
-    .button.primary{
-      background: linear-gradient(135deg, rgba(107,33,168,.26), rgba(91,33,182,.15));
-      border-color: rgba(167,139,250,.18);
-      color: #fff;
-    }
-    .button.danger{
-      background: rgba(220,38,38,.12);
-      border-color: rgba(220,38,38,.28);
-      color: #ffd7d7;
-    }
-
-    .dev-warning{
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, rgba(245,158,11,.12), rgba(31,31,31,.96));
-      border: 1px solid rgba(245,158,11,.16);
-      box-shadow: var(--shadow);
-    }
-
-    .dev-warning img{
-      width: 28px;
-      height: 28px;
-      flex: 0 0 auto;
-    }
-
-    .dev-warning .msg{
-      font-size: 13px;
-      line-height: 1.55;
-      color: var(--text);
-      font-weight: 600;
-    }
-
-    .empty-state{
-      padding: 18px;
-      border-radius: var(--radius);
-      border: 1px dashed var(--border-2);
-      background: var(--soft);
-      color: var(--muted);
-      line-height: 1.6;
-      font-size: 13px;
-    }
-
-    .cards-grid{
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-      min-width: 0;
-      align-items: start;
-    }
-
-    .creator-card{
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-width: 0;
-      height: 418px;
-      padding: 12px;
-      border-radius: var(--radius);
-      background: linear-gradient(180deg, var(--card-2), var(--card));
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
-    }
-    .creator-card:hover{
-      transform: translateY(-3px);
-      border-color: var(--border-2);
-      box-shadow: var(--shadow-strong);
-    }
-
-    .edit-link{
-      position: absolute;
-      right: 10px;
-      top: 10px;
-      width: 36px;
-      height: 36px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.05);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 1;
-      backdrop-filter: blur(12px);
-    }
-    .edit-link img{
-      width: 18px;
-      height: 18px;
-      pointer-events: none;
-      filter: invert(1) brightness(1.12);
-    }
-
-    .card-image{
-      width: 100%;
-      aspect-ratio: 16/9;
-      border-radius: 14px;
-      background-size: cover;
-      background-position: center;
-      border: 1px solid var(--border);
-      background-color: var(--soft);
-      flex: 0 0 auto;
-    }
-
-    .card-content{
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex: 1 1 auto;
-      min-height: 0;
-    }
-
-    .card-title-row{
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .card-title{
-      margin: 0;
-      font-size: 15px;
-      line-height: 1.25;
-      font-weight: 900;
-      letter-spacing: -.02em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .chip{
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--soft);
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--text);
-      white-space: nowrap;
-    }
-
-    .price-chip{
-      background: linear-gradient(135deg, rgba(107,33,168,.22), rgba(91,33,182,.12));
-      border-color: rgba(167,139,250,.16);
-    }
-
-    .type-chip{
-      color: var(--muted);
-      font-size: 11px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      font-weight: 800;
-      width: fit-content;
-    }
-
-    .card-desc{
-      margin: 0;
-      color: var(--text);
-      font-size: 13px;
-      line-height: 1.45;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 4;
-      -webkit-box-orient: vertical;
-    }
-
-    .card-bottom{
-      margin-top: auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .dl-chip{
-      text-decoration: none;
-    }
-
-    .card-creator{
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 160px;
-      margin-left: auto;
-      text-align: right;
-    }
-
-    .hidden{ display:none !important; }
-
-    #toast {
-      position: fixed;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 14px;
-      border-radius: 11px;
-      font-weight: 800;
-      display: none;
-      z-index: 99999;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.22);
-    }
-
-    #toast.purple { background: var(--accent-strong); color: #fff; }
-    #toast.yellow { background: #e6b800; color: #222; }
-    #toast.red { background: #c00; color: #fff; }
-
-    .dialog-portal{
-      position: fixed;
-      inset: 0;
-      z-index: 2000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-    }
-    .dialog-backdrop{
-      position: absolute;
-      inset: 0;
-      background: rgba(6,6,8,.66);
-      backdrop-filter: blur(8px);
-    }
-    .dialog{
-      position: relative;
-      width: min(1100px, 100%);
-      max-height: calc(100vh - 36px);
-      border-radius: 24px;
-      background: linear-gradient(180deg, rgba(28,28,28,.98), rgba(19,19,19,.98));
-      border: 1px solid rgba(255,255,255,.06);
-      box-shadow: var(--shadow-strong);
-      overflow: hidden;
-    }
-    body.light .dialog{
-      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.98));
-    }
-    .dialog-inner{
-      display: flex;
-      flex-direction: column;
-      max-height: calc(100vh - 36px);
-    }
-    .dialog-header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--border);
-    }
-    .dialog-title{
-      margin: 0;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: -.03em;
-    }
-    .icon-button{
-      appearance:none;
-      border: 1px solid var(--border);
-      background: var(--soft);
-      color: var(--text);
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    .dialog-body{
-      display: grid;
-      grid-template-columns: 1.45fr .9fr;
-      gap: 16px;
-      padding: 16px;
-      overflow: hidden;
-      min-height: 0;
-    }
-    .dialog-left{
-      min-width: 0;
-      overflow: auto;
-      padding-right: 4px;
-    }
-    .dialog-right{
-      min-width: 260px;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-    }
-
-    .field{
-      display: grid;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-    .field-row{
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .field-label{
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--text);
-    }
-    .field-note{
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-    .field-error{
-      min-height: 16px;
-      font-size: 12px;
-      color: #ffb4b4;
-      line-height: 1.4;
-    }
-
-    .input, .select, .textarea{
-      width: 100%;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.02);
-      color: var(--text);
-      border-radius: 14px;
-      padding: 12px 13px;
-      font: inherit;
-      outline: none;
-      transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
-    }
-    .textarea{ min-height: 118px; resize: vertical; }
-    .input:focus, .select:focus, .textarea:focus{
-      border-color: rgba(167,139,250,.32);
-      box-shadow: 0 0 0 3px rgba(107,33,168,.12);
-      background: rgba(255,255,255,.03);
-    }
-
-    .binary-grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .binary-option{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding: 11px 12px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.02);
-      cursor: pointer;
-      user-select: none;
-    }
-    .binary-option input{
-      accent-color: var(--accent);
-      margin: 0;
-    }
-    .binary-option span{
-      font-weight: 700;
-    }
-
-    .preview-card{
-      width: 100%;
-      max-width: 360px;
-      border-radius: 18px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
-      box-shadow: var(--shadow);
-    }
-    .preview-image{
-      width: 100%;
-      height: 200px;
-      background-size: cover;
-      background-position: center;
-      background-color: var(--soft);
-    }
-    .preview-body{
-      padding: 12px;
-      display: grid;
-      gap: 8px;
-    }
-    .preview-row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-    }
-    .preview-title{
-      font-size: 16px;
-      font-weight: 900;
-      letter-spacing: -.02em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .preview-price{
-      font-size: 13px;
-      font-weight: 900;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-    .preview-type{
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .preview-desc{
-      font-size: 13px;
-      line-height: 1.45;
-      color: var(--text);
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 5;
-      -webkit-box-orient: vertical;
-    }
-
-    .dialog-footer{
-      display:flex;
-      align-items:center;
-      justify-content:flex-end;
-      gap: 10px;
-      padding: 14px 16px;
-      border-top: 1px solid var(--border);
-    }
-
-    .perm-banner{
-      position: fixed;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9998;
-      display: none;
-      width: min(92vw, 760px);
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: #7f1d1d;
-      color: #fff;
-      box-shadow: var(--shadow-strong);
-      border: 1px solid rgba(255,255,255,.08);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    @media (max-width: 980px){
-      .cards-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .dialog-body{ grid-template-columns: 1fr; }
-      .dialog-right{ min-width: 0; justify-content: flex-start; }
-      .preview-card{ max-width: none; }
-    }
-
-    @media (max-width: 640px){
-      .page{ width: min(100% - 16px, 1240px); margin-top: 12px; }
-      .hero{ flex-direction: column; align-items: flex-start; }
-      h1{ font-size: 24px; }
-      .cards-grid{ grid-template-columns: 1fr; }
-      .panel{ padding: 14px; }
-      .field-row{ grid-template-columns: 1fr; }
-      .binary-grid{ grid-template-columns: 1fr; }
-      .creator-card{ height: auto; min-height: 400px; }
-    }
-  </style>
-
-  <script>
-    (function () {
-      const firebaseConfig = {
-        apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
-        authDomain: "darkpurpleof-s-website.firebaseapp.com",
-        projectId: "darkpurpleof-s-website",
-        storageBucket: "darkpurpleof-s-website.appspot.com",
-        messagingSenderId: "520651082420",
-        appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
-      };
-
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-
-      const auth = firebase.auth();
-      const db = firebase.firestore();
-
-      let currentUser = null;
-      let currentUserData = {};
-      let currentUserDataRef = null;
-      let unsubUserData = null;
-      let unsubStore = null;
-      let unsubDev = null;
-
-      const profileElId = "profile-pic";
-      const storeGridId = "store-grid";
-      const devGridId = "dev-grid";
-      const storeNoItemsId = "store-no-items";
-      const devNoItemsId = "dev-no-items";
-      const storePanelId = "store-panel";
-      const devPanelId = "dev-panel";
-      const welcomeId = "welcome-message";
-      const userNameId = "user-name";
-      const tabsSelector = ".tab";
-
-      const HOST_BLACKLIST = [
-        "mediafire.com","mega.nz","mega.com","catbox.moe","oshi.at","file.sh","transfer.sh",
-        "fileup.com","megaup.com","zippyshare.com","anonfiles.com","gofile.io","sendspace.com",
-        "dropapk.to","uptobox.com","userscloud.com","cloudmail.ru","we.tl"
-      ];
-      const CLOUD_WHITELIST = ["drive.google.com","onedrive.live.com","dropbox.com","dropboxusercontent.com"];
-      const IMAGE_EXTS = ["png","jpg","jpeg","webp","svg","gif","bmp","avif"];
-      const DEV_TYPE_EXT_MAP = {
-        "Package": ["apk","elf","bin","ipa","sh","bat"],
-        "File": ["*"],
-        "Plugin": ["js","ppaplugin","dpfplugin","sysplg","addplugin","debplugin","sovietplugin","dpplugin"],
-        "Sample": ["dpfhtml","html","beta","json","delta","data","dat"]
-      };
-
-      const TYPE_LABELS = {
-        "Sticker Pack": "Stickerpaket",
-        "Profile Frame": "Profilrahmen",
-        "Package": "Paket",
-        "File": "Datei",
-        "Plugin": "Plugin",
-        "Sample": "Beispiel"
-      };
-
-      const state = {
-        activeTab: "store",
-        dialogRoot: null,
-        dialog: null,
-        preview: null,
-        saveBtn: null,
-        form: null,
-        errors: {},
-        mode: "create",
-        isDev: false,
-        item: {},
-        controls: {}
-      };
-
-      function $(id){ return document.getElementById(id); }
-
-      function escapeHtml(s) {
-        if (s === null || s === undefined) return "";
-        return String(s).replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
-      }
-
-      function normalizeHostname(value) {
-        if (!value) return null;
-        const s = String(value).trim();
-        try {
-          return new URL(s).hostname.replace(/^www\./i, "").toLowerCase();
-        } catch (_) {
-          try {
-            return new URL("https://" + s).hostname.replace(/^www\./i, "").toLowerCase();
-          } catch (_) {
-            let t = s.replace(/^[a-z]+:\/\//i, "");
-            t = t.split("/")[0];
-            t = t.split(":")[0];
-            t = t.replace(/^www\./i, "").toLowerCase();
-            return t || null;
-          }
-        }
-      }
-
-      function extractHostname(url) {
-        try { return new URL(url).hostname.replace(/^www\./i, "").toLowerCase(); }
-        catch (_) { return null; }
-      }
-
-      function getExtensionFromUrl(url) {
-        try {
-          const path = new URL(url).pathname;
-          if (!path.includes(".")) return "";
-          return path.split(".").pop().toLowerCase();
-        } catch (_) {
-          return "";
-        }
-      }
-
-      function hostIsBlacklisted(hostname) {
-        if (!hostname) return true;
-        return HOST_BLACKLIST.some(b => hostname === b || hostname.endsWith("." + b));
-      }
-
-      function hostIsCloudAllowed(hostname) {
-        if (!hostname) return false;
-        return CLOUD_WHITELIST.some(b => hostname === b || hostname.endsWith("." + b));
-      }
-
-      function validateStoreTypeAndUrl(type, url) {
-        const ext = getExtensionFromUrl(url);
-        if (type === "Sticker Pack") return ext === "dpfstickers";
-        if (type === "Profile Frame") return IMAGE_EXTS.includes(ext);
-        return false;
-      }
-
-      function validateDevTypeAndUrl(devType, url) {
-        const ext = getExtensionFromUrl(url);
-        const map = DEV_TYPE_EXT_MAP[devType];
-        if (!map) return false;
-        if (map.includes("*")) {
-          const otherExts = Object.entries(DEV_TYPE_EXT_MAP)
-            .filter(([k]) => k !== "File")
-            .flatMap(([, arr]) => arr);
-          return !otherExts.includes(ext);
-        }
-        return map.includes(ext);
-      }
-
-      function showToast(message, color = "purple", duration = 3500) {
-        const toast = document.getElementById("toast");
-        if (!toast) return;
-        toast.textContent = message;
-        toast.className = color;
-        toast.style.display = "block";
-        setTimeout(() => {
-          toast.style.display = "none";
-          toast.className = "";
-        }, duration);
-      }
-
-      function showPermissionBanner(message) {
-        const banner = $("perm-banner");
-        if (!banner) return;
-        banner.textContent = message;
-        banner.style.display = "block";
-      }
-
-      function clearPermissionBanner() {
-        const banner = $("perm-banner");
-        if (banner) banner.style.display = "none";
-      }
-
-      async function userDomainIsValidForUrl(email, url) {
-        try {
-          if (!email) return { ok: false, reason: "Du bist nicht angemeldet" };
-          if (!url) return { ok: false, reason: "Keine URL angegeben" };
-
-          const urlHost = normalizeHostname(url);
-          let ud = currentUserData;
-          if (!ud || Object.keys(ud).length === 0) {
-            const userSnap = await getUserDataDocument(email);
-            if (!userSnap || !userSnap.exists) return { ok: false, reason: "Keine Benutzer-Domain gespeichert" };
-            ud = userSnap.data();
-          }
-
-          const rawDomain = ud && (ud.domain_name || ud.domain || null);
-          const domainHost = normalizeHostname(rawDomain);
-          const domainVerified = !!(ud && (ud.domain_verified || ud.is_verified || ud.isVerified));
-
-          if (!domainHost) return { ok: false, reason: "Keine Domain registriert" };
-          if (!urlHost) return { ok: false, reason: "Ungültige URL" };
-
-          const matches = (urlHost === domainHost) || urlHost.endsWith("." + domainHost);
-          if (!matches) return { ok: false, reason: "Der Host stimmt nicht mit der registrierten Domain überein" };
-          if (!domainVerified) return { ok: false, reason: "Domain nicht verifiziert" };
-
-          return { ok: true };
-        } catch (err) {
-          console.error("domain check error", err);
-          return { ok: false, reason: "Fehler bei der Domain-Prüfung" };
-        }
-      }
-
-      function getItemCardData(docSnap) {
-        const data = docSnap.data ? docSnap.data() : docSnap;
-        return {
-          id: docSnap.id || data.id || "",
-          name: data.name || "",
-          image: data.image || "",
-          description: data.description || "",
-          price: data.price,
-          on_sale: data.on_sale,
-          downloadable: !!data.downloadable,
-          download_link: data.download_link || "",
-          creator: data.creator || "",
-          type: data.type || "",
-          version: data.version || "",
-          file_hash: data.file_hash || data.filehash || "",
-          filehash: data.file_hash || data.filehash || ""
-        };
-      }
-
-      function normalizeBoolean(value) {
-        if (typeof value === "boolean") return value;
-        if (typeof value === "number") return value !== 0;
-        if (typeof value === "string") {
-          const normalized = value.trim().toLowerCase();
-          return normalized === "true" || normalized === "1" || normalized === "yes" || normalized === "on";
-        }
-        return false;
-      }
-
-      function userCanCreateDevItems() {
-        if (!currentUserData || Object.keys(currentUserData).length === 0) return false;
-        return normalizeBoolean(
-          currentUserData.dev_items_allowed ??
-          currentUserData.devItemsAllowed ??
-          currentUserData.dev_allowed ??
-          currentUserData.devAllowed ??
-          currentUserData.allowDevItems ??
-          currentUserData.allow_dev_items ??
-          currentUserData.canPublishDevItems ??
-          currentUserData.can_publish_dev_items ??
-          currentUserData.dev_item_allowed
-        );
-      }
-
-      async function getUserDataDocument(email) {
-        if (!email) return null;
-        let userRef = db.collection("user_data").doc(email);
-        let userSnap = await userRef.get();
-        if (userSnap.exists) return userSnap;
-
-        const lowerEmail = String(email).toLowerCase();
-        if (lowerEmail !== email) {
-          userRef = db.collection("user_data").doc(lowerEmail);
-          userSnap = await userRef.get();
-          if (userSnap.exists) return userSnap;
-        }
-
-        return userSnap;
-      }
-
-      async function getUserDataRef(email) {
-        if (!email) return null;
-        let userRef = db.collection("user_data").doc(email);
-        let userSnap = await userRef.get();
-        if (userSnap.exists) return userRef;
-
-        const lowerEmail = String(email).toLowerCase();
-        if (lowerEmail !== email) {
-          userRef = db.collection("user_data").doc(lowerEmail);
-          userSnap = await userRef.get();
-          if (userSnap.exists) return userRef;
-        }
-
-        return db.collection("user_data").doc(email);
-      }
-
-      async function subscribeUserData(email, user) {
-        if (unsubUserData) { unsubUserData(); unsubUserData = null; }
-        currentUserData = {};
-        currentUserDataRef = null;
-
-        if (!email) {
-          refreshWelcome(currentUserData, user);
-          return;
-        }
-
-        const userRef = await getUserDataRef(email);
-        if (!userRef) {
-          refreshWelcome(currentUserData, user);
-          return;
-        }
-
-        currentUserDataRef = userRef;
-        unsubUserData = userRef.onSnapshot(
-          snap => {
-            currentUserData = snap.exists ? snap.data() : {};
-            refreshWelcome(currentUserData, user);
-          },
-          err => {
-            console.warn("user_data snapshot err", err);
-            currentUserData = {};
-            refreshWelcome(currentUserData, user);
-          }
-        );
-      }
-
-      function createItemCard(item, isDevelopment = false) {
-        const card = document.createElement("article");
-        card.className = "creator-card";
-        card.dataset.productId = item.id || "";
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "edit-link";
-        editBtn.title = "Artikel bearbeiten";
-        editBtn.setAttribute("aria-label", `${item.name || "Artikel"} bearbeiten`);
-        editBtn.innerHTML = '<img src="/assets/edit.png" alt="" />';
-        editBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          openItemDialog({
-            mode: "edit",
-            isDev: !!isDevelopment,
-            item
-          });
-        });
-        card.appendChild(editBtn);
-
-        const imgWrap = document.createElement("div");
-        imgWrap.className = "card-image";
-        imgWrap.style.backgroundImage = `url(${item.image || "https://darkpurpleof.github.io/org-owner.jpg"})`;
-        card.appendChild(imgWrap);
-
-        const content = document.createElement("div");
-        content.className = "card-content";
-
-        const titleRow = document.createElement("div");
-        titleRow.className = "card-title-row";
-
-        const title = document.createElement("h3");
-        title.className = "card-title";
-        title.textContent = item.name || "(ohne Namen)";
-        titleRow.appendChild(title);
-
-        const priceChip = document.createElement("div");
-        priceChip.className = "chip price-chip";
-        priceChip.textContent = (item.price !== undefined && item.price !== null) ? `${item.price} DF$` : "Kostenlos";
-        titleRow.appendChild(priceChip);
-
-        content.appendChild(titleRow);
-
-        if (isDevelopment) {
-          const typeLine = document.createElement("div");
-          typeLine.className = "chip type-chip";
-          typeLine.textContent = item.type ? (TYPE_LABELS[item.type] || item.type.toUpperCase()) : "UNBEKANNT";
-          content.appendChild(typeLine);
-        }
-
-        const desc = document.createElement("p");
-        desc.className = "card-desc";
-        desc.textContent = item.description || "";
-        content.appendChild(desc);
-
-        const bottom = document.createElement("div");
-        bottom.className = "card-bottom";
-
-        if (item.downloadable) {
-          const dl = document.createElement("a");
-          dl.className = "chip dl-chip";
-          dl.href = item.download_link || "#";
-          dl.target = "_blank";
-          dl.rel = "noopener";
-          dl.textContent = "Herunterladen";
-          bottom.appendChild(dl);
-        }
-
-        const author = document.createElement("div");
-        author.className = "card-creator";
-        author.textContent = item.creator || "";
-        bottom.appendChild(author);
-
-        content.appendChild(bottom);
-        card.appendChild(content);
-        return card;
-      }
-
-      function renderItems(gridEl, docs, isDevelopment = false) {
-        gridEl.innerHTML = "";
-        docs.forEach(docSnap => {
-          const card = createItemCard(getItemCardData(docSnap), isDevelopment);
-          gridEl.appendChild(card);
-        });
-      }
-
-      async function subscribeStoreItems(email) {
-        if (!email) return;
-        if (unsubStore) { unsubStore(); unsubStore = null; }
-
-        const tryPaths = [email];
-        const lower = email.toLowerCase();
-        if (lower !== email) tryPaths.push(lower);
-
-        for (const p of tryPaths) {
-          const pathCol = db.collection("ugc").doc(p).collection("store-items");
-          try {
-            unsubStore = pathCol.onSnapshot(
-              snap => {
-                clearPermissionBanner();
-                const grid = $(storeGridId);
-                const empty = $(storeNoItemsId);
-                if (!grid || !empty) return;
-                if (snap.empty) {
-                  grid.innerHTML = "";
-                  empty.classList.remove("hidden");
-                } else {
-                  empty.classList.add("hidden");
-                  renderItems(grid, snap.docs, false);
-                }
-              },
-              err => {
-                console.error("store snapshot err", err);
-                if (err && err.code === "permission-denied") {
-                  showPermissionBanner("Zugriff verweigert beim Lesen der Store-Artikel unter: " + pathCol.path);
-                  if (unsubStore) { unsubStore(); unsubStore = null; }
-                } else {
-                  showPermissionBanner("Fehler beim Laden der Store-Artikel: " + (err.message || err));
-                }
-              }
-            );
-            break;
-          } catch (err) {
-            console.warn("subscribe store path failed", p, err);
-          }
-        }
-      }
-
-      async function subscribeDevItems(email) {
-        if (!email) return;
-        if (unsubDev) { unsubDev(); unsubDev = null; }
-
-        const tryPaths = [email];
-        const lower = email.toLowerCase();
-        if (lower !== email) tryPaths.push(lower);
-
-        for (const p of tryPaths) {
-          const pathCol = db.collection("ugc").doc(p).collection("development-items");
-          try {
-            unsubDev = pathCol.onSnapshot(
-              snap => {
-                clearPermissionBanner();
-                const grid = $(devGridId);
-                const empty = $(devNoItemsId);
-                if (!grid || !empty) return;
-                if (snap.empty) {
-                  grid.innerHTML = "";
-                  empty.classList.remove("hidden");
-                } else {
-                  empty.classList.add("hidden");
-                  renderItems(grid, snap.docs, true);
-                }
-              },
-              err => {
-                console.error("dev snapshot err", err);
-                if (err && err.code === "permission-denied") {
-                  showPermissionBanner("Zugriff verweigert beim Lesen der Entwicklungsartikel unter: " + pathCol.path);
-                  if (unsubDev) { unsubDev(); unsubDev = null; }
-                } else {
-                  showPermissionBanner("Fehler beim Laden der Entwicklungsartikel: " + (err.message || err));
-                }
-              }
-            );
-            break;
-          } catch (err) {
-            console.warn("subscribe dev path failed", p, err);
-          }
-        }
-      }
-
-      async function createStoreItem(data) {
-        if (!currentUser) throw new Error("Du bist nicht angemeldet");
-        return await db.collection("ugc").doc(currentUser.email).collection("store-items").add(data);
-      }
-
-      async function updateStoreItem(docId, data) {
-        if (!currentUser) throw new Error("Du bist nicht angemeldet");
-        return await db.collection("ugc").doc(currentUser.email).collection("store-items").doc(docId).set(data, { merge: true });
-      }
-
-      async function createDevItem(data) {
-        if (!currentUser) throw new Error("Du bist nicht angemeldet");
-        return await db.collection("ugc").doc(currentUser.email).collection("development-items").add(data);
-      }
-
-      async function updateDevItem(docId, data) {
-        if (!currentUser) throw new Error("Du bist nicht angemeldet");
-        return await db.collection("ugc").doc(currentUser.email).collection("development-items").doc(docId).set(data, { merge: true });
-      }
-
-      function getCollectionName() {
-        return state.isDev ? "development-items" : "store-items";
-      }
-
-      async function validateAll() {
-        const errs = [];
-        const { controls, isDev, mode, item } = state;
-
-        const name = String(controls.name.value || "").trim();
-        const idVal = String(controls.id.value || "").trim();
-        const priceVal = String(controls.price.value || "").trim();
-        const image = String(controls.image.value || "").trim();
-        const downloadable = String(controls.downloadable.value) === "true";
-        const downloadLink = String(controls.downloadLink.value || "").trim();
-        const type = String(controls.type.value || "").trim();
-        const version = String(controls.version.value || "").trim();
-        const desc = String(controls.description.value || "").trim();
-        const onStock = String(controls.onStock.value) === "true";
-        const filehash = controls.filehash ? String(controls.filehash.value || "").trim() : "";
-
-        if (!name) errs.push({ field: "name", msg: "Der Name ist erforderlich" });
-        if (mode === "create" && !idVal) errs.push({ field: "id", msg: "Die ID ist beim Erstellen erforderlich" });
-
-        if (priceVal !== "" && isNaN(Number(priceVal))) {
-          errs.push({ field: "price", msg: "Der Preis muss eine Zahl sein" });
-        }
-
-        if (idVal) {
-          try {
-            const collNames = ["development-items", "store-items"];
-            for (const collName of collNames) {
-              const snap = await db.collection("ugc").doc(currentUser.email).collection(collName).where("id", "==", idVal).get();
-              if (!snap.empty) {
-                const conflicts = snap.docs.filter(d => {
-                  if (mode !== "edit") return true;
-                  const foundDocId = d.id;
-                  const currentDocId = item.id || "";
-                  const storedId = d.data() && d.data().id ? d.data().id : "";
-                  return !(foundDocId === currentDocId || storedId === currentDocId);
-                });
-                if (conflicts.length > 0) {
-                  errs.push({ field: "id", msg: "ID wird bereits von einem anderen Artikel verwendet" });
-                  break;
-                }
-              }
-            }
-          } catch (err) {
-            console.error("ID uniqueness check error", err);
-            errs.push({ field: "id", msg: "Fehler beim Prüfen der ID-Eindeutigkeit" });
-          }
-        }
-
-        if (downloadable) {
-          if (!downloadLink) {
-            errs.push({ field: "downloadLink", msg: "Ein Download-Link ist erforderlich" });
-            return errs;
-          }
-          if (!downloadLink.startsWith("https://")) {
-            errs.push({ field: "downloadLink", msg: "Der Download-Link muss mit https:// beginnen" });
-          }
-          if (!version) {
-            errs.push({ field: "version", msg: "Für herunterladbare Artikel ist eine Version erforderlich" });
-          }
-          if (isDev && type === "Plugin" && !filehash) {
-            errs.push({ field: "filehash", msg: "Der Root-Hash ist für Plugins erforderlich" });
-          }
-          if (isDev && filehash && !/^[a-fA-F0-9]{64}$/.test(filehash)) {
-            errs.push({ field: "filehash", msg: "Der Root-Hash muss eine 64-stellige Hexadezimalzeichenfolge sein" });
-          }
-          if (mode === "edit" && item.download_link && item.download_link !== downloadLink) {
-            if (item.version === version) {
-              errs.push({ field: "version", msg: "Die Version muss aktualisiert werden, wenn sich der Download-Link ändert" });
-            }
-            if (isDev) {
-              const oldHash = item.file_hash || item.filehash || "";
-              if (oldHash === filehash) {
-                errs.push({ field: "filehash", msg: "Der Root-Hash muss aktualisiert werden, wenn sich der Download-Link ändert" });
-              }
-            }
-          }
-
-          const hostname = extractHostname(downloadLink);
-          if (!hostname) {
-            errs.push({ field: "downloadLink", msg: "Ungültige Download-Link-URL" });
-          } else if (hostIsBlacklisted(hostname) && !hostIsCloudAllowed(hostname)) {
-            errs.push({ field: "downloadLink", msg: "Der Download-Host ist nicht erlaubt" });
-          }
-
-          if (!isDev) {
-            if (!validateStoreTypeAndUrl(type, downloadLink)) {
-              errs.push({ field: "downloadLink", msg: `Für den Typ ${type} muss der Link zur erwarteten Dateiendung passen` });
-            }
-          } else {
-            if (!validateDevTypeAndUrl(type, downloadLink)) {
-              errs.push({ field: "downloadLink", msg: `Der Entwicklungstyp "${type}" stimmt nicht mit der Download-Endung überein` });
-            }
-            const domCheck = await userDomainIsValidForUrl(currentUser.email, downloadLink);
-            if (!domCheck.ok) {
-              errs.push({ field: "downloadLink", msg: "Der Entwicklungsartikel muss auf deiner verifizierten Domain gehostet werden" });
-            }
-          }
-        }
-
-        if (isDev && mode === "create") {
-          try {
-            const ud = (currentUserData && Object.keys(currentUserData).length > 0)
-              ? currentUserData
-              : (await (async () => {
-                  const userRef = await getUserDataRef(currentUser.email);
-                  const userSnap = userRef ? await userRef.get() : null;
-                  return userSnap && userSnap.exists ? userSnap.data() : {};
-                })());
-            const coinsStr = typeof ud.coins === "string" ? ud.coins : (ud.coins != null ? String(ud.coins) : "0");
-            const numeric = parseInt(coinsStr.replace(/[^\d-]/g, ""), 10) || 0;
-            if (numeric < 500) errs.push({ field: "coins", msg: "Du hast nicht genug Münzen (500 DF$ werden benötigt)" });
-          } catch (err) {
-            errs.push({ field: "coins", msg: "Fehler beim Prüfen der Münzen" });
-          }
-        }
-
-        if (desc.length > 1800) errs.push({ field: "description", msg: "Die Beschreibung ist zu lang" });
-        if (image && !/^https?:\/\//i.test(image)) errs.push({ field: "image", msg: "Die Bild-URL muss mit http:// oder https:// beginnen" });
-
-        return errs;
-      }
-
-      function clearErrors() {
-        Object.values(state.errors).forEach(node => {
-          if (node) node.textContent = "";
-        });
-      }
-
-      async function runValidationAndUpdateUI() {
-        clearErrors();
-        const errs = await validateAll();
-        const byField = {};
-        errs.forEach(e => { if (!byField[e.field]) byField[e.field] = e.msg; });
-
-        if (state.errors.name) state.errors.name.textContent = byField.name || "";
-        if (state.errors.id) state.errors.id.textContent = byField.id || "";
-        if (state.errors.price) state.errors.price.textContent = byField.price || "";
-        if (state.errors.image) state.errors.image.textContent = byField.image || "";
-        if (state.errors.downloadable) state.errors.downloadable.textContent = byField.downloadable || "";
-        if (state.errors.onStock) state.errors.onStock.textContent = byField.onstock || "";
-        if (state.errors.type) state.errors.type.textContent = byField.type || "";
-        if (state.errors.description) state.errors.description.textContent = byField.description || "";
-        if (state.errors.downloadLink) state.errors.downloadLink.textContent = byField.downloadLink || "";
-        if (state.errors.version) state.errors.version.textContent = byField.version || "";
-        if (state.errors.filehash) state.errors.filehash.textContent = byField.filehash || "";
-        if (state.errors.coins) state.errors.coins.textContent = byField.coins || "";
-
-        if (state.saveBtn) state.saveBtn.disabled = errs.length > 0;
-        return errs.length > 0;
-      }
-
-      function refreshDownloadVisibility() {
-        const show = state.controls.downloadable && String(state.controls.downloadable.value) === "true";
-        if (state.controls.downloadLinkWrap) {
-          state.controls.downloadLinkWrap.classList.toggle("hidden", !show);
-        }
-      }
-
-      function buildDialog(options = {}) {
-        const mode = options.mode || "create";
-        const isDev = !!options.isDev;
-        const item = options.item || {};
-
-        state.mode = mode;
-        state.isDev = isDev;
-        state.item = item;
-
-        if (state.dialogRoot) state.dialogRoot.remove();
-
-        const portal = document.createElement("div");
-        portal.className = "dialog-portal";
-        portal.id = "item-dialog-portal";
-        portal.innerHTML = `
-          <div class="dialog-backdrop" role="presentation"></div>
-          <div class="dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(mode === "create" ? "Neuen Artikel erstellen" : `Bearbeiten von ${item.name || ""}`)}">
-            <div class="dialog-inner">
-              <header class="dialog-header">
-                <h3 class="dialog-title">${escapeHtml(mode === "create" ? "Neuen Artikel erstellen" : `Bearbeiten von ${item.name || ""}`)}</h3>
-                <button class="icon-button" type="button" aria-label="Dialog schließen">×</button>
-              </header>
-
-              <div class="dialog-body">
-                <div class="dialog-left">
-                  <form class="item-form" novalidate>
-                    <div class="field">
-                      <label class="field-label" for="dlg-name">Name</label>
-                      <input class="input" id="dlg-name" type="text" value="${escapeHtml(item.name || "")}" required />
-                      <div class="field-error" id="err-dlg-name"></div>
-                    </div>
-
-                    <div class="field">
-                      <label class="field-label" for="dlg-id">ID</label>
-                      <input class="input" id="dlg-id" type="text" value="${escapeHtml(item.id || "")}" ${mode === "edit" ? "readonly" : ""} />
-                      <div class="field-note">${mode === "create" ? "Die ID kann beim Erstellen festgelegt werden." : "Die ID kann nicht geändert werden."}</div>
-                      <div class="field-error" id="err-dlg-id"></div>
-                    </div>
-
-                    <div class="field-row">
-                      <div class="field">
-                        <label class="field-label" for="dlg-price">Preis (DF$)</label>
-                        <input class="input" id="dlg-price" type="number" value="${item.price !== undefined && item.price !== null ? escapeHtml(item.price) : ""}" />
-                        <div class="field-error" id="err-dlg-price"></div>
-                      </div>
-                      <div class="field">
-                        <label class="field-label" for="dlg-version">Version</label>
-                        <input class="input" id="dlg-version" type="text" value="${escapeHtml(item.version || "")}" />
-                        <div class="field-error" id="err-dlg-version"></div>
-                      </div>
-                    </div>
-
-                    <div class="field">
-                      <label class="field-label" for="dlg-image">Bild-URL</label>
-                      <input class="input" id="dlg-image" type="url" value="${escapeHtml(item.image || "")}" />
-                      <div class="field-error" id="err-dlg-image"></div>
-                    </div>
-
-                    <div class="field">
-                      <label class="field-label" for="dlg-desc">Beschreibung</label>
-                      <textarea class="textarea" id="dlg-desc" rows="5">${escapeHtml(item.description || "")}</textarea>
-                      <div class="field-error" id="err-dlg-description"></div>
-                    </div>
-
-                    <div class="field" id="type-field">
-                      <label class="field-label" for="dlg-type">Typ</label>
-                      <select class="select" id="dlg-type" ${mode === "edit" ? "disabled" : ""}></select>
-                      <div class="field-error" id="err-dlg-type"></div>
-                    </div>
-
-                    <div class="field">
-                      <label class="field-label">Herunterladbar</label>
-                      <div class="binary-grid">
-                        <label class="binary-option"><input type="radio" name="downloadable" value="true" ${mode === "edit" ? "disabled" : ""} ${item.downloadable ? "checked" : ""} /><span>Ja</span></label>
-                        <label class="binary-option"><input type="radio" name="downloadable" value="false" ${mode === "edit" ? "disabled" : ""} ${!item.downloadable ? "checked" : ""} /><span>Nein</span></label>
-                      </div>
-                      <div class="field-error" id="err-dlg-downloadable"></div>
-                    </div>
-
-                    <div class="field">
-                      <label class="field-label">Im Verkauf</label>
-                      <div class="binary-grid">
-                        <label class="binary-option"><input type="radio" name="onstock" value="true" ${item.on_sale !== false ? "checked" : ""} /><span>Ja</span></label>
-                        <label class="binary-option"><input type="radio" name="onstock" value="false" ${item.on_sale === false ? "checked" : ""} /><span>Nein</span></label>
-                      </div>
-                      <div class="field-error" id="err-dlg-onstock"></div>
-                    </div>
-
-                    <div class="field hidden" id="download-link-wrap">
-                      <label class="field-label" for="dlg-download-link">Download-Link</label>
-                      <input class="input" id="dlg-download-link" type="url" value="${escapeHtml(item.download_link || "")}" placeholder="https://..." />
-                      <div class="field-note">HTTPS erforderlich. Gesperrte Hosts vermeiden. Für Entwicklungsartikel muss die Datei dem deklarierten Typ entsprechen und auf deiner verifizierten Domain liegen.</div>
-                      <div class="field-error" id="err-dlg-download-link"></div>
-                    </div>
-
-                    <div class="field hidden" id="filehash-wrap">
-                      <label class="field-label" for="dlg-filehash">Root-Hash</label>
-                      <input class="input" id="dlg-filehash" type="text" value="${escapeHtml(item.file_hash || item.filehash || "")}" placeholder="b31f39534c2ef95c53afd6551548152effa948cec98bde9c5d1e39a71bc722d9" />
-                      <div class="field-note">Root-Hash, der beim Signieren des Plugins bereitgestellt wird. Erforderlich für Plugins. Beispiel: b31f39534c2ef95c53afd6551548152effa948cec98bde9c5d1e39a71bc722d9</div>
-                      <div class="field-error" id="err-dlg-filehash"></div>
-                    </div>
-
-                    <div class="field-error" id="err-dlg-coins"></div>
-                  </form>
-                </div>
-
-                <div class="dialog-right">
-                  <div class="preview-card">
-                    <div class="preview-image" id="preview-image"></div>
-                    <div class="preview-body">
-                      <div class="preview-row">
-                        <div class="preview-title" id="preview-title">Vorschau</div>
-                        <div class="chip price-chip" id="preview-price">Kostenlos</div>
-                      </div>
-                      <div class="preview-type" id="preview-type">UNBEKANNT</div>
-                      <div class="preview-desc" id="preview-desc"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <footer class="dialog-footer">
-                <button class="button" type="button" id="dlg-discard">Verwerfen</button>
-                <button class="button primary" type="button" id="dlg-save" disabled>Speichern</button>
-              </footer>
-            </div>
-          </div>
-        `;
-
-        document.body.appendChild(portal);
-        state.dialogRoot = portal;
-        state.dialog = portal.querySelector(".dialog");
-        state.saveBtn = portal.querySelector("#dlg-save");
-        state.saveBtn.textContent = isDev && mode === "create" ? "Für 500 DF$ speichern" : "Speichern";
-        state.form = portal.querySelector(".item-form");
-        state.preview = {
-          image: portal.querySelector("#preview-image"),
-          title: portal.querySelector("#preview-title"),
-          price: portal.querySelector("#preview-price"),
-          type: portal.querySelector("#preview-type"),
-          desc: portal.querySelector("#preview-desc")
-        };
-
-        const closeBtn = portal.querySelector(".icon-button");
-        const discardBtn = portal.querySelector("#dlg-discard");
-
-        const name = portal.querySelector("#dlg-name");
-        const id = portal.querySelector("#dlg-id");
-        const price = portal.querySelector("#dlg-price");
-        const version = portal.querySelector("#dlg-version");
-        const image = portal.querySelector("#dlg-image");
-        const desc = portal.querySelector("#dlg-desc");
-        const type = portal.querySelector("#dlg-type");
-        const downloadLinkWrap = portal.querySelector("#download-link-wrap");
-        const downloadLink = portal.querySelector("#dlg-download-link");
-        const filehashWrap = portal.querySelector("#filehash-wrap");
-        const filehash = portal.querySelector("#dlg-filehash");
-
-        state.controls = {
-          name,
-          id,
-          price,
-          version,
-          image,
-          description: desc,
-          type,
-          downloadLink,
-          downloadLinkWrap,
-          filehash,
-          filehashWrap,
-          downloadable: portal.querySelector('input[name="downloadable"]:checked'),
-          onStock: portal.querySelector('input[name="onstock"]:checked')
-        };
-
-        state.errors = {
-          name: portal.querySelector("#err-dlg-name"),
-          id: portal.querySelector("#err-dlg-id"),
-          price: portal.querySelector("#err-dlg-price"),
-          image: portal.querySelector("#err-dlg-image"),
-          downloadable: portal.querySelector("#err-dlg-downloadable"),
-          onStock: portal.querySelector("#err-dlg-onstock"),
-          type: portal.querySelector("#err-dlg-type"),
-          description: portal.querySelector("#err-dlg-description"),
-          downloadLink: portal.querySelector("#err-dlg-download-link"),
-          version: portal.querySelector("#err-dlg-version"),
-          filehash: portal.querySelector("#err-dlg-filehash"),
-          coins: portal.querySelector("#err-dlg-coins")
-        };
-
-        const storeTypes = [
-          { value: "Sticker Pack", label: "Stickerpaket" },
-          { value: "Profile Frame", label: "Profilrahmen" }
-        ];
-        const devTypes = [
-          { value: "Package", label: "Paket" },
-          { value: "File", label: "Datei" },
-          { value: "Plugin", label: "Plugin" },
-          { value: "Sample", label: "Beispiel" }
-        ];
-        const types = isDev ? devTypes : storeTypes;
-
-        types.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t.value;
-          opt.textContent = t.label;
-          type.appendChild(opt);
-        });
-        type.value = item.type || types[0].value;
-
-        const refreshBinaryRefs = () => {
-          state.controls.downloadable = portal.querySelector('input[name="downloadable"]:checked');
-          state.controls.onStock = portal.querySelector('input[name="onstock"]:checked');
-        };
-
-        const updatePreview = () => {
-          const nm = name.value.trim() || "(ohne Namen)";
-          const pr = price.value.trim() !== "" ? `${price.value.trim()} DF$` : "Kostenlos";
-          const img = image.value.trim() || "https://darkpurpleof.github.io/org-owner.jpg";
-          const typ = TYPE_LABELS[type.value] || type.value || "UNBEKANNT";
-          const de = desc.value.trim();
-
-          state.preview.image.style.backgroundImage = `url(${img})`;
-          state.preview.title.textContent = nm;
-          state.preview.price.textContent = pr;
-          state.preview.type.textContent = typ;
-          state.preview.desc.textContent = de;
-        };
-
-        const refreshDownloadLinkVisibility = () => {
-          refreshBinaryRefs();
-          const downloadable = state.controls.downloadable && state.controls.downloadable.value === "true";
-          downloadLinkWrap.classList.toggle("hidden", !downloadable);
-          if (filehashWrap) {
-            filehashWrap.classList.toggle("hidden", !(isDev && downloadable));
-          }
-        };
-
-        const onInput = () => {
-          refreshDownloadLinkVisibility();
-          updatePreview();
-          runValidationAndUpdateUI();
-        };
-
-        [name, id, price, version, image, desc, type, downloadLink, filehash].forEach(el => {
-          if (el) {
-            el.addEventListener("input", onInput);
-            el.addEventListener("change", onInput);
-          }
-        });
-
-
-
-        portal.querySelectorAll('input[name="downloadable"], input[name="onstock"]').forEach(radio => {
-          radio.addEventListener("change", () => {
-            refreshDownloadLinkVisibility();
-            updatePreview();
-            runValidationAndUpdateUI();
-          });
-        });
-
-        if (mode === "edit" && item.id) {
-          id.readOnly = true;
-          id.style.opacity = ".8";
-          id.style.pointerEvents = "none";
-        }
-
-        function closeDialog() {
-          if (portal && portal.parentNode) portal.parentNode.removeChild(portal);
-          state.dialogRoot = null;
-          state.dialog = null;
-          state.preview = null;
-          state.saveBtn = null;
-          state.form = null;
-          state.controls = {};
-          state.errors = {};
-        }
-
-        closeBtn.addEventListener("click", closeDialog);
-        discardBtn.addEventListener("click", closeDialog);
-        portal.querySelector(".dialog-backdrop").addEventListener("click", closeDialog);
-
-        state.saveBtn.addEventListener("click", async () => {
-          const hasErrors = await runValidationAndUpdateUI();
-          if (hasErrors) return;
-          if (state.isDev && !userCanCreateDevItems()) {
-            if (state.errors.coins) state.errors.coins.textContent = "Du hast keine Berechtigung, Entwicklungsartikel zu veröffentlichen.";
-            showToast("Du hast keine Berechtigung, Entwicklungsartikel zu veröffentlichen.", "red");
-            return;
-          }
-
-          if (state.isDev && state.mode === "create") {
-            const confirmed = await DPDiag.confirm({
-              title: "Entwicklungsartikel veröffentlichen?",
-              text: "Diese Aktion veröffentlicht deinen Entwicklungsartikel und zieht 500 DF$ von deinem Konto ab.",
-              okText: "Für 500 DF$ speichern",
-              cancelText: "Abbrechen"
-            });
-            if (!confirmed) return;
-          }
-
-          const nameVal = String(name.value || "").trim();
-          const idVal = String(id.value || "").trim();
-          const priceVal = String(price.value || "").trim();
-          const imageVal = String(image.value || "").trim();
-          const versionVal = String(version.value || "").trim();
-          const descVal = String(desc.value || "").trim();
-          const typeVal = String(type.value || "").trim();
-          const downloadableVal = (portal.querySelector('input[name="downloadable"]:checked') || {}).value === "true";
-          const onStockVal = (portal.querySelector('input[name="onstock"]:checked') || {}).value === "true";
-          const downloadLinkVal = String(downloadLink.value || "").trim();
-
-          const payload = {
-            name: nameVal,
-            description: descVal,
-            price: priceVal === "" ? null : Number(priceVal),
-            image: imageVal,
-            version: versionVal,
-            on_sale: onStockVal,
-            downloadable: downloadableVal,
-            download_link: downloadableVal ? downloadLinkVal : null,
-            type: typeVal,
-            creator: currentUser.email,
-            updated_at: new Date()
-          };
-          if (state.isDev && downloadableVal && state.controls.filehash) {
-            const filehashVal = String(state.controls.filehash.value || "").trim();
-            payload.file_hash = filehashVal;
-            payload.filehash = filehashVal;
-          }
-
-          if (idVal) {
-            payload.id = idVal;
-          } else if (mode === "edit" && item.id) {
-            payload.id = item.id;
-          }
-
-          try {
-            if (mode === "create") {
-              if (isDev) {
-                const ud = (currentUserData && Object.keys(currentUserData).length > 0)
-                  ? currentUserData
-                  : (await (async () => {
-                      const userRef = await getUserDataRef(currentUser.email);
-                      const userSnap = userRef ? await userRef.get() : null;
-                      return userSnap && userSnap.exists ? userSnap.data() : {};
-                    })());
-                const coinsStr = typeof ud.coins === "string" ? ud.coins : (ud.coins != null ? String(ud.coins) : "0");
-                const numeric = parseInt(coinsStr.replace(/[^\d-]/g, ""), 10) || 0;
-
-                if (numeric < 500) {
-                  if (state.errors.coins) state.errors.coins.textContent = "Du hast nicht genug Münzen, um den Entwicklungsartikel zu veröffentlichen.";
-                  state.saveBtn.disabled = true;
-                  return;
-                }
-
-                const newVal = numeric - 500;
-                let createdRef = null;
-
-                if (idVal) {
-                  createdRef = db.collection("ugc").doc(currentUser.email).collection("development-items").doc(idVal);
-                  await createdRef.set(payload);
-                } else {
-                  const docRef = db.collection("ugc").doc(currentUser.email).collection("development-items").doc();
-                  payload.id = docRef.id;
-                  await docRef.set(payload);
-                  createdRef = docRef;
-                }
-
-                const activeUserRef = currentUserDataRef || await getUserDataRef(currentUser.email);
-                if (activeUserRef) {
-                  await activeUserRef.set({ coins: String(newVal) }, { merge: true });
-                }
-
-                try {
-                  const txPayload = {
-                    amount: 500,
-                    date: firebase.firestore.FieldValue.serverTimestamp(),
-                    description: `Upload von ${nameVal}`,
-                    image: imageVal || null,
-                    source: "system@darkpurpleof.github.io",
-                    type: "outgoing",
-                    transtype: "system"
-                  };
-                  const txId = idVal || (createdRef && createdRef.id);
-                  if (txId) {
-                    await db.collection("transactions").doc(currentUser.email).collection("records").doc(txId).set(txPayload);
-                  }
-                } catch (txErr) {
-                  console.error("failed to write transaction record", txErr);
-                }
-              } else {
-                let createdRef = null;
-                if (idVal) {
-                  createdRef = db.collection("ugc").doc(currentUser.email).collection("store-items").doc(idVal);
-                  await createdRef.set(payload);
-                } else {
-                  createdRef = await createStoreItem(payload);
-                }
-
-                if (typeVal === "Sticker Pack") {
-                  try {
-                    const txPayload = {
-                      amount: 0,
-                      date: firebase.firestore.FieldValue.serverTimestamp(),
-                      description: `Stickerpaket ${nameVal} speichern`,
-                      image: imageVal || null,
-                      source: "system@darkpurpleof.github.io",
-                      type: "outgoing"
-                    };
-                    const txId = idVal || (createdRef && createdRef.id);
-                    if (txId) {
-                      await db.collection("transactions").doc(currentUser.email).collection("records").doc(txId).set(txPayload);
-                    }
-                  } catch (txErr) {
-                    console.error("failed to write sticker pack transaction record", txErr);
-                  }
-                }
-              }
-            } else {
-              const docId = idVal || item.id;
-              if (!docId) throw new Error("Missing doc id to update");
-
-              if (isDev) {
-                await updateDevItem(docId, payload);
-              } else {
-                await updateStoreItem(docId, payload);
-
-                if (typeVal === "Sticker Pack") {
-                  try {
-                    const txPayload = {
-                      amount: 0,
-                      date: firebase.firestore.FieldValue.serverTimestamp(),
-                      description: `Stickerpaket ${nameVal} speichern`,
-                      image: imageVal || null,
-                      source: "system@darkpurpleof.github.io",
-                      type: "outgoing"
-                    };
-                    await db.collection("transactions").doc(currentUser.email).collection("records").doc(docId).set(txPayload);
-                  } catch (txErr) {
-                    console.error("failed to write sticker pack transaction record", txErr);
-                  }
-                }
-              }
-            }
-
-            closeDialog();
-            showToast("Erfolgreich gespeichert", "purple");
-          } catch (err) {
-            console.error("save err", err);
-            if (state.errors.downloadLink) state.errors.downloadLink.textContent = "Fehler beim Speichern: " + (err.message || String(err));
-            state.saveBtn.disabled = true;
-            showToast("Der Artikel konnte nicht gespeichert werden", "red");
-          }
-        });
-
-        updatePreview();
-        refreshDownloadLinkVisibility();
-        runValidationAndUpdateUI();
-        setTimeout(() => { try { name.focus(); } catch (_) {} }, 80);
-      }
-
-      function openItemDialog(options = {}) {
-        if (!currentUser) {
-          showPermissionBanner("Melde dich an, um Artikel zu erstellen oder zu bearbeiten.");
-          setTimeout(clearPermissionBanner, 2800);
-          return;
-        }
-        if (options.isDev && !userCanCreateDevItems()) {
-          showToast("Du hast keine Berechtigung, Entwicklungsartikel zu veröffentlichen.", "red");
-          return;
-        }
-        buildDialog(options);
-      }
-
-      function setTab(tabName) {
-        state.activeTab = tabName;
-        document.querySelectorAll(tabsSelector).forEach(btn => {
-          btn.classList.toggle("active", btn.dataset.tab === tabName);
-        });
-        $(storePanelId).classList.toggle("hidden", tabName !== "store");
-        $(devPanelId).classList.toggle("hidden", tabName !== "dev");
-      }
-
-      function refreshWelcome(userData, user) {
-        const profile = $(profileElId);
-        const userNameEl = $(userNameId);
-        const welcomeEl = $(welcomeId);
-
-        const pic = userData.profile_picture || "https://darkpurpleof.github.io/org-owner.jpg";
-        profile.style.backgroundImage = `url(${pic})`;
-
-        const displayName = userData["display name"] || userData.displayName || user.displayName || user.email;
-        userNameEl.textContent = displayName || "";
-        welcomeEl.classList.remove("hidden");
-
-        const devAllowed = normalizeBoolean(
-          userData.dev_items_allowed ??
-          userData.devItemsAllowed ??
-          userData.dev_allowed ??
-          userData.devAllowed ??
-          userData.allowDevItems ??
-          userData.allow_dev_items ??
-          userData.canPublishDevItems ??
-          userData.can_publish_dev_items ??
-          userData.dev_item_allowed
-        );
-
-        const devWarning = $("dev-warning");
-        const newDevBtn = $("new-dev-btn");
-        if (devAllowed) {
-          if (devWarning) devWarning.classList.add("hidden");
-          if (newDevBtn) newDevBtn.classList.remove("hidden");
-        } else {
-          if (devWarning) devWarning.classList.remove("hidden");
-          if (newDevBtn) newDevBtn.classList.add("hidden");
-        }
-      }
-
-      function bindButtons() {
-        const storeNewBtn = $("new-store-btn");
-        const newDevBtn = $("new-dev-btn");
-        if (storeNewBtn) storeNewBtn.addEventListener("click", () => openItemDialog({ mode: "create", isDev: false }));
-        if (newDevBtn) newDevBtn.addEventListener("click", () => openItemDialog({ mode: "create", isDev: true }));
-
-        document.querySelectorAll(tabsSelector).forEach(btn => {
-          btn.addEventListener("click", () => setTab(btn.dataset.tab));
-        });
-      }
-
-      document.addEventListener("DOMContentLoaded", () => {
-        bindButtons();
-        setTab("store");
-
-        auth.onAuthStateChanged(async user => {
-          const profile = $(profileElId);
-          const userNameEl = $(userNameId);
-          const welcomeEl = $(welcomeId);
-          const newDevBtn = $("new-dev-btn");
-
-          if (user) {
-            currentUser = user;
-            await subscribeUserData(user.email, user);
-            subscribeStoreItems(user.email);
-            subscribeDevItems(user.email);
-          } else {
-            currentUser = null;
-            currentUserData = {};
-            currentUserDataRef = null;
-            if (unsubUserData) { unsubUserData(); unsubUserData = null; }
-            if (profile) profile.style.backgroundImage = "url('https://darkpurpleof.github.io/org-owner.jpg')";
-            if (userNameEl) userNameEl.textContent = "";
-            if (welcomeEl) welcomeEl.classList.add("hidden");
-            if (unsubStore) { unsubStore(); unsubStore = null; }
-            if (unsubDev) { unsubDev(); unsubDev = null; }
-            if (newDevBtn) newDevBtn.classList.add("hidden");
-          }
-        });
-      });
-    })();
-  </script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Creator Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,300..1000&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+<script type="module" src="/dp-topbar.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --bg:#000;--s1:#0d0816;--s2:#150e21;--s3:#1d1429;--s4:#261a35;
+  --p:#cfaeff;--onp:#2b0b57;--pc:#52189a;--onpc:#ecdcff;
+  --s:#ecd9f8;--ons:#33224a;--sc:#4a3563;--onsc:#f4e5ff;
+  --t:#ffb7da;--tc:#5a1f43;--ont:#ffd9ec;
+  --tx:#ede4f7;--mu:#b5a6c7;--ol:#7d6e90;--ov:#3a2d4a;--er:#ffb4ab;--ok:#a8e6b4;
+  --e:cubic-bezier(.2,0,0,1);--ed:cubic-bezier(.05,.7,.1,1);
+  font-family:"Roboto Flex",system-ui,sans-serif;color-scheme:dark}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--tx);overflow-x:clip}
+body{font-size:15px;line-height:1.5}
+dp-topbar{display:block;position:sticky;top:0;z-index:100}
+.hidden{display:none!important}
+svg.i{width:24px;height:24px;fill:currentColor;flex:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+
+/* ripple + state layer */
+.rip{position:relative;overflow:hidden}
+.rip .r{position:absolute;border-radius:50%;background:currentColor;opacity:.18;transform:scale(0);animation:rp .65s var(--e) forwards;pointer-events:none}
+@keyframes rp{to{transform:scale(1);opacity:0}}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 24px;border-radius:24px;
+  font-weight:650;font-size:15px;letter-spacing:.01em;background:var(--pc);color:var(--onpc);text-decoration:none;
+  transition:border-radius .35s var(--ed),transform .35s var(--ed),opacity .2s}
+.btn::before{content:"";position:absolute;inset:0;background:currentColor;opacity:0;transition:opacity .2s}
+.btn:hover::before{opacity:.08}.btn:active::before{opacity:.14}.btn:active{border-radius:14px;transform:scale(.97)}
+.btn.tonal{background:var(--sc);color:var(--onsc)}.btn.text{background:none;color:var(--p);padding:0 16px}
+.btn.big{height:64px;padding:0 32px;border-radius:32px;font-size:16px}
+.btn[disabled]{opacity:.38;pointer-events:none}
+.ibtn{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:var(--tx);transition:border-radius .3s var(--ed),background .2s}
+.ibtn:hover{background:rgba(207,174,255,.12)}.ibtn:active{border-radius:14px}
+
+.page{width:min(1200px,calc(100% - 24px));margin:12px auto 140px;display:grid;gap:12px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
+.hero-main{position:relative;overflow:hidden;padding:36px 36px 32px;border-radius:48px 48px 48px 120px;
+  background:var(--pc);color:var(--onpc);display:grid;gap:14px;align-content:end;min-height:260px;animation:pop .9s var(--ed) both}
+.hero-main::after{content:"";position:absolute;right:-70px;top:-70px;width:260px;height:260px;background:var(--p);opacity:.16;
+  border-radius:62% 38% 55% 45%/48% 60% 40% 52%;animation:morph 9s ease-in-out infinite alternate}
+@keyframes morph{to{border-radius:38% 62% 40% 60%/58% 42% 58% 42%;transform:rotate(40deg) scale(1.15)}}
+@keyframes pop{from{opacity:0;transform:translateY(24px) scale(.96)}}
+h1{margin:0;font-size:clamp(40px,7vw,72px);line-height:.96;font-weight:850;letter-spacing:-.035em;font-variation-settings:"wdth" 125}
+.hero-main p{margin:0;max-width:44ch;color:var(--onpc);opacity:.82}
+.hero-side{display:grid;grid-template-rows:1fr 1fr;gap:12px}
+.wallet,.earnbox{border-radius:36px;padding:24px 28px;display:grid;align-content:space-between;animation:pop .9s .12s var(--ed) both}
+.wallet{background:var(--sc);color:var(--onsc);border-radius:36px 120px 36px 36px}
+.earnbox{background:var(--tc);color:var(--ont);animation-delay:.22s}
+.lbl{font-size:13px;font-weight:600;opacity:.8}
+.big-n{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.big-n small{font-size:16px;font-weight:600;opacity:.75;margin-left:6px}
+
+/* tabs */
+.tabs{position:relative;display:flex;gap:4px;padding:6px;border-radius:32px;background:var(--s2);width:fit-content;max-width:100%;overflow-x:auto}
+.tab{position:relative;z-index:1;height:48px;padding:0 24px;border-radius:24px;font-weight:650;color:var(--mu);display:inline-flex;align-items:center;gap:8px;white-space:nowrap;transition:color .25s}
+.tab.on{color:var(--onsc)}
+.ind{position:absolute;z-index:0;top:6px;bottom:6px;border-radius:24px;background:var(--sc);transition:left .45s var(--ed),width .45s var(--ed)}
+.panel{display:grid;gap:12px;animation:pop .5s var(--ed) both}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+
+/* cards */
+.card{position:relative;display:flex;flex-direction:column;gap:12px;padding:10px 10px 18px;background:var(--s2);border-radius:32px;
+  transition:border-radius .6s var(--ed),background .3s,transform .4s var(--ed);animation:pop .6s calc(var(--i,0)*70ms) var(--ed) both}
+.card:hover{border-radius:48px 20px 48px 20px;background:var(--s3);transform:translateY(-4px)}
+.card .img{aspect-ratio:16/10;border-radius:24px 24px 12px 12px;background:var(--s4) center/cover;transition:border-radius .6s var(--ed)}
+.card:hover .img{border-radius:38px 38px 12px 12px}
+.card .body{display:grid;gap:8px;padding:0 10px}
+.card h3{margin:0;font-size:18px;font-weight:750;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card p{margin:0;color:var(--mu);font-size:14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:63px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:15px;background:var(--s4);font-size:13px;font-weight:600;color:var(--tx);text-decoration:none}
+.chip.p{background:var(--pc);color:var(--onpc)}.chip.t{background:var(--tc);color:var(--ont)}.chip.s{background:var(--sc);color:var(--onsc)}
+.chip svg.i{width:16px;height:16px}
+.card .edit{position:absolute;top:18px;right:18px;background:rgba(0,0,0,.55);backdrop-filter:blur(10px);color:#fff;width:44px;height:44px}
+.skel{height:330px;border-radius:32px;background:linear-gradient(100deg,var(--s2) 30%,var(--s3) 50%,var(--s2) 70%) 0 0/300% 100%;animation:sh 1.4s linear infinite}
+@keyframes sh{to{background-position:-300% 0}}
+.empty{padding:40px;text-align:center;border-radius:40px;background:var(--s1);color:var(--mu);border:2px dashed var(--ov)}
+.warn{display:flex;gap:14px;align-items:center;padding:18px 22px;border-radius:28px;background:var(--tc);color:var(--ont);font-weight:550}
+
+/* FAB */
+.fab{position:fixed;right:20px;bottom:20px;z-index:50;height:72px;min-width:72px;padding:0 28px 0 24px;border-radius:28px;background:var(--p);color:var(--onp);
+  display:flex;align-items:center;gap:12px;font-weight:700;font-size:17px;box-shadow:0 10px 30px rgba(120,60,200,.45);overflow:hidden;
+  transition:padding .4s var(--ed),border-radius .4s var(--ed),transform .4s var(--ed)}
+.fab span{max-width:200px;overflow:hidden;white-space:nowrap;transition:max-width .4s var(--ed),opacity .3s}
+.fab.min{padding:0 24px;border-radius:50%}.fab.min span{max-width:0;opacity:0}
+.fab:hover{border-radius:36px}.fab:active{transform:scale(.94)}
+
+/* snackbar */
+#snack{position:fixed;left:50%;bottom:24px;z-index:3000;transform:translate(-50%,120px);min-width:280px;max-width:92vw;padding:16px 22px;border-radius:20px;
+  background:var(--s); color:var(--ons);font-weight:600;transition:transform .5s var(--ed);box-shadow:0 8px 30px #000}
+#snack.on{transform:translate(-50%,0)}#snack.err{background:var(--er);color:#690005}
+
+/* editor (full-screen create page) */
+#ed{position:fixed;inset:0;z-index:2000;background:var(--bg);display:grid;grid-template-rows:auto 1fr auto;
+  clip-path:circle(0 at var(--ox,100%) var(--oy,100%));transition:clip-path .7s var(--ed)}
+#ed.on{clip-path:circle(150% at var(--ox,100%) var(--oy,100%))}
+.ed-top{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--ov)}
+.ed-top h2{margin:0;font-size:22px;font-weight:750;letter-spacing:-.02em;flex:1}
+.steps{display:flex;gap:6px;padding:14px 20px 0}
+.stp{flex:1;display:grid;gap:6px;font-size:12px;font-weight:650;color:var(--mu);text-align:left}
+.stp i{height:8px;border-radius:4px;background:var(--s4);position:relative;overflow:hidden}
+.stp i::after{content:"";position:absolute;inset:0;background:var(--p);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ed)}
+.stp.done i::after,.stp.on i::after{transform:scaleX(1)}.stp.on{color:var(--p)}
+.ed-mid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;padding:12px 20px;overflow:auto;align-items:start}
+.stage{position:relative;min-height:420px}
+.step{display:grid;gap:16px;align-content:start;position:absolute;inset:0 0 auto 0;opacity:0;transform:translateX(48px);pointer-events:none;transition:opacity .35s,transform .5s var(--ed)}
+.step.on{position:relative;opacity:1;transform:none;pointer-events:auto}
+.step.past{transform:translateX(-48px)}
+.step h3{margin:6px 0 0;font-size:28px;font-weight:800;letter-spacing:-.02em}
+.step>p{margin:-8px 0 4px;color:var(--mu)}
+.tf{position:relative}
+.tf input,.tf textarea{width:100%;padding:24px 18px 10px;border-radius:20px;border:2px solid var(--ov);background:var(--s1);color:var(--tx);font:inherit;outline:0;transition:border-color .25s,background .25s,border-radius .4s var(--ed)}
+.tf textarea{min-height:130px;resize:vertical}
+.tf input:focus,.tf textarea:focus{border-color:var(--p);background:var(--s2);border-radius:28px}
+.tf label{position:absolute;left:20px;top:17px;color:var(--mu);pointer-events:none;transition:all .25s var(--e);transform-origin:left}
+.tf input:focus+label,.tf input:not(:placeholder-shown)+label,.tf textarea:focus+label,.tf textarea:not(:placeholder-shown)+label{top:6px;font-size:12px;color:var(--p)}
+.tf.bad input,.tf.bad textarea{border-color:var(--er)}.tf.bad label{color:var(--er)!important}
+.tf input:disabled{opacity:.5}
+.err{display:block;min-height:0;font-size:13px;color:var(--er);font-style:normal;padding:0 16px;max-height:0;overflow:hidden;transition:max-height .3s var(--e),padding .3s}
+.bad .err{max-height:40px;padding:6px 16px 0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0}
+.seg span{display:inline-flex;height:48px;align-items:center;padding:0 22px;border-radius:24px;background:var(--s2);font-weight:650;cursor:pointer;transition:all .35s var(--ed)}
+.seg input:checked+span{background:var(--sc);color:var(--onsc);border-radius:14px}
+.seg input:disabled+span{opacity:.45;cursor:default}
+.seg input:focus-visible+span{outline:3px solid var(--p)}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-radius:24px;background:var(--s2);cursor:pointer}
+.sw b{display:block}.sw small{color:var(--mu)}
+.sw input{appearance:none;width:52px;height:32px;border-radius:16px;border:2px solid var(--ol);background:var(--s4);position:relative;transition:all .3s var(--e);flex:none;cursor:pointer;margin:0}
+.sw input::after{content:"";position:absolute;left:6px;top:6px;width:16px;height:16px;border-radius:50%;background:var(--ol);transition:all .3s var(--ed)}
+.sw input:checked{background:var(--pc);border-color:var(--pc)}
+.sw input:checked::after{left:20px;top:2px;width:24px;height:24px;background:var(--onpc)}
+.sw input:disabled{opacity:.45}
+.earn{display:grid;gap:10px;padding:22px;border-radius:32px 32px 32px 80px;background:var(--tc);color:var(--ont)}
+.earn .big-n{font-size:52px}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:3px}
+.bar i{display:block;transition:flex .6s var(--ed)}
+.bar .you{background:var(--t)}.bar .fee{background:rgba(255,255,255,.2)}
+.legend{display:flex;justify-content:space-between;font-size:13px;opacity:.9}
+.side{position:sticky;top:0;display:grid;gap:12px}
+.pv{border-radius:32px;background:var(--s2);padding:10px 10px 18px;display:grid;gap:12px}
+.pv .img{aspect-ratio:16/10;border-radius:24px 24px 12px 12px;background:var(--s4) center/cover}
+.pv .body{padding:0 10px;display:grid;gap:8px}.pv h4{margin:0;font-size:18px;font-weight:750}.pv p{margin:0;color:var(--mu);font-size:14px}
+.checks{display:grid;gap:8px}
+.ck{display:flex;gap:14px;align-items:center;padding:14px 18px;border-radius:22px;background:var(--s2);animation:pop .5s calc(var(--i)*90ms) var(--ed) both}
+.ck .dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex:none;background:rgba(168,230,180,.18);color:var(--ok)}
+.ck.fail .dot{background:rgba(255,180,171,.18);color:var(--er);border-radius:10px}
+.ck small{display:block;color:var(--mu)}.ck.fail small{color:var(--er)}
+.ck .btn{margin-left:auto;height:36px;padding:0 14px;font-size:13px}
+.prog{height:6px;border-radius:3px;background:var(--s4);overflow:hidden}
+.prog::after{content:"";display:block;height:100%;width:40%;border-radius:3px;background:var(--p);animation:ind 1.1s var(--e) infinite}
+@keyframes ind{from{margin-left:-40%}to{margin-left:100%}}
+.ed-bot{display:flex;justify-content:space-between;gap:12px;padding:14px 20px;border-top:1px solid var(--ov);background:var(--s1)}
+#cf{position:fixed;inset:0;z-index:2500;display:grid;place-items:center;background:rgba(0,0,0,.7);animation:fade .3s both}
+@keyframes fade{from{opacity:0}}
+#cf>div{width:min(420px,92vw);padding:28px;border-radius:36px;background:var(--s3);display:grid;gap:14px;animation:pop .5s var(--ed) both}
+#cf h3{margin:0;font-size:24px}#cf p{margin:0;color:var(--mu)}#cf .a{display:flex;justify-content:flex-end;gap:8px}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.hero-side{grid-template-rows:none;grid-template-columns:1fr 1fr}
+  .ed-mid{grid-template-columns:1fr}.side .pv{display:none}.row{grid-template-columns:1fr}.hero-main{padding:28px;border-radius:40px 40px 40px 80px}}
+@media(max-width:560px){.hero-side{grid-template-columns:1fr}.stp span{display:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body>
-  <dp-topbar></dp-topbar>
+<dp-topbar></dp-topbar>
+<div id="snack" role="status" aria-live="polite"></div>
+<main class="page">
+  <section class="hero">
+    <div class="hero-main">
+      <h1><span data-i="h1a">Creator</span><br><span data-i="h1b">dashboard</span></h1>
+      <p data-i="heroSub">Publish store items and development builds. You keep 70% of every sale.</p>
+      <div class="chips"><a class="btn tonal" href="/docs/" data-i="openDocs">Open docs</a></div>
+    </div>
+    <div class="hero-side">
+      <div class="wallet"><span class="lbl" data-i="balance">Balance</span><span class="big-n"><span id="bal">0</span><small>DF$</small></span></div>
+      <div class="earnbox"><span class="lbl" data-i="earnAll">You earn per sale, all items</span><span class="big-n"><span id="st-earn">0</span><small>DF$</small></span></div>
+    </div>
+  </section>
 
-  <div id="perm-banner" class="perm-banner" role="alert"></div>
-  <div id="toast" aria-live="polite"></div>
+  <nav class="tabs" aria-label="Item type">
+    <span class="ind" id="ind"></span>
+    <button class="tab on rip" data-tab="store" type="button"><svg class="i"><use href="#i-store"/></svg><span data-i="tabStore">Store</span> <span id="n-store"></span></button>
+    <button class="tab rip" data-tab="dev" type="button"><svg class="i"><use href="#i-code"/></svg><span data-i="tabDev">Development</span> <span id="n-dev"></span></button>
+  </nav>
 
-  <main class="page">
-    <section class="hero" aria-label="Übersicht des Dashboards">
-      <div class="hero-copy">
-        <h1>Ersteller-Dashboard</h1>
-      </div>
-      <div class="hero-actions">
-        <a href="/docs/" class="button primary docs-link">Dokumentation öffnen</a>
-      </div>
-    </section>
+  <section id="store-panel" class="panel">
+    <div id="store-empty" class="empty hidden" data-i="storeEmpty">No store items yet. Tap New item to publish your first sticker pack or frame.</div>
+    <div id="store-grid" class="grid"></div>
+  </section>
+  <section id="dev-panel" class="panel hidden">
+    <div id="dev-warn" class="warn hidden"><svg class="i"><use href="#i-warn"/></svg><span data-i="devWarn">You can't publish development items yet. Check back later.</span></div>
+    <div id="dev-empty" class="empty hidden" data-i="devEmpty">No development items yet. Add a plugin, sample, package or file.</div>
+    <div id="dev-grid" class="grid"></div>
+  </section>
+</main>
+<button class="fab rip" id="fab" type="button"><svg class="i"><use href="#i-add"/></svg><span data-i="newItem">New item</span></button>
 
-    <section class="tabs" aria-label="Register des Ersteller-Dashboards">
-      <button class="tab active" type="button" data-tab="store">Shop</button>
-      <button class="tab" type="button" data-tab="dev">Entwicklungsartikel</button>
-    </section>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="i-add" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+<symbol id="i-dl" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></symbol>
+<symbol id="i-store" viewBox="0 0 24 24"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/></symbol>
+<symbol id="i-code" viewBox="0 0 24 24"><path d="M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></symbol>
+<symbol id="i-coin" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"/></symbol>
+<symbol id="i-trend" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></symbol>
+</defs></svg>
 
-    <section id="store-panel" class="panel" role="tabpanel" aria-label="Shop-Artikel">
-      <div class="panel-head">
-        <h2 class="panel-title">Shop-Artikel</h2>
-        <div class="panel-actions">
-          <button id="new-store-btn" class="button primary" type="button">Neuen Shop-Artikel</button>
-        </div>
-      </div>
-      <div id="store-no-items" class="empty-state hidden">Es gibt noch keine Shop-Artikel. Erstelle oben einen neuen Artikel.</div>
-      <div id="store-grid" class="cards-grid" aria-live="polite"></div>
-    </section>
+<script>
+(function(){
+const BACKEND=/^(localhost|127\.0\.0\.1|192\.168\.)/.test(location.hostname)?"http://192.168.1.8:8888/":"https://darkpurpleofswebsite.netlify.app/";
+const SHARE=0.7, DEV_FEE=500, DEFAULT_IMG="https://darkpurpleof.github.io/org-owner.jpg";
+firebase.initializeApp({apiKey:"AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",authDomain:"darkpurpleof-s-website.firebaseapp.com",projectId:"darkpurpleof-s-website",storageBucket:"darkpurpleof-s-website.appspot.com",messagingSenderId:"520651082420",appId:"1:520651082420:web:bb05c0c3fd64517952e5e1"});
+const auth=firebase.auth(), db=firebase.firestore();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const ic=n=>`<svg class="i"><use href="#i-${n}"/></svg>`;
+const fmt=n=>(Math.round(n*100)/100).toLocaleString("en");
+const earn=p=>p==null||p===""?0:Math.round(Number(p)*SHARE*100)/100;
+const cssUrl=u=>`url('${String(u||DEFAULT_IMG).replace(/["'\\()\s]/g,c=>"%"+c.charCodeAt(0).toString(16).toUpperCase().padStart(2,"0"))}')`;
+const HASH=/^[a-fA-F0-9]{64}$/, ID_RE=/^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$/, VER_RE=/^[0-9A-Za-z][0-9A-Za-z._+-]{0,31}$/;
+let user=null, ud={}, udRef=null, unsub=[], tab="store", items={store:[],dev:[]};
 
-    <section id="dev-panel" class="panel hidden" role="tabpanel" aria-label="Entwicklungsartikel">
-      <div class="panel-head">
-        <h2 class="panel-title">Entwicklungsartikel</h2>
-        <div class="panel-actions">
-          <button id="new-dev-btn" class="button primary" type="button">Neuen Entwicklungsartikel</button>
-        </div>
-      </div>
+function ripple(e){const t=e.target.closest(".rip");if(!t)return;const b=t.getBoundingClientRect(),d=Math.max(b.width,b.height)*2,s=document.createElement("span");
+  s.className="r";s.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-b.left-d/2}px;top:${e.clientY-b.top-d/2}px`;t.appendChild(s);setTimeout(()=>s.remove(),700)}
+document.addEventListener("pointerdown",ripple);
+let snT;function snack(m,err){const s=$("snack");s.textContent=m;s.className="on"+(err?" err":"");clearTimeout(snT);snT=setTimeout(()=>s.className="",3800)}
+function tween(el,to){const from=parseFloat((el.dataset.v||"0"));el.dataset.v=to;const t0=performance.now();
+  (function f(t){const k=Math.min(1,(t-t0)/700),e=1-Math.pow(1-k,4);el.textContent=fmt(from+(to-from)*e);if(k<1)requestAnimationFrame(f)})(t0)}
+const coins=d=>parseInt(String(d.coins??"0").replace(/[^\d-]/g,""),10)||0;
+const bool=v=>v===true||v===1||["true","1","yes","on"].includes(String(v).trim().toLowerCase());
+const canDev=()=>bool([ud.dev_items_allowed,ud.devItemsAllowed,ud.dev_allowed,ud.devAllowed,ud.allowDevItems,ud.allow_dev_items,ud.canPublishDevItems,ud.can_publish_dev_items,ud.dev_item_allowed].find(v=>v!=null));
 
-      <div id="dev-warning" class="dev-warning hidden" role="alert">
-        <img class="warning-img" src="/assets/warning.png" alt="" />
-        <div class="msg">Du hast derzeit keine Berechtigung, Entwicklungsartikel zu veröffentlichen. Bitte später erneut prüfen.</div>
-      </div>
+/* ---------- i18n ---------- */
+const TBL=`title|Creator Dashboard|Panel de creador|Панель автора|Creator-Dashboard|クリエイターダッシュボード
+h1a|Creator|Panel de|Панель|Creator-|クリエイター
+h1b|dashboard|creador|автора|Dashboard|ダッシュボード
+heroSub|Publish store items and development builds. You keep 70% of every sale.|Publica artículos de tienda y compilaciones de desarrollo. Te quedas con el 70% de cada venta.|Публикуйте товары магазина и сборки для разработки. Вы получаете 70% с каждой продажи.|Veröffentliche Shop-Artikel und Entwicklungs-Builds. Du behältst 70 % jedes Verkaufs.|ストアアイテムや開発ビルドを公開しましょう。売上の70%があなたの取り分です。
+openDocs|Open docs|Abrir documentación|Открыть документацию|Doku öffnen|ドキュメントを開く
+balance|Balance|Saldo|Баланс|Guthaben|残高
+earnAll|You earn per sale, all items|Ganas por venta, todos los artículos|Ваш доход с продажи, все товары|Dein Verdienst pro Verkauf, alle Artikel|1回の販売あたりの収益(全アイテム)
+tabStore|Store|Tienda|Магазин|Shop|ストア
+tabDev|Development|Desarrollo|Разработка|Entwicklung|開発
+storeEmpty|No store items yet. Tap New item to publish your first sticker pack or frame.|Aún no hay artículos de tienda. Toca Nuevo artículo para publicar tu primer paquete de stickers o marco.|В магазине пока нет товаров. Нажмите «Новый элемент», чтобы опубликовать первый набор стикеров или рамку.|Noch keine Shop-Artikel. Tippe auf Neuer Artikel, um dein erstes Sticker-Paket oder deinen ersten Rahmen zu veröffentlichen.|ストアアイテムはまだありません。「新規アイテム」をタップして最初のステッカーパックやフレームを公開しましょう。
+devEmpty|No development items yet. Add a plugin, sample, package or file.|Aún no hay elementos de desarrollo. Añade un plugin, muestra, paquete o archivo.|Элементов разработки пока нет. Добавьте плагин, образец, пакет или файл.|Noch keine Entwicklungs-Artikel. Füge ein Plugin, Beispiel, Paket oder eine Datei hinzu.|開発アイテムはまだありません。プラグイン、サンプル、パッケージ、ファイルを追加しましょう。
+devWarn|You can't publish development items yet. Check back later.|Todavía no puedes publicar elementos de desarrollo. Vuelve más tarde.|Вы пока не можете публиковать элементы разработки. Загляните позже.|Du kannst noch keine Entwicklungs-Artikel veröffentlichen. Schau später wieder vorbei.|まだ開発アイテムを公開できません。後でもう一度ご確認ください。
+newItem|New item|Nuevo artículo|Новый элемент|Neuer Artikel|新規アイテム
+free|Free|Gratis|Бесплатно|Kostenlos|無料
+youEarn|You earn {n}|Ganas {n}|Вы получаете {n}|Du verdienst {n}|収益 {n}
+offSale|Off sale|No a la venta|Не в продаже|Nicht im Verkauf|販売停止中
+download|Download|Descargar|Скачать|Herunterladen|ダウンロード
+editAria|Edit {name}|Editar {name}|Изменить {name}|{name} bearbeiten|{name} を編集
+noName|(no name)|(sin nombre)|(без названия)|(kein Name)|(名前なし)
+item|item|artículo|элемент|Artikel|アイテム
+noPermRead|No permission to read your items|Sin permiso para leer tus artículos|Нет прав на чтение ваших элементов|Keine Berechtigung, deine Artikel zu lesen|アイテムを読み取る権限がありません
+couldNotLoad|Could not load your items|No se pudieron cargar tus artículos|Не удалось загрузить ваши элементы|Deine Artikel konnten nicht geladen werden|アイテムを読み込めませんでした
+signInEdit|Sign in to create or edit items|Inicia sesión para crear o editar artículos|Войдите, чтобы создавать или изменять элементы|Melde dich an, um Artikel zu erstellen oder zu bearbeiten|アイテムの作成・編集にはログインが必要です
+noDevYet|You can't publish development items yet|Todavía no puedes publicar elementos de desarrollo|Вы пока не можете публиковать элементы разработки|Du kannst noch keine Entwicklungs-Artikel veröffentlichen|まだ開発アイテムを公開できません
+ty_StickerPack|Sticker Pack|Paquete de stickers|Набор стикеров|Sticker-Paket|ステッカーパック
+ty_ProfileFrame|Profile Frame|Marco de perfil|Рамка профиля|Profilrahmen|プロフィールフレーム
+ty_Package|Package|Paquete|Пакет|Paket|パッケージ
+ty_File|File|Archivo|Файл|Datei|ファイル
+ty_Plugin|Plugin|Plugin|Плагин|Plugin|プラグイン
+ty_Sample|Sample|Muestra|Образец|Beispiel|サンプル
+editTitle|Edit {name}|Editar {name}|Изменить {name}|{name} bearbeiten|{name} を編集
+newDev|New development item|Nuevo elemento de desarrollo|Новый элемент разработки|Neuer Entwicklungs-Artikel|新しい開発アイテム
+newStore|New store item|Nuevo artículo de tienda|Новый товар магазина|Neuer Shop-Artikel|新しいストアアイテム
+close|Close|Cerrar|Закрыть|Schließen|閉じる
+stBasics|Basics|Básicos|Основное|Grundlagen|基本
+stPricing|Pricing|Precio|Цена|Preis|価格
+stDelivery|Delivery|Entrega|Доставка|Lieferung|配信
+stReview|Review|Revisión|Проверка|Prüfung|確認
+nameIt|Name it|Ponle nombre|Назовите|Benennen|名前を付ける
+nameItSub|What people will see in the store.|Lo que la gente verá en la tienda.|Это увидят люди в магазине.|Das sehen die Leute im Shop.|ストアで表示される内容です。
+fName|Name|Nombre|Название|Name|名前
+fType|Type|Tipo|Тип|Typ|タイプ
+fDesc|Description|Descripción|Описание|Beschreibung|説明
+priceIt|Price it|Ponle precio|Назначьте цену|Preis festlegen|価格を設定
+priceSub|Leave empty for a free item. You receive 70% of each sale.|Déjalo vacío para un artículo gratis. Recibes el 70% de cada venta.|Оставьте пустым для бесплатного элемента. Вы получаете 70% с каждой продажи.|Leer lassen für einen kostenlosen Artikel. Du erhältst 70 % jedes Verkaufs.|無料にする場合は空欄のままにしてください。売上の70%を受け取れます。
+fPrice|Price (DF$)|Precio (DF$)|Цена (DF$)|Preis (DF$)|価格 (DF$)
+earnPerSale|You earn per sale|Ganas por venta|Ваш доход с продажи|Dein Verdienst pro Verkauf|1回の販売あたりの収益
+shareYou|70% you|70% tú|70% вам|70 % du|70% あなた
+platform|30% platform:|30% plataforma:|30% платформе:|30 % Plattform:|30% プラットフォーム:
+fImage|Image URL (https)|URL de imagen (https)|URL изображения (https)|Bild-URL (https)|画像URL (https)
+deliverIt|Deliver it|Entrégalo|Доставка|Bereitstellen|配信設定
+deliverSub|Links must be public, return a file (not a 404 or web page) and not use cloud storage or temporary hosts.|Los enlaces deben ser públicos, devolver un archivo (no un 404 ni una página web) y no usar almacenamiento en la nube ni hosts temporales.|Ссылки должны быть публичными, вести на файл (не 404 и не веб-страницу) и не использовать облачные хранилища или временные хосты.|Links müssen öffentlich sein, eine Datei liefern (keine 404-Seite oder Webseite) und dürfen keinen Cloud-Speicher oder temporäre Hosts nutzen.|リンクは公開されており、ファイル(404やWebページではない)を返し、クラウドストレージや一時ホストを使用していない必要があります。
+onSale|On sale|A la venta|В продаже|Im Verkauf|販売中
+onSaleSub|Show in the store|Mostrar en la tienda|Показывать в магазине|Im Shop anzeigen|ストアに表示する
+downloadable|Downloadable|Descargable|Можно скачать|Herunterladbar|ダウンロード可能
+downloadableSub|Attach a file link|Adjuntar un enlace de archivo|Прикрепить ссылку на файл|Dateilink anhängen|ファイルのリンクを添付
+fLink|Download link (https)|Enlace de descarga (https)|Ссылка для скачивания (https)|Download-Link (https)|ダウンロードリンク (https)
+fVersion|Version|Versión|Версия|Version|バージョン
+fHash|Root hash (64 hex)|Hash raíz (64 hex)|Корневой хеш (64 hex)|Root-Hash (64 Hex)|ルートハッシュ (64桁の16進数)
+reviewH|Review|Revisión|Проверка|Prüfung|確認
+reviewChecking|Checking everything on the server.|Comprobando todo en el servidor.|Проверяем всё на сервере.|Alles wird auf dem Server geprüft.|サーバーですべてを確認しています。
+reviewPass|All checks passed.|Todas las comprobaciones superadas.|Все проверки пройдены.|Alle Prüfungen bestanden.|すべてのチェックに合格しました。
+reviewPassDev|All checks passed. Publishing deducts {fee} DF$.|Todas las comprobaciones superadas. Publicar descuenta {fee} DF$.|Все проверки пройдены. При публикации спишется {fee} DF$.|Alle Prüfungen bestanden. Beim Veröffentlichen werden {fee} DF$ abgezogen.|すべてのチェックに合格しました。公開すると {fee} DF$ が差し引かれます。
+reviewFail|Some checks failed. Fix them to continue.|Algunas comprobaciones fallaron. Corrígelas para continuar.|Некоторые проверки не пройдены. Исправьте их, чтобы продолжить.|Einige Prüfungen sind fehlgeschlagen. Behebe sie, um fortzufahren.|一部のチェックに失敗しました。修正して続行してください。
+untitled|Untitled|Sin título|Без названия|Ohne Titel|無題
+previewDesc|Your description appears here.|Tu descripción aparece aquí.|Здесь появится ваше описание.|Deine Beschreibung erscheint hier.|ここに説明が表示されます。
+back|Back|Atrás|Назад|Zurück|戻る
+next|Next|Siguiente|Далее|Weiter|次へ
+reviewBtn|Review|Revisar|Проверить|Prüfen|確認する
+publishFor|Publish for {fee} DF$|Publicar por {fee} DF$|Опубликовать за {fee} DF$|Für {fee} DF$ veröffentlichen|{fee} DF$ で公開
+saveChanges|Save changes|Guardar cambios|Сохранить изменения|Änderungen speichern|変更を保存
+publish|Publish|Publicar|Опубликовать|Veröffentlichen|公開
+publishing|Publishing…|Publicando…|Публикация…|Wird veröffentlicht…|公開中…
+tryAgain|Try again|Reintentar|Повторить|Erneut versuchen|再試行
+fix|Fix|Corregir|Исправить|Beheben|修正
+cancel|Cancel|Cancelar|Отмена|Abbrechen|キャンセル
+confirmTitle|Publish development item?|¿Publicar elemento de desarrollo?|Опубликовать элемент разработки?|Entwicklungs-Artikel veröffentlichen?|開発アイテムを公開しますか?
+confirmText|This publishes your item and deducts {fee} DF$ from your balance.|Esto publica tu artículo y descuenta {fee} DF$ de tu saldo.|Элемент будет опубликован, а с вашего баланса спишется {fee} DF$.|Dein Artikel wird veröffentlicht und {fee} DF$ werden von deinem Guthaben abgezogen.|アイテムを公開し、残高から {fee} DF$ が差し引かれます。
+pay|Pay {fee} DF$|Pagar {fee} DF$|Оплатить {fee} DF$|{fee} DF$ zahlen|{fee} DF$ を支払う
+fixFields|Fix the highlighted fields first|Corrige primero los campos resaltados|Сначала исправьте выделенные поля|Behebe zuerst die markierten Felder|先にハイライトされた項目を修正してください
+rejected|Server rejected the item|El servidor rechazó el artículo|Сервер отклонил элемент|Der Server hat den Artikel abgelehnt|サーバーがアイテムを拒否しました
+saved|Saved|Guardado|Сохранено|Gespeichert|保存しました
+published|Published|Publicado|Опубликовано|Veröffentlicht|公開しました
+reachFail|Could not reach the server: {msg}|No se pudo conectar con el servidor: {msg}|Не удалось связаться с сервером: {msg}|Server nicht erreichbar: {msg}|サーバーに接続できません: {msg}
+validationUnreachable|Can't reach the validation server. {msg}|No se pudo conectar con el servidor de validación. {msg}|Не удалось связаться с сервером проверки. {msg}|Validierungsserver nicht erreichbar. {msg}|検証サーバーに接続できません。{msg}
+eName|Name needs at least 2 characters|El nombre necesita al menos 2 caracteres|Название должно содержать минимум 2 символа|Der Name braucht mindestens 2 Zeichen|名前は2文字以上必要です
+eId|2–64 letters, numbers, . _ -|2–64 letras, números, . _ -|2–64 букв, цифр, . _ -|2–64 Buchstaben, Zahlen, . _ -|2〜64文字の英数字と . _ -
+eDesc|Max 1800 characters|Máximo 1800 caracteres|Максимум 1800 символов|Maximal 1800 Zeichen|最大1800文字
+ePrice|Whole number from 0 to 1,000,000|Número entero de 0 a 1,000,000|Целое число от 0 до 1 000 000|Ganze Zahl von 0 bis 1.000.000|0〜1,000,000の整数
+eImage|Image must start with https://|La imagen debe empezar con https://|Ссылка на изображение должна начинаться с https://|Das Bild muss mit https:// beginnen|画像は https:// で始まる必要があります
+eLink|Link must start with https://|El enlace debe empezar con https://|Ссылка должна начинаться с https://|Der Link muss mit https:// beginnen|リンクは https:// で始まる必要があります
+eVersion|Version required, e.g. 1.0.0|Versión obligatoria, p. ej. 1.0.0|Нужна версия, например 1.0.0|Version erforderlich, z. B. 1.0.0|バージョンが必要です(例: 1.0.0)
+eHashReq|Root hash required for plugins|El hash raíz es obligatorio para plugins|Для плагинов нужен корневой хеш|Für Plugins ist ein Root-Hash erforderlich|プラグインにはルートハッシュが必要です
+eHashFmt|Must be 64 hex characters|Debe tener 64 caracteres hexadecimales|Должно быть 64 hex-символа|Muss 64 Hex-Zeichen lang sein|64桁の16進数にしてください
+eVerChange|Change the version when the link changes|Cambia la versión cuando cambie el enlace|Измените версию при смене ссылки|Ändere die Version, wenn sich der Link ändert|リンクを変更したらバージョンも変更してください
+eHashChange|Change the root hash when the link changes|Cambia el hash raíz cuando cambie el enlace|Измените корневой хеш при смене ссылки|Ändere den Root-Hash, wenn sich der Link ändert|リンクを変更したらルートハッシュも変更してください
+cPerm|Development publishing allowed|Publicación de desarrollo permitida|Публикация элементов разработки разрешена|Entwicklungs-Veröffentlichung erlaubt|開発アイテムの公開が許可されています
+cFields|Fields valid|Campos válidos|Поля корректны|Felder gültig|入力内容は有効です
+cId|ID available|ID disponible|ID доступен|ID verfügbar|IDは使用可能です
+cLink|Link reachable, not 404|Enlace accesible, sin 404|Ссылка доступна, не 404|Link erreichbar, kein 404|リンクにアクセス可能(404ではありません)
+cLinkValid|Link valid|Enlace válido|Ссылка корректна|Link gültig|リンクは有効です
+cImage|Image reachable|Imagen accesible|Изображение доступно|Bild erreichbar|画像にアクセス可能です
+cRequest|Request|Solicitud|Запрос|Anfrage|リクエスト
+cProblem|Problem|Problema|Проблема|Problem|問題
+cBalance|Balance covers {fee} DF$|El saldo cubre {fee} DF$|Баланса хватает на {fee} DF$|Guthaben deckt {fee} DF$|残高で {fee} DF$ をまかなえます`;
+const LC=["en","es","ru","de","ja"],I18N={en:{},es:{},ru:{},de:{},ja:{}};
+TBL.trim().split("\n").forEach(l=>{const p=l.split("|");LC.forEach((c,i)=>I18N[c][p[0]]=p[i+1])});
+let lang="en";
+const normLang=v=>{const x=String(v||"").trim().toLowerCase(),m={english:"en",spanish:"es",russian:"ru",german:"de",japanese:"ja",jp:"ja"};return LC.includes(x)?x:(m[x]||x.split(/[-_]/)[0])};
+const pickLang=()=>{const a=normLang(ud&&ud.lang);if(LC.includes(a))return a;const b=normLang(navigator.language);return LC.includes(b)?b:"en"};
+function t(k,p={}){let v=(I18N[lang]&&I18N[lang][k])??I18N.en[k]??k;for(const x in p)v=v.replaceAll("{"+x+"}",String(p[x]));return v}
+const typeName=x=>t("ty_"+String(x||"").replace(/\s/g,""));
+const srvLabel=l=>({"Development publishing allowed":"cPerm","Fields valid":"cFields","ID available":"cId","Link reachable, not 404":"cLink","Link valid":"cLinkValid","Image reachable":"cImage",Request:"cRequest",Problem:"cProblem"})[l]?t(({"Development publishing allowed":"cPerm","Fields valid":"cFields","ID available":"cId","Link reachable, not 404":"cLink","Link valid":"cLinkValid","Image reachable":"cImage",Request:"cRequest",Problem:"cProblem"})[l]):/^Balance covers/.test(l)?t("cBalance",{fee:DEV_FEE}):l;
+function applyI18n(){document.documentElement.lang=lang;document.title=t("title");document.querySelectorAll("[data-i]").forEach(el=>{el.textContent=t(el.dataset.i)})}
+function setLang(l){if(l===lang&&document.documentElement.dataset.i18n)return;lang=l;document.documentElement.dataset.i18n="1";applyI18n();render("store");render("dev")}
 
-      <div id="dev-no-items" class="empty-state hidden">Es gibt noch keine Entwicklungsartikel. Füge ein Plugin, ein Beispiel oder eine Datei hinzu, um zu beginnen.</div>
-      <div id="dev-grid" class="cards-grid" aria-live="polite"></div>
-    </section>
-  </main>
+/* ---------- list ---------- */
+function card(it,dev,i){
+  const a=document.createElement("article");a.className="card";a.style.setProperty("--i",i);
+  const e=earn(it.price);
+  a.innerHTML=`<button class="ibtn edit rip" type="button" aria-label="${esc(t('editAria',{name:it.name}))}">${ic("edit")}</button>
+  <div class="img" style="background-image:${cssUrl(it.image)}"></div>
+  <div class="body"><h3>${esc(it.name||t('noName'))}</h3>
+  <div class="chips"><span class="chip p">${ic("coin")}${it.price!=null?fmt(it.price)+" DF$":t("free")}</span>
+  ${it.price?`<span class="chip t">${ic("trend")}${esc(t("youEarn",{n:fmt(e)}))}</span>`:""}
+  ${dev&&it.type?`<span class="chip s">${esc(typeName(it.type))}</span>`:""}${it.on_sale===false?`<span class="chip">${esc(t("offSale"))}</span>`:""}</div>
+  <p>${esc(it.description)}</p>
+  <div class="chips">${it.downloadable&&it.download_link?`<a class="chip" target="_blank" rel="noopener noreferrer" href="${esc(it.download_link)}">${ic("dl")}${esc(t("download"))}${it.version?" v"+esc(it.version):""}</a>`:""}</div></div>`;
+  a.querySelector(".edit").addEventListener("click",ev=>openEditor({mode:"edit",isDev:dev,item:it},ev));
+  return a;
+}
+function render(kind){
+  const dev=kind==="dev",g=$(kind+"-grid"),list=items[kind];
+  g.innerHTML="";list.forEach((it,i)=>g.appendChild(card(it,dev,i)));
+  $(kind+"-empty").classList.toggle("hidden",list.length>0);
+  $("n-"+kind).textContent=list.length?`(${list.length})`:"";
+  const total=[...items.store,...items.dev].reduce((s,x)=>s+(x.on_sale===false?0:earn(x.price)),0);
+  tween($("st-earn"),total);
+}
+function sub(kind,col){
+  const g=$(kind+"-grid");g.innerHTML='<div class="skel"></div>'.repeat(4);
+  return db.collection("ugc").doc(user.email).collection(col).onSnapshot(s=>{
+    items[kind]=s.docs.map(d=>{const x=d.data();return{...x,id:d.id,file_hash:x.file_hash||x.filehash||""}});render(kind)},
+    e=>{console.error(kind+" snapshot",e);snack(t(e.code==="permission-denied"?"noPermRead":"couldNotLoad"),true)});
+}
+async function userRef(email){for(const e of [email,email.toLowerCase()]){const r=db.collection("user_data").doc(e);if((await r.get()).exists)return r}return db.collection("user_data").doc(email)}
+function setTab(t){
+  tab=t;document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
+  $("store-panel").classList.toggle("hidden",t!=="store");$("dev-panel").classList.toggle("hidden",t!=="dev");
+  moveInd();refreshDev();
+}
+function moveInd(){const b=document.querySelector(".tab.on"),i=$("ind");i.style.left=b.offsetLeft+"px";i.style.width=b.offsetWidth+"px"}
+function refreshDev(){const ok=canDev();$("dev-warn").classList.toggle("hidden",ok);$("fab").classList.toggle("hidden",tab==="dev"&&!ok)}
+
+/* ---------- editor ---------- */
+let S=null;
+const STEPS=()=>[t("stBasics"),t("stPricing"),t("stDelivery"),t("stReview")];
+const FSTEP={name:0,id:0,type:0,description:0,price:1,image:1,downloadLink:2,version:2,filehash:2,coins:3,permission:3,general:3};
+const tf=(id,label,val="",o={})=>{const t=o.area?"textarea":"input";
+  return `<div class="tf" data-f="${id}"><${t} id="f-${id}" placeholder=" " ${o.attr||""} ${o.area?"":`value="${esc(val)}"`}>${o.area?esc(val):""}</${t}><label for="f-${id}">${label}</label><i class="err"></i></div>`};
+const sw=(id,t,s,on,dis)=>`<label class="sw"><span><b>${t}</b><small>${s}</small></span><input type="checkbox" id="f-${id}" ${on?"checked":""} ${dis?"disabled":""}></label>`;
+
+function openEditor(o,ev){
+  if(!user)return snack(t("signInEdit"),true);
+  if(o.isDev&&o.mode==="create"&&!canDev())return snack(t("noDevYet"),true);
+  const it=o.item||{},dev=o.isDev,edit=o.mode==="edit",types=dev?["Package","File","Plugin","Sample"]:["Sticker Pack","Profile Frame"];
+  S={mode:o.mode,isDev:dev,item:it,step:0,touched:new Set(),srv:null,busy:false,
+    v:{name:it.name||"",id:it.id||"",type:it.type||types[0],desc:it.description||"",price:it.price!=null?String(it.price):"",image:it.image||"",
+       dl:!!it.downloadable,sale:it.on_sale!==false,link:it.download_link||"",version:it.version||"",hash:it.file_hash||""}};
+  const r=document.createElement("div");r.id="ed";r.setAttribute("role","dialog");r.setAttribute("aria-modal","true");
+  if(ev){r.style.setProperty("--ox",ev.clientX+"px");r.style.setProperty("--oy",ev.clientY+"px")}
+  r.innerHTML=`<div><header class="ed-top"><button class="ibtn rip" id="x" type="button" aria-label="${esc(t('close'))}">${ic("close")}</button>
+   <h2>${edit?esc(t("editTitle",{name:it.name||t("item")})):dev?esc(t("newDev")):esc(t("newStore"))}</h2></header>
+   <div class="steps">${STEPS().map((s,i)=>`<div class="stp" data-s="${i}"><i></i><span>${s}</span></div>`).join("")}</div></div>
+  <div class="ed-mid"><div class="stage">
+   <section class="step"><h3>${esc(t("nameIt"))}</h3><p>${esc(t("nameItSub"))}</p>
+    ${tf("name",t("fName"),S.v.name,{attr:'maxlength="80" autocomplete="off"'})}
+    <div class="row">${tf("id","ID",S.v.id,{attr:`${edit?"disabled":""} autocomplete="off"`})}
+     <div><div class="seg" id="types" role="radiogroup" aria-label="${esc(t('fType'))}">${types.map(t=>`<label><input type="radio" name="type" value="${t}" ${t===S.v.type?"checked":""} ${edit?"disabled":""}><span>${esc(typeName(t))}</span></label>`).join("")}</div></div></div>
+    ${tf("description",t("fDesc"),S.v.desc,{area:1,attr:'maxlength="1800"'})}</section>
+   <section class="step"><h3>${esc(t("priceIt"))}</h3><p>${esc(t("priceSub"))}</p>
+    ${tf("price",t("fPrice"),S.v.price,{attr:'inputmode="numeric"'})}
+    <div class="earn"><span class="lbl">${esc(t("earnPerSale"))}</span><span class="big-n"><span id="en">0</span><small>DF$</small></span>
+     <div class="bar"><i class="you" id="b1" style="flex:70"></i><i class="fee" id="b2" style="flex:30"></i></div>
+     <div class="legend"><span>${esc(t("shareYou"))}</span><span>${esc(t("platform"))} <b id="fee">0</b> DF$</span></div></div>
+    ${tf("image",t("fImage"),S.v.image,{attr:'type="url"'})}</section>
+   <section class="step"><h3>${esc(t("deliverIt"))}</h3><p>${esc(t("deliverSub"))}</p>
+    ${sw("sale",t("onSale"),t("onSaleSub"),S.v.sale)}
+    ${sw("dl",t("downloadable"),t("downloadableSub"),S.v.dl,edit)}
+    <div id="dlw" class="hidden" style="display:grid;gap:16px">${tf("downloadLink",t("fLink"),S.v.link,{attr:'type="url"'})}
+     <div class="row">${tf("version",t("fVersion"),S.v.version)}${dev?tf("filehash",t("fHash"),S.v.hash,{attr:'spellcheck="false"'}):""}</div></div></section>
+   <section class="step"><h3>${esc(t("reviewH"))}</h3><p id="rv-sub">${esc(t("reviewChecking"))}</p><div id="rv" class="checks"></div></section>
+  </div>
+  <aside class="side"><div class="pv"><div class="img" id="pv-i"></div><div class="body"><div class="chips"><span class="chip p" id="pv-p"></span><span class="chip t" id="pv-e"></span></div><h4 id="pv-n"></h4><p id="pv-d"></p></div></div></aside></div>
+  <footer class="ed-bot"><button class="btn tonal" id="bk" type="button">${esc(t("back"))}</button><button class="btn" id="nx" type="button">${esc(t("next"))}</button></footer>`;
+  document.body.appendChild(r);S.root=r;
+  const q=s=>r.querySelector(s);
+  const map={name:"name",id:"id",description:"desc",price:"price",image:"image",downloadLink:"link",version:"version",filehash:"hash"};
+  Object.entries(map).forEach(([f,k])=>{const el=q("#f-"+f);if(el)el.addEventListener("input",()=>{S.v[k]=el.value;S.touched.add(f);S.srv=null;sync()})});
+  r.querySelectorAll('input[name="type"]').forEach(x=>x.addEventListener("change",()=>{S.v.type=x.value;S.srv=null;sync()}));
+  q("#f-sale").addEventListener("change",e=>{S.v.sale=e.target.checked;S.srv=null;sync()});
+  q("#f-dl").addEventListener("change",e=>{S.v.dl=e.target.checked;S.srv=null;sync()});
+  q("#x").onclick=closeEditor;q("#bk").onclick=()=>go(S.step-1);q("#nx").onclick=next;
+  r.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("cf"))closeEditor()});
+  requestAnimationFrame(()=>{r.classList.add("on");go(0,true);sync();setTimeout(()=>q("#f-name").focus(),500)});
+}
+function closeEditor(){const r=S&&S.root;if(!r)return;r.classList.remove("on");setTimeout(()=>r.remove(),700);S=null}
+function local(){
+  const v=S.v,e={},edit=S.mode==="edit";
+  if(v.name.trim().length<2)e.name=t("eName");
+  if(!edit&&!ID_RE.test(v.id))e.id=t("eId");
+  if(v.desc.length>1800)e.description=t("eDesc");
+  if(v.price!==""&&(!/^\d{1,7}$/.test(v.price)||+v.price>1e6))e.price=t("ePrice");
+  if(v.image&&!/^https:\/\/\S+$/i.test(v.image))e.image=t("eImage");
+  if(v.dl){
+    if(!/^https:\/\/\S+$/i.test(v.link))e.downloadLink=t("eLink");
+    if(!VER_RE.test(v.version))e.version=t("eVersion");
+    if(S.isDev&&v.type==="Plugin"&&!v.hash)e.filehash=t("eHashReq");
+    else if(S.isDev&&v.hash&&!HASH.test(v.hash))e.filehash=t("eHashFmt");
+    if(edit&&S.item.download_link&&S.item.download_link!==v.link){
+      if(S.item.version===v.version)e.version=t("eVerChange");
+      const old=S.item.file_hash||"";if(S.isDev&&(v.type==="Plugin"||old)&&old===v.hash)e.filehash=t("eHashChange");}
+  }
+  return e;
+}
+function showErrors(force){
+  const e={...local()};(S.srv?.errors||[]).forEach(x=>{if(!e[x.field])e[x.field]=x.msg});
+  S.root.querySelectorAll(".tf").forEach(t=>{const f=t.dataset.f,m=e[f]&&(force||S.touched.has(f)||S.srv);t.classList.toggle("bad",!!m);if(m)t.querySelector(".err").textContent=e[f]});
+  return e;
+}
+function sync(){
+  const v=S.v,q=s=>S.root.querySelector(s),p=v.price===""?null:+v.price,e=earn(v.price);
+  q("#dlw").classList.toggle("hidden",!v.dl);
+  q("#pv-i").style.backgroundImage=cssUrl(v.image);q("#pv-n").textContent=v.name||t("untitled");q("#pv-d").textContent=v.desc||t("previewDesc");
+  q("#pv-p").textContent=p==null?t("free"):fmt(p)+" DF$";q("#pv-e").textContent=p?t("youEarn",{n:fmt(e)}):"";q("#pv-e").classList.toggle("hidden",!p);
+  tween(q("#en"),e);q("#fee").textContent=fmt(p?p-e:0);q("#b1").style.flex=p?70:0;q("#b2").style.flex=p?30:0;
+  showErrors(false);
+}
+function stepFields(s){return Object.keys(FSTEP).filter(f=>FSTEP[f]===s)}
+function go(n,first){
+  if(n<0||n>3)return;
+  const steps=S.root.querySelectorAll(".step");
+  steps.forEach((el,i)=>{el.classList.toggle("on",i===n);el.classList.toggle("past",i<n)});
+  S.root.querySelectorAll(".stp").forEach((el,i)=>{el.classList.toggle("on",i===n);el.classList.toggle("done",i<n)});
+  S.step=n;
+  const nx=S.root.querySelector("#nx"),last=n===3;
+  S.root.querySelector("#bk").style.visibility=n?"visible":"hidden";
+  nx.textContent=last?(S.isDev&&S.mode==="create"?t("publishFor",{fee:DEV_FEE}):S.mode==="edit"?t("saveChanges"):t("publish")):n===2?t("reviewBtn"):t("next");
+  if(last&&!first)runServer();
+}
+function next(){
+  if(S.step<3){const e=showErrors(true);if(stepFields(S.step).some(f=>e[f]))return snack(t("fixFields"),true);go(S.step+1)}
+  else publish();
+}
+function payload(){const v=S.v;return{id:v.id.trim(),name:v.name.trim(),type:v.type,description:v.desc.trim(),price:v.price===""?null:+v.price,image:v.image.trim(),
+  version:v.version.trim(),downloadable:v.dl,on_sale:v.sale,download_link:v.dl?v.link.trim():null,file_hash:S.isDev&&v.dl?v.hash.trim():""}}
+async function api(action){
+  const tok=await user.getIdToken();
+  const r=await fetch(BACKEND+"ugc/submit",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+tok},
+    body:JSON.stringify({action,isDev:S.isDev,mode:S.mode,docId:S.item.id||null,item:payload()})});
+  const j=await r.json().catch(()=>null);
+  if(!j)throw new Error("Server error ("+r.status+")");return j;
+}
+function renderChecks(){
+  const box=S.root.querySelector("#rv"),res=S.srv,nx=S.root.querySelector("#nx");
+  if(!res){box.innerHTML='<div class="prog"></div>';nx.disabled=true;return}
+  const rows=[...(res.checks||[])];
+  res.errors.forEach(e=>{if(!rows.some(c=>!c.ok&&c.detail===e.msg))rows.push({label:e.field==="general"?"Request":"Problem",ok:false,detail:e.msg,field:e.field})});
+  box.innerHTML=rows.map((c,i)=>{const f=c.field||({fields:"name",id:"id",link:"downloadLink",image:"image",coins:"coins",perm:"permission"})[c.id]||"general";
+    return `<div class="ck ${c.ok?"":"fail"}" style="--i:${i}"><span class="dot">${ic(c.ok?"check":"warn")}</span><div><b>${esc(srvLabel(c.label))}</b>${c.detail?`<small>${esc(c.detail)}</small>`:""}</div>
+    ${!c.ok&&FSTEP[f]<3?`<button class="btn tonal" type="button" data-s="${FSTEP[f]}">${esc(t("fix"))}</button>`:""}</div>`}).join("");
+  box.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>go(+b.dataset.s));
+  S.root.querySelector("#rv-sub").textContent=res.ok?(S.isDev&&S.mode==="create"?t("reviewPassDev",{fee:DEV_FEE}):t("reviewPass")):t("reviewFail");
+  nx.disabled=!res.ok;showErrors(true);
+}
+async function runServer(){
+  S.srv=null;renderChecks();
+  try{S.srv=await api("validate")}catch(err){console.error("validate",err);S.srv={ok:false,errors:[{field:"general",msg:t("validationUnreachable",{msg:err.message})}],checks:[]}}
+  if(S)renderChecks();
+}
+function confirmDlg(ti,m,ok){return new Promise(res=>{const d=document.createElement("div");d.id="cf";
+  d.innerHTML=`<div role="alertdialog"><h3>${esc(ti)}</h3><p>${esc(m)}</p><div class="a"><button class="btn text" type="button">${esc(t("cancel"))}</button><button class="btn" type="button">${esc(ok)}</button></div></div>`;
+  const b=d.querySelectorAll("button");b[0].onclick=()=>{d.remove();res(false)};b[1].onclick=()=>{d.remove();res(true)};document.body.appendChild(d);b[1].focus()})}
+async function publish(){
+  if(S.busy)return;
+  if(S.isDev&&S.mode==="create"&&!await confirmDlg(t("confirmTitle"),t("confirmText",{fee:DEV_FEE}),t("pay",{fee:DEV_FEE})))return;
+  S.busy=true;const nx=S.root.querySelector("#nx");nx.disabled=true;nx.textContent=t("publishing");
+  try{
+    const wasEdit=S.mode==="edit",res=await api("save");
+    if(!res.ok){S.srv=res;S.busy=false;renderChecks();nx.textContent=t("publish");return snack(t("rejected"),true)}
+    closeEditor();snack(wasEdit?t("saved"):t("published"));
+  }catch(err){console.error("save",err);S.busy=false;nx.disabled=false;nx.textContent=t("tryAgain");snack(t("reachFail",{msg:err.message}),true)}
+}
+
+/* ---------- boot ---------- */
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
+$("fab").addEventListener("click",e=>openEditor({mode:"create",isDev:tab==="dev"},e));
+addEventListener("resize",moveInd);
+let lastY=0;addEventListener("scroll",()=>{const y=scrollY;$("fab").classList.toggle("min",y>lastY&&y>120);lastY=y},{passive:true});
+document.fonts&&document.fonts.ready.then(moveInd);
+setLang(pickLang());setTab("store");
+auth.onAuthStateChanged(async u=>{
+  unsub.forEach(f=>f());unsub=[];user=u;
+  if(!u){ud={};items={store:[],dev:[]};setLang(pickLang());render("store");render("dev");tween($("bal"),0);refreshDev();return}
+  udRef=await userRef(u.email);
+  unsub.push(udRef.onSnapshot(s=>{ud=s.exists?s.data():{};setLang(pickLang());tween($("bal"),coins(ud));refreshDev()},e=>console.warn("user_data",e)));
+  unsub.push(sub("store","store-items"),sub("dev","development-items"));
+});
+})();
+</script>
 </body>
 </html>

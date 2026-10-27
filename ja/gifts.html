@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>私のギフト</title>
+  <title>My gifts</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -609,6 +609,197 @@
       measurementId: "G-S2X2JYC8Z0"
     };
 
+    // Server function that claims a gift (netlify/functions/claim-gift.mjs, public path from netlify.toml).
+    // If the functions live on another origin, use the full URL here.
+    const CLAIM_GIFT_URL = "/economy/claimgift";
+
+    // ---- i18n: language comes from the address bar (/es/gifts, /de/gifts, /ru/gifts, /ja/gifts; anything else = English)
+    const I18N = {
+      en: {
+        pageTitle: "My gifts",
+        subtitle: "Here you can see the gifts you received and the ones you sent.",
+        received: "Received", sent: "Sent", loading: "Loading",
+        nReceived: "{n} received", nSent: "{n} sent",
+        gifts: { one: "{n} gift", other: "{n} gifts" },
+        configMissing: "Firebase is not configured in this file.",
+        signIn: "Sign in to see your gifts.",
+        noReceivedTitle: "No received gifts",
+        noReceivedBody: "When someone sends you a gift, it will appear here so you can claim it.",
+        noSentTitle: "No sent gifts",
+        noSentBody: "Gifts you send will appear here.",
+        youReceived: "You received a gift", youSent: "You sent a gift",
+        redeemed: "Redeemed", redeemGift: "Redeem gift", view: "View",
+        claimedNote: "This gift has already been claimed.",
+        tapToOpen: "Tap it to open the claim window.",
+        sentTo: "Sent to {name}", user: "User", item: "Item",
+        preview: "Preview", close: "Close", itemPreview: "Item preview",
+        alreadyClaimed: "Already claimed", claim: "Claim",
+        itemLoadFail: "The item linked to this gift could not be loaded.",
+        giftLoadFail: "The gift could not be loaded.",
+        giftClaimedToast: "Gift claimed",
+        loadReceivedFail: "Could not load received gifts.",
+        loadSentFail: "Could not load sent gifts.",
+        errGiftNotFound: "This gift could not be found.",
+        errItemUnavailable: "The item in this gift is no longer available.",
+        errBanned: "Your account can't claim gifts.",
+        errInvalid: "Something was wrong with the request.",
+        errSignedIn: "You need to be signed in to claim gifts.",
+        errNetwork: "Couldn't reach the server. Check your connection and try again.",
+        errClaim: "Could not claim it."
+      },
+      es: {
+        pageTitle: "Mis regalos",
+        subtitle: "Aquí puedes ver los regalos que recibiste y los que enviaste.",
+        received: "Recibidos", sent: "Enviados", loading: "Cargando",
+        nReceived: "{n} recibidos", nSent: "{n} enviados",
+        gifts: { one: "{n} regalo", other: "{n} regalos" },
+        configMissing: "Firebase no está configurado en este archivo.",
+        signIn: "Inicia sesión para ver tus regalos.",
+        noReceivedTitle: "No hay regalos recibidos",
+        noReceivedBody: "Cuando alguien te envíe un regalo, aparecerá aquí para que puedas canjearlo.",
+        noSentTitle: "No hay regalos enviados",
+        noSentBody: "Los regalos que envíes aparecerán aquí.",
+        youReceived: "Recibiste un regalo", youSent: "Enviaste un regalo",
+        redeemed: "Canjeado", redeemGift: "Canjear regalo", view: "Ver",
+        claimedNote: "Este regalo ya fue canjeado.",
+        tapToOpen: "Tócalo para abrir la ventana de canje.",
+        sentTo: "Enviado a {name}", user: "Usuario", item: "Artículo",
+        preview: "Vista previa", close: "Cerrar", itemPreview: "Vista previa del artículo",
+        alreadyClaimed: "Ya canjeado", claim: "Canjear",
+        itemLoadFail: "No se pudo cargar el artículo vinculado a este regalo.",
+        giftLoadFail: "No se pudo cargar el regalo.",
+        giftClaimedToast: "Regalo canjeado",
+        loadReceivedFail: "No se pudieron cargar los regalos recibidos.",
+        loadSentFail: "No se pudieron cargar los regalos enviados.",
+        errGiftNotFound: "No se encontró este regalo.",
+        errItemUnavailable: "El artículo de este regalo ya no está disponible.",
+        errBanned: "Tu cuenta no puede canjear regalos.",
+        errInvalid: "Hubo un problema con la solicitud.",
+        errSignedIn: "Debes iniciar sesión para canjear regalos.",
+        errNetwork: "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+        errClaim: "No se pudo canjear."
+      },
+      de: {
+        pageTitle: "Meine Geschenke",
+        subtitle: "Hier siehst du die Geschenke, die du erhalten und verschickt hast.",
+        received: "Erhalten", sent: "Gesendet", loading: "Wird geladen",
+        nReceived: "{n} erhalten", nSent: "{n} gesendet",
+        gifts: { one: "{n} Geschenk", other: "{n} Geschenke" },
+        configMissing: "Firebase ist in dieser Datei nicht konfiguriert.",
+        signIn: "Melde dich an, um deine Geschenke zu sehen.",
+        noReceivedTitle: "Keine erhaltenen Geschenke",
+        noReceivedBody: "Wenn dir jemand ein Geschenk schickt, erscheint es hier und du kannst es einlösen.",
+        noSentTitle: "Keine gesendeten Geschenke",
+        noSentBody: "Geschenke, die du verschickst, erscheinen hier.",
+        youReceived: "Du hast ein Geschenk erhalten", youSent: "Du hast ein Geschenk gesendet",
+        redeemed: "Eingelöst", redeemGift: "Geschenk einlösen", view: "Ansehen",
+        claimedNote: "Dieses Geschenk wurde bereits eingelöst.",
+        tapToOpen: "Tippe darauf, um das Einlösefenster zu öffnen.",
+        sentTo: "Gesendet an {name}", user: "Nutzer", item: "Artikel",
+        preview: "Vorschau", close: "Schließen", itemPreview: "Artikelvorschau",
+        alreadyClaimed: "Bereits eingelöst", claim: "Einlösen",
+        itemLoadFail: "Der mit diesem Geschenk verknüpfte Artikel konnte nicht geladen werden.",
+        giftLoadFail: "Das Geschenk konnte nicht geladen werden.",
+        giftClaimedToast: "Geschenk eingelöst",
+        loadReceivedFail: "Erhaltene Geschenke konnten nicht geladen werden.",
+        loadSentFail: "Gesendete Geschenke konnten nicht geladen werden.",
+        errGiftNotFound: "Dieses Geschenk wurde nicht gefunden.",
+        errItemUnavailable: "Der Artikel in diesem Geschenk ist nicht mehr verfügbar.",
+        errBanned: "Dein Konto kann keine Geschenke einlösen.",
+        errInvalid: "Mit der Anfrage stimmte etwas nicht.",
+        errSignedIn: "Du musst angemeldet sein, um Geschenke einzulösen.",
+        errNetwork: "Server nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+        errClaim: "Einlösen nicht möglich."
+      },
+      ru: {
+        pageTitle: "Мои подарки",
+        subtitle: "Здесь вы можете увидеть полученные и отправленные вами подарки.",
+        received: "Полученные", sent: "Отправленные", loading: "Загрузка",
+        nReceived: "Получено: {n}", nSent: "Отправлено: {n}",
+        gifts: { one: "{n} подарок", few: "{n} подарка", many: "{n} подарков", other: "{n} подарка" },
+        configMissing: "Firebase не настроен в этом файле.",
+        signIn: "Войдите, чтобы увидеть свои подарки.",
+        noReceivedTitle: "Нет полученных подарков",
+        noReceivedBody: "Когда кто-то отправит вам подарок, он появится здесь, и вы сможете его получить.",
+        noSentTitle: "Нет отправленных подарков",
+        noSentBody: "Отправленные вами подарки появятся здесь.",
+        youReceived: "Вам подарили подарок", youSent: "Вы отправили подарок",
+        redeemed: "Получен", redeemGift: "Получить подарок", view: "Открыть",
+        claimedNote: "Этот подарок уже получен.",
+        tapToOpen: "Нажмите, чтобы открыть окно получения.",
+        sentTo: "Отправлено: {name}", user: "Пользователь", item: "Предмет",
+        preview: "Предпросмотр", close: "Закрыть", itemPreview: "Предпросмотр предмета",
+        alreadyClaimed: "Уже получен", claim: "Получить",
+        itemLoadFail: "Не удалось загрузить предмет, связанный с этим подарком.",
+        giftLoadFail: "Не удалось загрузить подарок.",
+        giftClaimedToast: "Подарок получен",
+        loadReceivedFail: "Не удалось загрузить полученные подарки.",
+        loadSentFail: "Не удалось загрузить отправленные подарки.",
+        errGiftNotFound: "Этот подарок не найден.",
+        errItemUnavailable: "Предмет из этого подарка больше недоступен.",
+        errBanned: "Ваш аккаунт не может получать подарки.",
+        errInvalid: "С запросом что-то не так.",
+        errSignedIn: "Чтобы получать подарки, нужно войти в аккаунт.",
+        errNetwork: "Не удалось связаться с сервером. Проверьте подключение и повторите попытку.",
+        errClaim: "Не удалось получить подарок."
+      },
+      ja: {
+        pageTitle: "マイギフト",
+        subtitle: "受け取ったギフトと送ったギフトをここで確認できます。",
+        received: "受信", sent: "送信", loading: "読み込み中",
+        nReceived: "受信 {n}件", nSent: "送信 {n}件",
+        gifts: { other: "{n}件のギフト" },
+        configMissing: "このファイルにFirebaseが設定されていません。",
+        signIn: "ギフトを見るにはログインしてください。",
+        noReceivedTitle: "受け取ったギフトはありません",
+        noReceivedBody: "誰かからギフトが届くと、ここに表示され、受け取ることができます。",
+        noSentTitle: "送ったギフトはありません",
+        noSentBody: "送ったギフトはここに表示されます。",
+        youReceived: "ギフトが届きました", youSent: "ギフトを送りました",
+        redeemed: "受け取り済み", redeemGift: "ギフトを受け取る", view: "表示",
+        claimedNote: "このギフトはすでに受け取り済みです。",
+        tapToOpen: "タップして受け取り画面を開きます。",
+        sentTo: "{name} に送信", user: "ユーザー", item: "アイテム",
+        preview: "プレビュー", close: "閉じる", itemPreview: "アイテムのプレビュー",
+        alreadyClaimed: "受け取り済み", claim: "受け取る",
+        itemLoadFail: "このギフトに紐づくアイテムを読み込めませんでした。",
+        giftLoadFail: "ギフトを読み込めませんでした。",
+        giftClaimedToast: "ギフトを受け取りました",
+        loadReceivedFail: "受信したギフトを読み込めませんでした。",
+        loadSentFail: "送信したギフトを読み込めませんでした。",
+        errGiftNotFound: "このギフトが見つかりません。",
+        errItemUnavailable: "このギフトのアイテムは利用できなくなりました。",
+        errBanned: "このアカウントではギフトを受け取れません。",
+        errInvalid: "リクエストに問題がありました。",
+        errSignedIn: "ギフトを受け取るにはログインが必要です。",
+        errNetwork: "サーバーに接続できませんでした。接続を確認してもう一度お試しください。",
+        errClaim: "受け取れませんでした。"
+      }
+    };
+
+    const LANG = (() => {
+      const m = location.pathname.match(/^\/([a-z]{2})(?=\/|$)/i);
+      const code = m ? m[1].toLowerCase() : "en";
+      return I18N[code] ? code : "en";
+    })();
+
+    function t(key, vars) {
+      const raw = (I18N[LANG] && I18N[LANG][key]) ?? I18N.en[key] ?? key;
+      return String(raw).replace(/\{(\w+)\}/g, (_, k) => (vars && vars[k] != null ? vars[k] : ""));
+    }
+
+    function giftsLabel(n) {
+      const forms = I18N[LANG].gifts;
+      const rule = new Intl.PluralRules(LANG).select(n);
+      return (forms[rule] || forms.other).replace("{n}", n);
+    }
+
+    function applyStaticTranslations() {
+      document.documentElement.lang = LANG;
+      document.title = t("pageTitle");
+      document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.getAttribute("data-i18n")); });
+    }
+
     if (!firebase.apps.length && !String(firebaseConfig.apiKey).includes("PASTE_YOUR")) {
       firebase.initializeApp(firebaseConfig);
     } else if (!firebase.apps.length) {
@@ -687,17 +878,17 @@
       els.tabSent.classList.toggle("active", state.selectedTab === "sent");
       els.tabReceived.querySelector(".count").textContent = receivedCount;
       els.tabSent.querySelector(".count").textContent = sentCount;
-      els.sectionBadge.textContent = isCurrentLoading() ? "読み込み中" : `${list.length} ギフト`;
+      els.sectionBadge.textContent = isCurrentLoading() ? t("loading") : giftsLabel(list.length);
 
       els.metaRow.innerHTML = `
-        <span class="pill">${receivedCount} 受信</span>
-        <span class="pill">${sentCount} 送信</span>
+        <span class="pill">${escapeHtml(t("nReceived", { n: receivedCount }))}</span>
+        <span class="pill">${escapeHtml(t("nSent", { n: sentCount }))}</span>
       `;
 
       if (state.configMissing) {
         els.content.innerHTML = `
           <div class="empty-inline">
-            このファイルで Firebase が設定されていません。
+            ${escapeHtml(t("configMissing"))}
           </div>
         `;
         return;
@@ -706,7 +897,7 @@
       if (!state.currentEmail) {
         els.content.innerHTML = `
           <div class="empty-inline">
-            ギフトを見るにはログインしてください。
+            ${escapeHtml(t("signIn"))}
           </div>
         `;
         return;
@@ -727,10 +918,8 @@
       if (!list.length) {
         els.content.innerHTML = `
           <div class="empty-inline">
-            <strong>${escapeHtml(state.selectedTab === "received" ? "受け取ったギフトはありません" : "送ったギフトはありません")}</strong><br>
-            ${escapeHtml(state.selectedTab === "received"
-              ? "誰かからギフトが届くと、ここに表示され、受け取れます。"
-              : "あなたが送ったギフトがここに表示されます。")}
+            <strong>${escapeHtml(state.selectedTab === "received" ? t("noReceivedTitle") : t("noSentTitle"))}</strong><br>
+            ${escapeHtml(state.selectedTab === "received" ? t("noReceivedBody") : t("noSentBody"))}
           </div>
         `;
         return;
@@ -771,7 +960,7 @@
           displayName: snap.get("display name") || "",
           profilePicture: snap.get("profile_picture") || "",
           profilePictureFrame: snap.get("profile_picture_frame") || "",
-          is詳細ified: snap.get("is_verified") === true
+          isViewified: snap.get("is_verified") === true
         };
 
         state.profileCache.set(email, profile);
@@ -791,21 +980,21 @@
       const isReceived = state.selectedTab === "received";
       const partnerEmail = isReceived ? (gift.giftSentBy || "") : (gift.giftSentTo || "");
       const profile = state.profileCache.get(partnerEmail);
-      const name = profile?.displayName?.trim() ? profile.displayName : (partnerEmail || "ユーザー");
+      const name = profile?.displayName?.trim() ? profile.displayName : (partnerEmail || t("user"));
       const avatar = profile?.profilePicture || "https://darkpurpleof.github.io/org-owner-jpg";
       const frame = profile?.profilePictureFrame || "";
-      const verified = profile?.is詳細ified === true;
-      const actionLabel = isReceived ? (gift.giftClaimed ? "主張した" : "ギフトを引き換える") : "詳細";
+      const verified = profile?.isViewified === true;
+      const actionLabel = isReceived ? (gift.giftClaimed ? t("redeemed") : t("redeemGift")) : t("view");
       const subtext = isReceived
-        ? (gift.giftClaimed ? "このギフトはすでに受け取られています。" : "タップして受け取り画面を開きます。")
-        : `送信先 ${name}`;
+        ? (gift.giftClaimed ? t("claimedNote") : t("tapToOpen"))
+        : t("sentTo", { name });
 
       return `
         <article class="gift-card ${state.highlightGiftId === gift.docId ? "highlighted" : ""}" data-gift-id="${escapeHtml(gift.docId)}">
           <div class="gift-cover">
             <img src="${escapeHtml(gift.giftCardImg || "")}" alt="">
             <div class="gift-cover-copy">
-              <h3 class="gift-cover-title">${escapeHtml(isReceived ? "ギフトが届きました" : "ギフトを送りました")}</h3>
+              <h3 class="gift-cover-title">${escapeHtml(isReceived ? t("youReceived") : t("youSent"))}</h3>
               <div class="partner-row">
                 <div class="partner-avatar-wrap">
                   <img class="partner-avatar" src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}">
@@ -842,7 +1031,7 @@
       els.sheetBody.innerHTML = "";
     }
 
-    async function loadUgcアイテム(author, typeId, ugcId) {
+    async function loadUgcItem(author, typeId, ugcId) {
       if (!author || !ugcId || !db) return null;
       const cacheKey = `${author}:${typeId}:${ugcId}`;
       if (state.ugcCache.has(cacheKey)) return state.ugcCache.get(cacheKey);
@@ -857,7 +1046,7 @@
         }
 
         const item = {
-          name: snap.get("name") || snap.get("title") || "アイテム",
+          name: snap.get("name") || snap.get("title") || t("item"),
           image: snap.get("image") || "",
           rolename: snap.get("rolename") || "",
           type: snap.get("type") || "",
@@ -871,29 +1060,48 @@
       }
     }
 
+    // server error code -> translation key
+    const CLAIM_ERROR_KEYS = {
+      already_claimed: "claimedNote",
+      gift_not_found: "errGiftNotFound",
+      item_unavailable: "errItemUnavailable",
+      account_banned: "errBanned",
+      invalid_request: "errInvalid"
+    };
+
+    // Claiming is done by the server: it checks the signed-in user, reads the gift/item itself,
+    // and does everything (transaction record, role, bundle, claimed flag) in one transaction.
     async function redeemGift(gift, ugc) {
-      const currentEmail = state.currentEmail;
-      const giftDocRef = db.collection("gifts").doc(currentEmail).collection("received").doc(gift.docId);
-      const txRef = db.collection("transactions").doc(currentEmail).collection("records").doc(gift.giftUgcId);
-      const batch = db.batch();
+      const user = auth && auth.currentUser;
+      if (!user) throw new Error(t("errSignedIn"));
 
-      batch.set(txRef, {
-        amount: 0,
-        date: firebase.firestore.FieldValue.serverTimestamp(),
-        description: `Gifted description: ${ugc.name}`,
-        image: ugc.image || "",
-        source: gift.giftSentBy || "",
-        type: "outgoing"
-      });
+      const token = await user.getIdToken();
+      let res;
+      try {
+        res = await fetch(CLAIM_GIFT_URL, {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            giftId: gift.docId,
+            description: `Gifted description: ${ugc?.name || "Item"}`
+          })
+        });
+      } catch {
+        throw new Error(t("errNetwork"));
+      }
 
-      const userDocRef = db.collection("user_data").doc(currentEmail);
-      const updates = {};
-      if (ugc.rolename && ugc.rolename.trim()) updates.roles = firebase.firestore.FieldValue.arrayUnion(ugc.rolename);
-      if (/bundle/i.test(ugc.type || "")) updates.purchasedIds = firebase.firestore.FieldValue.arrayUnion(gift.giftUgcId);
-      if (Object.keys(updates).length) batch.set(userDocRef, updates, { merge: true });
+      let data = {};
+      try { data = await res.json(); } catch {}
 
-      batch.update(giftDocRef, { gift_claimed: true });
-      await batch.commit();
+      if (!res.ok) {
+        const err = new Error(t(CLAIM_ERROR_KEYS[data.code] || "errClaim"));
+        err.code = data.code || "";
+        throw err;
+      }
+      return data;
     }
 
     async function openGiftSheet(gift) {
@@ -906,10 +1114,10 @@
       renderSheet();
 
       try {
-        const ugc = await loadUgcアイテム(gift.giftAuthor, gift.giftTypeId, gift.giftUgcId);
+        const ugc = await loadUgcItem(gift.giftAuthor, gift.giftTypeId, gift.giftUgcId);
         state.selectedUgc = ugc;
       } catch (err) {
-        state.sheetError = err?.message || "ギフトを読み込めませんでした。";
+        state.sheetError = err?.message || t("giftLoadFail");
       } finally {
         state.sheetLoading = false;
         renderSheet();
@@ -930,9 +1138,9 @@
           <div class="sheet-content">
             <div class="sheet-head">
               <div class="sheet-title-wrap">
-                <h2 class="sheet-title">表示イメージ</h2>
+                <h2 class="sheet-title">${escapeHtml(t("preview"))}</h2>
               </div>
-              <button class="sheet-close" id="sheetCloseBtn" aria-label="閉じる">×</button>
+              <button class="sheet-close" id="sheetCloseBtn" aria-label="${escapeHtml(t("close"))}">×</button>
             </div>
 
             ${state.sheetLoading ? `
@@ -948,17 +1156,17 @@
                       <span>${escapeHtml(ugc.name)}</span>
                       ${ugc.verified ? verifiedIcon() : ""}
                     </p>
-                    <p class="ugc-sub">${escapeHtml(ugc.type || "アイテムのプレビュー")}</p>
+                    <p class="ugc-sub">${escapeHtml(ugc.type || t("itemPreview"))}</p>
                   </div>
                 </div>
                 <button id="redeemBtn" class="primary-btn" ${canRedeem ? "" : "disabled"}>
-                  ${gift.giftClaimed ? "受け取り済み" : "受け取る"}
+                  ${escapeHtml(gift.giftClaimed ? t("alreadyClaimed") : t("claim"))}
                 </button>
-                ${gift.giftClaimed ? `<p class="sheet-error">このギフトはすでに受け取られています。</p>` : ""}
+                ${gift.giftClaimed ? `<p class="sheet-error">${escapeHtml(t("claimedNote"))}</p>` : ""}
               </div>
             ` : `
               <div class="sheet-preview">
-                <p class="sheet-error">このギフトに関連付けられたアイテムを読み込めませんでした。</p>
+                <p class="sheet-error">${escapeHtml(t("itemLoadFail"))}</p>
               </div>
             `}
 
@@ -978,11 +1186,13 @@
           redeemBtn.innerHTML = `<span class="spinner" style="width:18px;height:18px;margin:0;"></span>`;
           try {
             await redeemGift(state.selectedGift, state.selectedUgc);
-            setToast("ギフトを受け取りました", "purple");
+            setToast(t("giftClaimedToast"), "purple");
             closeSheet();
             await refreshLists();
           } catch (err) {
-            state.sheetError = err?.message || "受け取れませんでした。";
+            // Already claimed elsewhere (another tab/device): reflect it instead of leaving the button live
+            if (err?.code === "already_claimed" && state.selectedGift) state.selectedGift.giftClaimed = true;
+            state.sheetError = err?.message || t("errClaim");
             renderSheet();
           }
         };
@@ -1043,7 +1253,7 @@
           preloadProfiles(state.received, true);
         }, (error) => {
           state.loadingReceived = false;
-          setToast(error?.message || "受け取ったギフトを読み込めませんでした。", "red");
+          setToast(t("loadReceivedFail"), "red");
           render();
         });
 
@@ -1067,7 +1277,7 @@
           preloadProfiles(state.sent, false);
         }, (error) => {
           state.loadingSent = false;
-          setToast(error?.message || "送ったギフトを読み込めませんでした。", "red");
+          setToast(t("loadSentFail"), "red");
           render();
         });
     }
@@ -1081,6 +1291,7 @@
       els.content = $("content");
       els.sheetBackdrop = $("sheetBackdrop");
       els.sheetBody = $("sheetBody");
+      applyStaticTranslations();
       attachEvents();
       render();
 
@@ -1112,21 +1323,21 @@
   <main class="container">
     <section class="layout">
       <article class="card hero">
-        <h1>私のギフト</h1>
-        <p class="hero-subtitle">受け取ったギフトと送ったギフトをここで確認できます。</p>
+        <h1 data-i18n="pageTitle">My gifts</h1>
+        <p class="hero-subtitle" data-i18n="subtitle">Here you can see the gifts you received and the ones you sent.</p>
         <div class="meta-row" id="metaRow"></div>
       </article>
 
       <article class="card">
         <div class="tabs">
-          <button class="tab-btn active" id="tabReceived">受信 <span class="count">0</span></button>
-          <button class="tab-btn" id="tabSent">送信 <span class="count">0</span></button>
+          <button class="tab-btn active" id="tabReceived"><span data-i18n="received">Received</span> <span class="count">0</span></button>
+          <button class="tab-btn" id="tabSent"><span data-i18n="sent">Sent</span> <span class="count">0</span></button>
         </div>
       </article>
 
       <article class="card">
         <div class="hero" style="margin-bottom:14px;">
-          <div class="hero-kicker" id="sectionBadge">読み込み中</div>
+          <div class="hero-kicker" id="sectionBadge">Loading</div>
         </div>
         <div id="content"></div>
       </article>

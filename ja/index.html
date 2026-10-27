@@ -1,4 +1,3 @@
-<!-- Drop-in i18n version of your page: add the script blocks below and replace the visible text nodes with the spans/ids shown. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,40 +14,156 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    html, body { height: 100%; width: 100%; overflow-x: hidden; }
+    html, body { width: 100%; min-height: 100%; overflow-x: clip; }
     img { max-width: 100%; display: block; }
 
+    /* ============================================================
+       MATERIAL 3 TOKENS
+       Color roles generated from seed 0xFF9300FF (see Kotlin theme).
+       Dark scheme is default (:root); body.light overrides it.
+       "Vivid pair" constants are mode-independent by construction:
+       M3's dark *Container role always equals the light On*Container
+       role (and vice-versa), so those never need overriding.
+       ============================================================ */
     :root{
-      --bg: #171717;
-      --panel: #1b1b1b;
-      --card: #1f1f1f;
-      --card-2: #232323;
-      --muted: #a8a8a8;
-      --text: #eaeaea;
-      --accent: #6b21a8;
-      --accent-strong: #5b21b6;
-      --border: rgba(255,255,255,0.05);
-      --border-strong: rgba(255,255,255,0.08);
-      --soft: rgba(255,255,255,0.03);
-      --redeem: #2196f3;
-      --redeem-strong: #1c86dd;
-      --moderation: #564059;
-      --watchdog: #8b3a3a;
-      --community: #345cfb;
-      --community-hover: #4b7bf5;
-      --radius: 16px;
+      /* Neutral surfaces — Dark scheme */
+      --md-background: #151218;
+      --md-on-background: #E8E0E8;
+      --md-surface: #151218;
+      --md-on-surface: #E8E0E8;
+      --md-surface-dim: #151218;
+      --md-surface-bright: #3C383E;
+      --md-surface-container-lowest: #100D12;
+      --md-surface-container-low: #1E1A20;
+      --md-surface-container: #221E24;
+      --md-surface-container-high: #2C292E;
+      --md-surface-container-highest: #373339;
+      --md-surface-variant: #4A454E;
+      --md-on-surface-variant: #CCC4CF;
+      --md-outline: #968E98;
+      --md-outline-variant: #4A454E;
+      --md-inverse-surface: #E8E0E8;
+      --md-inverse-on-surface: #332F35;
+      --md-scrim: #000000;
+
+      --md-primary: #DCB8FF;
+      --md-on-primary: #480082;
+      --md-primary-container: #6700B5;
+      --md-on-primary-container: #EFDBFF;
+      --md-inverse-primary: #8800EC;
+
+      --md-secondary: #D0C1DA;
+      --md-on-secondary: #362D3F;
+      --md-secondary-container: #4D4357;
+      --md-on-secondary-container: #EDDDF6;
+
+      --md-tertiary: #F3B7BE;
+      --md-on-tertiary: #4B252B;
+      --md-tertiary-container: #653A41;
+      --md-on-tertiary-container: #FFD9DD;
+
+      --md-error: #FFB4AB;
+      --md-on-error: #690005;
+      --md-error-container: #93000A;
+      --md-on-error-container: #FFDAD6;
+
+      /* Mode-independent vivid pairs (brand + status widgets) */
+      --brand-vivid: #8800EC;
+      --brand-deep:  #6700B5;
+      --brand-pale:  #EFDBFF;
+      --brand-tint:  #DCB8FF;
+      --secondary-deep: #4D4357;
+      --secondary-pale: #EDDDF6;
+      --tertiary-deep:  #653A41;
+      --tertiary-pale:  #FFD9DD;
+      --error-deep:     #93000A;
+      --error-pale:     #FFDAD6;
+
+      /* Shape scale (M3) */
+      --shape-xs: 4px;
+      --shape-sm: 8px;
+      --shape-md: 12px;
+      --shape-lg: 16px;
+      --shape-xl: 28px;
+      --shape-full: 999px;
+
+      /* Elevation (M3 shadow tokens) */
+      --elev-1: 0 1px 2px rgba(0,0,0,.30), 0 1px 3px 1px rgba(0,0,0,.15);
+      --elev-2: 0 1px 2px rgba(0,0,0,.30), 0 2px 6px 2px rgba(0,0,0,.15);
+      --elev-3: 0 1px 3px rgba(0,0,0,.30), 0 4px 8px 3px rgba(0,0,0,.15);
+
+      /* Type scale (M3) */
+      --type-title-large: 600 22px/28px Inter;
+      --type-title-medium: 600 16px/24px Inter;
+      --type-title-small: 600 14px/20px Inter;
+      --type-body-large: 400 16px/24px Inter;
+      --type-body-medium: 400 14px/20px Inter;
+      --type-body-small: 400 12px/16px Inter;
+      --type-label-large: 600 14px/20px Inter;
+      --type-label-medium: 600 12px/16px Inter;
+      --type-label-small: 700 11px/16px Inter;
+
+      /* Legacy aliases kept so the rest of the sheet reads naturally */
+      --bg: var(--md-background);
+      --panel: var(--md-surface-container-low);
+      --card: var(--md-surface-container-low);
+      --card-2: var(--md-surface-container-high);
+      --card-3: var(--md-surface-container-highest);
+      --muted: var(--md-on-surface-variant);
+      --text: var(--md-on-surface);
+      --accent: var(--brand-vivid);
+      --accent-strong: var(--brand-deep);
+      --border: var(--md-outline-variant);
+      --border-strong: var(--md-outline);
+      --soft: color-mix(in srgb, var(--md-on-surface) 6%, transparent);
+      --redeem: var(--tertiary-deep);
+      --redeem-strong: var(--md-on-tertiary);
+      --moderation: var(--secondary-deep);
+      --watchdog: var(--error-deep);
+      --community: var(--brand-vivid);
+      --community-hover: #9A2CFF;
+      --radius: var(--shape-lg);
     }
 
     body.light {
-      --bg: #f6f8fb;
-      --panel: #ffffff;
-      --card: #ffffff;
-      --card-2: #f8fafc;
-      --muted: #475569;
-      --text: #0f172a;
-      --border: rgba(0,0,0,0.06);
-      --border-strong: rgba(0,0,0,0.09);
-      --soft: rgba(0,0,0,0.025);
+      --md-background: #FFF7FF;
+      --md-on-background: #1E1A20;
+      --md-surface: #FFF7FF;
+      --md-on-surface: #1E1A20;
+      --md-surface-dim: #DFD8DF;
+      --md-surface-bright: #FFF7FF;
+      --md-surface-container-lowest: #FFFFFF;
+      --md-surface-container-low: #F9F1F9;
+      --md-surface-container: #F3EBF3;
+      --md-surface-container-high: #EEE6EE;
+      --md-surface-container-highest: #E8E0E8;
+      --md-surface-variant: #E9E0EB;
+      --md-on-surface-variant: #4A454E;
+      --md-outline: #7B757E;
+      --md-outline-variant: #CCC4CF;
+      --md-inverse-surface: #332F35;
+      --md-inverse-on-surface: #F6EEF6;
+
+      --md-primary: #8800EC;
+      --md-on-primary: #FFFFFF;
+      --md-primary-container: #EFDBFF;
+      --md-on-primary-container: #6700B5;
+      --md-inverse-primary: #DCB8FF;
+
+      --md-secondary: #655A6F;
+      --md-on-secondary: #FFFFFF;
+      --md-secondary-container: #EDDDF6;
+      --md-on-secondary-container: #4D4357;
+
+      --md-tertiary: #805158;
+      --md-on-tertiary: #FFFFFF;
+      --md-tertiary-container: #FFD9DD;
+      --md-on-tertiary-container: #653A41;
+
+      --md-error: #BA1A1A;
+      --md-on-error: #FFFFFF;
+      --md-error-container: #FFDAD6;
+      --md-on-error-container: #93000A;
     }
 
     body {
@@ -60,6 +175,19 @@
       transition: background .25s ease, color .25s ease;
     }
 
+    /* State layer: M3 interactive elements overlay their own "on" color
+       (currentColor) at low opacity on hover/press rather than changing hue. */
+    .m3-state { position: relative; isolation: isolate; }
+    .m3-state::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: currentColor; opacity: 0; pointer-events: none;
+      transition: opacity .15s ease;
+    }
+    .m3-state:hover::before { opacity: .08; }
+    .m3-state:active::before { opacity: .12; }
+    .m3-state:active { transform: scale(.98); }
+    .m3-state { transition: transform .1s ease; }
+
     dp-topbar { display:block; position:sticky; top:0; z-index:100; }
     .top-bar { display:none !important; }
 
@@ -67,128 +195,223 @@
       max-width: 1100px;
       width: 100%;
       margin: 0 auto;
-      padding: 0 18px;
+      padding: 0 18px 32px 18px;
       display: grid;
       grid-template-columns: minmax(0, 640px) 320px;
-      gap: 0;
+      gap: 20px;
       align-items: start;
-      overflow-x: hidden;
+      overflow-x: clip;
     }
 
     @media (max-width: 920px){
-      main.container { grid-template-columns: 1fr; padding: 0 14px; }
+      main.container { grid-template-columns: 1fr; padding: 0 14px 28px 14px; gap: 14px; }
       aside.right-column { order: 2; }
     }
 
-    .feed { min-width: 0; border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding-bottom: 24px; }
-    @media (max-width: 920px){ .feed { border-left: none; border-right: none; } }
+    .feed { min-width: 0; display: grid; gap: 12px; }
 
+    /* M3 Top App Bar (small): flat at rest, gains a tonal surface + elevation on scroll */
     .feed-header {
       position: sticky; top: 0; z-index: 5;
-      background: color-mix(in srgb, var(--bg) 88%, transparent);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 18px;
+      background: var(--bg);
+      padding: 18px 4px 10px 4px;
+      transition: background-color .2s ease, box-shadow .2s ease;
     }
+    .feed-header.scrolled {
+      background: color-mix(in srgb, var(--md-surface-container) 92%, transparent);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--elev-2);
+      border-radius: 0 0 var(--shape-md) var(--shape-md);
+    }
+    .feed-header h1 { margin: 0; font: var(--type-title-large); letter-spacing: -0.01em; color: var(--text); }
 
-    .feed-header h1 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
-    .post { padding: 16px 18px; border-bottom: 1px solid var(--border); display: grid; gap: 10px; }
-    .post-eyebrow { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    /* M3 filled card: default surface used for the feed list */
+    .post {
+      background: var(--md-surface-container-low);
+      border-radius: var(--shape-lg);
+      padding: 16px 18px;
+      display: grid; gap: 10px;
+      box-shadow: var(--elev-1);
+    }
+    .post-eyebrow { display: flex; align-items: center; gap: 8px; font: var(--type-label-medium); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
     .post-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
-    .post-title { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.3; }
-    .post-body { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; white-space: pre-wrap; }
-    .post-footer { display: flex; align-items: center; justify-content: flex-end; gap: 6px; color: var(--muted); font-size: 12px; cursor: pointer; padding-top: 4px; }
+    .post-title { margin: 0; font: var(--type-title-medium); letter-spacing: -0.01em; color: var(--text); }
+    .post-body { margin: 0; color: var(--muted); font: var(--type-body-medium); white-space: pre-wrap; }
+    .post-footer { display: flex; align-items: center; justify-content: flex-end; gap: 6px; color: var(--muted); font: var(--type-label-small); cursor: pointer; padding-top: 4px; }
     .post-footer:hover { color: var(--text); }
     .post-footer svg { width: 14px; height: 14px; }
 
-    .login-card { display: flex; align-items: center; gap: 14px; background: linear-gradient(135deg, var(--accent), var(--accent-strong)); border-radius: 14px; padding: 16px 18px; color: #fff; cursor: pointer; transition: transform .15s ease; }
-    .login-card:hover { transform: translateY(-1px); }
-    .login-card svg { width: 26px; height: 26px; flex-shrink: 0; }
-    .login-card-title { font-weight: 800; font-size: 15.5px; }
-    .login-card-sub { font-size: 12.5px; opacity: .85; margin-top: 2px; }
+    /* M3 elevated promo card (functions like a large filled button) */
+    .login-card {
+      display: flex; align-items: center; gap: 14px;
+      background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep));
+      border-radius: var(--shape-xl);
+      padding: 16px 18px;
+      color: var(--brand-pale);
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: var(--elev-2);
+    }
+    .login-card-icon {
+      flex-shrink: 0; width: 44px; height: 44px; border-radius: var(--shape-full);
+      background: color-mix(in srgb, #FFFFFF 18%, transparent);
+      display: grid; place-items: center;
+    }
+    .login-card-icon svg { width: 22px; height: 22px; color: #FFFFFF; }
+    .login-card-title { font: var(--type-title-medium); color: #FFFFFF; }
+    .login-card-sub { font: var(--type-body-small); opacity: .9; margin-top: 2px; }
 
-    .notif-card { display: none; align-items: center; gap: 12px; justify-content: space-between; background: var(--card-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin: 14px 18px 0 18px; }
-    .notif-card p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
-    .notif-btn { flex-shrink: 0; border: 1px solid var(--border-strong); background: var(--soft); color: var(--text); font-weight: 700; font-size: 12.5px; padding: 8px 12px; border-radius: 10px; cursor: pointer; }
-    .notif-btn:hover { background: rgba(255,255,255,0.06); }
+    /* M3 banner-style card with a tonal action button */
+    .notif-card {
+      display: none; align-items: center; gap: 12px; justify-content: space-between;
+      background: var(--md-surface-container-high);
+      border-radius: var(--shape-md);
+      padding: 14px 16px;
+    }
+    .notif-card p { margin: 0; font: var(--type-body-medium); color: var(--muted); }
+    .m3-btn {
+      flex-shrink: 0; border: none; cursor: pointer;
+      font: var(--type-label-large);
+      padding: 10px 20px;
+      border-radius: var(--shape-full);
+      overflow: hidden;
+    }
+    .m3-btn-tonal { background: var(--brand-pale); color: var(--brand-deep); }
+    body.light .m3-btn-tonal { background: var(--md-primary-container); color: var(--md-on-primary-container); }
 
-    .profile-card { display: none; border-radius: 14px; overflow: hidden; background: var(--card-2); border: 1px solid var(--border); cursor: default; }
+    .profile-card { display: none; border-radius: var(--shape-lg); overflow: hidden; background: var(--md-surface-container-low); box-shadow: var(--elev-1); cursor: default; }
     .profile-banner { width: 100%; height: 110px; background-size: cover; background-position: center; background-color: var(--soft); display: none; }
     .profile-card-body { display: flex; align-items: center; gap: 14px; padding: 14px 16px; min-width: 0; }
     .profile-pfp-wrap { position: relative; flex-shrink: 0; }
-    .profile-pfp { width: 62px; height: 62px; border-radius: 12px; background-size: cover; background-position: center; background-color: var(--soft); border: 1px solid var(--border-strong); }
-    .profile-pfp-frame { position: absolute; inset: 0; pointer-events: none; border-radius: 12px; background-size: cover; background-position: center; display: none; }
+    .profile-pfp { width: 56px; height: 56px; border-radius: var(--shape-full); background-size: cover; background-position: center; background-color: var(--soft); outline: 1px solid var(--border); outline-offset: -1px; }
+    .profile-pfp-frame { position: absolute; inset: 0; pointer-events: none; border-radius: var(--shape-full); background-size: cover; background-position: center; display: none; }
     .profile-text { min-width: 0; flex: 1; display: grid; gap: 4px; }
-    .profile-name-verif { font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .profile-name-verif { font: var(--type-title-medium); display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--text); }
     .profile-name-verif span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .profile-name-verif img { width: 15px; height: 15px; flex-shrink: 0; }
-    .profile-bio { color: var(--muted); font-size: 13px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .profile-arrow { flex-shrink: 0; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: var(--text); cursor: pointer; transition: background .12s ease; }
-    .profile-arrow:hover { background: var(--soft); }
-    .profile-arrow svg { width: 17px; height: 17px; }
+    .profile-bio { color: var(--muted); font: var(--type-body-small); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-    .friends-scroll { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 6px 2px; }
+    /* M3 Icon Button: 40dp circular target with a state layer */
+    .icon-btn {
+      flex-shrink: 0; width: 40px; height: 40px; border-radius: var(--shape-full);
+      display: grid; place-items: center; color: var(--text); cursor: pointer;
+    }
+    .icon-btn svg { width: 20px; height: 20px; }
+
+    .friends-scroll { display: flex; gap: 16px; overflow-x: auto; padding: 4px 2px 6px 2px; }
     .friends-scroll::-webkit-scrollbar { height: 6px; }
-    .friends-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
-    .friend-item { flex: 0 0 auto; width: 78px; display: grid; justify-items: center; gap: 6px; cursor: pointer; text-align: center; }
-    .friend-item-pfp-wrap { position: relative; width: 62px; height: 62px; }
-    .friend-item-pfp { width: 62px; height: 62px; border-radius: 50%; background-size: cover; background-position: center; background-color: var(--soft); border: 1px solid var(--border-strong); }
-    .friend-item-frame { position: absolute; inset: 0; border-radius: 50%; background-size: cover; background-position: center; pointer-events: none; display: none; }
-    .friend-item-name { font-size: 11.5px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 3px; max-width: 78px; overflow: hidden; }
+    .friends-scroll::-webkit-scrollbar-thumb { background: var(--md-outline-variant); border-radius: var(--shape-full); }
+    .friend-item { flex: 0 0 auto; width: 72px; display: grid; justify-items: center; gap: 6px; cursor: pointer; text-align: center; border-radius: var(--shape-md); padding: 4px 0; }
+    .friend-item-pfp-wrap { position: relative; width: 56px; height: 56px; }
+    .friend-item-pfp { width: 56px; height: 56px; border-radius: var(--shape-full); background-size: cover; background-position: center; background-color: var(--soft); outline: 1px solid var(--border); outline-offset: -1px; }
+    .friend-item-frame { position: absolute; inset: 0; border-radius: var(--shape-full); background-size: cover; background-position: center; pointer-events: none; display: none; }
+    .friend-item-name { font: var(--type-label-small); color: var(--text); display: flex; align-items: center; gap: 3px; max-width: 72px; overflow: hidden; }
     .friend-item-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .friend-item-name img { width: 11px; height: 11px; flex-shrink: 0; }
-    .friends-empty, .friends-loading { width: 100%; padding: 18px 8px; text-align: center; color: var(--muted); font-size: 13px; }
+    .friends-empty, .friends-loading { width: 100%; padding: 18px 8px; text-align: center; color: var(--muted); font: var(--type-body-small); }
 
     .community-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
-    .community-avatar { width: 46px; height: 46px; border-radius: 10px; background-size: cover; background-position: center; background-color: var(--soft); flex-shrink: 0; }
+    .community-avatar { width: 46px; height: 46px; border-radius: var(--shape-md); background-size: cover; background-position: center; background-color: var(--soft); flex-shrink: 0; }
     .community-text { flex: 1; min-width: 0; }
-    .community-title { font-size: 14.5px; font-weight: 700; color: var(--text); }
-    .community-subtitle { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
-    .community-btn { flex-shrink: 0; border: none; background: var(--community); color: #fff; font-weight: 700; font-size: 12.5px; padding: 9px 14px; border-radius: 8px; cursor: pointer; transition: background .12s ease; }
-    .community-btn:hover { background: var(--community-hover); }
+    .community-title { font: var(--type-title-small); color: var(--text); }
+    .community-subtitle { font: var(--type-body-small); color: var(--muted); margin-top: 1px; }
+    .community-btn { flex-shrink: 0; border: none; background: var(--community); color: #fff; font: var(--type-label-large); padding: 10px 16px; border-radius: var(--shape-full); cursor: pointer; overflow: hidden; }
 
-    .quote-mark { font-size: 34px; font-weight: 800; color: var(--muted); line-height: 1; margin: 0; }
-    .post-quote { margin: 0; color: var(--text); font-size: 16px; line-height: 1.6; font-weight: 500; letter-spacing: -0.01em; }
-    .quote-refresh { justify-self: end; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--soft); display: grid; place-items: center; cursor: pointer; color: var(--muted); transition: background .12s ease, color .12s ease; }
-    .quote-refresh:hover { background: rgba(255,255,255,0.06); color: var(--text); }
-    .quote-refresh.spin svg { animation: spin .6s linear; }
-    .quote-refresh svg { width: 15px; height: 15px; }
+    /* M3 outlined card, used for the quote to visually break the rhythm of filled cards */
+    .post.quote-post { background: transparent; border: 1px solid var(--border); box-shadow: none; }
+    .quote-mark { font: 800 34px/1 Inter; color: var(--muted); margin: 0; }
+    .post-quote { margin: 0; color: var(--text); font: var(--type-title-medium); font-size: 16px; }
+
+    .friend-item.m3-state,
+    .icon-btn.m3-state,
+    .login-card.m3-state,
+    .daily-card.m3-state,
+    .redeem-widget.m3-state,
+    .moderation-widget.m3-state { overflow: hidden; }
+
+    .daily-card { border-radius: var(--shape-xl); padding: 18px; cursor: pointer; background: var(--md-surface-container-high); color: var(--text); transition: background .15s ease, opacity .15s ease, box-shadow .15s ease; overflow: hidden; }
+    .daily-card.state-offline { background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep)); box-shadow: var(--elev-2); }
+    .daily-card.state-cooldown { background: var(--md-surface-container-high); }
+    .daily-card.state-processing { background: var(--md-surface-container-high); cursor: default; opacity: .85; }
+    .daily-card.state-available { background: linear-gradient(135deg, var(--md-tertiary-container), var(--tertiary-deep)); color: var(--tertiary-pale); box-shadow: var(--elev-2); }
+    .daily-head { display: flex; align-items: center; gap: 10px; font: var(--type-title-medium); }
+    .daily-head svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .daily-body { min-height: 40px; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font: var(--type-body-small); padding-top: 10px; }
+    .daily-card.state-offline .daily-body,
+    .daily-card.state-offline .daily-head { color: var(--brand-pale); }
+    .daily-card.state-available .daily-body { color: var(--tertiary-pale); opacity: .92; }
+    .daily-spinner { width: 26px; height: 26px; border: 2px solid color-mix(in srgb, currentColor 25%, transparent); border-top: 2px solid currentColor; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
-    .daily-card { border-radius: 14px; padding: 16px; cursor: pointer; background: var(--soft); border: 1px solid var(--border); transition: background .15s ease, opacity .15s ease; }
-    .daily-card.state-offline { background: var(--accent); border-color: transparent; }
-    .daily-card.state-cooldown { background: var(--card-2); }
-    .daily-card.state-processing { background: var(--card-2); cursor: default; opacity: .85; }
-    .daily-card.state-available { background: var(--card-2); }
-    .daily-head { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; }
-    .daily-head svg { width: 20px; height: 20px; flex-shrink: 0; }
-    .daily-body { min-height: 40px; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 13.5px; padding-top: 10px; line-height: 1.5; }
-    .daily-card.state-offline .daily-body,
-    .daily-card.state-offline .daily-head { color: #fff; }
-    .daily-spinner { width: 26px; height: 26px; border: 2px solid var(--border); border-top: 2px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+    aside.right-column { display: grid; gap: 14px; padding: 18px 0 14px 0; position: sticky; top: 0; align-self: start; min-width: 0; }
+    @media (max-width: 920px){ aside.right-column { padding: 4px 0; position: static; } }
 
-    aside.right-column { display: grid; gap: 14px; padding: 14px 0 14px 18px; position: sticky; top: 0; align-self: start; min-width: 0; }
-    @media (max-width: 920px){ aside.right-column { padding: 14px 0; position: static; } }
-    .redeem-widget { background: linear-gradient(160deg, var(--redeem), var(--redeem-strong)); border-radius: var(--radius); padding: 16px; color: #fff; cursor: pointer; transition: transform .15s ease; }
-    .redeem-widget:hover { transform: translateY(-1px); }
-    .redeem-widget-head { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15.5px; }
+    .redeem-widget { background: linear-gradient(160deg, var(--md-tertiary-container), var(--tertiary-deep)); border-radius: var(--shape-xl); padding: 18px; color: var(--tertiary-pale); cursor: pointer; box-shadow: var(--elev-1); }
+    .redeem-widget-head { display: flex; align-items: center; gap: 8px; font: var(--type-title-medium); }
     .redeem-widget-head svg { width: 19px; height: 19px; }
-    .redeem-widget p { margin: 8px 0 0 0; font-size: 12.5px; opacity: .9; line-height: 1.5; }
-    .moderation-widget { background: var(--moderation); border-radius: var(--radius); padding: 16px; color: #fff; cursor: pointer; min-height: 92px; display: flex; flex-direction: column; justify-content: space-between; transition: transform .15s ease; }
-    .moderation-widget:hover { transform: translateY(-1px); }
+    .redeem-widget p { margin: 8px 0 0 0; font: var(--type-body-small); opacity: .9; }
+
+    .moderation-widget { background: var(--secondary-deep); border-radius: var(--shape-xl); padding: 18px; color: var(--secondary-pale); cursor: pointer; min-height: 92px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--elev-1); }
     .moderation-widget svg { width: 26px; height: 26px; }
-    .moderation-widget-text { font-size: 13px; font-weight: 600; word-break: break-word; }
-    .watchdog-widget { background: var(--watchdog); border-radius: var(--radius); padding: 16px; color: #fff; }
-    .watchdog-desc { font-size: 12.5px; font-weight: 600; margin: 0 0 10px 0; opacity: .95; }
-    .dot-row { display: flex; align-items: baseline; gap: 6px; font-size: 13px; font-family: "SFMono-Regular", Consolas, monospace; padding: 4px 0; }
-    .dot-row .dr-label { flex-shrink: 0; opacity: .85; }
-    .dot-row .dr-fill { flex: 1; border-bottom: 1px dotted rgba(255,255,255,0.35); transform: translateY(-3px); }
+    .moderation-widget-text { font: var(--type-body-medium); word-break: break-word; }
+
+    .watchdog-widget { background: var(--error-deep); border-radius: var(--shape-xl); padding: 18px; color: var(--error-pale); }
+    .watchdog-desc { font: var(--type-body-small); margin: 0 0 10px 0; opacity: .95; }
+    .dot-row { display: flex; align-items: baseline; gap: 6px; font: var(--type-label-medium); font-family: "SFMono-Regular", Consolas, monospace; padding: 4px 0; }
+    .dot-row .dr-label { flex-shrink: 0; opacity: .85; font-weight: 400; }
+    .dot-row .dr-fill { flex: 1; border-bottom: 1px dotted color-mix(in srgb, var(--error-pale) 45%, transparent); transform: translateY(-3px); }
     .dot-row .dr-value { flex-shrink: 0; font-weight: 700; }
-    #toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 14px; border-radius: 11px; font-weight: 800; display: none; z-index: 99999; box-shadow: 0 12px 28px rgba(0,0,0,0.22); }
-    #toast.purple { background: var(--accent-strong); color: #fff; }
-    #toast.yellow { background: #e6b800; color: #222; }
-    #toast.red { background: #c00; color: #fff; }
-    @media (max-width: 600px) { .feed-header h1 { font-size: 18px; } .post-quote { font-size: 15px; } }
+
+    /* M3 Snackbar: single-line surface anchored to the bottom of the viewport */
+    #toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px);
+      padding: 14px 18px; border-radius: var(--shape-xs);
+      font: var(--type-body-medium); font-weight: 600;
+      display: none; z-index: 99999; box-shadow: var(--elev-3);
+      max-width: min(92vw, 420px); text-align: center;
+    }
+    #toast.purple { background: var(--md-inverse-surface); color: var(--md-inverse-on-surface); border-left: 4px solid var(--brand-vivid); }
+    #toast.yellow { background: var(--md-inverse-surface); color: var(--md-inverse-on-surface); border-left: 4px solid var(--md-tertiary); }
+    #toast.red { background: var(--md-inverse-surface); color: var(--md-inverse-on-surface); border-left: 4px solid var(--md-error); }
+
+    @media (max-width: 600px) { .feed-header h1 { font-size: 20px; } .post-quote { font-size: 15px; } }
+
+    /* ---- home update ---- */
+@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.97)}}
+.feed>*:not(.feed-header){animation:rise .6s cubic-bezier(.05,.7,.1,1) both}
+.feed>:nth-child(2){animation-delay:.04s}.feed>:nth-child(3){animation-delay:.1s}.feed>:nth-child(4){animation-delay:.16s}
+.feed>:nth-child(5){animation-delay:.22s}.feed>:nth-child(6){animation-delay:.28s}.feed>:nth-child(7){animation-delay:.34s}
+.feed>:nth-child(8){animation-delay:.4s}.feed>:nth-child(9){animation-delay:.46s}
+
+/* hero */
+.hero{display:none;position:relative;overflow:hidden;padding:24px 22px 20px;color:var(--brand-pale);
+  border-radius:var(--shape-xl) var(--shape-xl) var(--shape-xl) 84px;box-shadow:var(--elev-2);
+  background:linear-gradient(135deg,var(--brand-deep),#34075c)}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;background:var(--brand-tint);opacity:.15;
+  border-radius:62% 38% 55% 45%/48% 60% 40% 52%;animation:morph 9s ease-in-out infinite alternate}
+@keyframes morph{to{border-radius:38% 62% 40% 60%/58% 42% 58% 42%;transform:rotate(40deg) scale(1.15)}}
+.hero>*{position:relative;z-index:1}
+.hero-hi{font:800 28px/1.1 Inter;letter-spacing:-.02em;color:#fff;overflow-wrap:anywhere}
+.hero-sub{font:var(--type-body-medium);opacity:.85;margin-top:6px;max-width:42ch}
+.hero-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:18px}
+.hero-bal{display:inline-flex;align-items:baseline;gap:6px;padding:10px 18px;border-radius:var(--shape-full);
+  background:color-mix(in srgb,#fff 16%,transparent);font:800 22px Inter;color:#fff;font-variant-numeric:tabular-nums}
+.hero-bal small{font:600 13px Inter;opacity:.8}
+.hero-chip{display:inline-flex;align-items:center;height:40px;padding:0 18px;border-radius:var(--shape-full);
+  background:var(--brand-pale);color:var(--brand-deep);font:var(--type-label-large);text-decoration:none;transition:border-radius .35s cubic-bezier(.05,.7,.1,1)}
+.hero-chip:hover{border-radius:12px}
+
+/* daily card */
+.daily-card.state-available{animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--md-tertiary) 22%,transparent),var(--elev-2)}}
+.daily-win{font:800 48px/1 Inter;letter-spacing:-.03em;animation:rise .6s cubic-bezier(.05,.7,.1,1) both}
+.daily-win small{font:700 16px Inter;opacity:.8;margin-left:6px}
+.daily-time{font:800 26px/1 Inter;font-variant-numeric:tabular-nums;color:var(--text)}
+.daily-bar{height:6px;border-radius:3px;margin-top:12px;width:100%;overflow:hidden;background:color-mix(in srgb,currentColor 16%,transparent)}
+.daily-bar i{display:block;height:100%;border-radius:3px;background:var(--brand-tint);transition:width 1s linear}
+.daily-body{flex-direction:column;gap:2px}
+.icon-btn.spin svg{animation:spin .6s linear}
+
   </style>
 
   <script type="module" src="/dp-topbar.js"></script>
@@ -217,11 +440,23 @@
 
   <main class="container">
     <section class="feed">
-      <div class="feed-header"><h1 id="t-home">Home</h1></div>
+      <div class="feed-header" id="feed-header"><h1 id="t-home">Home</h1></div>
 
-      <div class="post" id="login-card-wrap" style="display:none;">
-        <div class="login-card" onclick="location.href='/login'">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 17l5-5-5-5M15 12H3M15 21h4a2 2 0 002-2V5a2 2 0 00-2-2h-4"/></svg>
+<section class="hero" id="hero">
+  <div class="hero-hi" id="hero-hi"></div>
+  <div class="hero-sub" id="hero-sub"></div>
+  <div class="hero-row">
+    <div class="hero-bal"><span id="hero-n">0</span><small>DF$</small></div>
+    <a class="hero-chip" href="/redeem" id="hero-redeem"></a>
+    <a class="hero-chip" href="/profile" id="hero-profile"></a>
+  </div>
+</section>
+
+      <div class="post" id="login-card-wrap" style="display:none; background:none; box-shadow:none; padding:0;">
+        <div class="login-card m3-state" onclick="location.href='/login'">
+          <div class="login-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 17l5-5-5-5M15 12H3M15 21h4a2 2 0 002-2V5a2 2 0 00-2-2h-4"/></svg>
+          </div>
           <div>
             <div class="login-card-title" id="t-login">Log in</div>
             <div class="login-card-sub" id="t-login-sub">Sign in to see your friends, profile and daily rewards.</div>
@@ -231,14 +466,14 @@
 
       <div class="notif-card" id="notif-card">
         <p id="t-notif">Turn on notifications to get alerted about important updates.</p>
-        <button class="notif-btn" id="notif-btn" data-i18n="enable">Enable</button>
+        <button class="m3-btn m3-btn-tonal m3-state" id="notif-btn" data-i18n="enable">Enable</button>
       </div>
 
       <div class="post">
         <div class="post-eyebrow"><span class="dot"></span><span id="t-profile">Profile</span></div>
-        <div class="profile-card" id="profile-card">
+        <div class="profile-card" id="profile-card" style="box-shadow:none; background:none;">
           <div class="profile-banner" id="profile-banner"></div>
-          <div class="profile-card-body">
+          <div class="profile-card-body" style="padding:0;">
             <div class="profile-pfp-wrap">
               <div class="profile-pfp" id="preview-pfp"></div>
               <div id="preview-pfp-frame" class="profile-pfp-frame"></div>
@@ -250,7 +485,7 @@
               </div>
               <div class="profile-bio" id="preview-bio"></div>
             </div>
-            <div class="profile-arrow" onclick="location.href='/profile'" id="profile-arrow" title="Go to profile">
+            <div class="icon-btn m3-state" onclick="location.href='/profile'" id="profile-arrow" title="Go to profile">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </div>
           </div>
@@ -271,20 +506,20 @@
         </div>
       </div>
 
-      <div class="post">
+      <div class="post quote-post">
         <div class="post-eyebrow"><span class="dot"></span><span id="t-quote-day">Quote of the day</span></div>
         <p class="quote-mark">&#10077;</p>
         <p class="post-quote" id="quote-card">Loading quote...</p>
-        <div class="quote-refresh" id="quote-refresh" title="Get another quote">
-          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/></svg>
+        <div class="icon-btn m3-state" id="quote-refresh" title="Get another quote" style="justify-self:end; color:var(--muted);">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/></svg>
         </div>
       </div>
 
-      <div class="post">
+      <div class="post" style="background:none; box-shadow:none; padding:0;">
         <div class="post-eyebrow"><span class="dot"></span><span id="t-daily-reward">Daily reward</span></div>
-        <div class="daily-card state-offline" id="daily-card">
+        <div class="daily-card m3-state" id="daily-card">
           <div class="daily-head">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M120-80v-800l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v800l-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60Zm120-200h480v-80H240v80Zm0-160h480v-80H240v80Zm0-160h480v-80H240v80Zm-40 404h560v-568H200v568Zm0-568v568-568Z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M120-80v-800l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v800l-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60Zm120-200h480v-80H240v80Zm0-160h480v-80H240v80Zm0-160h480v-80H240v80Zm-40 404h560v-568H200v568Zm0-568v568-568Z"/></svg>
             <span id="daily-title">Daily coins</span>
           </div>
           <div class="daily-body" id="daily-body">Log in to claim your daily coins.</div>
@@ -293,16 +528,16 @@
     </section>
 
     <aside class="right-column">
-      <div class="redeem-widget" id="redeem-widget" onclick="handleRedeemClick()">
+      <div class="redeem-widget m3-state" id="redeem-widget" onclick="handleRedeemClick()">
         <div class="redeem-widget-head">
-          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#CCCCCC"><path d="M120-80v-800l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v800l-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60Zm120-200h480v-80H240v80Zm0-160h480v-80H240v80Zm0-160h480v-80H240v80Zm-40 404h560v-568H200v568Zm0-568v568-568Z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M120-80v-800l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v800l-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60Zm120-200h480v-80H240v80Zm0-160h480v-80H240v80Zm0-160h480v-80H240v80Zm-40 404h560v-568H200v568Zm0-568v568-568Z"/></svg>
           <span id="t-redeem-code">Redeem a code</span>
         </div>
         <p id="t-redeem-desc">Have a promo code? Redeem it here for coins and rewards.</p>
       </div>
 
-      <div class="moderation-widget" id="moderation-widget" onclick="handleModerationClick()">
-        <img src="https://darkpurpleof.neocities.org/Owner.png" width="30" height="30" style="object-fit: cover;">
+      <div class="moderation-widget m3-state" id="moderation-widget" onclick="handleModerationClick()">
+        <img src="https://darkpurpleof.neocities.org/Owner.png" width="30" height="30" style="object-fit: cover; border-radius: 999px;">
         <div class="moderation-widget-text" id="moderation-text">You don't have moderator access.</div>
       </div>
 
@@ -342,6 +577,13 @@
       ja: {
         home: 'ホーム', login: 'ログイン', loginSub: 'サインインして、友達・プロフィール・毎日の報酬を確認しましょう。', notifications: '重要な更新を受け取るには通知をオンにしてください。', enable: '有効にする', profile: 'プロフィール', friends: '友だち', latestUpdate: '最新のサイト更新', quoteOfDay: '今日の名言', getAnotherQuote: '別の名言を表示', dailyReward: '毎日の報酬', dailyCoins: '毎日のコイン', logInToClaim: 'ログインして毎日のコインを受け取りましょう。', redeemCode: 'コードを引き換える', redeemDesc: 'プロモコードがありますか？ここでコインと報酬に交換できます。', noModAccess: 'モデレーター権限がありません。', watchdogDesc: '現在、モデレーションは {count} 件の停止アカウントを追跡しています。', bannedUsers: '停止ユーザー', bannedIps: '停止IP', pendingAppeals: '保留中の異議申し立て', announcement: 'お知らせ', noAnnouncementsYet: 'まだお知らせはありません', nothingNew: '今は新しい情報はありません。', publishedOn: '公開日', loading: '読み込み中...', pleaseWait: 'お待ちください...', loadingQuote: '名言を読み込み中...', noQuotes: '名言がありません。', failedQuote: '名言の読み込みに失敗しました。', failedClaim: '毎日のコインを受け取れませんでした。', alreadyClaimed: '今日はすでに受け取り済みです。', earned: '{amount} DF$ を獲得しました！', hugeReward: '大きな報酬: {amount} DF$！', comeBackTomorrow: 'また明日', available: '{date} に利用可能', nextRewardNotReady: '次の報酬はまだ準備できていません。', earnUpTo: '最大 10,000 DF$ を獲得', tapToClaim: 'タップして今日の報酬を受け取る', loadingFriends: '友だちを読み込み中...', emptyFriends: '誰かにリクエストを送ってみましょう', loadingProfile: '読み込み中...', noBio: 'まだ自己紹介が追加されていません。', goToProfile: 'プロフィールへ', verifiedAlt: '認証済み', moderatorsDesc: '現在モデレーションが追跡している', bannedAccounts: '件の停止アカウント', promoCode: 'プロモコードがありますか？ここでコインと報酬に交換できます。' }
     };
+
+Object.assign(I18N.en,{greetMorning:'Good morning',greetAfternoon:'Good afternoon',greetEvening:'Good evening',heroSub:'Your daily reward and friends are right below.',quickRedeem:'Redeem',quickProfile:'Profile',availableIn:'Next reward in',serverUnreachable:"Couldn't reach the server. Tap to retry.",accountBanned:'This account is banned.'});
+Object.assign(I18N.es,{greetMorning:'Buenos días',greetAfternoon:'Buenas tardes',greetEvening:'Buenas noches',heroSub:'Tu recompensa diaria y tus amigos están justo abajo.',quickRedeem:'Canjear',quickProfile:'Perfil',availableIn:'Próxima recompensa en',serverUnreachable:'No se pudo conectar con el servidor. Toca para reintentar.',accountBanned:'Esta cuenta está baneada.'});
+Object.assign(I18N.ru,{greetMorning:'Доброе утро',greetAfternoon:'Добрый день',greetEvening:'Добрый вечер',heroSub:'Ежедневная награда и друзья — чуть ниже.',quickRedeem:'Код',quickProfile:'Профиль',availableIn:'Следующая награда через',serverUnreachable:'Не удалось связаться с сервером. Нажмите, чтобы повторить.',accountBanned:'Этот аккаунт заблокирован.'});
+Object.assign(I18N.de,{greetMorning:'Guten Morgen',greetAfternoon:'Guten Tag',greetEvening:'Guten Abend',heroSub:'Deine tägliche Belohnung und deine Freunde findest du direkt darunter.',quickRedeem:'Einlösen',quickProfile:'Profil',availableIn:'Nächste Belohnung in',serverUnreachable:'Server nicht erreichbar. Tippen zum Wiederholen.',accountBanned:'Dieses Konto ist gesperrt.'});
+Object.assign(I18N.ja,{greetMorning:'おはようございます',greetAfternoon:'こんにちは',greetEvening:'こんばんは',heroSub:'毎日の報酬と友だちはこのすぐ下です。',quickRedeem:'引き換え',quickProfile:'プロフィール',availableIn:'次の報酬まで',serverUnreachable:'サーバーに接続できません。タップして再試行。',accountBanned:'このアカウントは停止されています。'});
+
 
     const SUPPORTED_LANGS = ['en', 'es', 'ru', 'de', 'ja'];
     let currentLang = 'en';
@@ -383,20 +625,18 @@
       setText('t-friends', t('friends'));
       setText('t-latest-update', t('latestUpdate'));
       setText('t-quote-day', t('quoteOfDay'));
-      setText('quote-refresh', '');
       const qr = document.getElementById('quote-refresh'); if (qr) qr.title = t('getAnotherQuote');
       setText('t-daily-reward', t('dailyReward'));
-      setText('daily-title', t('dailyCoins'));
-      setText('daily-body', t('logInToClaim'));
       setText('t-redeem-code', t('redeemCode'));
       setText('t-redeem-desc', t('redeemDesc'));
-      setText('moderation-text', t('noModAccess'));
-      setText('t-watchdog-desc', t('moderatorsDesc') + ' ' + t('watchdogDesc').replace('{count}', document.getElementById('watchdog-banned-inline')?.textContent || '0'));
+      { const u = auth.currentUser; setText('moderation-text', u && u.email && u.email.endsWith('@darkpurpleof.github.io') ? u.email : t('noModAccess')); }
+      setText('t-watchdog-desc', t('watchdogDesc', { count: window.__bannedCount || 0 }));
       setText('t-banned-users', t('bannedUsers'));
       setText('t-banned-ips', t('bannedIps'));
       setText('t-pending-appeals', t('pendingAppeals'));
       const p = document.getElementById('profile-arrow'); if (p) p.title = t('goToProfile');
       const v = document.getElementById('preview-verified'); if (v) v.alt = t('verifiedAlt');
+      window.__dailyRender && window.__dailyRender(); window.__heroRender && window.__heroRender();
     }
 
     async function resolveLanguage(user) {
@@ -406,7 +646,7 @@
           const snap = await db.collection('user_data').doc(user.email).get();
           lang = normalizeLang(snap.exists ? snap.data()?.lang : '') || '';
         }
-      } catch (e) {}
+      } catch (e) { console.warn('language lookup failed', e); }
       lang = SUPPORTED_LANGS.includes(lang) ? lang : getBrowserLang();
       currentLang = lang;
       applyTranslations();
@@ -424,6 +664,8 @@
       toast.style.display = 'block';
       setTimeout(() => { toast.style.display = 'none'; toast.className = ''; }, duration);
     }
+
+    function cssUrl(u) { return "url('" + String(u || '').replace(/["'()\\\s]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')) + "')"; }
 
     function escapeHtml(str) {
       return String(str || '').replace(/[&<>"']/g, s => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[s]);
@@ -501,9 +743,9 @@
         const data = docSnap.data() || {};
         card.style.display = 'block';
         const banner = document.getElementById('profile-banner');
-        if (banner) { if (data.banner) { banner.style.backgroundImage = `url(${data.banner})`; banner.style.display = 'block'; } else banner.style.display = 'none'; }
-        const pfp = document.getElementById('preview-pfp'); if (pfp) pfp.style.backgroundImage = `url(${data.profile_picture || '/org-owner.jpg'})`;
-        const previewFrame = document.getElementById('preview-pfp-frame'); if (previewFrame) { if (data.profile_picture_frame && data.profile_picture_frame.trim() !== '') { previewFrame.style.backgroundImage = `url(${data.profile_picture_frame})`; previewFrame.style.display = 'block'; } else previewFrame.style.display = 'none'; }
+        if (banner) { if (data.banner) { banner.style.backgroundImage = cssUrl(data.banner); banner.style.display = 'block'; } else banner.style.display = 'none'; }
+        const pfp = document.getElementById('preview-pfp'); if (pfp) pfp.style.backgroundImage = cssUrl(data.profile_picture || '/org-owner.jpg');
+        const previewFrame = document.getElementById('preview-pfp-frame'); if (previewFrame) { if (data.profile_picture_frame && data.profile_picture_frame.trim() !== '') { previewFrame.style.backgroundImage = cssUrl(data.profile_picture_frame); previewFrame.style.display = 'block'; } else previewFrame.style.display = 'none'; }
         const displayName = data['display name'] || user.email; const nameEl = document.getElementById('preview-name'); if (nameEl) nameEl.textContent = displayName;
         const verifiedEl = document.getElementById('preview-verified'); if (verifiedEl) verifiedEl.style.display = data.is_verified ? 'inline' : 'none';
         const bioEl = document.getElementById('preview-bio'); if (bioEl) bioEl.textContent = data.bio || t('noBio');
@@ -516,14 +758,14 @@
       function makeEmptyState(message, className) { const wrap = document.createElement('div'); wrap.className = className; wrap.textContent = message; return wrap; }
       function makeItem(f) {
         const item = document.createElement('div');
-        item.className = 'friend-item';
+        item.className = 'friend-item m3-state';
         item.onclick = () => location.href = `/viewprofile?profile=${encodeURIComponent(f.email)}`;
-        const pfpUrl = f.profilePic ? f.profilePic.replace(/'/g, "\\'") : '/org-owner.jpg';
-        const frameUrl = f.frameUrl ? f.frameUrl.replace(/'/g, "\\'") : '';
+        const pfpUrl = cssUrl(f.profilePic || '/org-owner.jpg');
+        const frameUrl = f.frameUrl ? cssUrl(f.frameUrl) : '';
         item.innerHTML = `
           <div class="friend-item-pfp-wrap">
-            <div class="friend-item-pfp" style="background-image:url('${pfpUrl}')"></div>
-            ${frameUrl ? `<div class="friend-item-frame" style="background-image:url('${frameUrl}');display:block;"></div>` : ''}
+            <div class="friend-item-pfp" style="background-image:${pfpUrl}"></div>
+            ${frameUrl ? `<div class="friend-item-frame" style="background-image:${frameUrl};display:block;"></div>` : ''}
           </div>
           <div class="friend-item-name">
             <span title="${escapeHtml(f.displayName)}">${escapeHtml(f.displayName)}</span>
@@ -555,56 +797,108 @@
       });
     })();
 
+    /* ---------- hero: greeting + live balance ---------- */
+    (function () {
+      const $ = id => document.getElementById(id);
+      let name = '', unsub = null, shown = 0;
+      function tween(to) {
+        const el = $('hero-n'), from = shown, t0 = performance.now(); shown = to;
+        (function f(now) { const k = Math.min(1, (now - t0) / 700), e = 1 - Math.pow(1 - k, 4); el.textContent = Math.round(from + (to - from) * e).toLocaleString(currentLang || 'en'); if (k < 1) requestAnimationFrame(f); })(t0);
+      }
+      function render() {
+        const h = new Date().getHours();
+        $('hero-hi').textContent = t(h < 12 ? 'greetMorning' : h < 18 ? 'greetAfternoon' : 'greetEvening') + (name ? ', ' + name : '');
+        $('hero-sub').textContent = t('heroSub');
+        $('hero-redeem').textContent = t('quickRedeem');
+        $('hero-profile').textContent = t('quickProfile');
+      }
+      window.__heroRender = render;
+      auth.onAuthStateChanged(user => {
+        if (unsub) { unsub(); unsub = null; }
+        $('hero').style.display = user ? 'block' : 'none';
+        if (!user) return;
+        name = (user.displayName || user.email.split('@')[0] || '').split(' ')[0]; render();
+        unsub = db.collection('user_data').doc(user.email).onSnapshot(snap => {
+          const d = snap.exists ? snap.data() : {};
+          if (d['display name']) name = String(d['display name']).split(' ')[0];
+          render(); tween(parseInt(String(d.coins ?? '0').replace(/[^\d-]/g, ''), 10) || 0);
+        }, err => console.warn('balance snapshot failed', err));
+      });
+    })();
+    
+    /* ---------- daily coins: server is the only authority (/economy/freecoins) ---------- */
     (function () {
       const cardEl = document.getElementById('daily-card');
       const titleEl = document.getElementById('daily-title');
       const bodyEl = document.getElementById('daily-body');
       if (!cardEl) return;
-      let isProcessing = false, isAvailable = false, offlineOrLoggedOut = true, nextAvailableDate = null;
-      function isOnline() { return typeof navigator === 'undefined' || navigator.onLine !== false; }
-      function weightedRandomAmount(min = 10, max = 10000, biasPower = 4.0) { const r = Math.random(); const biased = Math.pow(r, biasPower); const raw = min + (max - min) * biased; return Math.min(max, Math.max(min, Math.round(raw))); }
-      function setState() {
+      const BASE = /^(localhost|127\.0\.0\.1|192\.168\.)/.test(location.hostname) ? 'http://192.168.1.8:8888/' : 'https://darkpurpleofswebsite.netlify.app/';
+      const URL_ = BASE + 'economy/freecoins', COOLDOWN = 24 * 60 * 60 * 1000;
+      let S = 'loading', next = 0, win = 0; // loading | guest | available | processing | won | cooldown | banned | error
+    
+      async function call(method) {
+        const u = auth.currentUser;
+        if (!u) throw new Error('not signed in');
+        const r = await fetch(URL_, { method, headers: { Authorization: 'Bearer ' + await u.getIdToken() } });
+        return { status: r.status, j: await r.json().catch(() => ({})) };
+      }
+      const clock = ms => { const s = Math.max(0, Math.ceil(ms / 1000)), p = n => String(n).padStart(2, '0'); return `${p(Math.floor(s / 3600))}:${p(Math.floor(s % 3600 / 60))}:${p(s % 60)}`; };
+    
+      function render() {
         cardEl.classList.remove('state-offline', 'state-processing', 'state-cooldown', 'state-available');
-        if (offlineOrLoggedOut) { cardEl.classList.add('state-offline'); titleEl.textContent = t('dailyCoins'); bodyEl.innerHTML = t('logInToClaim'); }
-        else if (isProcessing) { cardEl.classList.add('state-processing'); titleEl.textContent = ''; bodyEl.innerHTML = '<div class="daily-spinner"></div>'; }
-        else if (isAvailable) { cardEl.classList.add('state-available'); titleEl.textContent = t('earnUpTo'); bodyEl.textContent = t('tapToClaim'); }
-        else { cardEl.classList.add('state-cooldown'); titleEl.textContent = t('comeBackTomorrow'); bodyEl.textContent = nextAvailableDate ? `${t('available')} ${nextAvailableDate.toLocaleString(currentLang || 'en', { month: 'long', day: '2-digit', hour: '2-digit', minute: '2-digit' })}` : t('nextRewardNotReady'); }
+        if (S === 'guest') { cardEl.classList.add('state-offline'); titleEl.textContent = t('dailyCoins'); bodyEl.textContent = t('logInToClaim'); }
+        else if (S === 'loading' || S === 'processing') { cardEl.classList.add('state-processing'); titleEl.textContent = t('dailyCoins'); bodyEl.innerHTML = '<div class="daily-spinner"></div>'; }
+        else if (S === 'available') { cardEl.classList.add('state-available'); titleEl.textContent = t('earnUpTo'); bodyEl.textContent = t('tapToClaim'); }
+        else if (S === 'won') { cardEl.classList.add('state-available'); titleEl.textContent = t('dailyCoins'); bodyEl.innerHTML = `<div class="daily-win">+${win.toLocaleString(currentLang || 'en')}<small>DF$</small></div>`; }
+        else if (S === 'banned') { cardEl.classList.add('state-cooldown'); titleEl.textContent = t('dailyCoins'); bodyEl.textContent = t('accountBanned'); }
+        else if (S === 'error') { cardEl.classList.add('state-cooldown'); titleEl.textContent = t('dailyCoins'); bodyEl.textContent = t('serverUnreachable'); }
+        else {
+          const left = next - Date.now(), pct = Math.min(100, Math.max(0, (COOLDOWN - left) / COOLDOWN * 100));
+          cardEl.classList.add('state-cooldown'); titleEl.textContent = t('comeBackTomorrow');
+          bodyEl.innerHTML = `<div>${t('availableIn')}</div><div class="daily-time">${clock(left)}</div><div class="daily-bar"><i style="width:${pct}%"></i></div>`;
+        }
       }
-      async function checkAvailability() {
-        const user = auth.currentUser; offlineOrLoggedOut = !isOnline() || !user;
-        if (offlineOrLoggedOut) { isAvailable = false; nextAvailableDate = null; setState(); return; }
+      window.__dailyRender = render;
+    
+      async function refresh() {
+        if (!auth.currentUser) { S = 'guest'; return render(); }
+        if (navigator.onLine === false) { S = 'error'; return render(); }
+        S = 'loading'; render();
         try {
-          const snap = await db.collection('user_data').doc(user.email).get();
-          const data = snap.exists ? snap.data() : null;
-          const ts = data && data.daily_last && data.daily_last.toDate ? data.daily_last.toDate() : null;
-          const now = Date.now();
-          if (!ts) { isAvailable = true; nextAvailableDate = null; } else { const diff = now - ts.getTime(); const dayMs = 24 * 60 * 60 * 1000; isAvailable = diff >= dayMs; nextAvailableDate = isAvailable ? null : new Date(ts.getTime() + dayMs); }
-        } catch (e) { offlineOrLoggedOut = true; }
-        setState();
+          const { status, j } = await call('GET');
+          if (status === 403 && j.code === 'account_banned') S = 'banned';
+          else if (status !== 200) throw new Error(j.error || 'HTTP ' + status);
+          else if (j.available) S = 'available';
+          else { S = 'cooldown'; next = j.nextAvailableMs; }
+        } catch (e) { console.warn('freecoins status failed', e); S = 'error'; }
+        render();
       }
+    
       async function claim() {
-        const user = auth.currentUser;
-        if (offlineOrLoggedOut) { location.href = '/login'; return; }
-        if (!isAvailable || isProcessing) { if (!isAvailable) showToast(t('alreadyClaimed'), 'yellow'); return; }
-        isProcessing = true; isAvailable = false; setState();
-        const amount = weightedRandomAmount(10, 10000, 4.0);
-        await new Promise(res => setTimeout(res, 6000));
+        if (S === 'guest') { location.href = '/login'; return; }
+        if (S === 'error') return refresh();
+        if (S === 'cooldown') return showToast(t('alreadyClaimed'), 'yellow');
+        if (S !== 'available') return;
+        S = 'processing'; render();
         try {
-          const docRef = db.collection('user_data').doc(user.email);
-          const snap = await docRef.get();
-          const current = snap.exists ? parseInt(snap.data().coins || '0', 10) || 0 : 0;
-          const newCoins = current + amount;
-          await docRef.set({ coins: String(newCoins), daily_last: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-          showToast(t('earned', { amount }), 'purple');
-          if (amount > 1000) showToast(t('hugeReward', { amount }), 'yellow', 5000);
-        } catch (e) { showToast(t('failedClaim'), 'red'); }
-        finally { isProcessing = false; await checkAvailability(); }
+          const { status, j } = await call('POST');
+          if (status === 403 && j.code === 'account_banned') { S = 'banned'; return render(); }
+          if (status !== 200) throw new Error(j.error || 'HTTP ' + status);
+          next = j.nextAvailableMs;
+          if (j.claimed) {
+            win = j.amount; S = 'won'; render();
+            showToast(t('earned', { amount: j.amount.toLocaleString(currentLang || 'en') }), 'purple');
+            if (j.amount > 1000) showToast(t('hugeReward', { amount: j.amount.toLocaleString(currentLang || 'en') }), 'yellow', 5000);
+            setTimeout(() => { if (S === 'won') { S = 'cooldown'; render(); } }, 4500);
+          } else { S = 'cooldown'; showToast(t('alreadyClaimed'), 'yellow'); render(); }
+        } catch (e) { console.error('freecoins claim failed', e); showToast(t('failedClaim'), 'red'); S = 'error'; render(); }
       }
+    
       cardEl.addEventListener('click', claim);
-      auth.onAuthStateChanged(() => checkAvailability());
-      window.addEventListener('online', checkAvailability);
-      window.addEventListener('offline', checkAvailability);
-      checkAvailability();
+      setInterval(() => { if (S === 'cooldown') { if (Date.now() >= next) refresh(); else render(); } }, 1000);
+      auth.onAuthStateChanged(refresh);
+      window.addEventListener('online', refresh);
+      window.addEventListener('offline', refresh);
     })();
 
     auth.onAuthStateChanged(user => {
@@ -618,11 +912,19 @@
       const usersEl = document.getElementById('watchdog-users');
       const ipsEl = document.getElementById('watchdog-ips');
       const appealsEl = document.getElementById('watchdog-appeals');
-      const inlineEl = document.getElementById('watchdog-banned-inline');
       if (!usersEl) return;
-      db.collection('banned_users').get().then(snap => { usersEl.textContent = snap.size; if (inlineEl) inlineEl.textContent = snap.size; }).catch(() => {});
-      db.collection('banned_ips').get().then(snap => { ipsEl.textContent = snap.size; }).catch(() => {});
-      db.collection('ban_appeals').get().then(snap => { appealsEl.textContent = snap.size; }).catch(() => {});
+      db.collection('banned_users').get().then(snap => { usersEl.textContent = snap.size; window.__bannedCount = snap.size; setText('t-watchdog-desc', t('watchdogDesc', { count: snap.size })); }).catch(e => console.warn('banned_users count failed', e));
+      db.collection('banned_ips').get().then(snap => { ipsEl.textContent = snap.size; }).catch(e => console.warn('banned_ips count failed', e));
+      db.collection('ban_appeals').get().then(snap => { appealsEl.textContent = snap.size; }).catch(e => console.warn('ban_appeals count failed', e));
+    })();
+
+    /* M3 Top App Bar elevation: gain a tonal surface + shadow once the page scrolls */
+    (function () {
+      const header = document.getElementById('feed-header');
+      if (!header) return;
+      function onScroll() { header.classList.toggle('scrolled', window.scrollY > 4); }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
     })();
 
     applyTranslations();

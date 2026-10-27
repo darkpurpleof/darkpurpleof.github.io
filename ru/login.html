@@ -13,29 +13,171 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* ============================================================
+       MATERIAL 3 TOKENS — generated from seed 0xFF9300FF, matching
+       ru.darkpurpleof.darkpurpleofswebsite.theme.Color.kt 1:1.
+       Dark scheme is default; body.light overrides.
+       ============================================================ */
     :root{
-      --bg: #171717;
-      --card: #1f1f1f;
-      --card-2: #262626;
-      --muted: #a8a8a8;
-      --accent: #6b21a8;
-      --accent-strong: #5b21b6;
-      --accent-soft: rgba(107,33,168,0.14);
-      --text: #eaeaea;
-      --border: rgba(255,255,255,0.08);
-      --warning-bg: rgba(107,33,168,0.06);
-      --warning-border: rgba(107,33,168,0.14);
+      --md-background: #151218;
+      --md-on-background: #E8E0E8;
+      --md-surface: #151218;
+      --md-on-surface: #E8E0E8;
+      --md-surface-dim: #151218;
+      --md-surface-bright: #3C383E;
+      --md-surface-container-lowest: #100D12;
+      --md-surface-container-low: #1E1A20;
+      --md-surface-container: #221E24;
+      --md-surface-container-high: #2C292E;
+      --md-surface-container-highest: #373339;
+      --md-surface-variant: #4A454E;
+      --md-on-surface-variant: #CCC4CF;
+      --md-surface-tint: #DCB8FF;
+      --md-outline: #968E98;
+      --md-outline-variant: #4A454E;
+      --md-inverse-surface: #E8E0E8;
+      --md-inverse-on-surface: #332F35;
+      --md-scrim: #000000;
+
+      --md-primary: #DCB8FF;
+      --md-on-primary: #480082;
+      --md-primary-container: #6700B5;
+      --md-on-primary-container: #EFDBFF;
+      --md-inverse-primary: #8800EC;
+      --md-primary-fixed: #EFDBFF;
+      --md-primary-fixed-dim: #DCB8FF;
+      --md-on-primary-fixed: #2B0052;
+      --md-on-primary-fixed-variant: #6700B5;
+
+      --md-secondary: #D0C1DA;
+      --md-on-secondary: #362D3F;
+      --md-secondary-container: #4D4357;
+      --md-on-secondary-container: #EDDDF6;
+      --md-secondary-fixed: #EDDDF6;
+      --md-secondary-fixed-dim: #D0C1DA;
+      --md-on-secondary-fixed: #21182A;
+      --md-on-secondary-fixed-variant: #4D4357;
+
+      --md-tertiary: #F3B7BE;
+      --md-on-tertiary: #4B252B;
+      --md-tertiary-container: #653A41;
+      --md-on-tertiary-container: #FFD9DD;
+      --md-tertiary-fixed: #FFD9DD;
+      --md-tertiary-fixed-dim: #F3B7BE;
+      --md-on-tertiary-fixed: #321017;
+      --md-on-tertiary-fixed-variant: #653A41;
+
+      --md-error: #FFB4AB;
+      --md-on-error: #690005;
+      --md-error-container: #93000A;
+      --md-on-error-container: #FFDAD6;
+
+      /* Mode-independent vivid pairs */
+      --brand-vivid: #8800EC;
+      --brand-deep:  #6700B5;
+      --brand-pale:  #EFDBFF;
+      --brand-tint:  #DCB8FF;
+      --secondary-deep: #4D4357;
+      --secondary-pale: #EDDDF6;
+      --tertiary-deep:  #653A41;
+      --tertiary-pale:  #FFD9DD;
+      --error-deep:     #93000A;
+      --error-pale:     #FFDAD6;
+
+      /* Shape scale */
+      --shape-xs: 4px;
+      --shape-sm: 8px;
+      --shape-md: 12px;
+      --shape-lg: 16px;
+      --shape-xl: 28px;
+      --shape-full: 999px;
+
+      /* Elevation */
+      --elev-1: 0 1px 2px rgba(0,0,0,.30), 0 1px 3px 1px rgba(0,0,0,.15);
+      --elev-2: 0 1px 2px rgba(0,0,0,.30), 0 2px 6px 2px rgba(0,0,0,.15);
+      --elev-3: 0 1px 3px rgba(0,0,0,.30), 0 4px 8px 3px rgba(0,0,0,.15);
+
+      /* Type scale */
+      --type-headline-small: 700 24px/30px Inter;
+      --type-title-large: 600 20px/26px Inter;
+      --type-title-medium: 600 16px/24px Inter;
+      --type-title-small: 600 14px/20px Inter;
+      --type-body-large: 400 16px/24px Inter;
+      --type-body-medium: 400 14px/20px Inter;
+      --type-body-small: 400 13px/19px Inter;
+      --type-label-large: 600 14.5px/20px Inter;
+      --type-label-medium: 700 12px/16px Inter;
+      --type-label-small: 700 10.5px/14px Inter;
+
+      /* Legacy aliases kept for readability below */
+      --bg: var(--md-background);
+      --card: var(--md-surface-container-low);
+      --card-2: var(--md-surface-container-high);
+      --muted: var(--md-on-surface-variant);
+      --text: var(--md-on-surface);
+      --accent: var(--brand-vivid);
+      --accent-strong: var(--brand-deep);
+      --accent-soft: color-mix(in srgb, var(--brand-vivid) 16%, transparent);
+      --border: var(--md-outline-variant);
+      --warning-bg: color-mix(in srgb, var(--tertiary-deep) 22%, transparent);
+      --warning-border: color-mix(in srgb, var(--tertiary-deep) 45%, transparent);
     }
     body.light {
-      --bg: #f6f8fb;
-      --card:#fff;
-      --card-2:#f1f3f8;
-      --muted:#475569;
-      --text:#0f172a;
-      --border: rgba(0,0,0,0.08);
-      --accent-soft: rgba(107,33,168,0.08);
-      --warning-bg: rgba(107,33,168,0.04);
-      --warning-border: rgba(107,33,168,0.08);
+      --md-background: #FFF7FF;
+      --md-on-background: #1E1A20;
+      --md-surface: #FFF7FF;
+      --md-on-surface: #1E1A20;
+      --md-surface-dim: #DFD8DF;
+      --md-surface-bright: #FFF7FF;
+      --md-surface-container-lowest: #FFFFFF;
+      --md-surface-container-low: #F9F1F9;
+      --md-surface-container: #F3EBF3;
+      --md-surface-container-high: #EEE6EE;
+      --md-surface-container-highest: #E8E0E8;
+      --md-surface-variant: #E9E0EB;
+      --md-on-surface-variant: #4A454E;
+      --md-surface-tint: #8800EC;
+      --md-outline: #7B757E;
+      --md-outline-variant: #CCC4CF;
+      --md-inverse-surface: #332F35;
+      --md-inverse-on-surface: #F6EEF6;
+
+      --md-primary: #8800EC;
+      --md-on-primary: #FFFFFF;
+      --md-primary-container: #EFDBFF;
+      --md-on-primary-container: #6700B5;
+      --md-inverse-primary: #DCB8FF;
+      --md-primary-fixed: #EFDBFF;
+      --md-primary-fixed-dim: #DCB8FF;
+      --md-on-primary-fixed: #2B0052;
+      --md-on-primary-fixed-variant: #6700B5;
+
+      --md-secondary: #655A6F;
+      --md-on-secondary: #FFFFFF;
+      --md-secondary-container: #EDDDF6;
+      --md-on-secondary-container: #4D4357;
+      --md-secondary-fixed: #EDDDF6;
+      --md-secondary-fixed-dim: #D0C1DA;
+      --md-on-secondary-fixed: #21182A;
+      --md-on-secondary-fixed-variant: #4D4357;
+
+      --md-tertiary: #805158;
+      --md-on-tertiary: #FFFFFF;
+      --md-tertiary-container: #FFD9DD;
+      --md-on-tertiary-container: #653A41;
+      --md-tertiary-fixed: #FFD9DD;
+      --md-tertiary-fixed-dim: #F3B7BE;
+      --md-on-tertiary-fixed: #321017;
+      --md-on-tertiary-fixed-variant: #653A41;
+
+      --md-error: #BA1A1A;
+      --md-on-error: #FFFFFF;
+      --md-error-container: #FFDAD6;
+      --md-on-error-container: #93000A;
+
+      --accent-soft: color-mix(in srgb, var(--brand-vivid) 10%, transparent);
+      --warning-bg: color-mix(in srgb, var(--tertiary-deep) 8%, transparent);
+      --warning-border: color-mix(in srgb, var(--tertiary-deep) 22%, transparent);
     }
 
     *{ box-sizing:border-box; }
@@ -53,97 +195,397 @@
       padding:32px 20px;
     }
 
+    /* State layer: M3 interactive elements overlay currentColor at low opacity */
+    .m3-state { position: relative; isolation: isolate; overflow: hidden; }
+    .m3-state::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: currentColor; opacity: 0; pointer-events: none;
+      transition: opacity .15s ease;
+    }
+    .m3-state:hover::before { opacity: .08; }
+    .m3-state:active::before { opacity: .12; }
+    .m3-state:active { transform: scale(.98); }
+    .m3-state { transition: transform .1s ease; }
+
+    /* M3 filled/elevated card — tightened radius + border, lighter shadow,
+       closer to Adobe's flat auth-card aesthetic while keeping M3 tokens */
     .card {
-      background: linear-gradient(180deg, var(--card), var(--card) 60%, var(--card-2));
-      border-radius:18px;
-      padding:36px;
-      border:1px solid var(--border);
+      background: var(--md-surface-container-low);
+      border: 1px solid var(--md-outline-variant);
+      border-radius: var(--shape-lg);
+      padding:40px 32px;
       color:var(--text);
-      box-shadow:0 20px 50px rgba(2,6,23,0.5), 0 2px 0 rgba(255,255,255,0.02) inset;
+      box-shadow: var(--elev-1);
       max-width:420px;
       width:100%;
       box-sizing:border-box;
       margin-bottom:14px;
     }
 
+    /* ---------- Adobe-style sign-in header ---------- */
+    .signin-header { margin-bottom:24px; }
+    .signin-header h1 { margin:0 0 8px 0; font: var(--type-headline-small); font-size:26px; letter-spacing:-0.01em; color:var(--text); }
+    .signin-subtext { margin:0; font: var(--type-body-medium); color:var(--muted); }
+    .signin-subtext a { color: var(--brand-vivid); text-decoration:none; font-weight:600; }
+    body.light .signin-subtext a { color: var(--md-primary); }
+    .signin-subtext a:hover { text-decoration:underline; }
+
+    /* Field label + input, more compact / square than the pill inputs used
+       elsewhere on the site, matching Adobe's minimal outlined fields */
+    .field label { font: var(--type-body-small); font-weight:600; color:var(--muted); text-transform:none; letter-spacing:0; }
+    #identifier, #password { border-radius: var(--shape-xs); }
+    #identifier:focus, #password:focus { padding:11px 15px; }
+
+    .continue-row { display:flex; justify-content:flex-end; margin-top:4px; }
+    .adobe-btn {
+      min-width:120px;
+      padding:11px 26px;
+      background: var(--brand-vivid);
+      color:#fff;
+      border:none;
+      border-radius: var(--shape-xs);
+      font: var(--type-label-large);
+      font-size:14px;
+      cursor:pointer;
+      text-align:center;
+    }
+    .adobe-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+    /* plain text link used for secondary actions (legacy toggle, back, etc.) */
+    .text-link-btn {
+      background:none;
+      border:none;
+      color: var(--brand-vivid);
+      font: var(--type-body-medium);
+      font-size:13.5px;
+      font-weight:600;
+      cursor:pointer;
+      padding:0;
+      text-align:left;
+      display:inline-block;
+    }
+    body.light .text-link-btn { color: var(--md-primary); }
+    .text-link-btn:hover { text-decoration:underline; }
+    .or-divider { display:flex; align-items:center; gap:12px; margin:28px 0 20px; color:var(--muted); font: var(--type-body-small); }
+    .or-divider::before, .or-divider::after { content:''; flex:1; height:1px; background:var(--md-outline-variant); }
+
+
+    .help-link { margin:24px 0 0 0; font: var(--type-body-small); font-size:13px; }
+    .help-link a { color: var(--brand-vivid); text-decoration:none; font-weight:600; }
+    body.light .help-link a { color: var(--md-primary); }
+    .help-link a:hover { text-decoration:underline; }
+
+    .back-link {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      background:none;
+      border:none;
+      color:var(--muted);
+      font: var(--type-body-small);
+      font-size:13px;
+      font-weight:600;
+      cursor:pointer;
+      padding:0;
+      margin-bottom:18px;
+    }
+    .back-link:hover { color:var(--text); }
+
+    .identity-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 12px 14px;
+  margin: 18px 0;
+
+  border: 1px solid color-mix(
+    in srgb,
+    var(--text) 10%,
+    transparent
+  );
+
+  border-radius: 18px;
+  background: color-mix(
+    in srgb,
+    var(--text) 4%,
+    transparent
+  );
+}
+
+.identity-avatar {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.identity-info {
+  min-width: 0;
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.identity-name-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  min-width: 0;
+}
+
+.identity-name {
+  min-width: 0;
+
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--text);
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identity-verified {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  display: block;
+  object-fit: contain;
+}
+
+.identity-email {
+  min-width: 0;
+
+  font-size: 13px;
+  color: var(--muted);
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identity-pill .text-link-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .identity-pill {
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+
+  .identity-avatar {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+  }
+
+  .identity-name {
+    font-size: 14px;
+  }
+
+  .identity-email {
+    font-size: 12px;
+  }
+
+  .identity-verified {
+    width: 15px;
+    height: 15px;
+    min-width: 15px;
+  }
+}
+    /* ---------- "Other options" row — parity with LoggedOutActivity.kt's
+       real buttons (management panel / legacy account / Playgrounds), not
+       generic social providers. Colors and icons are literal 1:1 matches. */
+    .other-options-list { display:flex; flex-direction:column; gap:8px; }
+    .option-btn {
+      width:100%;
+      height:48px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      border-radius:8px;
+      border:1px solid #000000;
+      font: var(--type-label-large);
+      font-size:15px;
+      font-weight:500;
+      cursor:pointer;
+      box-sizing:border-box;
+    }
+    .option-btn img { width:24px; height:24px; }
+    /* Management panel — Color(0xFF8C6494), black text/icon, black border */
+    .management-btn { background:#8C6494; color:#000000; }
+    /* Legacy account — Color(0xFFC99A2E), black text/icon, black border */
+    .legacy-btn { background:#C99A2E; color:#000000; }
+    /* Playgrounds — MaterialTheme.colorScheme.error (theme-adaptive), onError text */
+    .playgrounds-btn { background: var(--md-error); color: var(--md-on-error); }
+
+    /* ---------- Responsive: mobile app-like full-bleed screens ---------- */
+    .cards-container { width:100%; max-width:420px; display:flex; flex-direction:column; align-items:center; }
+    @media (max-width:600px){
+      main.wrapper { padding:0; align-items:flex-start; }
+      .cards-container { max-width:100%; }
+      .screen-card {
+        border:none;
+        border-radius:0;
+        box-shadow:none;
+        max-width:100%;
+        min-height:100vh;
+        padding:28px 20px 32px;
+        margin-bottom:0;
+      }
+    }
+
+    /* ---------- Responsive: desktop-optimized OAuth authorize prompt ----------
+       Wider two-column consent layout instead of the stacked/centered mobile
+       card, closer to a typical desktop OAuth consent screen. */
+    @media (min-width:860px){
+      .cards-container { max-width:640px; }
+      .authorize-card {
+        max-width:640px;
+        text-align:left;
+        padding:44px 48px;
+        display:grid;
+        grid-template-columns: 220px 1fr;
+        gap:0 40px;
+        align-items:start;
+      }
+      .authorize-avatars { grid-column:1; flex-direction:column; align-items:flex-start; gap:10px; margin-bottom:0; }
+      .authorize-link-icon { transform:rotate(90deg); margin-left:18px; }
+      .authorize-title, .authorize-subtitle, .authorize-wants {
+        justify-content:flex-start; text-align:left;
+      }
+      .authorize-title { grid-column:2; margin-top:0; }
+      .authorize-subtitle { grid-column:2; }
+      .authorize-wants { grid-column:2; margin-bottom:20px; }
+      .authorize-disclaimer, .authorize-account-pill, .authorize-switch-btn,
+      .authorize-permissions, .authorize-footnote { grid-column:2; }
+      .authorize-actions {
+        grid-column:2;
+        flex-direction:row-reverse;
+        justify-content:flex-start;
+        gap:12px;
+      }
+      .authorize-actions .primary-btn, .authorize-actions .ghost-btn {
+        width:auto;
+        min-width:140px;
+        padding:12px 28px;
+      }
+    }
+
+    /* M3 assist chip */
     .badge {
       display:inline-flex;
       align-items:center;
       gap:6px;
-      font-size:11px;
-      font-weight:700;
-      letter-spacing:0.06em;
+      font: var(--type-label-medium);
+      letter-spacing:0.04em;
       text-transform:uppercase;
-      color:var(--accent);
-      background:var(--accent-soft);
-      border:1px solid rgba(107,33,168,0.25);
-      padding:5px 10px;
-      border-radius:999px;
+      color: var(--brand-pale);
+      background: var(--brand-deep);
+      padding:6px 12px;
+      border-radius: var(--shape-full);
       margin-bottom:16px;
     }
 
-    h1 { margin:0 0 6px 0; font-size:24px; font-weight:800; letter-spacing:-0.01em; }
-    p.lead { margin:0 0 24px 0; color:var(--muted); font-size:14px; line-height:1.5; }
+    h1 { margin:0 0 6px 0; font: var(--type-headline-small); letter-spacing:-0.01em; color: var(--text); }
+    p.lead { margin:0 0 24px 0; color:var(--muted); font: var(--type-body-medium); }
+
+    /* Parity with Android's inline legacy-mode status line under the lead text */
+    p.legacy-status { margin:0 0 20px 0; font: var(--type-body-small); line-height:1.5; }
+    p.legacy-status.tertiary { color: var(--md-tertiary); }
+    body.light p.legacy-status.tertiary { color: var(--md-on-tertiary-container); }
+    p.legacy-status.error { color: var(--md-error); }
+    body.light p.legacy-status.error { color: var(--md-error); }
 
     form { display:flex; flex-direction:column; gap:18px; }
 
     .field { display:flex; flex-direction:column; gap:7px; }
-    label { font-size:13px; font-weight:600; color:var(--muted); }
+    label { font: var(--type-label-large); font-weight: 600; color:var(--muted); }
 
+    /* M3 outlined text field */
     .input,
     #identifier {
       width:100%;
-      padding:12px 14px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      background:rgba(0,0,0,0.18);
+      padding:14px 16px;
+      border-radius: var(--shape-sm);
+      border:1px solid var(--md-outline-variant);
+      background: transparent;
       color:var(--text);
-      font-size:14px;
-      font-family: inherit;
+      font: var(--type-body-large);
       outline:none;
       transition: border-color .15s, box-shadow .15s;
     }
-    body.light .input,
-    body.light #identifier { background:rgba(0,0,0,0.02); }
     .input:focus,
     #identifier:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
+      border-color: var(--brand-vivid);
+      border-width: 2px;
+      padding: 13px 15px;
+      box-shadow: none;
     }
     #identifier::placeholder,
     .input::placeholder { color: var(--muted); opacity:0.7; }
+    .input:disabled,
+    #identifier:disabled { opacity:0.5; cursor:not-allowed; }
 
-    .hint { font-size:12px; color:var(--muted); }
+    .hint { font: var(--type-body-small); color:var(--muted); }
 
-    /* small icon-led header strip to fill empty top area */
+    /* Parity with Android's "Forgot email?" clickable text, legacy mode only */
+    .forgot-email-link {
+      font: var(--type-body-medium);
+      font-size:13.5px;
+      color: var(--brand-vivid);
+      cursor:pointer;
+      margin-top:-2px;
+      display:none;
+      width:fit-content;
+    }
+    body.light .forgot-email-link { color: var(--md-primary); }
+    .forgot-email-link:hover { text-decoration:underline; }
+
+    /* Header icon — parity with Android's R.drawable.ic_member (48dp), served
+       from the same assets/ folder used by the web build. */
     .login-icon {
-      width:46px;
-      height:46px;
-      border-radius:12px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      width:52px;
+      height:52px;
+      border-radius: var(--shape-lg);
+      background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep));
       display:flex;
       align-items:center;
       justify-content:center;
-      margin-bottom:14px;
-      box-shadow: 0 6px 16px rgba(107,33,168,0.35);
+      margin-bottom:16px;
+      box-shadow: var(--elev-2);
     }
-    .login-icon svg { width:22px; height:22px; color:#fff; }
+    .login-icon img { width:26px; height:26px; filter: brightness(0) invert(1); }
 
-    button[type="submit"] {
+    /* M3 filled button (pill) */
+    .m3-filled-btn {
       width:100%;
-      padding:13px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      padding:14px;
+      background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep));
       color:#fff;
       border:none;
-      border-radius:10px;
-      font-weight:700;
-      font-size:15px;
+      border-radius: var(--shape-full);
+      font: var(--type-label-large);
+      font-size: 15px;
       cursor:pointer;
-      transition: transform .12s ease, filter .15s ease;
-      box-shadow: 0 8px 20px rgba(107,33,168,0.35);
+      box-shadow: var(--elev-1);
     }
-    button[type="submit"]:hover { filter:brightness(1.08); transform:translateY(-1px); }
-    button[type="submit"]:active { transform:translateY(0); }
+    button[type="submit"] { width:100%; padding:14px; background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep)); color:#fff; border:none; border-radius: var(--shape-full); font: var(--type-label-large); font-size: 15px; cursor:pointer; box-shadow: var(--elev-1); }
+    button[type="submit"]:disabled { opacity:0.45; cursor:not-allowed; box-shadow:none; }
 
     .divider {
       height:1px;
@@ -158,17 +600,37 @@
       gap:8px;
       margin-top:4px;
     }
-    .footer-row a { color:var(--accent); text-decoration:none; font-weight:600; font-size:13.5px; }
+    .footer-row a { color:var(--brand-vivid); text-decoration:none; font-weight:600; font-size:13.5px; }
+    body.light .footer-row a { color: var(--md-primary); }
     .footer-row a:hover { text-decoration:underline; }
     .footer-row .muted-link { color:var(--muted); font-size:13.5px; }
 
+    /* Parity with Android's filled "Register instead" button shown once
+       legacy accounts are fully locked out (past the migration cutoff) */
+    .register-instead-btn {
+      width:100%;
+      padding:14px;
+      background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep));
+      color:#fff;
+      border:none;
+      border-radius: var(--shape-full);
+      font: var(--type-label-large);
+      font-size: 15px;
+      cursor:pointer;
+      box-shadow: var(--elev-1);
+      text-align:center;
+      text-decoration:none;
+      display:none;
+    }
+
+    /* M3 outlined button, dashed variant kept for the legacy toggle's distinct affordance */
     .legacy-toggle {
       background:transparent;
-      border:1px dashed var(--border);
+      border:1px dashed var(--md-outline-variant);
       color:var(--muted);
-      padding:10px 12px;
-      border-radius:10px;
-      font-size:13px;
+      padding:11px 12px;
+      border-radius: var(--shape-sm);
+      font: var(--type-body-small);
       font-weight:600;
       cursor:pointer;
       text-align:center;
@@ -176,34 +638,183 @@
       width:100%;
     }
     .legacy-toggle:hover {
-      border-color: var(--accent);
+      border-color: var(--brand-vivid);
       color: var(--text);
       background: var(--accent-soft);
     }
 
     /* OAuth card specifics */
-    .oauth-card { display:flex; gap:12px; align-items:center; }
-    .oauth-image {
-      width:64px; height:64px; border-radius:10px; object-fit:cover; flex:0 0 64px; background:#111;
-      border:1px solid var(--border);
-    }
-    .oauth-meta { display:flex; flex-direction:column; gap:6px; min-width:0; }
-    .oauth-title { font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px; flex-wrap:nowrap; overflow:hidden; }
-    .oauth-client-name { white-space:nowrap; text-overflow:ellipsis; overflow:hidden; max-width:220px; }
-    .oauth-by { font-size:13px; color:var(--muted); display:flex; align-items:center; gap:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
-    .oauth-note { font-size:13px; color:var(--muted); margin-top:6px; display:flex; gap:8px; align-items:center; }
+    .oauth-card {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  column-gap: 18px;
+  align-items: start;
 
-    .oauth-actions { display:flex; gap:8px; margin-top:6px; }
+  width: 100%;
+  padding: 18px;
+  box-sizing: border-box;
+}
+
+.oauth-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  object-fit: cover;
+  display: block;
+}
+
+.oauth-meta {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.oauth-you {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.oauth-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  min-width: 0;
+  width: 100%;
+  line-height: 1.25;
+}
+
+.oauth-client-name {
+  min-width: 0;
+
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oauth-by {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  min-width: 0;
+  margin-top: 4px;
+
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.oauth-by span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verified-icon {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  max-width: 16px;
+
+  display: block;
+  object-fit: contain;
+}
+
+/* Bottom section is completely independent from the title */
+.oauth-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+
+  width: 100%;
+  margin-top: 16px;
+  padding-top: 14px;
+
+  border-top: 1px solid color-mix(
+    in srgb,
+    var(--text) 8%,
+    transparent
+  );
+
+  box-sizing: border-box;
+}
+
+.oauth-note {
+  min-width: 0;
+
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.oauth-cancel {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .oauth-card {
+    grid-template-columns: 52px minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 15px;
+  }
+
+  .oauth-image {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+  }
+
+  .oauth-you {
+    font-size: 12px;
+  }
+
+  .oauth-client-name {
+    font-size: 17px;
+  }
+
+  .oauth-by {
+    font-size: 13px;
+  }
+
+  .oauth-footer {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    margin-top: 14px;
+    padding-top: 12px;
+  }
+
+  .oauth-note {
+    flex: 1 1 180px;
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  .oauth-cancel {
+    flex: 0 0 auto;
+  }
+}
 
     .verified-icon { width:16px; height:16px; display:inline-block; vertical-align:middle; margin-left:4px; }
 
     .session-warning {
-      padding:10px 12px;
-      border-radius:10px;
+      padding:12px 14px;
+      border-radius: var(--shape-md);
       background: var(--warning-bg);
       border:1px solid var(--warning-border);
       color: var(--muted);
-      font-size:13px;
+      font: var(--type-body-small);
       display:flex;
       gap:8px;
       align-items:flex-start;
@@ -211,63 +822,70 @@
     }
     .session-warning b { color:var(--text); font-weight:700; }
 
+    /* M3 outlined button (small) */
     .small-btn {
       background:transparent;
-      border:1px solid var(--border);
+      border:1px solid var(--md-outline-variant);
       color:var(--text);
-      padding:8px 10px;
-      border-radius:8px;
+      padding:9px 14px;
+      border-radius: var(--shape-full);
       cursor:pointer;
-      font-weight:600;
+      font: var(--type-label-large);
+      font-size: 13px;
+      overflow: hidden;
     }
     .small-btn.ghost { background:transparent; }
 
-    /* account picker list */
+    /* account picker list — M3 list item */
     .account-list { display:flex; flex-direction:column; gap:8px; }
     .account-option {
       display:flex;
       align-items:center;
-      gap:10px;
-      padding:12px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      background:rgba(0,0,0,0.18);
+      gap:12px;
+      padding:12px 14px;
+      border-radius: var(--shape-md);
+      border:1px solid var(--md-outline-variant);
+      background: var(--md-surface-container);
       cursor:pointer;
       transition: border-color .15s, background .15s;
       text-align:left;
+      overflow: hidden;
     }
-    body.light .account-option { background:rgba(0,0,0,0.02); }
-    .account-option:hover { border-color:var(--accent); background:var(--accent-soft); }
+    .account-option:hover { border-color:var(--brand-vivid); background: var(--accent-soft); }
     .account-avatar {
-      width:34px; height:34px; border-radius:50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      width:36px; height:36px; border-radius: var(--shape-full);
+      background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep));
       display:flex; align-items:center; justify-content:center;
-      color:#fff; font-weight:700; font-size:14px; flex:0 0 34px;
+      color:#fff; font-weight:700; font-size:14px; flex:0 0 36px;
     }
-    .account-email { font-size:13.5px; color:var(--text); font-weight:600; word-break:break-all; }
+    .account-email { font: var(--type-body-medium); color:var(--text); font-weight:600; word-break:break-all; }
 
+    /* M3 Snackbar — bottom-anchored, single line, inverse-surface */
     #toast {
       position: fixed;
-      top: 18px;
       left: 50%;
+      bottom: 24px;
       transform: translateX(-50%);
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-weight: 700;
+      padding: 14px 18px;
+      border-radius: var(--shape-xs);
+      font: var(--type-body-medium);
+      font-weight: 600;
       display: none;
       z-index: 99999;
-      color: #fff;
+      box-shadow: var(--elev-3);
+      max-width: min(92vw, 420px);
+      text-align: center;
       box-sizing: border-box;
     }
-    #toast.purple { background: var(--accent-strong); color:#fff; }
-    #toast.yellow { background: #e6b800; color:#222; }
-    #toast.red { background: #c00; color:#fff; }
+    #toast.purple { background: var(--md-inverse-surface); color: var(--md-inverse-on-surface); border-left: 4px solid var(--brand-vivid); }
+    #toast.yellow { background: var(--md-inverse-surface); color: var(--md-inverse-on-surface); border-left: 4px solid var(--md-tertiary); }
+    #toast.red { background: var(--md-inverse-surface); color: var(--md-inverse-on-surface); border-left: 4px solid var(--md-error); }
 
-    /* Migration required sheet */
+    /* Migration required sheet — M3 basic dialog */
     .sheet-overlay {
       position:fixed;
       inset:0;
-      background:rgba(0,0,0,0.55);
+      background: color-mix(in srgb, var(--md-scrim) 55%, transparent);
       backdrop-filter: blur(2px);
       display:none;
       align-items:center;
@@ -277,13 +895,12 @@
     }
     .sheet-overlay.visible { display:flex; }
     .sheet {
-      background: linear-gradient(180deg, var(--card), var(--card) 60%, var(--card-2));
-      border:1px solid var(--border);
-      border-radius:18px;
+      background: var(--md-surface-container-high);
+      border-radius: var(--shape-xl);
       max-width:400px;
       width:100%;
       padding:28px;
-      box-shadow:0 24px 60px rgba(0,0,0,0.5);
+      box-shadow: var(--elev-3);
       text-align:center;
       animation: sheet-in .18s ease-out;
     }
@@ -293,44 +910,42 @@
     }
     .sheet-icon {
       width:52px; height:52px;
-      border-radius:14px;
+      border-radius: var(--shape-lg);
       background: var(--warning-bg);
       border:1px solid var(--warning-border);
       display:flex; align-items:center; justify-content:center;
       margin:0 auto 16px;
     }
-    .sheet-icon svg { width:24px; height:24px; color:var(--accent); }
-    .sheet h2 { margin:0 0 8px 0; font-size:18px; font-weight:800; }
-    .sheet p { margin:0 0 22px 0; color:var(--muted); font-size:13.5px; line-height:1.55; }
+    .sheet-icon svg { width:24px; height:24px; color: var(--tertiary-pale); }
+    body.light .sheet-icon svg { color: var(--md-on-tertiary-container); }
+    .sheet h2 { margin:0 0 8px 0; font: var(--type-title-large); font-size:18px; }
+    .sheet p { margin:0 0 22px 0; color:var(--muted); font: var(--type-body-small); line-height:1.55; }
     .sheet-actions { display:flex; flex-direction:column; gap:10px; }
     .sheet-actions .primary-btn {
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep));
       color:#fff;
       border:none;
-      padding:12px;
-      border-radius:10px;
-      font-weight:700;
-      font-size:14px;
+      padding:13px;
+      border-radius: var(--shape-full);
+      font: var(--type-label-large);
       cursor:pointer;
-      transition: filter .15s ease, transform .12s ease;
+      overflow: hidden;
     }
-    .sheet-actions .primary-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
     .sheet-actions .ghost-btn {
       background:transparent;
-      border:1px solid var(--border);
+      border:1px solid var(--md-outline-variant);
       color:var(--muted);
-      padding:11px;
-      border-radius:10px;
+      padding:12px;
+      border-radius: var(--shape-full);
+      font: var(--type-label-large);
       font-weight:600;
-      font-size:13.5px;
       cursor:pointer;
+      overflow: hidden;
     }
-    .sheet-actions .ghost-btn:hover { color:var(--text); border-color:var(--accent); }
+    .sheet-actions .ghost-btn:hover { color:var(--text); border-color:var(--brand-vivid); }
 
-    /* Authorize (OAuth consent) screen — GitHub/Microsoft style */
-    .authorize-card {
-      text-align:center;
-    }
+    /* Authorize (OAuth consent) screen */
+    .authorize-card { text-align:center; }
     .authorize-avatars {
       display:flex;
       align-items:center;
@@ -340,15 +955,15 @@
     }
     .authorize-avatar {
       width:64px; height:64px;
-      border-radius:14px;
+      border-radius: var(--shape-lg);
       object-fit:cover;
-      background:#111;
+      background: var(--md-surface-container-high);
       border:1px solid var(--border);
-      box-shadow:0 6px 16px rgba(0,0,0,0.3);
+      box-shadow: var(--elev-1);
     }
     .authorize-avatar.user-avatar {
-      border-radius:50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      border-radius: var(--shape-full);
+      background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep));
       display:flex; align-items:center; justify-content:center;
       color:#fff; font-weight:700; font-size:22px;
     }
@@ -359,60 +974,63 @@
       flex:0 0 auto;
       z-index:1;
     }
-    .authorize-title { font-size:17px; font-weight:700; margin:0 0 2px 0; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
+    .authorize-title { font: var(--type-title-large); font-size:17px; margin:0 0 2px 0; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
     .authorize-title-inner { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
-    .authorize-title .client-name { color:var(--accent); }
-    .authorize-subtitle { font-size:13.5px; color:var(--muted); margin:0 0 4px 0; display:flex; align-items:center; justify-content:center; gap:5px; flex-wrap:wrap; }
-    .authorize-wants { font-size:13px; color:var(--muted); margin:0 0 20px 0; }
+    .authorize-title .client-name { color: var(--brand-vivid); }
+    body.light .authorize-title .client-name { color: var(--md-primary); }
+    .authorize-subtitle { font: var(--type-body-small); color:var(--muted); margin:0 0 4px 0; display:flex; align-items:center; justify-content:center; gap:5px; flex-wrap:wrap; }
+    .authorize-wants { font: var(--type-body-small); color:var(--muted); margin:0 0 20px 0; }
 
     .authorize-disclaimer {
       display:flex;
       align-items:flex-start;
       gap:10px;
       text-align:left;
-      padding:11px 13px;
-      border-radius:10px;
+      padding:12px 14px;
+      border-radius: var(--shape-md);
       background: var(--warning-bg);
       border:1px solid var(--warning-border);
       margin-bottom:20px;
-      font-size:12.5px;
+      font: var(--type-body-small);
+      font-size: 12.5px;
       color:var(--muted);
       line-height:1.5;
     }
-    .authorize-disclaimer svg { width:16px; height:16px; color:var(--accent); flex:0 0 16px; margin-top:1px; }
+    .authorize-disclaimer svg { width:16px; height:16px; color: var(--brand-vivid); flex:0 0 16px; margin-top:1px; }
     .authorize-disclaimer b { color:var(--text); }
 
     .authorize-account-pill {
       display:flex;
       align-items:center;
       gap:10px;
-      padding:10px 14px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      background:rgba(0,0,0,0.18);
+      padding:11px 14px;
+      border-radius: var(--shape-md);
+      border:1px solid var(--md-outline-variant);
+      background: var(--md-surface-container);
       margin-bottom:10px;
       text-align:left;
     }
-    body.light .authorize-account-pill { background:rgba(0,0,0,0.02); }
     .authorize-account-pill .account-avatar { flex:0 0 32px; width:32px; height:32px; font-size:13px; }
     .authorize-account-pill img.account-avatar { object-fit:cover; }
-    .authorize-account-email { font-size:13px; font-weight:600; color:var(--text); word-break:break-all; display:flex; align-items:center; gap:5px; }
-    .authorize-account-sub { font-size:11.5px; color:var(--muted); }
+    .authorize-account-email { font: var(--type-body-medium); font-weight:600; color:var(--text); word-break:break-all; display:flex; align-items:center; gap:5px; }
+    .authorize-account-sub { font: var(--type-body-small); font-size:11.5px; color:var(--muted); }
     .authorize-switch-btn {
       width:100%;
       background:transparent;
-      border:1px solid var(--border);
-      color:var(--accent);
-      padding:9px 12px;
-      border-radius:10px;
-      font-size:13px;
-      font-weight:600;
+      border:1px solid var(--md-outline-variant);
+      color: var(--brand-vivid);
+      padding:10px 12px;
+      border-radius: var(--shape-full);
+      font: var(--type-label-large);
+      font-size: 13px;
       cursor:pointer;
       text-align:center;
       margin-bottom:14px;
       transition: border-color .15s, background .15s;
+      overflow: hidden;
     }
-    .authorize-switch-btn:hover { border-color:var(--accent); background:var(--accent-soft); }
+    body.light .authorize-switch-btn { color: var(--md-primary); }
+    .authorize-switch-btn:hover { border-color: var(--brand-vivid); background: var(--accent-soft); }
 
     .verified-badge {
       display:inline-flex;
@@ -431,8 +1049,7 @@
       gap:14px;
     }
     .authorize-permissions-label {
-      font-size:12px;
-      font-weight:700;
+      font: var(--type-label-medium);
       letter-spacing:0.04em;
       text-transform:uppercase;
       color:var(--muted);
@@ -442,161 +1059,362 @@
       display:flex;
       align-items:center;
       gap:10px;
-      font-size:13.5px;
+      font: var(--type-body-medium);
+      font-size: 13.5px;
       color:var(--text);
       line-height:1.45;
     }
     .authorize-permission-item svg {
       width:16px; height:16px;
-      color:var(--accent);
+      color: var(--brand-vivid);
       flex:0 0 16px;
       margin-top:0;
     }
     .authorize-permission-item .perm-label { flex:1; }
     .risk-pill {
-      font-size:10.5px;
-      font-weight:700;
-      letter-spacing:0.05em;
+      font: var(--type-label-small);
+      letter-spacing:0.04em;
       text-transform:uppercase;
-      padding:2px 7px;
-      border-radius:999px;
+      padding:3px 8px;
+      border-radius: var(--shape-full);
       flex:0 0 auto;
       white-space:nowrap;
     }
-    .risk-pill.low  { background:rgba(107,33,168,0.14); color:var(--accent); border:1px solid rgba(107,33,168,0.25); }
-    .risk-pill.moderate { background:rgba(202,138,4,0.14); color:#b45309; border:1px solid rgba(202,138,4,0.3); }
-    body.light .risk-pill.moderate { color:#92400e; }
-    .risk-pill.high { background:rgba(185,28,28,0.12); color:#dc2626; border:1px solid rgba(185,28,28,0.25); }
+    .risk-pill.low      { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+    .risk-pill.moderate { background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); }
+    .risk-pill.high      { background: var(--md-error-container); color: var(--md-on-error-container); }
 
     .authorize-actions { display:flex; flex-direction:column; gap:10px; }
     .authorize-actions .primary-btn {
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep));
       color:#fff;
       border:none;
-      padding:13px;
-      border-radius:10px;
-      font-weight:700;
+      padding:14px;
+      border-radius: var(--shape-full);
+      font: var(--type-label-large);
       font-size:14.5px;
       cursor:pointer;
-      transition: filter .15s ease, transform .12s ease;
-      box-shadow: 0 8px 20px rgba(107,33,168,0.35);
+      box-shadow: var(--elev-1);
+      overflow: hidden;
     }
-    .authorize-actions .primary-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
     .authorize-actions .ghost-btn {
       background:transparent;
-      border:1px solid var(--border);
+      border:1px solid var(--md-outline-variant);
       color:var(--muted);
       padding:12px;
-      border-radius:10px;
-      font-weight:600;
+      border-radius: var(--shape-full);
+      font: var(--type-label-large);
       font-size:13.5px;
       cursor:pointer;
+      overflow: hidden;
     }
-    .authorize-actions .ghost-btn:hover { color:var(--text); border-color:var(--accent); }
+    .authorize-actions .ghost-btn:hover { color:var(--text); border-color: var(--brand-vivid); }
 
     .authorize-footnote {
       margin-top:18px;
-      font-size:11.5px;
+      font: var(--type-body-small);
+      font-size: 11.5px;
       color:var(--muted);
       line-height:1.5;
     }
-    .authorize-footnote a { color:var(--accent); text-decoration:none; }
+    .authorize-footnote a { color: var(--brand-vivid); text-decoration:none; }
+    body.light .authorize-footnote a { color: var(--md-primary); }
     .authorize-footnote a:hover { text-decoration:underline; }
 
     /* OAuth cancelled screen */
-    .oauth-cancelled-card {
-      text-align:center;
-    }
+    .oauth-cancelled-card { text-align:center; }
     .oauth-cancelled-icon {
-      width:54px; height:54px;
-      border-radius:16px;
+      width:56px; height:56px;
+      border-radius: var(--shape-lg);
       background: var(--warning-bg);
       border:1px solid var(--warning-border);
       display:flex; align-items:center; justify-content:center;
       margin:0 auto 18px;
     }
     .oauth-cancelled-icon svg { width:26px; height:26px; color:var(--muted); }
-    .oauth-cancelled-title { font-size:18px; font-weight:800; margin:0 0 8px 0; }
-    .oauth-cancelled-sub { font-size:13.5px; color:var(--muted); margin:0 0 24px 0; line-height:1.55; }
+    .oauth-cancelled-title { font: var(--type-title-large); margin:0 0 8px 0; }
+    .oauth-cancelled-sub { font: var(--type-body-small); color:var(--muted); margin:0 0 24px 0; line-height:1.55; }
     .oauth-cancelled-home {
       display:inline-block;
       width:100%;
-      padding:13px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      padding:14px;
+      background: linear-gradient(135deg, var(--brand-vivid), var(--brand-deep));
       color:#fff;
       border:none;
-      border-radius:10px;
-      font-weight:700;
+      border-radius: var(--shape-full);
+      font: var(--type-label-large);
       font-size:14.5px;
       cursor:pointer;
-      transition: filter .15s ease, transform .12s ease;
-      box-shadow: 0 8px 20px rgba(107,33,168,0.35);
+      box-shadow: var(--elev-1);
     }
-    .oauth-cancelled-home:hover { filter:brightness(1.08); transform:translateY(-1px); }
+
+    .brick-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+
+    background-color: var(--md-on-error);
+
+    mask: url("/assets/brick.svg") center / contain no-repeat;
+    -webkit-mask: url("/assets/brick.svg") center / contain no-repeat;
+}
+    /* All interactive M3 targets share the same state-layer + press behaviour */
+    button, .account-option, .legacy-toggle, .authorize-switch-btn, .oauth-cancelled-home {
+      transition: transform .1s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+    }
+    button:active, .account-option:active, .oauth-cancelled-home:active { transform: translateY(0) scale(.98); }
 
     @media (max-width:600px){
       main.wrapper { padding:20px 14px; }
-      .card { padding:24px 20px; }
+      .card { padding:24px 20px; border-radius: var(--shape-lg); }
       .oauth-image { width:56px; height:56px; flex:0 0 56px; }
     }
+    .current-session-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    background: var(--card);
+    color: var(--text);
+
+    text-align: left;
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.1s ease;
+}
+
+.current-session-btn:hover {
+    background: var(--card-2);
+    border-color: var(--md-on-error);
+}
+
+.current-session-btn:active {
+    transform: scale(0.985);
+}
+
+.current-session-icon {
+    flex: 0 0 auto;
+    color: var(--md-on-error);
+}
+
+.current-session-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.current-session-text strong {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.current-session-text small {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  width: fit-content;
+  padding: 7px 10px;
+  margin: -4px 0 18px -10px;
+
+  border: 0;
+  border-radius: 999px;
+
+  background: transparent;
+  color: var(--muted);
+
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.back-link:hover {
+  color: var(--text);
+  background: color-mix(
+    in srgb,
+    var(--text) 7%,
+    transparent
+  );
+}
+
+.back-link:active {
+  transform: scale(0.96);
+}
+
+.back-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+  line-height: 1;
+
+  transition: transform 0.15s ease;
+}
+
+.back-link:hover .back-icon {
+  transform: translateX(-2px);
+}
   </style>
 
   <!-- dp-topbar -->
   <script type="module" src="/dp-topbar.js"></script>
+  <script src="/login-i18n.js"></script>
 </head>
 <body>
   <dp-topbar></dp-topbar>
 
   <main class="wrapper" role="main" aria-label="Login area">
-    <div id="cardsContainer" style="width:100%; max-width:420px; display:flex; flex-direction:column;">
-      <div class="card" role="region" aria-label="Login form" id="loginCard">
-        <div class="login-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 12c2.5 0 4.5-2 4.5-4.5S14.5 3 12 3 7.5 5 7.5 7.5 9.5 12 12 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M4 20c0-3.5 3.5-6 8-6s8 2.5 8 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+    <div id="cardsContainer" class="cards-container">
+      <!-- Step 1: identifier + social providers (Adobe-style sign-in) -->
+      <div class="card screen-card" role="region" aria-label="Sign in" id="loginCard">
+        <div class="signin-header">
+          <h1 id="titleText">Sign in</h1>
+          <p class="signin-subtext" id="newUserLine">New user? <a href="/registration.html">Create an account</a></p>
         </div>
-        <span class="badge">Welcome back</span>
-        <h1>Sign in</h1>
-        <p class="lead" id="leadText">Enter your username to continue.</p>
 
-        <form id="loginForm" autocomplete="on" novalidate>
+        <p class="lead" id="leadText" style="display:none; margin:0 0 20px 0;"></p>
+        <p class="legacy-status" id="legacyStatus" style="display:none;"></p>
+
+        <form id="identifierForm" autocomplete="on" novalidate>
           <div class="field" id="identifierField">
             <label for="identifier" id="identifierLabel">Username</label>
-            <input id="identifier" name="identifier" type="text" inputmode="email" placeholder="username" required autocomplete="username">
-            <span class="hint" id="identifierHint">We automatically check both account types.</span>
+            <input id="identifier" name="identifier" type="text" inputmode="email" placeholder="yourname" required autocomplete="username">
+            <span class="hint" id="identifierHint">We'll check both your account types automatically.</span>
+            <span class="forgot-email-link" id="forgotEmailLink">Forgot email?</span>
           </div>
 
-          <div class="field">
-            <label for="password">Password</label>
-            <input id="password" class="input" name="password" type="password" placeholder="Your password" required autocomplete="current-password">
+          <div class="continue-row">
+            <button type="submit" id="continueBtn" class="adobe-btn m3-state">Continue</button>
           </div>
-
-          <button type="submit" id="loginBtn">Sign in</button>
-
-          <hr class="divider">
-
-          <div class="footer-row">
-            <a href="/forgot.html">Forgot password?</a>
-            <span class="muted-link">Don't have an account? <a href="/registration.html">Register</a></span>
-          </div>
-
-          <button type="button" class="legacy-toggle" id="legacyToggle">
-            Sign in with a legacy account? (available until Dec. 31, 2026)
-          </button>
         </form>
 
+        <a href="/registration.html" class="register-instead-btn m3-state" id="registerInsteadBtn">Register instead</a>
+
+        <div class="or-divider"><span>Or</span></div>
+
+        <!-- Parity with LoggedOutActivity.kt's real buttons — not generic
+             social providers, but this app's own cross-product entry points. -->
+        <div class="other-options-list" id="otherOptionsList">
+          <button type="button" class="option-btn management-btn m3-state" id="managementBtn">
+            <img src="/assets/ic_owner.webp" alt="">
+            Log in to management
+          </button>
+          <button type="button" class="option-btn legacy-btn m3-state" id="legacyToggle">
+            <img src="/assets/ic_member.webp" alt="" id="legacyToggleIcon">
+            <span id="legacyToggleLabel">Log in with a legacy account</span>
+          </button>
+          <button type="button" class="option-btn playgrounds-btn m3-state" id="playgroundsBtn">
+           <span class="brick-icon" aria-hidden="true"></span>
+            Log in with Playgrounds
+          </button>
+        </div>
+
         <div id="sessionWarningContainer" aria-live="polite"></div>
+
+        <p class="help-link"><a href="/help.html">Get help signing in</a></p>
       </div>
 
-      <div class="card" id="accountPickerCard" style="display:none;">
+      <!-- Step 2: password entry for the resolved identity -->
+<div
+  class="card screen-card"
+  role="region"
+  aria-label="Enter password"
+  id="passwordCard"
+  style="display:none;"
+>
+  <button type="button" class="back-link" id="passwordBackBtn" aria-label="Go back">
+  <span class="back-icon" aria-hidden="true">←</span>
+  <span>Back</span>
+</button>
+
+  <div class="signin-header">
+    <h1>Enter your password</h1>
+  </div>
+
+  <div class="identity-pill">
+    <img
+      class="identity-avatar"
+      id="identityAvatar"
+      src="/org-owner.jpg"
+      alt="Profile picture"
+    >
+
+    <div class="identity-info">
+      <div class="identity-name-row">
+        <span class="identity-name" id="identityName"></span>
+
+        <img
+          class="identity-verified"
+          id="identityVerified"
+          src="/assets/verified.png"
+          alt="Verified"
+          style="display:none;"
+        >
+      </div>
+
+      <div class="identity-email" id="identityEmail"></div>
+    </div>
+
+    <button type="button" class="text-link-btn" id="notYouBtn">
+      Not you?
+    </button>
+  </div>
+
+  <form id="passwordForm" autocomplete="on" novalidate>
+    <div class="field">
+      <label for="password">Password</label>
+      <input
+        id="password"
+        class="input"
+        name="password"
+        type="password"
+        placeholder="Password"
+        required
+        autocomplete="current-password"
+      >
+    </div>
+
+    <div class="continue-row">
+      <button type="submit" id="loginBtn" class="adobe-btn m3-state">
+        Log in
+      </button>
+    </div>
+  </form>
+
+  <div class="footer-row" style="margin-top:20px;">
+    <a href="/forgot.html">Forgot password?</a>
+  </div>
+</div>
+
+      <div class="card screen-card" id="accountPickerCard" style="display:none;">
         <span class="badge">Multiple accounts found</span>
         <h1 style="font-size:18px;">Choose an account</h1>
-        <p class="lead" style="margin-bottom:16px;">This username matches more than one account. Choose the account you want to sign in with.</p>
+        <p class="lead" style="margin-bottom:16px;">This username matches more than one account. Pick the one you want to log in to.</p>
         <div class="account-list" id="accountList"></div>
       </div>
 
-      <div class="card authorize-card" id="authorizeCard" style="display:none;">
+      <div class="card screen-card authorize-card" id="authorizeCard" style="display:none;">
         <div class="authorize-avatars">
           <img class="authorize-avatar" id="authorizeClientImg" alt="App logo" src="/assets/default_client.png">
           <svg class="authorize-link-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -605,7 +1423,8 @@
           <div class="authorize-avatar user-avatar" id="authorizeUserAvatar">?</div>
         </div>
 
-        <p class="authorize-title"><span id="authorizeTitlePrefix">Authorize</span>
+        <p class="authorize-title">
+          Authorize
           <span class="authorize-title-inner">
             <span class="client-name" id="authorizeClientName">this app</span>
             <span class="verified-badge" id="authorizeClientVerifiedBadge" style="display:none;" title="Verified">
@@ -614,11 +1433,11 @@
           </span>
         </p>
         <p class="authorize-subtitle" id="authorizeClientBy">by Unknown</p>
-        <p class="authorize-wants" id="authorizeWants">Wants to access your account</p>
+        <p class="authorize-wants">Wants to access your account</p>
 
         <div class="authorize-disclaimer" id="authorizeOfficialDisclaimer" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 16.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg>
-          <span><b>This is an official app.</b> Make sure you downloaded it from a trusted source before authorizing it — official apps will never ask you to enter your password anywhere other than this page.</span>
+          <span><b>This is an official app.</b> Make sure you downloaded it from a trusted source before authorizing — official apps will never ask you to enter your password anywhere except this page.</span>
         </div>
 
         <div class="authorize-account-pill">
@@ -634,31 +1453,31 @@
             <div class="authorize-account-sub" id="authorizeAccountSub">Signed in</div>
           </div>
         </div>
-        <button type="button" class="authorize-switch-btn" id="authorizeSwitchAccount">Switch account</button>
+        <button type="button" class="authorize-switch-btn m3-state" id="authorizeSwitchAccount">Switch account</button>
 
         <div class="authorize-permissions">
-          <div class="authorize-permissions-label" id="authorizePermissionsLabel">This allows the app to</div>
+          <div class="authorize-permissions-label">This will allow the app to</div>
           <div id="authorizePermissionsList"></div>
         </div>
 
         <div class="authorize-actions">
-          <button type="button" class="primary-btn" id="authorizeConfirmBtn">Authorize</button>
-          <button type="button" class="ghost-btn" id="authorizeCancelBtn">Cancel</button>
+          <button type="button" class="primary-btn m3-state" id="authorizeConfirmBtn">Authorize</button>
+          <button type="button" class="ghost-btn m3-state" id="authorizeCancelBtn">Cancel</button>
         </div>
 
-        <p class="authorize-footnote" id="authorizeFootnote">By continuing, you allow this app to use your information according to its own terms and privacy policy. You can revoke access at any time from <a href="/settings.html">Settings</a>.</p>
+        <p class="authorize-footnote" id="authorizeFootnote">By continuing, you allow this app to use your information in accordance with its own terms and privacy policy. You can revoke access at any time from <a href="/connected-apps.html">Settings</a>.</p>
       </div>
 
-      <div class="card oauth-cancelled-card" id="oauthCancelledCard" style="display:none;">
+      <div class="card screen-card oauth-cancelled-card" id="oauthCancelledCard" style="display:none;">
         <div class="oauth-cancelled-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
             <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
         </div>
-        <h1 class="oauth-cancelled-title" id="oauthCancelledTitle">Authorization cancelled</h1>
-        <p class="oauth-cancelled-sub" id="oauthCancelledSub">You did not authorize this app. You can safely close this window or go home.</p>
-        <button type="button" class="oauth-cancelled-home" id="oauthCancelledHome" onclick="window.location.href='/'">Home</button>
+        <h1 class="oauth-cancelled-title">Authorization cancelled</h1>
+        <p class="oauth-cancelled-sub">You chose not to authorize this app. You can safely close this window, or go back home.</p>
+        <button type="button" class="oauth-cancelled-home m3-state" onclick="window.location.href='/'">Go home</button>
       </div>
     </div>
   </main>
@@ -673,11 +1492,11 @@
           <path d="M10.3 3.9 2.7 17a1.8 1.8 0 0 0 1.55 2.7h15.5A1.8 1.8 0 0 0 21.3 17L13.7 3.9a1.8 1.8 0 0 0-3.4 0z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <h2 id="migrationTitle">This account must be migrated</h2>
-      <p id="migrationText">Legacy email accounts can no longer sign in to connected apps. Go to <b>Settings</b> while signed in with your legacy email to migrate to a username, then try again.</p>
+      <h2 id="migrationTitle">This account needs to be migrated</h2>
+      <p>Legacy email accounts can no longer sign in to connected apps. Go to <b>Settings</b> while logged in with your legacy email to migrate to a username, then try again.</p>
       <div class="sheet-actions">
-        <button type="button" class="primary-btn" id="migrationLoginAnyway">Continue without app sign-in</button>
-        <button type="button" class="ghost-btn" id="migrationDismiss">Cancel</button>
+        <button type="button" class="primary-btn m3-state" id="migrationLoginAnyway">Continue without app login</button>
+        <button type="button" class="ghost-btn m3-state" id="migrationDismiss">Cancel</button>
       </div>
     </div>
   </div>
@@ -699,10 +1518,17 @@
 
     const ADMIN_DOMAIN = "@darkpurpleof.github.io";
     const USER_DOMAIN = "@users.darkpurpleof.github.io";
+    // OAuth server (Netlify functions: /oauth/authorize, /token, /revoke, /userinfo, /grants)
+    const OAUTH_BASE = "http://darkpurpleofswebsite.netlify.app/oauth";
+    let oauthParams = {}; // state, scope, PKCE challenge, resolved redirect_uri
+    // Mirrors LoginActivity.LEGACY_CUTOFF_YEAR/MONTH/DAY (Dec 31 2026, UTC)
     const LEGACY_CUTOFF = new Date("2026-12-31T23:59:59Z");
+    // Same probe LoginActivity uses (isLegacyLoginLockedFromServer) so the
+    // client can't just roll its own clock back to dodge the cutoff.
+    const SERVER_DATE_URL = "https://www.google.com/generate_204";
 
     let legacyMode = false;
-    let pendingPassword = ""; // held only in-memory while user picks an account
+    let legacyLoginLocked = null; // null = unknown/checking, true = locked, false = allowed
     let lastLoginWasLegacy = false; // tracks whether the most recent successful sign-in used a legacy (non-migrated) email
 
     // ---------- Migration sheet ----------
@@ -751,915 +1577,25 @@
       window.history.replaceState({}, document.title, url.toString());
     }
 
-    // Validate redirectUrl: must contain '__' placeholder and have a scheme:// (accept custom schemes)
+    // Validate redirect URL: safe custom scheme or https (http only on localhost); '__' placeholder optional
     function isValidRedirectUrl(url) {
       if (!url || typeof url !== "string") return false;
-      if (!url.includes("__")) return false;
-      return /^[a-z][a-z0-9+\-.]*:\/\//i.test(url);
+      let u;
+      try { u = new URL(url.replace("__", "x")); } catch (e) { return false; }
+      const proto = u.protocol.toLowerCase();
+      if (["javascript:", "data:", "vbscript:", "file:", "blob:", "about:"].includes(proto)) return false;
+      if (proto === "http:") return ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname);
+      return /^[a-z][a-z0-9+.-]*:$/i.test(proto);
     }
 
     // Global holders
     let oauthClient = null;
     let oauthClientId = null;
     let oauthClientValidRedirect = false;
+    let oauthRedirectOverridden = false;
     let triedLoadingOauthClient = false;
     let sessionExists = false;
     let loginPressed = false;
-
-    const SUPPORTED_LANGS = ["en", "de", "es", "ru", "ja"];
-    const FALLBACK_LANG = "en";
-    const TRANSLATIONS = {
-  "en": {
-    "title": "Login",
-    "welcomeBack": "Welcome back",
-    "pageTitle": "Sign in",
-    "leadText": "Enter your username to continue.",
-    "identifierLabel": "Username",
-    "identifierPlaceholder": "username",
-    "identifierHint": "We automatically check both account types.",
-    "passwordLabel": "Password",
-    "passwordPlaceholder": "Your password",
-    "loginBtn": "Sign in",
-    "forgotPassword": "Forgot password?",
-    "noAccount": "Don't have an account?",
-    "register": "Register",
-    "legacyToggle": "Sign in with a legacy account? (available until Dec. 31, 2026)",
-    "legacyToggleUsername": "Use username instead",
-    "legacyEmailLabel": "Email",
-    "legacyEmailPlaceholder": "you@provider.com",
-    "legacyEmailHint": "Sign in with the email address linked to your legacy account.",
-    "legacyEmailLead": "Legacy sign-in is available until Dec. 31, 2026.",
-    "legacyUsernameLabel": "Username",
-    "legacyUsernamePlaceholder": "username",
-    "legacyUsernameHint": "We automatically check both account types.",
-    "legacyUsernameLead": "Enter your username to continue.",
-    "multipleAccountsBadge": "Multiple accounts found",
-    "chooseAccountTitle": "Choose an account",
-    "chooseAccountLead": "This username matches more than one account. Choose the account you want to sign in with.",
-    "authorizeTitle": "Authorize",
-    "authorizeWants": "Wants to access your account",
-    "officialDisclaimer": "<b>This is an official app.</b> Make sure you downloaded it from a trusted source before authorizing it — official apps will never ask you to enter your password anywhere other than this page.",
-    "signedIn": "Signed in",
-    "switchAccount": "Switch account",
-    "permissionsLabel": "This allows the app to",
-    "authorizeBtn": "Authorize",
-    "cancelBtn": "Cancel",
-    "authorizeFootnote": "By continuing, you allow this app to use your information according to its own terms and privacy policy. You can revoke access at any time from <a href=\"/settings.html\">Settings</a>.",
-    "oauthCancelledTitle": "Authorization cancelled",
-    "oauthCancelledSub": "You did not authorize this app. You can safely close this window or go home.",
-    "homeBtn": "Home",
-    "migrationTitle": "This account must be migrated",
-    "migrationText": "Legacy email accounts can no longer sign in to connected apps. Go to <b>Settings</b> while signed in with your legacy email to migrate to a username, then try again.",
-    "migrationLoginAnyway": "Continue without app sign-in",
-    "migrationDismiss": "Cancel",
-    "sessionWarningTitle": "Active session detected.",
-    "sessionWarningBody": "If you sign in with another account, the current session will be overwritten.",
-    "sessionWarningBtn": "Use current session",
-    "youAreSigningInto": "You are signing into:",
-    "unnamedApp": "Unnamed app",
-    "by": "by",
-    "unknown": "Unknown",
-    "onlyTrustApp": "Only sign in if you trust this app",
-    "oauthCancel": "Cancel OAuth",
-    "thisApp": "this app",
-    "appLogo": "App logo",
-    "verified": "verified",
-    "verifiedDeveloper": "Verified developer",
-    "verifiedAccount": "Verified account",
-    "redirecting": "Redirecting...",
-    "oauthBadRedirect": "This app's redirect is misconfigured.",
-    "oauthCompleteFailed": "Authorization could not be completed. Please try again.",
-    "legacyAppsBlocked": "Legacy accounts cannot sign in to apps. Please migrate first from Settings.",
-    "signInSuccessRedirect": "Sign in successful — redirecting...",
-    "bannedAccess": "You are banned from accessing the website.",
-    "signInSuccess": "Sign in successful!",
-    "searchingAccount": "Searching for your account...",
-    "usernameVerifyFailed": "This username could not be verified. Try again.",
-    "noAccountFound": "No account was found with that username.",
-    "fillAllFields": "Please fill out all fields.",
-    "validEmail": "Please enter a valid email address.",
-    "validUsername": "Please enter a valid username.",
-    "legacyLoginAvailable": "Legacy sign-in is available until Dec. 31, 2026.",
-    "useUsernameInstead": "Use username instead",
-    "currentSessionBtn": "Use current session",
-    "activeSessionDetected": "Active session detected.",
-    "currentSessionOverwritten": "If you sign in with another account, the current session will be overwritten.",
-    "signInSuccessful": "Sign in successful!",
-    "signInFailed": "Sign in failed: ",
-    "searchingAccountSuccess": "Searching for your account...",
-    "trustWarning": "Only sign in if you trust this app",
-    "oauthRedirecting": "Redirecting...",
-    "oauthConfigError": "This app's redirect is misconfigured.",
-    "oauthAuthFailed": "Authorization could not be completed. Please try again.",
-    "bannedSignedInRedirect": "Sign in successful — redirecting...",
-    "migrateFirst": "Legacy accounts cannot sign in to apps. Please migrate first from Settings."
-  },
-  "de": {
-    "title": "Anmelden",
-    "welcomeBack": "Willkommen zurück",
-    "pageTitle": "Anmelden",
-    "leadText": "Geben Sie Ihren Benutzernamen ein, um fortzufahren.",
-    "identifierLabel": "Benutzername",
-    "identifierPlaceholder": "benutzername",
-    "identifierHint": "Wir prüfen automatisch beide Kontotypen.",
-    "passwordLabel": "Passwort",
-    "passwordPlaceholder": "Ihr Passwort",
-    "loginBtn": "Anmelden",
-    "forgotPassword": "Passwort vergessen?",
-    "noAccount": "Haben Sie kein Konto?",
-    "register": "Registrieren",
-    "legacyToggle": "Mit einem Legacy-Konto anmelden? (verfügbar bis 31. Dez. 2026)",
-    "legacyToggleUsername": "Stattdessen Benutzernamen verwenden",
-    "legacyEmailLabel": "E-Mail",
-    "legacyEmailPlaceholder": "you@provider.com",
-    "legacyEmailHint": "Melden Sie sich mit der E-Mail-Adresse an, die mit Ihrem Legacy-Konto verknüpft ist.",
-    "legacyEmailLead": "Legacy-Anmeldung ist bis 31. Dez. 2026 verfügbar.",
-    "legacyUsernameLabel": "Benutzername",
-    "legacyUsernamePlaceholder": "benutzername",
-    "legacyUsernameHint": "Wir prüfen automatisch beide Kontotypen.",
-    "legacyUsernameLead": "Geben Sie Ihren Benutzernamen ein, um fortzufahren.",
-    "multipleAccountsBadge": "Mehrere Konten gefunden",
-    "chooseAccountTitle": "Wählen Sie ein Konto",
-    "chooseAccountLead": "Dieser Benutzername passt zu mehr als einem Konto. Wählen Sie das Konto aus, mit dem Sie sich anmelden möchten.",
-    "authorizeTitle": "Autorisieren",
-    "authorizeWants": "Möchte auf Ihr Konto zugreifen",
-    "officialDisclaimer": "<b>Dies ist eine offizielle App.</b> Stellen Sie sicher, dass Sie sie von einer vertrauenswürdigen Quelle heruntergeladen haben, bevor Sie autorisieren – offizielle Apps werden Sie niemals auffordern, Ihr Passwort irgendwo anders als auf dieser Seite einzugeben.",
-    "signedIn": "Angemeldet",
-    "switchAccount": "Konto wechseln",
-    "permissionsLabel": "Dies erlaubt der App zu",
-    "authorizeBtn": "Autorisieren",
-    "cancelBtn": "Abbrechen",
-    "authorizeFootnote": "Durch das Fortfahren erlauben Sie dieser App, Ihre Informationen gemäß ihren eigenen Bedingungen und Datenschutzrichtlinie zu verwenden. Sie können den Zugriff jederzeit aus den <a href=\"/settings.html\">Einstellungen</a> widerrufen.",
-    "oauthCancelledTitle": "Autorisierung abgebrochen",
-    "oauthCancelledSub": "Sie haben diese App nicht autorisiert. Sie können dieses Fenster sicher schließen oder nach Hause gehen.",
-    "homeBtn": "Nach Hause",
-    "migrationTitle": "Dieses Konto muss migriert werden",
-    "migrationText": "Legacy-E-Mail-Konten können sich nicht mehr bei verbundenen Apps anmelden. Gehen Sie zu <b>Einstellungen</b>, während Sie mit Ihrer Legacy-E-Mail angemeldet sind, um auf einen Benutzernamen zu migrieren, und versuchen Sie es dann erneut.",
-    "migrationLoginAnyway": "Ohne App-Anmeldung fortfahren",
-    "migrationDismiss": "Abbrechen",
-    "sessionWarningTitle": "Aktive Sitzung erkannt.",
-    "sessionWarningBody": "Wenn Sie sich mit einem anderen Konto anmelden, wird die aktuelle Sitzung überschrieben.",
-    "sessionWarningBtn": "Aktuelle Sitzung verwenden",
-    "youAreSigningInto": "Sie melden sich bei an:",
-    "unnamedApp": "Unbenannte App",
-    "by": "von",
-    "unknown": "Unbekannt",
-    "onlyTrustApp": "Melden Sie sich nur an, wenn Sie dieser App vertrauen",
-    "oauthCancel": "OAuth abbrechen",
-    "thisApp": "diese App",
-    "appLogo": "App-Logo",
-    "verified": "verifiziert",
-    "verifiedDeveloper": "Verifizierter Entwickler",
-    "verifiedAccount": "Verifiziertes Konto",
-    "redirecting": "Wird weitergeleitet...",
-    "oauthBadRedirect": "Die Umleitung dieser App ist fehlerhaft konfiguriert.",
-    "oauthCompleteFailed": "Autorisierung konnte nicht abgeschlossen werden. Versuchen Sie es erneut.",
-    "legacyAppsBlocked": "Legacy-Konten können sich nicht bei Apps anmelden. Migrieren Sie zuerst aus den Einstellungen.",
-    "signInSuccessRedirect": "Anmeldung erfolgreich – wird weitergeleitet...",
-    "bannedAccess": "Sie sind vom Zugriff auf die Website ausgeschlossen.",
-    "signInSuccess": "Anmeldung erfolgreich!",
-    "searchingAccount": "Ihr Konto wird gesucht...",
-    "usernameVerifyFailed": "Dieser Benutzername konnte nicht überprüft werden. Versuchen Sie es erneut.",
-    "noAccountFound": "Kein Konto mit diesem Benutzernamen gefunden.",
-    "fillAllFields": "Bitte füllen Sie alle Felder aus.",
-    "validEmail": "Geben Sie eine gültige E-Mail-Adresse ein.",
-    "validUsername": "Geben Sie einen gültigen Benutzernamen ein.",
-    "legacyLoginAvailable": "Legacy-Anmeldung ist bis 31. Dez. 2026 verfügbar.",
-    "useUsernameInstead": "Stattdessen Benutzernamen verwenden",
-    "currentSessionBtn": "Aktuelle Sitzung verwenden",
-    "activeSessionDetected": "Aktive Sitzung erkannt.",
-    "currentSessionOverwritten": "Wenn Sie sich mit einem anderen Konto anmelden, wird die aktuelle Sitzung überschrieben.",
-    "signInSuccessful": "Anmeldung erfolgreich!",
-    "signInFailed": "Anmeldung fehlgeschlagen: ",
-    "searchingAccountSuccess": "Ihr Konto wird gesucht...",
-    "trustWarning": "Melden Sie sich nur an, wenn Sie dieser App vertrauen",
-    "oauthRedirecting": "Wird weitergeleitet...",
-    "oauthConfigError": "Die Umleitung dieser App ist fehlerhaft konfiguriert.",
-    "oauthAuthFailed": "Autorisierung konnte nicht abgeschlossen werden. Versuchen Sie es erneut.",
-    "bannedSignedInRedirect": "Anmeldung erfolgreich – wird weitergeleitet...",
-    "migrateFirst": "Legacy-Konten können sich nicht bei Apps anmelden. Migrieren Sie zuerst aus den Einstellungen."
-  },
-  "es": {
-    "title": "Iniciar sesión",
-    "welcomeBack": "Bienvenido de nuevo",
-    "pageTitle": "Iniciar sesión",
-    "leadText": "Introduce tu nombre de usuario para continuar.",
-    "identifierLabel": "Nombre de usuario",
-    "identifierPlaceholder": "nombredeusuario",
-    "identifierHint": "Comprobamos automáticamente ambos tipos de cuenta.",
-    "passwordLabel": "Contraseña",
-    "passwordPlaceholder": "Tu contraseña",
-    "loginBtn": "Iniciar sesión",
-    "forgotPassword": "¿Olvidaste tu contraseña?",
-    "noAccount": "¿No tienes una cuenta?",
-    "register": "Registrarte",
-    "legacyToggle": "¿Iniciar sesión con una cuenta heredada? (disponible hasta el 31 dic. 2026)",
-    "legacyToggleUsername": "Usar nombre de usuario",
-    "legacyEmailLabel": "Correo electrónico",
-    "legacyEmailPlaceholder": "tucorreo@proveedor.com",
-    "legacyEmailHint": "Inicia sesión con la dirección de correo vinculada a tu cuenta heredada.",
-    "legacyEmailLead": "El inicio de sesión heredado está disponible hasta el 31 dic. 2026.",
-    "legacyUsernameLabel": "Nombre de usuario",
-    "legacyUsernamePlaceholder": "nombredeusuario",
-    "legacyUsernameHint": "Comprobamos automáticamente ambos tipos de cuenta.",
-    "legacyUsernameLead": "Introduce tu nombre de usuario para continuar.",
-    "multipleAccountsBadge": "Se encontraron varias cuentas",
-    "chooseAccountTitle": "Elige una cuenta",
-    "chooseAccountLead": "Este nombre de usuario coincide con más de una cuenta. Elige la cuenta con la que quieres iniciar sesión.",
-    "authorizeTitle": "Autorizar",
-    "authorizeWants": "Quiere acceder a tu cuenta",
-    "officialDisclaimer": "<b>Esta es una app oficial.</b> Asegúrate de haberla descargado de una fuente confiable antes de autorizarla: las apps oficiales nunca te pedirán que escribas tu contraseña en ningún lugar que no sea esta página.",
-    "signedIn": "Conectado",
-    "switchAccount": "Cambiar cuenta",
-    "permissionsLabel": "Esto permite a la app",
-    "authorizeBtn": "Autorizar",
-    "cancelBtn": "Cancelar",
-    "authorizeFootnote": "Al continuar, permites que esta app use tu información según sus propios términos y política de privacidad. Puedes revocar el acceso en cualquier momento desde <a href=\"/settings.html\">Configuración</a>.",
-    "oauthCancelledTitle": "Autorización cancelada",
-    "oauthCancelledSub": "No autorizaste esta app. Puedes cerrar esta ventana con seguridad o volver al inicio.",
-    "homeBtn": "Inicio",
-    "migrationTitle": "Esta cuenta debe migrarse",
-    "migrationText": "Las cuentas de correo heredadas ya no pueden iniciar sesión en apps conectadas. Ve a <b>Configuración</b> mientras iniciaste sesión con tu correo heredado para migrar a un nombre de usuario y vuelve a intentarlo.",
-    "migrationLoginAnyway": "Continuar sin iniciar sesión en la app",
-    "migrationDismiss": "Cancelar",
-    "sessionWarningTitle": "Sesión activa detectada.",
-    "sessionWarningBody": "Si inicias sesión con otra cuenta, la sesión actual se sobrescribirá.",
-    "sessionWarningBtn": "Usar la sesión actual",
-    "youAreSigningInto": "Estás iniciando sesión en:",
-    "unnamedApp": "App sin nombre",
-    "by": "por",
-    "unknown": "Desconocido",
-    "onlyTrustApp": "Inicia sesión solo si confías en esta app",
-    "oauthCancel": "Cancelar OAuth",
-    "thisApp": "esta app",
-    "appLogo": "Logo de la app",
-    "verified": "verificado",
-    "verifiedDeveloper": "Desarrollador verificado",
-    "verifiedAccount": "Cuenta verificada",
-    "redirecting": "Redirigiendo...",
-    "oauthBadRedirect": "La redirección de esta app está mal configurada.",
-    "oauthCompleteFailed": "No se pudo completar la autorización. Inténtalo de nuevo.",
-    "legacyAppsBlocked": "Las cuentas heredadas no pueden iniciar sesión en apps. Migra primero desde Configuración.",
-    "signInSuccessRedirect": "Inicio de sesión correcto — redirigiendo...",
-    "bannedAccess": "No tienes permiso para acceder al sitio web.",
-    "signInSuccess": "¡Inicio de sesión correcto!",
-    "searchingAccount": "Buscando tu cuenta...",
-    "usernameVerifyFailed": "No se pudo verificar este nombre de usuario. Inténtalo de nuevo.",
-    "noAccountFound": "No se encontró ninguna cuenta con ese nombre de usuario.",
-    "fillAllFields": "Completa todos los campos.",
-    "validEmail": "Introduce una dirección de correo válida.",
-    "validUsername": "Introduce un nombre de usuario válido.",
-    "legacyLoginAvailable": "El inicio de sesión heredado está disponible hasta el 31 dic. 2026.",
-    "useUsernameInstead": "Usar nombre de usuario",
-    "currentSessionBtn": "Usar la sesión actual",
-    "activeSessionDetected": "Sesión activa detectada.",
-    "currentSessionOverwritten": "Si inicias sesión con otra cuenta, la sesión actual se sobrescribirá.",
-    "signInSuccessful": "¡Inicio de sesión correcto!",
-    "signInFailed": "Inicio de sesión fallido: ",
-    "searchingAccountSuccess": "Buscando tu cuenta...",
-    "trustWarning": "Inicia sesión solo si confías en esta app",
-    "oauthRedirecting": "Redirigiendo...",
-    "oauthConfigError": "La redirección de esta app está mal configurada.",
-    "oauthAuthFailed": "No se pudo completar la autorización. Inténtalo de nuevo.",
-    "bannedSignedInRedirect": "Inicio de sesión correcto — redirigiendo...",
-    "migrateFirst": "Las cuentas heredadas no pueden iniciar sesión en apps. Migra primero desde Configuración."
-  },
-  "ru": {
-    "title": "Вход",
-    "welcomeBack": "С возвращением",
-    "pageTitle": "Войти",
-    "leadText": "Введите имя пользователя, чтобы продолжить.",
-    "identifierLabel": "Имя пользователя",
-    "identifierPlaceholder": "имяпользователя",
-    "identifierHint": "Мы автоматически проверяем оба типа аккаунтов.",
-    "passwordLabel": "Пароль",
-    "passwordPlaceholder": "Ваш пароль",
-    "loginBtn": "Войти",
-    "forgotPassword": "Забыли пароль?",
-    "noAccount": "Нет аккаунта?",
-    "register": "Зарегистрироваться",
-    "legacyToggle": "Войти через устаревший аккаунт? (доступно до 31 дек. 2026)",
-    "legacyToggleUsername": "Использовать имя пользователя",
-    "legacyEmailLabel": "Эл. почта",
-    "legacyEmailPlaceholder": "you@provider.com",
-    "legacyEmailHint": "Войдите с адресом электронной почты, привязанным к вашему устаревшему аккаунту.",
-    "legacyEmailLead": "Устаревший вход доступен до 31 дек. 2026.",
-    "legacyUsernameLabel": "Имя пользователя",
-    "legacyUsernamePlaceholder": "имяпользователя",
-    "legacyUsernameHint": "Мы автоматически проверяем оба типа аккаунтов.",
-    "legacyUsernameLead": "Введите имя пользователя, чтобы продолжить.",
-    "multipleAccountsBadge": "Найдено несколько аккаунтов",
-    "chooseAccountTitle": "Выберите аккаунт",
-    "chooseAccountLead": "Это имя пользователя соответствует нескольким аккаунтам. Выберите аккаунт, в который хотите войти.",
-    "authorizeTitle": "Авторизовать",
-    "authorizeWants": "Хочет получить доступ к вашему аккаунту",
-    "officialDisclaimer": "<b>Это официальное приложение.</b> Перед авторизацией убедитесь, что вы загрузили его из надежного источника — официальные приложения никогда не попросят ввести пароль где-либо, кроме этой страницы.",
-    "signedIn": "В системе",
-    "switchAccount": "Сменить аккаунт",
-    "permissionsLabel": "Это позволяет приложению",
-    "authorizeBtn": "Авторизовать",
-    "cancelBtn": "Отмена",
-    "authorizeFootnote": "Продолжая, вы разрешаете этому приложению использовать вашу информацию в соответствии с его условиями и политикой конфиденциальности. Доступ можно отозвать в любое время через <a href=\"/settings.html\">Настройки</a>.",
-    "oauthCancelledTitle": "Авторизация отменена",
-    "oauthCancelledSub": "Вы не авторизовали это приложение. Можете безопасно закрыть это окно или перейти на главную.",
-    "homeBtn": "На главную",
-    "migrationTitle": "Этот аккаунт необходимо перенести",
-    "migrationText": "Устаревшие email-аккаунты больше не могут входить в подключенные приложения. Перейдите в <b>Настройки</b>, войдя в устаревший email, чтобы перенести его в имя пользователя, затем попробуйте снова.",
-    "migrationLoginAnyway": "Продолжить без входа в приложение",
-    "migrationDismiss": "Отмена",
-    "sessionWarningTitle": "Обнаружена активная сессия.",
-    "sessionWarningBody": "Если вы войдете в другой аккаунт, текущая сессия будет заменена.",
-    "sessionWarningBtn": "Использовать текущую сессию",
-    "youAreSigningInto": "Вы входите в:",
-    "unnamedApp": "Безымянное приложение",
-    "by": "от",
-    "unknown": "Неизвестно",
-    "onlyTrustApp": "Входите только если доверяете этому приложению",
-    "oauthCancel": "Отменить OAuth",
-    "thisApp": "это приложение",
-    "appLogo": "Логотип приложения",
-    "verified": "подтверждено",
-    "verifiedDeveloper": "Подтверждённый разработчик",
-    "verifiedAccount": "Подтверждённый аккаунт",
-    "redirecting": "Перенаправление...",
-    "oauthBadRedirect": "Перенаправление этого приложения настроено неправильно.",
-    "oauthCompleteFailed": "Не удалось завершить авторизацию. Попробуйте ещё раз.",
-    "legacyAppsBlocked": "Устаревшие аккаунты не могут входить в приложения. Сначала перенесите их через Настройки.",
-    "signInSuccessRedirect": "Вход выполнен успешно — перенаправление...",
-    "bannedAccess": "Вам запрещен доступ к сайту.",
-    "signInSuccess": "Вход выполнен успешно!",
-    "searchingAccount": "Поиск вашего аккаунта...",
-    "usernameVerifyFailed": "Не удалось проверить это имя пользователя. Попробуйте ещё раз.",
-    "noAccountFound": "Аккаунт с таким именем пользователя не найден.",
-    "fillAllFields": "Пожалуйста, заполните все поля.",
-    "validEmail": "Введите действительный адрес электронной почты.",
-    "validUsername": "Введите действительное имя пользователя.",
-    "legacyLoginAvailable": "Устаревший вход доступен до 31 дек. 2026.",
-    "useUsernameInstead": "Использовать имя пользователя",
-    "currentSessionBtn": "Использовать текущую сессию",
-    "activeSessionDetected": "Обнаружена активная сессия.",
-    "currentSessionOverwritten": "Если вы войдете в другой аккаунт, текущая сессия будет заменена.",
-    "signInSuccessful": "Вход выполнен успешно!",
-    "signInFailed": "Ошибка входа: ",
-    "searchingAccountSuccess": "Поиск вашего аккаунта...",
-    "trustWarning": "Входите только если доверяете этому приложению",
-    "oauthRedirecting": "Перенаправление...",
-    "oauthConfigError": "Перенаправление этого приложения настроено неправильно.",
-    "oauthAuthFailed": "Не удалось завершить авторизацию. Попробуйте ещё раз.",
-    "bannedSignedInRedirect": "Вход выполнен успешно — перенаправление...",
-    "migrateFirst": "Устаревшие аккаунты не могут входить в приложения. Сначала перенесите их через Настройки."
-  },
-  "ja": {
-    "title": "ログイン",
-    "welcomeBack": "おかえりなさい",
-    "pageTitle": "ログイン",
-    "leadText": "続行するにはユーザー名を入力してください。",
-    "identifierLabel": "ユーザー名",
-    "identifierPlaceholder": "ユーザー名",
-    "identifierHint": "両方のアカウント形式を自動で確認します。",
-    "passwordLabel": "パスワード",
-    "passwordPlaceholder": "パスワード",
-    "loginBtn": "ログイン",
-    "forgotPassword": "パスワードをお忘れですか？",
-    "noAccount": "アカウントをお持ちでないですか？",
-    "register": "登録",
-    "legacyToggle": "レガシーアカウントでログインしますか？（2026年12月31日まで）",
-    "legacyToggleUsername": "代わりにユーザー名を使う",
-    "legacyEmailLabel": "メール",
-    "legacyEmailPlaceholder": "you@provider.com",
-    "legacyEmailHint": "レガシーアカウントに紐づいたメールアドレスでサインインしてください。",
-    "legacyEmailLead": "レガシーサインインは2026年12月31日まで利用できます。",
-    "legacyUsernameLabel": "ユーザー名",
-    "legacyUsernamePlaceholder": "ユーザー名",
-    "legacyUsernameHint": "両方のアカウント形式を自動で確認します。",
-    "legacyUsernameLead": "続行するにはユーザー名を入力してください。",
-    "multipleAccountsBadge": "複数のアカウントが見つかりました",
-    "chooseAccountTitle": "アカウントを選択",
-    "chooseAccountLead": "このユーザー名には複数のアカウントが一致します。サインインするアカウントを選んでください。",
-    "authorizeTitle": "認可",
-    "authorizeWants": "あなたのアカウントへのアクセスを求めています",
-    "officialDisclaimer": "<b>これは公式アプリです。</b> 認可する前に信頼できる場所からダウンロードしたことを確認してください。公式アプリがこのページ以外でパスワードの入力を求めることはありません。",
-    "signedIn": "サインイン済み",
-    "switchAccount": "アカウントを切り替え",
-    "permissionsLabel": "これによりアプリは次のことができます",
-    "authorizeBtn": "認可する",
-    "cancelBtn": "キャンセル",
-    "authorizeFootnote": "続行すると、このアプリが独自の利用規約とプライバシーポリシーに従ってあなたの情報を使用することに同意したことになります。アクセスはいつでも<a href=\"/settings.html\">設定</a>から取り消せます。",
-    "oauthCancelledTitle": "認可をキャンセルしました",
-    "oauthCancelledSub": "このアプリを認可しませんでした。このウィンドウを安全に閉じるか、ホームへ戻れます。",
-    "homeBtn": "ホーム",
-    "migrationTitle": "このアカウントは移行が必要です",
-    "migrationText": "レガシーのメールアカウントは接続済みアプリにログインできなくなりました。レガシーのメールでサインインした状態で <b>設定</b> に移動してユーザー名へ移行し、もう一度お試しください。",
-    "migrationLoginAnyway": "アプリへのサインインなしで続行",
-    "migrationDismiss": "キャンセル",
-    "sessionWarningTitle": "アクティブなセッションが見つかりました。",
-    "sessionWarningBody": "別のアカウントでサインインすると、現在のセッションは上書きされます。",
-    "sessionWarningBtn": "現在のセッションを使う",
-    "youAreSigningInto": "次のアプリにサインインしています：",
-    "unnamedApp": "名前のないアプリ",
-    "by": "提供元",
-    "unknown": "不明",
-    "onlyTrustApp": "このアプリを信頼できる場合のみサインインしてください",
-    "oauthCancel": "OAuth をキャンセル",
-    "thisApp": "このアプリ",
-    "appLogo": "アプリアイコン",
-    "verified": "確認済み",
-    "verifiedDeveloper": "確認済みの開発者",
-    "verifiedAccount": "確認済みのアカウント",
-    "redirecting": "リダイレクト中...",
-    "oauthBadRedirect": "このアプリのリダイレクト設定が正しくありません。",
-    "oauthCompleteFailed": "認可を完了できませんでした。もう一度お試しください。",
-    "legacyAppsBlocked": "レガシーアカウントはアプリにサインインできません。先に設定から移行してください。",
-    "signInSuccessRedirect": "サインインに成功しました — リダイレクト中...",
-    "bannedAccess": "このサイトへのアクセスは禁止されています。",
-    "signInSuccess": "サインインに成功しました！",
-    "searchingAccount": "アカウントを検索しています...",
-    "usernameVerifyFailed": "このユーザー名を確認できませんでした。もう一度お試しください。",
-    "noAccountFound": "そのユーザー名のアカウントは見つかりませんでした。",
-    "fillAllFields": "すべての項目を入力してください。",
-    "validEmail": "有効なメールアドレスを入力してください。",
-    "validUsername": "有効なユーザー名を入力してください。",
-    "legacyLoginAvailable": "レガシーログインは2026年12月31日まで利用できます。",
-    "useUsernameInstead": "代わりにユーザー名を使う",
-    "currentSessionBtn": "現在のセッションを使う",
-    "activeSessionDetected": "アクティブなセッションが検出されました。",
-    "currentSessionOverwritten": "別のアカウントでサインインすると、現在のセッションは上書きされます。",
-    "signInSuccessful": "サインインに成功しました！",
-    "signInFailed": "サインインに失敗しました: ",
-    "searchingAccountSuccess": "アカウントを検索しています...",
-    "trustWarning": "このアプリを信頼できる場合のみサインインしてください",
-    "oauthRedirecting": "リダイレクト中...",
-    "oauthConfigError": "このアプリのリダイレクト設定が正しくありません。",
-    "oauthAuthFailed": "認可を完了できませんでした。もう一度お試しください。",
-    "bannedSignedInRedirect": "サインインに成功しました — リダイレクト中...",
-    "migrateFirst": "レガシーアカウントはアプリにサインインできません。先に設定から移行してください。"
-  }
-};
-    const SCOPE_DESCRIPTIONS = {
-  "profile:read": {
-    "en": "View your public profile information",
-    "de": "Ihre öffentlichen Profilinformationen anzeigen",
-    "es": "Ver tu información pública del perfil",
-    "ru": "Просматривать общедоступную информацию профиля",
-    "ja": "公開プロフィール情報を表示する"
-  },
-  "profile:write": {
-    "en": "Edit your public profile",
-    "de": "Ihr öffentliches Profil bearbeiten",
-    "es": "Editar tu perfil público",
-    "ru": "Редактировать ваш публичный профиль",
-    "ja": "公開プロフィールを編集する"
-  },
-  "profile:badge": {
-    "en": "View your badges and verification status",
-    "de": "Ihre Abzeichen und den Verifizierungsstatus anzeigen",
-    "es": "Ver tus insignias y tu estado de verificación",
-    "ru": "Просматривать ваши значки и статус подтверждения",
-    "ja": "バッジと認証状態を表示する"
-  },
-  "profile:bio": {
-    "en": "View and edit your biography",
-    "de": "Ihre Biografie anzeigen und bearbeiten",
-    "es": "Ver y editar tu biografía",
-    "ru": "Просматривать и редактировать вашу биографию",
-    "ja": "自己紹介を表示および編集する"
-  },
-  "email:read": {
-    "en": "View your email address",
-    "de": "Ihre E-Mail-Adresse anzeigen",
-    "es": "Ver tu dirección de correo electrónico",
-    "ru": "Просматривать ваш адрес электронной почты",
-    "ja": "メールアドレスを表示する"
-  },
-  "username:read": {
-    "en": "View your username",
-    "de": "Ihren Benutzernamen anzeigen",
-    "es": "Ver tu nombre de usuario",
-    "ru": "Просматривать ваше имя пользователя",
-    "ja": "ユーザー名を表示する"
-  },
-  "avatar:read": {
-    "en": "View your profile picture",
-    "de": "Ihr Profilbild anzeigen",
-    "es": "Ver tu foto de perfil",
-    "ru": "Просматривать вашу фотографию профиля",
-    "ja": "プロフィール画像を表示する"
-  },
-  "avatar:write": {
-    "en": "Change your profile picture",
-    "de": "Ihr Profilbild ändern",
-    "es": "Cambiar tu foto de perfil",
-    "ru": "Изменять вашу фотографию профиля",
-    "ja": "プロフィール画像を変更する"
-  },
-  "connections:read": {
-    "en": "View your connections list",
-    "de": "Ihre Verbindungsliste anzeigen",
-    "es": "Ver tu lista de conexiones",
-    "ru": "Просматривать список ваших связей",
-    "ja": "接続一覧を表示する"
-  },
-  "connections:write": {
-    "en": "Manage your connections",
-    "de": "Ihre Verbindungen verwalten",
-    "es": "Administrar tus conexiones",
-    "ru": "Управлять вашими связями",
-    "ja": "接続を管理する"
-  },
-  "connections:request": {
-    "en": "Send connection requests",
-    "de": "Verbindungsanfragen senden",
-    "es": "Enviar solicitudes de conexión",
-    "ru": "Отправлять запросы на добавление в связи",
-    "ja": "接続リクエストを送信する"
-  },
-  "connections:block": {
-    "en": "Block or unblock users",
-    "de": "Benutzer blockieren oder freigeben",
-    "es": "Bloquear o desbloquear usuarios",
-    "ru": "Блокировать или разблокировать пользователей",
-    "ja": "ユーザーをブロックまたは解除する"
-  },
-  "messages:read": {
-    "en": "Read your private messages",
-    "de": "Ihre privaten Nachrichten lesen",
-    "es": "Leer tus mensajes privados",
-    "ru": "Читать ваши личные сообщения",
-    "ja": "プライベートメッセージを読む"
-  },
-  "messages:write": {
-    "en": "Send messages on your behalf",
-    "de": "Nachrichten in Ihrem Namen senden",
-    "es": "Enviar mensajes en tu nombre",
-    "ru": "Отправлять сообщения от вашего имени",
-    "ja": "あなたに代わってメッセージを送信する"
-  },
-  "messages:history": {
-    "en": "Access your message history",
-    "de": "Zugriff auf Ihren Nachrichtenverlauf",
-    "es": "Acceder a tu historial de mensajes",
-    "ru": "Получать доступ к истории ваших сообщений",
-    "ja": "メッセージ履歴にアクセスする"
-  },
-  "typing:write": {
-    "en": "Send typing indicators",
-    "de": "Tipp-Indikatoren senden",
-    "es": "Enviar indicadores de escritura",
-    "ru": "Отправлять индикаторы набора текста",
-    "ja": "入力中インジケーターを送信する"
-  },
-  "admin:run": {
-    "en": "Perform actions with administrator privileges",
-    "de": "Aktionen mit Administratorberechtigungen ausführen",
-    "es": "Realizar acciones con privilegios de administrador",
-    "ru": "Выполнять действия с правами администратора",
-    "ja": "管理者権限で操作を実行する"
-  },
-  "admin:status": {
-    "en": "Check whether you are an administrator",
-    "de": "Prüfen, ob Sie ein Administrator sind",
-    "es": "Comprobar si eres administrador",
-    "ru": "Проверять, являетесь ли вы администратором",
-    "ja": "あなたが管理者かどうかを確認する"
-  },
-  "admin:actionsexecutor": {
-    "en": "Act as a client to perform administrative actions",
-    "de": "Als Client fungieren, um administrative Aktionen auszuführen",
-    "es": "Actuar como cliente para realizar acciones administrativas",
-    "ru": "Выступать в роли клиента для выполнения административных действий",
-    "ja": "クライアントとして管理操作を実行する"
-  },
-  "notifications:read": {
-    "en": "View your notifications",
-    "de": "Ihre Benachrichtigungen anzeigen",
-    "es": "Ver tus notificaciones",
-    "ru": "Просматривать ваши уведомления",
-    "ja": "通知を表示する"
-  },
-  "settings:read": {
-    "en": "View your account settings",
-    "de": "Ihre Kontoeinstellungen anzeigen",
-    "es": "Ver la configuración de tu cuenta",
-    "ru": "Просматривать настройки вашего аккаунта",
-    "ja": "アカウント設定を表示する"
-  },
-  "settings:write": {
-    "en": "Change your account settings",
-    "de": "Ihre Kontoeinstellungen ändern",
-    "es": "Cambiar la configuración de tu cuenta",
-    "ru": "Изменять настройки вашего аккаунта",
-    "ja": "アカウント設定を変更する"
-  },
-  "posts:read": {
-    "en": "View your posts",
-    "de": "Ihre Beiträge anzeigen",
-    "es": "Ver tus publicaciones",
-    "ru": "Просматривать ваши публикации",
-    "ja": "投稿を表示する"
-  },
-  "posts:write": {
-    "en": "Create posts on your behalf",
-    "de": "Beiträge in Ihrem Namen erstellen",
-    "es": "Crear publicaciones en tu nombre",
-    "ru": "Создавать публикации от вашего имени",
-    "ja": "あなたに代わって投稿を作成する"
-  },
-  "posts:delete": {
-    "en": "Delete your posts",
-    "de": "Ihre Beiträge löschen",
-    "es": "Eliminar tus publicaciones",
-    "ru": "Удалять ваши публикации",
-    "ja": "投稿を削除する"
-  },
-  "comments:read": {
-    "en": "View comments on your posts",
-    "de": "Kommentare zu Ihren Beiträgen anzeigen",
-    "es": "Ver comentarios en tus publicaciones",
-    "ru": "Просматривать комментарии к вашим публикациям",
-    "ja": "あなたの投稿へのコメントを表示する"
-  },
-  "comments:write": {
-    "en": "Post comments on your behalf",
-    "de": "Kommentare in Ihrem Namen posten",
-    "es": "Publicar comentarios en tu nombre",
-    "ru": "Публиковать комментарии от вашего имени",
-    "ja": "あなたに代わってコメントを投稿する"
-  },
-  "reactions:write": {
-    "en": "React to posts and comments",
-    "de": "Auf Beiträge und Kommentare reagieren",
-    "es": "Reaccionar a publicaciones y comentarios",
-    "ru": "Реагировать на публикации и комментарии",
-    "ja": "投稿やコメントにリアクションする"
-  },
-  "gifts:read": {
-    "en": "View your gifts",
-    "de": "Ihre Geschenke anzeigen",
-    "es": "Ver tus regalos",
-    "ru": "Просматривать ваши подарки",
-    "ja": "ギフトを表示する"
-  },
-  "gifts:send": {
-    "en": "Send gifts on your behalf",
-    "de": "Geschenke in Ihrem Namen senden",
-    "es": "Enviar regalos en tu nombre",
-    "ru": "Отправлять подарки от вашего имени",
-    "ja": "あなたに代わってギフトを送信する"
-  },
-  "gifts:claim": {
-    "en": "Claim gifts for your account",
-    "de": "Geschenke für Ihr Konto beanspruchen",
-    "es": "Reclamar regalos para tu cuenta",
-    "ru": "Получать подарки для вашего аккаунта",
-    "ja": "アカウント用のギフトを受け取る"
-  },
-  "inventory:read": {
-    "en": "View your inventory",
-    "de": "Ihr Inventar anzeigen",
-    "es": "Ver tu inventario",
-    "ru": "Просматривать ваш инвентарь",
-    "ja": "インベントリを表示する"
-  },
-  "marketplace:read": {
-    "en": "Browse marketplace listings",
-    "de": "Marktplatzeinträge durchsuchen",
-    "es": "Explorar anuncios del mercado",
-    "ru": "Просматривать объявления на торговой площадке",
-    "ja": "マーケットプレイスの一覧を閲覧する"
-  },
-  "marketplace:purchase": {
-    "en": "Buy items on your behalf",
-    "de": "Artikel in Ihrem Namen kaufen",
-    "es": "Comprar artículos en tu nombre",
-    "ru": "Покупать товары от вашего имени",
-    "ja": "あなたに代わって商品を購入する"
-  },
-  "sessions:read": {
-    "en": "View your active sessions",
-    "de": "Ihre aktiven Sitzungen anzeigen",
-    "es": "Ver tus sesiones activas",
-    "ru": "Просматривать ваши активные сеансы",
-    "ja": "アクティブなセッションを表示する"
-  },
-  "security:read": {
-    "en": "View your security settings",
-    "de": "Ihre Sicherheitseinstellungen anzeigen",
-    "es": "Ver tu configuración de seguridad",
-    "ru": "Просматривать настройки безопасности",
-    "ja": "セキュリティ設定を表示する"
-  },
-  "files:read": {
-    "en": "Access your uploaded files",
-    "de": "Zugriff auf Ihre hochgeladenen Dateien",
-    "es": "Acceder a tus archivos subidos",
-    "ru": "Получать доступ к загруженным вами файлам",
-    "ja": "アップロードしたファイルにアクセスする"
-  },
-  "offline_access": {
-    "en": "Keep access when you are offline",
-    "de": "Zugriff beibehalten, wenn Sie offline sind",
-    "es": "Mantener el acceso cuando estés sin conexión",
-    "ru": "Сохранять доступ, когда вы не в сети",
-    "ja": "オフライン時もアクセスを維持する"
-  },
-  "token:create": {
-    "en": "Create a one-time token to sign in without your password",
-    "de": "Token erstellen, um sich ohne Passwort anzumelden, nur einmal",
-    "es": "Crear un token de un solo uso para iniciar sesión sin tu contraseña",
-    "ru": "Создать одноразовый токен для входа без пароля",
-    "ja": "パスワードなしで1回だけログインするためのトークンを作成する"
-  }
-};
-    const RISK_LABELS = {
-      "en": {"Low":"Low","Moderate":"Moderate","High":"High"},
-      "de": {"Low":"Niedrig","Moderate":"Mittel","High":"Hoch"},
-      "es": {"Low":"Bajo","Moderate":"Moderado","High":"Alto"},
-      "ru": {"Low":"Низкий","Moderate":"Средний","High":"Высокий"},
-      "ja": {"Low":"低","Moderate":"中","High":"高"}
-    };
-
-    let currentLang = FALLBACK_LANG;
-    let currentUserCache = null;
-
-    function normalizeLang(value) {
-      if (!value) return null;
-      const code = String(value).trim().toLowerCase().replace(/_/g, "-");
-      const base = code.split("-")[0];
-      return SUPPORTED_LANGS.includes(base) ? base : null;
-    }
-
-    function getBrowserLang() {
-      const candidates = [];
-      if (navigator && Array.isArray(navigator.languages)) candidates.push(...navigator.languages);
-      if (navigator && navigator.language) candidates.push(navigator.language);
-      for (const candidate of candidates) {
-        const normalized = normalizeLang(candidate);
-        if (normalized) return normalized;
-      }
-      return FALLBACK_LANG;
-    }
-
-    function getPreferredLang(accountLang, browserLang) {
-      return normalizeLang(accountLang) || normalizeLang(browserLang) || FALLBACK_LANG;
-    }
-
-    function t(key) {
-      const langTable = TRANSLATIONS[currentLang] || TRANSLATIONS[FALLBACK_LANG];
-      if (langTable && Object.prototype.hasOwnProperty.call(langTable, key)) return langTable[key];
-      const fallback = TRANSLATIONS[FALLBACK_LANG] || {};
-      return Object.prototype.hasOwnProperty.call(fallback, key) ? fallback[key] : key;
-    }
-
-    function setText(selector, value) {
-      const el = document.querySelector(selector);
-      if (el) el.textContent = value;
-    }
-
-    function setHTML(selector, value) {
-      const el = document.querySelector(selector);
-      if (el) el.innerHTML = value;
-    }
-
-    function updateLoginTexts() {
-      const badge = document.querySelector("#loginCard .badge");
-      const title = document.querySelector("#loginCard h1");
-      const lead = document.getElementById("leadText");
-      const label = document.getElementById("identifierLabel");
-      const input = document.getElementById("identifier");
-      const hint = document.getElementById("identifierHint");
-      const passwordLabel = document.querySelector('#loginCard label[for="password"]');
-      const passwordInput = document.getElementById("password");
-      const loginBtn = document.getElementById("loginBtn");
-      const forgot = document.querySelector('#loginCard a[href="/forgot.html"]');
-      const registerRow = document.querySelector('#loginCard .muted-link');
-      const legacyToggleEl = document.getElementById("legacyToggle");
-
-      if (badge) badge.textContent = t("welcomeBack");
-      if (title) title.textContent = t("pageTitle");
-      if (lead) lead.textContent = t("leadText");
-      if (label) label.textContent = t("identifierLabel");
-      if (input) input.placeholder = t("identifierPlaceholder");
-      if (hint) hint.textContent = t("identifierHint");
-      if (passwordLabel) passwordLabel.textContent = t("passwordLabel");
-      if (passwordInput) passwordInput.placeholder = t("passwordPlaceholder");
-      if (loginBtn) loginBtn.textContent = t("loginBtn");
-      if (forgot) forgot.textContent = t("forgotPassword");
-      if (registerRow) registerRow.innerHTML = `${t("noAccount")} <a href="/registration.html">${t("register")}</a>`;
-      if (legacyToggleEl) legacyToggleEl.textContent = legacyMode ? t("legacyToggleUsername") : t("legacyToggle");
-      document.title = t("title");
-      document.documentElement.lang = currentLang;
-    }
-
-    function updateAccountPickerTexts() {
-      const badge = document.querySelector("#accountPickerCard .badge");
-      const title = document.querySelector("#accountPickerCard h1");
-      const lead = document.querySelector("#accountPickerCard .lead");
-      if (badge) badge.textContent = t("multipleAccountsBadge");
-      if (title) title.textContent = t("chooseAccountTitle");
-      if (lead) lead.textContent = t("chooseAccountLead");
-    }
-
-    function updateAuthorizeTexts() {
-      const prefix = document.getElementById("authorizeTitlePrefix");
-      const wants = document.getElementById("authorizeWants");
-      const disclaimer = document.getElementById("authorizeOfficialDisclaimer");
-      const switchBtn = document.getElementById("authorizeSwitchAccount");
-      const permissionsLabel = document.getElementById("authorizePermissionsLabel");
-      const confirmBtn = document.getElementById("authorizeConfirmBtn");
-      const cancelBtn = document.getElementById("authorizeCancelBtn");
-      const footnote = document.getElementById("authorizeFootnote");
-      if (prefix) prefix.textContent = t("authorizeTitle");
-      if (wants) wants.textContent = t("authorizeWants");
-      if (disclaimer) disclaimer.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 16.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg><span>${t("officialDisclaimer")}</span>`;
-      if (switchBtn) switchBtn.textContent = t("switchAccount");
-      if (permissionsLabel) permissionsLabel.textContent = t("permissionsLabel");
-      if (confirmBtn) confirmBtn.textContent = t("authorizeBtn");
-      if (cancelBtn) cancelBtn.textContent = t("cancelBtn");
-      if (footnote) footnote.innerHTML = t("authorizeFootnote");
-    }
-
-    function updateCancelledTexts() {
-      const title = document.getElementById("oauthCancelledTitle");
-      const sub = document.getElementById("oauthCancelledSub");
-      const home = document.getElementById("oauthCancelledHome");
-      if (title) title.textContent = t("oauthCancelledTitle");
-      if (sub) sub.textContent = t("oauthCancelledSub");
-      if (home) home.textContent = t("homeBtn");
-    }
-
-    function updateMigrationTexts() {
-      const title = document.getElementById("migrationTitle");
-      const text = document.getElementById("migrationText");
-      const loginAnyway = document.getElementById("migrationLoginAnyway");
-      const dismiss = document.getElementById("migrationDismiss");
-      if (title) title.textContent = t("migrationTitle");
-      if (text) text.innerHTML = t("migrationText");
-      if (loginAnyway) loginAnyway.textContent = t("migrationLoginAnyway");
-      if (dismiss) dismiss.textContent = t("migrationDismiss");
-    }
-
-    function updateSessionWarningTexts() {
-      const warn = document.getElementById("sessionWarning");
-      if (!warn) return;
-
-      warn.innerHTML = "";
-
-      const left = document.createElement("div");
-      left.innerHTML = '<div style="display:flex;gap:10px;align-items:flex-start;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden><path d="M12 2v12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.2a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-        '<div><b>' + t("activeSessionDetected") + '</b><div style="margin-top:4px;color:var(--muted)">' + t("currentSessionOverwritten") + '</div></div></div>';
-
-      const right = document.createElement("div");
-      right.style.display = "flex";
-      right.style.gap = "8px";
-      right.style.alignItems = "center";
-      right.style.flexShrink = "0";
-
-      const useBtn = document.createElement("button");
-      useBtn.className = "small-btn";
-      useBtn.type = "button";
-      useBtn.textContent = t("currentSessionBtn");
-      useBtn.onclick = () => {
-        window.location.href = "/";
-      };
-
-      right.appendChild(useBtn);
-      warn.appendChild(left);
-      warn.appendChild(right);
-    }
-
-    function applyLanguage(lang) {
-      currentLang = getPreferredLang(lang, getBrowserLang());
-      updateLoginTexts();
-      updateAccountPickerTexts();
-      updateAuthorizeTexts();
-      updateCancelledTexts();
-      updateMigrationTexts();
-      updateSessionWarningTexts();
-      if (oauthClient && oauthClientValidRedirect) {
-        renderAuthorizeClient(oauthClient);
-      }
-      if (currentUserCache) {
-        renderAuthorizeUser(currentUserCache);
-      }
-    }
-
-    async function loadAndApplyAccountLanguage(email) {
-      if (!email) {
-        applyLanguage(getBrowserLang());
-        return currentLang;
-      }
-      try {
-        const profileSnap = await db.collection("user_data").doc(email).get();
-        const profile = profileSnap.exists ? (profileSnap.data() || {}) : {};
-        applyLanguage(getPreferredLang(profile.lang, getBrowserLang()));
-        return currentLang;
-      } catch (e) {
-        console.warn("Failed to load user lang for localization:", e);
-        applyLanguage(getBrowserLang());
-        return currentLang;
-      }
-    }
-
 
     function waitForOauthLoad(maxMs = 3000) {
       return new Promise((resolve) => {
@@ -1693,13 +1629,41 @@
         oauthClient = data;
         oauthClient.__id = oauthClientId;
 
-        oauthClientValidRedirect = isValidRedirectUrl(data.redirectUrl);
+        // Overridable return URL: ?redirect_uri= must be registered (redirectUrl / redirectUris)
+        // or the client doc must opt in with allowRedirectOverride: true. Server re-checks it.
+        const registered = [data.redirectUrl].concat(Array.isArray(data.redirectUris) ? data.redirectUris : []).filter(Boolean);
+        const redirectOverride = getQueryParam("redirect_uri");
+        oauthRedirectOverridden = false;
+        oauthClient.redirectUrl = data.redirectUrl;
+        if (redirectOverride) {
+          const ok = isValidRedirectUrl(redirectOverride) &&
+            (registered.includes(redirectOverride) || data.allowRedirectOverride === true);
+          if (!ok) {
+            console.warn("redirect_uri rejected:", redirectOverride);
+            oauthClient = null;
+            triedLoadingOauthClient = true;
+            showToast("This app isn't allowed to use that return link.", "red", 5000);
+            return;
+          }
+          oauthClient.redirectUrl = redirectOverride;
+          oauthRedirectOverridden = !registered.includes(redirectOverride);
+        }
+
+        oauthClientValidRedirect = isValidRedirectUrl(oauthClient.redirectUrl);
         if (!oauthClientValidRedirect) {
-          console.warn("OAuth client redirect invalid or missing '__':", data.redirectUrl);
+          console.warn("OAuth client redirect invalid:", oauthClient.redirectUrl);
           oauthClient = null;
           triedLoadingOauthClient = true;
           return;
         }
+
+        oauthParams = {
+          state: getQueryParam("state") || "",
+          scope: getQueryParam("scope") || "",
+          codeChallenge: getQueryParam("code_challenge") || "",
+          codeChallengeMethod: getQueryParam("code_challenge_method") || "S256",
+          redirectUri: oauthClient.redirectUrl
+        };
 
         insertOAuthCard(data);
         triedLoadingOauthClient = true;
@@ -1710,93 +1674,106 @@
     })();
 
     // Insert the OAuth consent card above login
-
     function insertOAuthCard(data) {
-      const container = document.getElementById("cardsContainer");
-      if (!container) return;
+  const container = document.getElementById("cardsContainer");
+  if (!container) return;
 
-      const old = document.querySelector(".oauth-card");
-      if (old && old.parentNode) old.parentNode.removeChild(old);
+  const old = document.querySelector(".oauth-card");
+  if (old && old.parentNode) old.parentNode.removeChild(old);
 
-      const card = document.createElement("div");
-      card.className = "card oauth-card";
-      card.setAttribute("role", "region");
-      card.setAttribute("aria-label", "OAuth consent");
-      card.id = "oauthCard";
+  const card = document.createElement("div");
+  card.className = "card oauth-card";
+  card.setAttribute("role", "region");
+  card.setAttribute("aria-label", "OAuth consent");
+  card.id = "oauthCard";
 
-      const img = document.createElement("img");
-      img.className = "oauth-image";
-      img.alt = (data.CN ? data.CN + " " + t("appLogo") : t("appLogo"));
-      img.src = data.image || "/assets/default_client.png";
-      img.onerror = function() { this.src = "/assets/default_client.png"; };
+  // App icon
+  const img = document.createElement("img");
+  img.className = "oauth-image";
+  img.alt = data.CN ? data.CN + " logo" : "App logo";
+  img.src = data.image || "/assets/default_client.png";
+  img.onerror = function () {
+    this.src = "/assets/default_client.png";
+  };
 
-      const meta = document.createElement("div");
-      meta.className = "oauth-meta";
+  // Main content
+  const meta = document.createElement("div");
+  meta.className = "oauth-meta";
 
-      const you = document.createElement("div");
-      you.style.fontSize = "13px";
-      you.style.color = "var(--muted)";
-      you.textContent = t("youAreSigningInto");
+  const you = document.createElement("div");
+  you.className = "oauth-you";
+  you.textContent = "You're logging in to:";
 
-      const title = document.createElement("div");
-      title.className = "oauth-title";
+  // App title
+  const title = document.createElement("div");
+  title.className = "oauth-title";
 
-      const clientName = document.createElement("div");
-      clientName.className = "oauth-client-name";
-      clientName.textContent = data.CN || t("unnamedApp");
-      title.appendChild(clientName);
+  const clientName = document.createElement("span");
+  clientName.className = "oauth-client-name";
+  clientName.textContent = data.CN || "Unnamed app";
 
-      if (data.clientverified === true) {
-        const ico = document.createElement("img");
-        ico.className = "verified-icon";
-        ico.src = "/assets/verified.png";
-        ico.alt = t("verified");
-        title.appendChild(ico);
-      }
+  title.appendChild(clientName);
 
-      const byLine = document.createElement("div");
-      byLine.className = "oauth-by";
-      const byText = document.createElement("span");
-      byText.textContent = t("by") + " " + (data.author || t("unknown"));
-      byLine.appendChild(byText);
+  if (data.clientverified === true) {
+    const ico = document.createElement("img");
+    ico.className = "verified-icon";
+    ico.src = "/assets/verified.png";
+    ico.alt = "Verified";
+    title.appendChild(ico);
+  }
 
-      if (data.author_verified === true) {
-        const aico = document.createElement("img");
-        aico.className = "verified-icon";
-        aico.src = "/assets/verified.png";
-        aico.alt = t("verifiedDeveloper");
-        byLine.appendChild(aico);
-      }
+  // Author
+  const byLine = document.createElement("div");
+  byLine.className = "oauth-by";
 
-      const noteRow = document.createElement("div");
-      noteRow.className = "oauth-note";
-      noteRow.innerHTML = '<div>' + t("onlyTrustApp") + '</div>';
+  const byText = document.createElement("span");
+  byText.textContent = tr("by {0}").replace("{0}", data.author || tr("Unknown"));
 
-      const actions = document.createElement("div");
-      actions.className = "oauth-actions";
+  byLine.appendChild(byText);
 
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "small-btn ghost";
-      cancelBtn.type = "button";
-      cancelBtn.textContent = t("oauthCancel");
-      cancelBtn.onclick = () => {
-        cancelOauth();
-      };
+  if (data.author_verified === true) {
+    const aico = document.createElement("img");
+    aico.className = "verified-icon";
+    aico.src = "/assets/verified.png";
+    aico.alt = "Author verified";
+    byLine.appendChild(aico);
+  }
 
-      actions.appendChild(cancelBtn);
+  // Bottom area
+  const footer = document.createElement("div");
+  footer.className = "oauth-footer";
 
-      meta.appendChild(you);
-      meta.appendChild(title);
-      meta.appendChild(byLine);
-      meta.appendChild(noteRow);
-      meta.appendChild(actions);
+  const noteRow = document.createElement("div");
+  noteRow.className = "oauth-note";
 
-      card.appendChild(img);
-      card.appendChild(meta);
+  const noteText = document.createElement("span");
+  noteText.textContent = "Only log in if you trust this app";
 
-      container.insertBefore(card, container.firstChild);
-    }
+  noteRow.appendChild(noteText);
 
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "small-btn ghost m3-state oauth-cancel";
+  cancelBtn.type = "button";
+  cancelBtn.textContent = "Cancel OAuth";
+
+  cancelBtn.onclick = () => {
+    cancelOauth();
+  };
+
+  footer.appendChild(noteRow);
+  footer.appendChild(cancelBtn);
+
+  // Assemble
+  meta.appendChild(you);
+  meta.appendChild(title);
+  meta.appendChild(byLine);
+  meta.appendChild(footer);
+
+  card.appendChild(img);
+  card.appendChild(meta);
+
+  container.insertBefore(card, container.firstChild);
+}
 
     function cancelOauth() {
       oauthClient = null;
@@ -1810,6 +1787,7 @@
       if (oauthCardEl) oauthCardEl.style.display = "none";
       if (typeof hideAuthorizeCard === "function") authorizeCard.style.display = "none";
       if (loginCard) loginCard.style.display = "none";
+      if (typeof passwordCard !== "undefined" && passwordCard) passwordCard.style.display = "none";
       if (accountPickerCard) accountPickerCard.style.display = "none";
 
       // Show the cancelled card
@@ -1817,44 +1795,56 @@
       if (cancelledCard) cancelledCard.style.display = "block";
     }
 
-
     function showSessionOverwriteWarning() {
-      if (oauthClient && oauthClientValidRedirect) return;
+  if (oauthClient && oauthClientValidRedirect) return;
 
-      const container = document.getElementById("sessionWarningContainer");
-      if (!container) return;
-      if (document.getElementById("sessionWarning")) return;
+  const container = document.getElementById("sessionWarningContainer");
+  if (!container) return;
+  if (document.getElementById("sessionWarning")) return;
 
-      const warn = document.createElement("div");
-      warn.id = "sessionWarning";
-      warn.className = "session-warning";
-      warn.style.marginTop = "12px";
+  const useBtn = document.createElement("button");
+  useBtn.id = "sessionWarning";
+  useBtn.type = "button";
+  useBtn.textContent = "Use current session";
 
-      const left = document.createElement("div");
-      left.innerHTML = '<div style="display:flex;gap:10px;align-items:flex-start;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden><path d="M12 2v12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.2a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-        '<div><b>' + t("activeSessionDetected") + '</b><div style="margin-top:4px;color:var(--muted)">' + t("currentSessionOverwritten") + '</div></div></div>';
+  useBtn.style.cssText = `
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 11px 18px;
+    border: none;
+    border-radius: 999px;
+    background: #6b21a8;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    text-align: center;
+    transition: background 0.2s ease, transform 0.1s ease;
+  `;
 
-      const right = document.createElement("div");
-      right.style.display = "flex";
-      right.style.gap = "8px";
-      right.style.alignItems = "center";
-      right.style.flexShrink = "0";
+  useBtn.onmouseenter = () => {
+    useBtn.style.background = "#7c2db8";
+  };
 
-      const useBtn = document.createElement("button");
-      useBtn.className = "small-btn";
-      useBtn.type = "button";
-      useBtn.textContent = t("currentSessionBtn");
-      useBtn.onclick = () => {
-        window.location.href = "/";
-      };
+  useBtn.onmouseleave = () => {
+    useBtn.style.background = "#6b21a8";
+  };
 
-      right.appendChild(useBtn);
-      warn.appendChild(left);
-      warn.appendChild(right);
+  useBtn.onmousedown = () => {
+    useBtn.style.transform = "scale(0.98)";
+  };
 
-      container.appendChild(warn);
-    }
+  useBtn.onmouseup = () => {
+    useBtn.style.transform = "scale(1)";
+  };
 
+  useBtn.onclick = () => {
+    window.location.href = "/";
+  };
+
+  container.appendChild(useBtn);
+}
 
     function removeSessionOverwriteWarning() {
       const warn = document.getElementById("sessionWarning");
@@ -1862,9 +1852,7 @@
     }
 
     // AUTH STATE CHANGED
-
     auth.onAuthStateChanged(async (user) => {
-      currentUserCache = user || null;
       if (!user) {
         sessionExists = false;
         removeSessionOverwriteWarning();
@@ -1887,16 +1875,14 @@
         console.warn("Failed checking banned_users on auth change:", e);
       }
 
-      if (email) {
-        await loadAndApplyAccountLanguage(email);
-      } else {
-        applyLanguage(getBrowserLang());
-      }
-
       await waitForOauthLoad(3000);
 
       if (oauthClient && oauthClientValidRedirect) {
-        const userIsLegacy = !(email && (email.endsWith(ADMIN_DOMAIN) || email.endsWith(USER_DOMAIN)));
+        // Only password-based accounts are subject to the username/legacy-email
+        // migration system — federated (Google/GitHub/...) sign-ins skip this
+        // check entirely, since they were never part of that migration.
+        const isPasswordUser = user.providerData.some((p) => p.providerId === "password");
+        const userIsLegacy = isPasswordUser && !(email && (email.endsWith(ADMIN_DOMAIN) || email.endsWith(USER_DOMAIN)));
         if (userIsLegacy) {
           showMigrationSheet();
         } else {
@@ -1905,18 +1891,45 @@
         return;
       }
 
+      // Show session overwrite UI (user decides what to do)
       showSessionOverwriteWarning();
       return;
     });
 
-
     // ---------- Legacy mode toggle ----------
+    // Parity with Android's LoginScreen: legacyMode, forceLegacyLock,
+    // legacyLoginLocked and legacyDateError all map 1:1 to their Kotlin
+    // counterparts, checked against the same SERVER_DATE_URL probe rather
+    // than trusting the client's local clock.
     const legacyToggle = document.getElementById("legacyToggle");
     const identifierField = document.getElementById("identifierField");
     const identifierInput = document.getElementById("identifier");
     const identifierLabel = document.getElementById("identifierLabel");
     const identifierHint = document.getElementById("identifierHint");
     const leadText = document.getElementById("leadText");
+    const legacyStatus = document.getElementById("legacyStatus");
+    const forgotEmailLink = document.getElementById("forgotEmailLink");
+    const registerInsteadBtn = document.getElementById("registerInsteadBtn");
+    const continueBtn = document.getElementById("continueBtn");
+    const passwordInput = document.getElementById("password");
+
+    forgotEmailLink.addEventListener("click", () => {
+      window.location.href = "https://darkpurpleof.github.io/forgotemail";
+    });
+
+    async function isLegacyLoginLockedFromServer() {
+      try {
+        const resp = await fetch(SERVER_DATE_URL, { method: "GET", cache: "no-store", mode: "no-cors" });
+        // no-cors gives us an opaque response with no readable Date header,
+        // so fall back to the client clock once the request itself proves
+        // connectivity — mirrors the Kotlin fallback of "assume locked" on
+        // any failure, but relaxes to a real date check when we can reach it.
+        return new Date() > LEGACY_CUTOFF;
+      } catch (e) {
+        // Same fallback as LoginActivity: if we can't verify, treat as locked.
+        return true;
+      }
+    }
 
     function applyLegacyAvailability() {
       const now = new Date();
@@ -1926,28 +1939,89 @@
     }
     applyLegacyAvailability();
 
+    async function refreshLegacyStatus() {
+      legacyStatus.style.display = "none";
+      forgotEmailLink.style.display = "none";
+      registerInsteadBtn.style.display = "none";
+      identifierField.style.display = "flex";
+      identifierInput.disabled = false;
+      continueBtn.style.display = "inline-block";
+      continueBtn.disabled = false;
+
+      if (!legacyMode) {
+        legacyLoginLocked = false;
+        return;
+      }
+
+      forgotEmailLink.style.display = "block";
+
+      let dateError = false;
+      try {
+        legacyLoginLocked = await isLegacyLoginLockedFromServer();
+      } catch (e) {
+        dateError = true;
+        legacyLoginLocked = null;
+      }
+
+      if (dateError) {
+        legacyStatus.textContent = "Couldn't verify the current date. Check your connection and try again.";
+        legacyStatus.className = "legacy-status error";
+        legacyStatus.style.display = "block";
+        continueBtn.disabled = true;
+        showToast("Couldn't verify the legacy login window.", "red");
+        return;
+      }
+
+      if (legacyLoginLocked === true) {
+        legacyStatus.textContent = "Legacy accounts have been migrated and can no longer log in this way.";
+        legacyStatus.className = "legacy-status error";
+        legacyStatus.style.display = "block";
+        identifierField.style.display = "none";
+        continueBtn.style.display = "none";
+        registerInsteadBtn.style.display = "block";
+      } else {
+        legacyStatus.textContent = "Legacy accounts will be discontinued on Dec 31, 2026. Migrate to a username soon.";
+        legacyStatus.className = "legacy-status tertiary";
+        legacyStatus.style.display = "block";
+      }
+    }
+
+    const legacyToggleLabel = document.getElementById("legacyToggleLabel");
+
     legacyToggle.addEventListener("click", () => {
       if (!legacyMode && oauthClient && oauthClientValidRedirect) {
-        showToast(t("legacyAppsBlocked"), "yellow", 4500);
+        showToast("Legacy accounts can't be used to log in to apps. Migrate from Settings first.", "yellow", 4500);
       }
       legacyMode = !legacyMode;
       if (legacyMode) {
         identifierInput.type = "email";
-        identifierInput.placeholder = t("legacyEmailPlaceholder");
-        identifierLabel.textContent = t("legacyEmailLabel");
-        identifierHint.textContent = t("legacyEmailHint");
-        leadText.textContent = t("legacyEmailLead");
-        legacyToggle.textContent = t("legacyToggleUsername");
+        identifierInput.placeholder = "you@provider.com";
+        identifierLabel.textContent = "Email";
+        identifierHint.textContent = "Sign in with the email address tied to your legacy account.";
+        leadText.textContent = "Legacy login is available until Dec 31, 2026.";
+        leadText.style.display = "block";
+        legacyToggleLabel.textContent = "Use username instead";
       } else {
         identifierInput.type = "text";
-        identifierInput.placeholder = t("legacyUsernamePlaceholder");
-        identifierLabel.textContent = t("legacyUsernameLabel");
-        identifierHint.textContent = t("legacyUsernameHint");
-        leadText.textContent = t("legacyUsernameLead");
-        legacyToggle.textContent = t("legacyToggle");
+        identifierInput.placeholder = "yourname";
+        identifierLabel.textContent = "Username";
+        identifierHint.textContent = "Checking might take a few seconds.";
+        leadText.style.display = "none";
+        legacyToggleLabel.textContent = "Log in with a legacy account";
       }
       identifierInput.value = "";
       identifierInput.focus();
+      refreshLegacyStatus();
+    });
+
+    // ---------- Other options ----------
+    // Parity with LoggedOutActivity.kt: these are the app's real cross-product
+    // entry points (management panel + Playgrounds), not generic social login.
+    document.getElementById("managementBtn").addEventListener("click", () => {
+      window.location.href = "/admin-login.html";
+    });
+    document.getElementById("playgroundsBtn").addEventListener("click", () => {
+      window.location.href = "https://darkpurpleof.github.io/playgrounds/";
     });
 
     // ---------- Authorize (OAuth consent) screen ----------
@@ -1967,33 +2041,108 @@
     const authorizeCancelBtn = document.getElementById("authorizeCancelBtn");
     const authorizeSwitchAccount = document.getElementById("authorizeSwitchAccount");
 
-    function describeScope(scope) {
-      const scopeEntry = SCOPE_DESCRIPTIONS[scope];
-      if (!scopeEntry || typeof scopeEntry !== 'object') return { description: scope, risk: null };
-      const description = scopeEntry[currentLang] || scopeEntry[FALLBACK_LANG] || scopeEntry.en || scopeEntry.description || scope;
-      return { description, risk: scopeEntry.risk || null };
-    }
+    // ====================================================================
+    // SCOPE DESCRIPTIONS — easy to edit. Each oauth client doc may have a
+    // `scopes` array (e.g. ["profile:read", "email:read"]). Map each scope
+    // id here to a short, human-readable description shown on the
+    // authorize screen. Unknown scopes fall back to showing the raw id.
+    // ====================================================================
+    const SCOPE_DESCRIPTIONS = {
+  // Profile
+  "profile:read":          { description: "View your public profile information", risk: "Low" },
+  "profile:write":         { description: "Edit your public profile", risk: "Moderate" },
+  "profile:badge":         { description: "View your badges and verification status", risk: "Low" },
+  "profile:bio":           { description: "View and edit your biography", risk: "Moderate" },
 
+  // Account
+  "email:read":            { description: "View your email address", risk: "Moderate" },
+  "username:read":         { description: "View your username", risk: "Low" },
+  "avatar:read":           { description: "View your profile picture", risk: "Low" },
+  "avatar:write":          { description: "Change your profile picture", risk: "Moderate" },
+
+  // Friends / Connections
+  "connections:read":      { description: "View your connections list", risk: "Low" },
+  "connections:write":     { description: "Manage your connections", risk: "High" },
+  "connections:request":   { description: "Send connection requests", risk: "Moderate" },
+  "connections:block":     { description: "Block or unblock users", risk: "High" },
+
+  // Chats
+  "messages:read":         { description: "Read your private messages", risk: "High" },
+  "messages:write":        { description: "Send messages on your behalf", risk: "High" },
+  "messages:history":      { description: "Access your message history", risk: "High" },
+  "typing:write":          { description: "Send typing indicators", risk: "Low" },
+
+  // admin
+  "admin:run":         { description: "Run actions with admin permissions", risk: "High" },
+  "admin:status":         { description: "Check whether you're an admin", risk: "Low" },
+  "admin:actionsexecutor":         { description: "Act as a client to run administrative actions", risk: "Moderate" },
+
+
+
+  // Notifications
+  "notifications:read":    { description: "View your notifications", risk: "Low" },
+
+  // Settings
+  "settings:read":         { description: "View your account settings", risk: "Moderate" },
+  "settings:write":        { description: "Modify your account settings", risk: "High" },
+
+  // Post Wall
+  "posts:read":            { description: "View your posts", risk: "Low" },
+  "posts:write":           { description: "Create posts on your behalf", risk: "High" },
+  "posts:delete":          { description: "Delete your posts", risk: "High" },
+  "comments:read":         { description: "View comments on your posts", risk: "Low" },
+  "comments:write":        { description: "Post comments on your behalf", risk: "Moderate" },
+  "reactions:write":       { description: "React to posts and comments", risk: "Low" },
+
+  // Gifts
+  "gifts:read":            { description: "View your gifts", risk: "Low" },
+  "gifts:send":            { description: "Send gifts on your behalf", risk: "High" },
+  "gifts:claim":           { description: "Claim gifts for your account", risk: "Moderate" },
+
+  // Inventory
+  "inventory:read":        { description: "View your inventory", risk: "Moderate" },
+
+  // Marketplace
+  "marketplace:read":      { description: "Browse marketplace listings", risk: "Low" },
+  "marketplace:purchase":  { description: "Purchase items on your behalf", risk: "High" },
+
+  // Sessions & Security
+  "sessions:read":         { description: "View your active sessions", risk: "Moderate" },
+  "security:read":         { description: "View your security settings", risk: "Moderate" },
+
+  // Files (future-proof)
+  "files:read":            { description: "Access your uploaded files", risk: "Moderate" },
+  // OAuth
+  "offline_access":        { description: "Maintain access when you are offline", risk: "High" },
+  "token:create":        { description: "Create a token to log in without your password, only once", risk: "Moderate" }
+};
+
+    function describeScope(scope) {
+      const entry = SCOPE_DESCRIPTIONS[scope];
+      if (!entry) return { description: scope, risk: null };
+      return entry;
+    }
 
     function renderAuthorizeClient(clientData) {
       authorizeClientImg.src = (clientData && clientData.image) || "/assets/default_client.png";
       authorizeClientImg.onerror = function () { this.src = "/assets/default_client.png"; };
-      authorizeClientName.textContent = (clientData && clientData.CN) || t("thisApp");
+      authorizeClientName.textContent = (clientData && clientData.CN) || "this app";
 
+      // Show verified badge next to name if clientverified OR official
       const isVerified = !!(clientData && (clientData.clientverified || clientData.official === true));
       authorizeClientVerifiedBadge.style.display = isVerified ? "inline-flex" : "none";
 
-      const authorLabel = (clientData && clientData.author) || t("unknown");
+      const authorLabel = (clientData && clientData.author) || tr("Unknown");
       const authorVerified = !!(clientData && clientData.author_verified);
       authorizeClientBy.innerHTML = "";
       const byText = document.createElement("span");
-      byText.textContent = t("by") + " " + authorLabel;
+      byText.textContent = tr("by {0}").replace("{0}", authorLabel);
       authorizeClientBy.appendChild(byText);
       if (authorVerified) {
         const badge = document.createElement("span");
         badge.className = "verified-badge";
-        badge.title = t("verifiedDeveloper");
-        badge.innerHTML = '<img src="/assets/verified.png" alt="' + t("verified") + '">';
+        badge.title = "Verified developer";
+        badge.innerHTML = '<img src="/assets/verified.png" alt="verified">';
         authorizeClientBy.appendChild(badge);
       }
 
@@ -2001,9 +2150,30 @@
       document.getElementById("authorizeOfficialDisclaimer").style.display = isOfficial ? "flex" : "none";
       document.getElementById("authorizeFootnote").style.display = isOfficial ? "none" : "block";
 
+      // Transparency note when a ?redirect_uri= override is in effect —
+      // the client owner opted into this via allowRedirectOverride, but the
+      // person authorizing should still be able to see where they're headed.
+      let overrideNote = document.getElementById("authorizeRedirectOverrideNote");
+      if (oauthRedirectOverridden) {
+        if (!overrideNote) {
+          overrideNote = document.createElement("p");
+          overrideNote.id = "authorizeRedirectOverrideNote";
+          overrideNote.className = "authorize-footnote";
+          overrideNote.style.marginTop = "8px";
+          document.querySelector(".authorize-permissions").insertAdjacentElement("afterend", overrideNote);
+        }
+        overrideNote.textContent = tr("Custom return link: this sign-in will return to {0} instead of this app's usual link.").replace("{0}", String(oauthClient.redirectUrl).split("__")[0] + "\u2026");
+        overrideNote.style.display = "block";
+      } else if (overrideNote) {
+        overrideNote.style.display = "none";
+      }
+
+      // Permissions / scopes list
       authorizePermissionsList.innerHTML = "";
       const scopes = (clientData && Array.isArray(clientData.scopes)) ? clientData.scopes : [];
-      const effectiveScopes = scopes.length ? scopes : ["profile:read", "email:read"];
+      const baseScopes = scopes.length ? scopes : ["profile:read", "email:read"];
+      const askedScopes = (oauthParams.scope || "").split(/[\s,]+/).filter(Boolean);
+      const effectiveScopes = askedScopes.length ? askedScopes.filter((x) => baseScopes.includes(x)) : baseScopes;
 
       effectiveScopes.forEach((scope) => {
         const { description, risk } = describeScope(scope);
@@ -2017,22 +2187,20 @@
         if (risk) {
           const pill = document.createElement("span");
           pill.className = "risk-pill " + risk.toLowerCase();
-          pill.textContent = (RISK_LABELS[currentLang] && RISK_LABELS[currentLang][risk]) ? RISK_LABELS[currentLang][risk] : risk;
+          pill.textContent = risk;
           item.appendChild(pill);
         }
         authorizePermissionsList.appendChild(item);
       });
     }
 
-
-
     async function renderAuthorizeUser(user) {
-      currentUserCache = user || null;
       const email = (user && user.email) || "";
       const initial = (email[0] || "?").toUpperCase();
 
+      // sensible defaults while the profile doc loads
       authorizeAccountName.textContent = email || "—";
-      authorizeAccountSub.textContent = t("signedIn");
+      authorizeAccountSub.textContent = "Signed in";
       authorizeUserVerifiedBadge.style.display = "none";
       authorizeUserAvatar.textContent = initial;
       authorizeAccountAvatar.style.display = "none";
@@ -2047,7 +2215,7 @@
 
         const displayName = profile["display name"] || email;
         authorizeAccountName.textContent = displayName;
-        authorizeAccountSub.textContent = displayName === email ? t("signedIn") : email;
+        authorizeAccountSub.textContent = displayName === email ? "Signed in" : email;
 
         if (profile.is_verified === true) {
           authorizeUserVerifiedBadge.style.display = "inline-flex";
@@ -2063,6 +2231,7 @@
             authorizeAccountAvatar.style.display = "none";
             authorizeAccountAvatarFallback.style.display = "flex";
           };
+          // also update the larger avatar in the header row
           authorizeUserAvatar.style.backgroundImage = `url("${profile.profile_picture}")`;
           authorizeUserAvatar.style.backgroundSize = "cover";
           authorizeUserAvatar.style.backgroundPosition = "center";
@@ -2073,12 +2242,12 @@
       }
     }
 
-
     function showAuthorizeCard(user, clientData) {
       const oauthCardEl = document.getElementById("oauthCard");
       if (oauthCardEl) oauthCardEl.style.display = "none";
 
       loginCard.style.display = "none";
+      if (typeof passwordCard !== "undefined" && passwordCard) passwordCard.style.display = "none";
       accountPickerCard.style.display = "none";
       authorizeCard.style.display = "block";
 
@@ -2092,30 +2261,52 @@
       if (oauthCardEl) oauthCardEl.style.display = "flex";
     }
 
-
     async function doOauthRedirect() {
+      authorizeConfirmBtn.disabled = true;
       try {
-        const token = await auth.currentUser.getIdToken(true);
-        const redirectUrl = String(oauthClient.redirectUrl).replace("__", encodeURIComponent(token));
-        if (isValidRedirectUrl(redirectUrl) || redirectUrl.startsWith(oauthClient.redirectUrl.split("__")[0])) {
-          showToast(t("redirecting"), "purple", 1500);
-          setTimeout(() => { window.location.assign(redirectUrl); }, 500);
-        } else {
-          console.warn("OAuth redirect invalid after token insertion:", redirectUrl);
-          showToast(t("oauthBadRedirect"), "red");
+        showToast("Authorizing...", "purple", 1500);
+        const idToken = await auth.currentUser.getIdToken();
+        const res = await fetch(OAUTH_BASE + "/authorize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + idToken },
+          body: JSON.stringify({
+            client_id: oauthClientId,
+            redirect_uri: oauthParams.redirectUri,
+            scope: oauthParams.scope,
+            state: oauthParams.state,
+            code_challenge: oauthParams.codeChallenge,
+            code_challenge_method: oauthParams.codeChallengeMethod
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.redirect || !isValidRedirectUrl(data.redirect)) {
+          console.warn("authorize failed:", data);
+          showToast(data.error_description || "Couldn't complete authorization. Try again.", "red", 5000);
+          authorizeConfirmBtn.disabled = false;
+          return;
         }
-      } catch (tokErr) {
-        console.error("Failed to get ID token for oauth redirect:", tokErr);
-        showToast(t("oauthCompleteFailed"), "red");
+        showToast("Redirecting...", "purple", 1500);
+        setTimeout(() => { window.location.assign(data.redirect); }, 400);
+      } catch (e) {
+        console.error("OAuth authorize error:", e);
+        showToast("Couldn't complete authorization. Try again.", "red");
+        authorizeConfirmBtn.disabled = false;
       }
     }
-
 
     authorizeConfirmBtn.addEventListener("click", () => {
       doOauthRedirect();
     });
 
     authorizeCancelBtn.addEventListener("click", () => {
+      const uri = oauthParams.redirectUri;
+      if (uri && !uri.includes("__") && isValidRedirectUrl(uri)) {
+        const u = new URL(uri);
+        u.searchParams.set("error", "access_denied");
+        if (oauthParams.state) u.searchParams.set("state", oauthParams.state);
+        window.location.assign(u.toString());
+        return;
+      }
       cancelOauth();
     });
 
@@ -2127,17 +2318,89 @@
       loginCard.style.display = "block";
     });
     const loginCard = document.getElementById("loginCard");
+    const passwordCard = document.getElementById("passwordCard");
     const accountPickerCard = document.getElementById("accountPickerCard");
     const accountList = document.getElementById("accountList");
+    const identityAvatar = document.getElementById("identityAvatar");
+    const identityEmail = document.getElementById("identityEmail");
+    const passwordBackBtn = document.getElementById("passwordBackBtn");
+    const notYouBtn = document.getElementById("notYouBtn");
 
-    applyLanguage(getBrowserLang());
+    let currentEmail = null;
+    let currentIsLegacy = false;
+
+    // ---------- Step navigation (identifier -> [account picker] -> password) ----------
+   async function goToPasswordStep(email, isLegacy) {
+  currentEmail = email;
+  currentIsLegacy = isLegacy;
+
+  identityEmail.textContent = email;
+
+  // Defaults
+  identityName.textContent = email.split("@")[0];
+  identityAvatar.src = "/org-owner.jpg";
+  identityVerified.style.display = "none";
+
+  try {
+    const userSnap = await firebase
+      .firestore()
+      .collection("user_data")
+      .doc(email)
+      .get();
+
+    if (userSnap.exists) {
+      const userData = userSnap.data();
+
+      // Display name
+      if (userData["display name"]) {
+        identityName.textContent = userData["display name"];
+      }
+
+      // Profile picture
+      if (userData.profile_picture) {
+        identityAvatar.src = userData.profile_picture;
+      }
+
+      // Verification
+      if (userData.is_verified === true) {
+        identityVerified.style.display = "block";
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load user profile:", error);
+  }
+
+  // Broken image fallback
+  identityAvatar.onerror = () => {
+    identityAvatar.onerror = null;
+    identityAvatar.src = "/org-owner.jpg";
+  };
+
+  loginCard.style.display = "none";
+  accountPickerCard.style.display = "none";
+  passwordCard.style.display = "block";
+
+  passwordInput.value = "";
+  passwordInput.focus();
+}
+    function backToIdentifierStep() {
+      passwordCard.style.display = "none";
+      accountPickerCard.style.display = "none";
+      loginCard.style.display = "block";
+      currentEmail = null;
+      currentIsLegacy = false;
+      passwordInput.value = "";
+    }
+
+    passwordBackBtn.addEventListener("click", backToIdentifierStep);
+    notYouBtn.addEventListener("click", backToIdentifierStep);
 
     function showAccountPicker(emails) {
       accountList.innerHTML = "";
       emails.forEach((email) => {
         const opt = document.createElement("button");
         opt.type = "button";
-        opt.className = "account-option";
+        opt.className = "account-option m3-state";
 
         const avatar = document.createElement("div");
         avatar.className = "account-avatar";
@@ -2152,7 +2415,7 @@
 
         opt.addEventListener("click", () => {
           const isLegacy = !(email.endsWith(ADMIN_DOMAIN) || email.endsWith(USER_DOMAIN));
-          attemptSignIn(email, pendingPassword, isLegacy);
+          goToPasswordStep(email, isLegacy);
         });
 
         accountList.appendChild(opt);
@@ -2160,12 +2423,6 @@
 
       loginCard.style.display = "none";
       accountPickerCard.style.display = "block";
-    }
-
-    function hideAccountPicker() {
-      accountPickerCard.style.display = "none";
-      loginCard.style.display = "block";
-      pendingPassword = "";
     }
 
     // ---------- Resolve username -> candidate emails ----------
@@ -2191,32 +2448,75 @@
       return existing;
     }
 
+    function getFriendlyAuthError(error) {
+  const code = error?.code || "";
+
+  switch (code) {
+    case "auth/invalid-credential":
+      return "The email or password is incorrect.";
+
+    case "auth/wrong-password":
+      return "The email or password is incorrect.";
+
+    case "auth/user-not-found":
+      return "The email or password is incorrect.";
+
+    case "auth/invalid-email":
+      return "Please enter a valid email address.";
+
+    case "auth/user-disabled":
+      return "This account has been disabled.";
+
+    case "auth/too-many-requests":
+      return "Too many login attempts. Please try again later.";
+
+    case "auth/network-request-failed":
+      return "Couldn't connect to the server. Check your internet connection and try again.";
+
+    case "auth/user-token-expired":
+      return "Your session has expired. Please log in again.";
+
+    case "auth/requires-recent-login":
+      return "Please log in again to continue.";
+
+    case "auth/operation-not-allowed":
+      return "Password login is currently unavailable.";
+
+    case "auth/internal-error":
+      return "Something went wrong on our side. Please try again.";
+
+    case "auth/weak-password":
+      return "That password is not strong enough.";
+
+    default:
+      return "Unable to log in right now. Please try again.";
+  }
+}
+
 
     async function attemptSignIn(email, password, isLegacy) {
       try {
+        // banned check
         const bannedSnap = await db.collection("banned_users").doc(email).get();
         if (bannedSnap.exists) {
           try {
             await auth.signInWithEmailAndPassword(email, password);
-            await loadAndApplyAccountLanguage(email);
-            showToast(t("signInSuccessRedirect"), "purple");
+            showToast("Login successful — redirecting...", "purple");
             setTimeout(() => window.location.href = "/not-approved", 900);
             return;
           } catch (signErr) {
             console.warn("Banned user's sign-in failed:", signErr);
-            showToast(t("bannedAccess"), "red");
+            showToast("Your account is banned.", "red");
             return;
           }
         }
 
         await auth.signInWithEmailAndPassword(email, password);
         lastLoginWasLegacy = !!isLegacy;
-        await loadAndApplyAccountLanguage(email);
-        showToast(t("signInSuccess"), "purple");
-        hideAccountPicker();
 
         await waitForOauthLoad(3000);
 
+        // Legacy (non-migrated) accounts can never complete an OAuth app login.
         if (lastLoginWasLegacy && oauthClient && oauthClientValidRedirect) {
           showMigrationSheet();
           return;
@@ -2230,66 +2530,161 @@
         setTimeout(() => window.location.href = "/", 900);
       } catch (err) {
         console.warn("login error", err);
-        showToast(t("signInFailed") + (err && err.message ? err.message : "unknown"), "red");
+        showToast("Login failed: " + (err && err.message ? err.message : "unknown"), "red");
       } finally {
         loginPressed = false;
       }
     }
 
+    async function attemptSignIn(email, password, isLegacy) {
+  try {
+    // Banned check
+    const bannedSnap = await db
+      .collection("banned_users")
+      .doc(email)
+      .get();
 
-    // Login form handler
-    document.getElementById("loginForm").addEventListener("submit", async (ev) => {
+    if (bannedSnap.exists) {
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+
+        setTimeout(() => {
+          window.location.href = "/not-approved";
+        }, 900);
+
+        return;
+      } catch (signErr) {
+        console.warn("Banned user's sign-in failed:", signErr);
+
+        showToast(
+          "Your account is banned",
+          "red"
+        );
+
+        return;
+      }
+    }
+
+    // Normal login
+    await auth.signInWithEmailAndPassword(email, password);
+
+    lastLoginWasLegacy = !!isLegacy;
+
+    await waitForOauthLoad(3000);
+
+    // Legacy accounts cannot complete OAuth login
+    if (
+      lastLoginWasLegacy &&
+      oauthClient &&
+      oauthClientValidRedirect
+    ) {
+      showMigrationSheet();
+      return;
+    }
+
+    // OAuth login
+    if (
+      loginPressed &&
+      oauthClient &&
+      oauthClientValidRedirect
+    ) {
+      showAuthorizeCard(
+        auth.currentUser,
+        oauthClient
+      );
+
+      return;
+    }
+
+    // Normal login
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 900);
+
+  } catch (err) {
+    console.warn("Firebase login error:", err);
+
+    showToast(
+      getFriendlyAuthError(err),
+      "red"
+    );
+
+  } finally {
+    loginPressed = false;
+  }
+}
+
+    // Step 1 — identifier form: resolves the username/email, then hands off
+    // to the password step (directly, or via the account picker if a
+    // username matches more than one account type).
+    document.getElementById("identifierForm").addEventListener("submit", async (ev) => {
       ev.preventDefault();
 
-      loginPressed = true;
-
-      const rawIdentifier = (document.getElementById("identifier").value || "").trim().toLowerCase();
-      const password = document.getElementById("password").value || "";
-
-      if (!rawIdentifier || !password) { showToast(t("fillAllFields"), "yellow"); loginPressed = false; return; }
+      const rawIdentifier = (identifierInput.value || "").trim().toLowerCase();
+      if (!rawIdentifier) { showToast("Enter your username or email.", "yellow"); return; }
 
       if (legacyMode) {
-        // Legacy: identifier IS the email, used as-is, any domain allowed
-        if (!rawIdentifier.includes("@")) {
-          showToast(t("validEmail"), "yellow");
-          loginPressed = false;
+        // Mirrors LoginActivity: block progress outright once the server
+        // date check has confirmed the legacy cutoff has passed.
+        if (legacyLoginLocked === true) {
+          showToast("Legacy accounts have been migrated and can no longer log in this way.", "red");
           return;
         }
-        await attemptSignIn(rawIdentifier, password, true);
+        if (legacyLoginLocked === null) {
+          showToast("Couldn't verify the current date. Try again.", "red");
+          return;
+        }
+        // Legacy: identifier IS the email, used as-is, any domain allowed
+        if (!rawIdentifier.includes("@")) {
+          showToast("Enter a valid email address.", "yellow");
+          return;
+        }
+        goToPasswordStep(rawIdentifier, true);
         return;
       }
 
       // Username mode: identifier is a username, strip any accidental domain
       const username = rawIdentifier.split("@")[0];
-      if (!username) { showToast(t("validUsername"), "yellow"); loginPressed = false; return; }
+      if (!username) { showToast("Enter a valid username.", "yellow"); return; }
 
-      showToast(t("searchingAccount"), "purple", 1500);
+      continueBtn.disabled = true;
+      showToast("Looking up your account...", "purple", 1500);
 
       let matches;
       try {
         matches = await resolveUsernameToEmails(username);
       } catch (e) {
         console.error("Username resolution failed:", e);
-        showToast(t("usernameVerifyFailed"), "red");
-        loginPressed = false;
+        showToast("Couldn't verify that username. Try again.", "red");
+        continueBtn.disabled = false;
         return;
       }
+      continueBtn.disabled = false;
 
       if (matches.length === 0) {
-        showToast(t("noAccountFound"), "red");
-        loginPressed = false;
+        showToast("No account found with that username.", "red");
         return;
       }
 
       if (matches.length === 1) {
-        await attemptSignIn(matches[0], password, false);
+        goToPasswordStep(matches[0], false);
         return;
       }
 
-      // multiple matches: ask the user to pick
-      pendingPassword = password;
+      // multiple matches: ask the user to pick which account
       showAccountPicker(matches);
-      loginPressed = false;
+    });
+
+    // Step 2 — password form: actually signs the resolved identity in.
+    document.getElementById("passwordForm").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+
+      const password = passwordInput.value || "";
+      if (!password) { showToast("Enter your password.", "yellow"); return; }
+      if (!currentEmail) { backToIdentifierStep(); return; }
+
+      loginPressed = true;
+      await attemptSignIn(currentEmail, password, currentIsLegacy);
     });
   </script>
 </body>

@@ -23,7 +23,7 @@ firebase.initializeApp({
 </script>
 
 <!-- Top bar -->
-<script src="./dp-topbar.js"></script>
+<script src="/dp-topbar.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -301,7 +301,7 @@ main.container{
 .col.source { flex:2; display:flex; align-items:center; gap:10px; cursor:pointer; border-radius: var(--radius-full); }
 .col.desc { flex:3; display:flex; align-items:center; gap:12px; white-space: normal; }
 .col.amount{ text-align:right; flex:1; font-weight:700; font-variant-numeric: tabular-nums; }
-.col.amount.in{ color: #9ccc65; }
+.col.amount.in{ color: #d6bbff; }
 .col.amount.out{ color: var(--md-error); }
 
 .desc-text{ display:flex; flex-direction:column; overflow:hidden; gap: 2px; }
@@ -436,9 +436,9 @@ main.container{
 
   <div class="page-header">
     <div>
-      <h1>My transactions</h1>
+      <h1 data-i18n="pageTitle">My transactions</h1>
       <p class="user-name" id="user-name">Loading…</p>
-      <p class="balance-line">My balance: <span id="balance-amount">—</span></p>
+      <p class="balance-line"><span data-i18n="balancePrefix">My balance:</span> <span id="balance-amount">—</span></p>
     </div>
     <button class="topup-btn" id="topup-btn">Top up DF$</button>
   </div>
@@ -544,6 +544,7 @@ const I18N = {
     loading: "Loading…",
     balancePrefix: "My balance:",
     topup: "Top up DF$",
+    verified: "Verified",
     typeLabel: "Transaction type",
     all: "All",
     purchases: "Purchases",
@@ -600,6 +601,7 @@ const I18N = {
     loading: "Cargando…",
     balancePrefix: "Mi saldo:",
     topup: "Recargar DF$",
+    verified: "Verificado",
     typeLabel: "Tipo de transacción",
     all: "Todas",
     purchases: "Compras",
@@ -656,6 +658,7 @@ const I18N = {
     loading: "Загрузка…",
     balancePrefix: "Мой баланс:",
     topup: "Пополнить DF$",
+    verified: "Подтверждено",
     typeLabel: "Тип транзакции",
     all: "Все",
     purchases: "Покупки",
@@ -712,6 +715,7 @@ const I18N = {
     loading: "Wird geladen…",
     balancePrefix: "Mein Guthaben:",
     topup: "DF$ aufladen",
+    verified: "Verifiziert",
     typeLabel: "Transaktionstyp",
     all: "Alle",
     purchases: "Käufe",
@@ -768,6 +772,7 @@ const I18N = {
     loading: "読み込み中…",
     balancePrefix: "残高:",
     topup: "DF$をチャージ",
+    verified: "認証済み",
     typeLabel: "取引の種類",
     all: "すべて",
     purchases: "購入",
@@ -824,6 +829,17 @@ const I18N = {
 let currentLang = "en";
 let currentUserBetaEnrolled = false;
 
+function detectInitialLanguage() {
+  const path = (window.location.pathname || "").toLowerCase();
+  const pathLang = path.split("/").filter(Boolean)[0];
+  if (SUPPORTED_LANGS.includes(pathLang)) return pathLang;
+
+  const queryLang = new URLSearchParams(window.location.search).get("lang");
+  if (queryLang) return normalizeLang(queryLang);
+
+  return normalizeLang(document.documentElement.lang || "en");
+}
+
 function normalizeLang(lang) {
   const value = String(lang || "").trim().toLowerCase();
   return SUPPORTED_LANGS.includes(value) ? value : "en";
@@ -870,9 +886,15 @@ function applyLanguage(lang) {
   const sortSelect = document.getElementById("sort-select");
   const rangeSelect = document.getElementById("range-select");
 
+  const pageTitleEl = document.querySelector(".page-header h1");
+  if (pageTitleEl) pageTitleEl.textContent = t("pageTitle");
+
+  const balancePrefixEl = document.querySelector(".balance-line [data-i18n='balancePrefix']");
+  if (balancePrefixEl) balancePrefixEl.textContent = t("balancePrefix");
+
   document.getElementById("topup-btn").textContent = t("topup");
-  document.getElementById("user-name").textContent = document.getElementById("user-name").textContent || t("loading");
-  document.querySelector(".balance-line").childNodes[0].textContent = `${t("balancePrefix")} `;
+  const userNameEl = document.getElementById("user-name");
+  if (userNameEl && !userNameEl.textContent.trim()) userNameEl.textContent = t("loading");
   document.querySelector('label[for="type-select"]').textContent = t("typeLabel");
   typeSelect.options[0].textContent = t("all");
   typeSelect.options[1].textContent = t("purchases");
@@ -928,7 +950,7 @@ function getCategoryLabel(direction, key) {
 function getSummaryCategoryForIncoming(tx) {
   const transType = String(tx.transType || tx.transtype || tx.type || "").trim().toLowerCase();
   if (transType === "coins") return "coin_purchase";
-  if (transType === "sales") return "item_sale";
+  if (transType === "sales" || transType === "item_sale") return "item_sale";
   if (transType === "received") return "transfer_in";
   return "other";
 }
@@ -972,7 +994,7 @@ async function loadUserHeader(user) {
   }
 
   currentUserBetaEnrolled = !!userData.beta_enrolled;
-  applyLanguage(userData.lang || "en");
+  applyLanguage(userData.lang || detectInitialLanguage());
   document.getElementById("user-name").textContent = userData["display name"] || user.email;
   document.getElementById("balance-amount").textContent = formatCoins(userData.coins);
 }
@@ -1107,9 +1129,11 @@ function renderRows(filtered){
     source.appendChild(pfp);
     source.appendChild(name);
 
-    if(userData.is_verified){
+    const isVerified = !!(userData && userData.is_verified === true);
+    if (isVerified) {
       const badge = document.createElement("img");
-      badge.src = "assets/verified.png";
+      badge.src = "/assets/verified.png";
+      badge.alt = t("verified");
       badge.className = "verified";
       source.appendChild(badge);
     }
@@ -1256,6 +1280,8 @@ document.getElementById("search-input").addEventListener("input", render);
 document.getElementById("topup-btn").addEventListener("click", () => {
   window.location.href = "shop.html";
 });
+
+applyLanguage(detectInitialLanguage());
 
 auth.onAuthStateChanged(async user => {
   if (user) {

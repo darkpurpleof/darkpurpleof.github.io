@@ -1,19 +1,18 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Programa Beta</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap)" rel="stylesheet">
+  <title>Beta Program</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Firebase (non-modular) - LOAD THESE AT THE TOP as requested -->
+  <!-- Firebase: Auth for sign-in; Firestore only because dp-topbar needs it. -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
 
-  <!-- Initialize Firebase immediately so other scripts (like dp-topbar) can use firebase -->
+  <!-- Initialize immediately so dp-topbar can use firebase -->
   <script>
-    // Replace with your project's Firebase config if different
     var firebaseConfig = {
       apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
       authDomain: "darkpurpleof-s-website.firebaseapp.com",
@@ -22,43 +21,49 @@
       messagingSenderId: "520651082420",
       appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
     };
-    // Only initialize once (guard just in case)
     try {
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     } catch (e) {
       console.error('Firebase init error', e);
     }
   </script>
 
-  <!-- Your existing topbar script (non-module) - keep external as requested -->
   <script src="/dp-topbar.js"></script>
 
   <style>
-    /* --- user-provided theme (kept intact, with tiny additions for the modal & topbar) --- */
     *, *::before, *::after { box-sizing: border-box; }
     html, body { height: 100%; width: 100%; overflow-x: hidden; }
     img { max-width: 100%; display: block; }
+    [hidden] { display: none !important; }
 
     :root{
       --bg: #171717;
       --card: #1f1f1f;
+      --raised: #242424;
       --muted: #a8a8a8;
       --accent: #6b21a8;
       --accent-strong: #5b21b6;
       --text: #eaeaea;
       --border: rgba(255,255,255,0.04);
-      --friend-row-height: 110px;
-      --friend-row-height-mobile: 84px;
+      --line: rgba(255,255,255,0.1);
+      --lily: #c8a2c8;
+      --lily-ink: #2a1238;
+      --danger: #c0392b;
     }
-    body.light { --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06); }
+    body.light {
+      --bg: #f6f8fb; --card:#fff; --raised:#f1f4f8; --muted:#475569; --text:#0f172a;
+      --border: rgba(0,0,0,0.06); --line: rgba(0,0,0,0.12);
+      --lily: #7e4a8a; --lily-ink: #fff;
+    }
 
     body {
       margin:0;
       font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      font-size: 14.5px;
+      line-height: 1.55;
       background-color: var(--bg);
       color:var(--text);
+      -webkit-font-smoothing: antialiased;
       transition: background .25s, color .25s;
       min-height:100vh;
     }
@@ -66,284 +71,748 @@
     dp-topbar { display:block; position:sticky; top:0; z-index:100; }
     .top-bar { display:none !important; }
 
+    /* ── Layout ── */
     main.container {
-      max-width:1200px;
+      max-width:1120px;
       width:100%;
-      margin:24px auto;
-      padding:20px;
+      margin:28px auto 56px;
+      padding:0 20px;
       display:grid;
-      grid-template-columns:1fr 340px;
+      grid-template-columns:minmax(0,1fr) 320px;
       gap:20px;
-      box-sizing:border-box;
-      overflow-x: hidden;
+      align-items:start;
     }
-    @media (max-width:920px){ main.container{ grid-template-columns:1fr; padding:16px; } aside.right-column{ order:2; } }
+    .col { display:grid; gap:20px; min-width:0; }
+    .side { position:sticky; top:76px; }
+    @media (max-width:900px){
+      main.container{ grid-template-columns:1fr; margin:16px auto 40px; padding:0 14px; }
+      .side { position:static; }
+    }
 
-    .card { background:var(--card); border-radius:12px; padding:18px; border:1px solid var(--border); color:var(--text); box-shadow:0 6px 18px rgba(2,6,23,0.45); overflow:visible; }
-    .hero { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 20px; border-radius: 12px; min-width: 0; }
-    .hero > div { min-width: 0; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:4px; overflow:hidden; }
+    .sec { padding:20px 22px; }
+    h2.label {
+      margin:0 0 14px; font-size:12px; font-weight:600; letter-spacing:.07em;
+      text-transform:uppercase; color:var(--muted);
+    }
 
-    .muted { color:var(--muted); font-size:13px; }
-
-    .center-card { max-width:900px; margin: 0 auto; }
-    .beta-card { display:flex; gap:18px; align-items:flex-start; }
-    @media (max-width:720px) { .beta-card { flex-direction:column; align-items:center; text-align:center; } }
+    /* ── Hero ── */
+    .hero { display:grid; grid-template-columns:220px minmax(0,1fr); }
+    @media (max-width:640px){ .hero { grid-template-columns:1fr; } }
 
     .beta-art {
-      width:320px; height:320px; border-radius:12px; background-size:cover; background-position:center; flex-shrink:0; border:1px solid var(--border);
+      min-height:220px;
+      border-right:1px solid var(--line);
+      background-size:cover; background-position:center;
+      background-color:var(--raised);
     }
-    @media (max-width:720px){ .beta-art{ width:100%; height:220px; } }
+    @media (max-width:640px){ .beta-art{ min-height:170px; border-right:0; border-bottom:1px solid var(--line); } }
 
-    .beta-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:12px; }
-    .beta-title { font-size:20px; font-weight:800; }
-    .beta-desc { color:var(--muted); font-size:15px; line-height:1.4; white-space:pre-wrap; }
+    .beta-body { min-width:0; padding:22px; display:flex; flex-direction:column; gap:14px; }
+    @media (max-width:640px){ .beta-body { padding:16px; } }
 
-    .actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    .btn { padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:transparent; cursor:pointer; font-weight:700; color:var(--text); }
-    .btn.primary { background: linear-gradient(180deg,var(--accent), var(--accent-strong)); border: none; color: white; }
-    .btn.ghost { background: transparent; }
+    .pill {
+      align-self:flex-start;
+      font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+      padding:4px 9px; border-radius:2px;
+      border:1px solid var(--line); color:var(--muted);
+    }
+    .pill.ok { background:var(--accent); border-color:var(--accent); color:#fff; }
 
-    #toast { position:fixed; top:18px; left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:10px; font-weight:700; display:none; z-index:99999; }
-    #toast.purple { background:var(--accent-strong); color:#fff; } #toast.yellow{ background:#e6b800; color:#222; } #toast.red{ background:#c00; color:#fff; }
+    h1 { margin:0; font-size:26px; font-weight:700; line-height:1.2; }
+    .desc { margin:0; color:var(--muted); font-size:14px; }
+    .fine { margin:0; color:var(--muted); font-size:12.5px; }
+    .fine a, .info a { color:var(--text); text-decoration:underline; font-weight:600; }
+    .fine a:hover, .info a:hover { color:var(--muted); }
 
-    /* modal */
-    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9998; }
-    .modal { background:var(--card); border-radius:12px; padding:18px; width:420px; max-width:95%; border:1px solid var(--border); }
-    .modal h3{ margin:0 0 8px 0; }
-    .modal .modal-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+    /* requirement progress */
+    .prog-head { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+    .prog-head span { font-size:12px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+    .prog-head b { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
+    .segs { display:flex; gap:4px; margin-top:8px; }
+    .seg { flex:1; height:4px; background:var(--line); }
+    .seg.on { background:var(--lily); }
 
-    /* topbar styling (minimal) */
-    dp-topbar .bar{ display:flex; gap:16px; align-items:center; padding:10px 20px; background:linear-gradient(90deg, rgba(0,0,0,0.2), transparent); border-bottom:1px solid var(--border); }
-    dp-topbar .logo{ display:flex; align-items:center; gap:10px; font-weight:800; }
-    dp-topbar .logo .dot{ width:12px; height:12px; border-radius:4px; background:var(--accent); box-shadow:0 2px 8px rgba(107,33,168,0.35); }
-    dp-topbar nav{ margin-left:auto; display:flex; gap:10px; }
-    dp-topbar a{ color:var(--muted); text-decoration:none; font-weight:600; padding:8px 10px; border-radius:8px; }
-    dp-topbar a.active{ color:var(--text); }
+    /* requirement tiles */
+    .reqs { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    @media (max-width:760px){ .reqs { grid-template-columns:1fr; } }
+    .reqs li {
+      display:flex; align-items:flex-start; gap:10px;
+      padding:10px 12px; background:var(--raised);
+      border:1px solid var(--line); border-left:3px solid var(--line); border-radius:2px;
+    }
+    .reqs li.ok { border-left-color:var(--lily); }
+    .reqs li.bad { border-left-color:var(--danger); }
+    .reqs .mark {
+      width:18px; height:18px; border-radius:2px; flex-shrink:0; margin-top:1px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:700; color:#fff;
+      border:1.5px solid var(--muted);
+    }
+    .reqs li.ok .mark { background:var(--lily); border-color:var(--lily); color:var(--lily-ink); }
+    .reqs li.bad .mark { background:var(--danger); border-color:var(--danger); }
+    .reqs .rt { min-width:0; display:flex; flex-direction:column; }
+    .reqs .rl { font-size:13.5px; font-weight:600; }
+    .reqs .rs { font-size:12px; color:var(--muted); }
+    .reqs li.neutral .rl { color:var(--muted); }
 
-    /* small responsive tweaks */
-    @media (max-width:600px){ main.container{ padding:12px; margin:12px auto; } }
+    /* actions */
+    .actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:2px; }
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      height:40px; padding:0 20px; border-radius:3px;
+      border:1px solid rgba(128,128,128,.35); background:transparent; color:var(--text);
+      font:inherit; font-size:13.5px; font-weight:600; text-decoration:none; cursor:pointer;
+      transition:background-color .12s, border-color .12s, opacity .12s;
+    }
+    .btn:hover { border-color:var(--muted); }
+    .btn:focus-visible { outline:2px solid var(--accent-strong); outline-offset:2px; }
+    .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .btn.primary:hover { background:var(--accent-strong); border-color:var(--accent-strong); }
+
+    /* loading skeleton */
+    .skeleton .sk { background:var(--line); animation:pulse 1.2s ease-in-out infinite; }
+    .skeleton .sk.t { height:28px; width:60%; }
+    .skeleton .sk.l { height:14px; width:90%; }
+    .skeleton .sk.l.s { width:70%; }
+    @keyframes pulse { 50% { opacity:.45; } }
+
+    /* ── Stats strip ── */
+    .stats { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:1px; background:var(--line); }
+    .stat { background:var(--card); padding:14px 18px; display:flex; flex-direction:column; gap:4px; }
+    .stat-k { font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+    .stat-v { font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; }
+    @media (max-width:640px){ .stats { grid-auto-flow:row; grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+    /* ── How it works ── */
+    .steps { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); }
+    .steps li { background:var(--card); padding:16px; display:flex; flex-direction:column; gap:10px; }
+    @media (max-width:760px){ .steps { grid-template-columns:1fr; } }
+    .num {
+      width:26px; height:26px; border-radius:2px; background:var(--accent); color:#fff;
+      display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+    }
+    .steps h4, .get h4 { margin:0; font-size:14.5px; font-weight:700; }
+    .steps p, .get p { margin:4px 0 0; color:var(--muted); font-size:13px; }
+
+    /* ── What you get ── */
+    .gets { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    @media (max-width:640px){ .gets { grid-template-columns:1fr; } }
+    .get { display:flex; gap:14px; padding:16px; background:var(--raised); border:1px solid var(--line); border-radius:2px; }
+    .get-ico {
+      width:38px; height:38px; flex:none; border-radius:2px;
+      display:flex; align-items:center; justify-content:center;
+      background:var(--card); border:1px solid var(--line); color:var(--text);
+    }
+    .get-ico svg { width:20px; height:20px; }
+
+    /* ── Sidebar ── */
+    .info { padding:20px; }
+    .info + .info { margin-top:0; }
+    .info ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px; }
+    .info li { color:var(--muted); font-size:13px; line-height:1.5; padding-left:16px; position:relative; }
+    .info li::before { content:""; position:absolute; left:0; top:7px; width:6px; height:6px; background:var(--accent); }
+    .info .fine { margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
+
+    /* ── Toast ── */
+    #toast {
+      position:fixed; top:18px; left:50%; transform:translate(-50%,-8px);
+      padding:10px 16px; border-radius:3px; font-size:13.5px; font-weight:600;
+      opacity:0; pointer-events:none; z-index:99999;
+      box-shadow:0 8px 24px rgba(0,0,0,0.4);
+      transition:opacity .18s, transform .18s;
+    }
+    #toast.show { opacity:1; transform:translate(-50%,0); }
+    #toast.purple { background:var(--accent-strong); color:#fff; }
+    #toast.yellow { background:#e6b800; color:#222; }
+    #toast.red { background:var(--danger); color:#fff; }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(0,0,0,0.6);
+      display:flex; align-items:center; justify-content:center; padding:16px; z-index:9998;
+      opacity:0; pointer-events:none; transition:opacity .15s;
+    }
+    .modal-backdrop.open { opacity:1; pointer-events:auto; }
+    .modal {
+      background:var(--card); border-radius:4px; border:1px solid var(--line);
+      padding:22px; width:400px; max-width:100%;
+      box-shadow:0 16px 40px rgba(0,0,0,0.5);
+      transform:translateY(8px); transition:transform .15s;
+    }
+    .modal-backdrop.open .modal { transform:none; }
+    .modal h3 { margin:0 0 8px; font-size:17px; }
+    .modal p { margin:0; color:var(--muted); font-size:14px; line-height:1.5; }
+    .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
   </style>
 </head>
 <body>
 
-  <!-- Use your existing topbar implementation (external script provided above) -->
   <dp-topbar></dp-topbar>
 
   <main class="container">
-    <section class="center-card card">
-      <div class="hero">
-        <div style="flex:1;">
-          <div class="beta-card" id="betaCard">
-            <div class="beta-art" id="betaArt" style="background-image: url('./assets/beta_en_unavailable.png')"></div>
-            <div class="beta-body">
-              <div class="beta-title">Programa Beta de DarkPurpleOF's Website</div>
-              <div class="beta-desc" id="betaDesc">Verificando elegibilidad...</div>
-              <div class="actions" id="betaActions" style="margin-top:8px"></div>
-            </div>
+    <div class="col">
+      <section class="card hero skeleton" id="betaCard">
+        <div class="beta-art" id="betaArt"></div>
+        <div class="beta-body" id="betaBody">
+          <div class="sk t"></div>
+          <div class="sk l"></div>
+          <div class="sk l s"></div>
+        </div>
+      </section>
+
+      <section class="card stats" id="stats">
+        <div class="stat"><span class="stat-k" data-i="statFee"></span><b class="stat-v">1000 DF$</b></div>
+        <div class="stat"><span class="stat-k" data-i="statAge"></span><b class="stat-v" data-i="statAgeVal"></b></div>
+        <div class="stat"><span class="stat-k" data-i="statRefund"></span><b class="stat-v" data-i="statRefundVal"></b></div>
+        <div class="stat" id="statBalance" hidden><span class="stat-k" data-i="statBalance"></span><b class="stat-v" id="statBalanceVal"></b></div>
+      </section>
+
+      <section class="card sec">
+        <h2 class="label" data-i="stepsTitle"></h2>
+        <ol class="steps">
+          <li>
+            <span class="num">1</span>
+            <div><h4 data-i="step1T"></h4><p data-i="step1B"></p></div>
+          </li>
+          <li>
+            <span class="num">2</span>
+            <div><h4 data-i="step2T"></h4><p data-i="step2B"></p></div>
+          </li>
+          <li>
+            <span class="num">3</span>
+            <div><h4 data-i="step3T"></h4><p data-i="step3B"></p></div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="card sec">
+        <h2 class="label" data-i="getTitle"></h2>
+        <div class="gets">
+          <div class="get">
+            <span class="get-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+            </span>
+            <div><h4 data-i="get1T"></h4><p data-i="get1B"></p></div>
+          </div>
+          <div class="get">
+            <span class="get-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4"/><path d="M12 11v10"/></svg>
+            </span>
+            <div><h4 data-i="get2T"></h4><p data-i="get2B"></p></div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
-    <aside class="right-column card">
-      <h3>Información del Programa Beta</h3>
-      <p class="muted">Únete a la beta para obtener acceso anticipado a funciones experimentales. La inscripción cuesta 1000 DF$ (no reembolsable).</p>
-      <p class="muted">Si te inscribes podrás descargar el plugin oficial para la experiencia beta.</p>
+    <aside class="col side">
+      <section class="card info">
+        <h2 class="label" data-i="aboutTitle"></h2>
+        <ul>
+          <li data-i="about1"></li>
+          <li data-i="about2"></li>
+          <li data-i="about3"></li>
+        </ul>
+      </section>
+
+      <section class="card info">
+        <h2 class="label" data-i="knowTitle"></h2>
+        <ul>
+          <li data-i="know1"></li>
+          <li data-i="know2"></li>
+          <li data-i="know3"></li>
+        </ul>
+        <p class="fine" id="sideTerms"></p>
+      </section>
     </aside>
   </main>
 
-  <!-- Confirm modal -->
   <div class="modal-backdrop" id="modalBackdrop">
-    <div class="modal" role="dialog" aria-modal="true">
-      <h3 id="modalTitle">Confirmar</h3>
-      <div id="modalBody">¿Estás seguro?</div>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle"></h3>
+      <p id="modalBody"></p>
       <div class="modal-actions">
-        <button class="btn" id="modalCancel">Cancelar</button>
-        <button class="btn primary" id="modalConfirm">Sí</button>
+        <button class="btn" id="modalCancel" data-i="cancel"></button>
+        <button class="btn primary" id="modalConfirm"></button>
       </div>
     </div>
   </div>
 
-  <div id="toast" class="purple"></div>
+  <div id="toast" class="purple" role="status"></div>
 
-  <!-- App logic (NON-modular, uses firebase global from the scripts loaded in <head>) -->
   <script>
-    // Use global firebase (already initialized in <head>)
+    // The server decides everything (eligibility, fee, enrollment); this page only displays it.
     var auth = firebase.auth();
-    var db = firebase.firestore();
 
-    // helpers
-    var toastEl = document.getElementById('toast');
-    function toast(text, kind){ kind = kind || 'purple'; toastEl.textContent = text; toastEl.className = kind; toastEl.style.display = 'block'; setTimeout(function(){ toastEl.style.display = 'none'; }, 3000); }
-
-    var modalBackdrop = document.getElementById('modalBackdrop');
-    var modalTitle = document.getElementById('modalTitle');
-    var modalBody = document.getElementById('modalBody');
-    var modalCancel = document.getElementById('modalCancel');
-    var modalConfirm = document.getElementById('modalConfirm');
-    function askConfirmation(title, body){
-      return new Promise(function(resolve){
-        modalTitle.textContent = title; modalBody.textContent = body;
-        modalBackdrop.style.display = 'flex';
-        function cancel(){ modalBackdrop.style.display='none'; cleanup(); resolve(false); }
-        function confirm(){ modalBackdrop.style.display='none'; cleanup(); resolve(true); }
-        function cleanup(){ modalCancel.removeEventListener('click', cancel); modalConfirm.removeEventListener('click', confirm); }
-        modalCancel.addEventListener('click', cancel);
-        modalConfirm.addEventListener('click', confirm);
-      });
-    }
-
-    function parseCoins(coinsStr) {
-      return BigInt(coinsStr || '0');
-    }
-
-    var betaArt = document.getElementById('betaArt');
-    var betaDesc = document.getElementById('betaDesc');
-    var betaActions = document.getElementById('betaActions');
+    // Page is on GitHub Pages, backend on Netlify. Override with window.BETA_API if needed.
+    var IS_LOCAL = ['localhost', '127.0.0.1'].indexOf(location.hostname) !== -1;
+    var API_URL = window.BETA_API
+      || (IS_LOCAL ? 'http://localhost:8888/beta' : 'https://darkpurpleofswebsite.netlify.app/beta');
 
     var ASSETS = {
       available: '/org-owner.jpg',
       unavailable: '/assets/beta_en_unavailable.png',
       enrolled: '/assets/default_inverted.png'
     };
+    var TERMS_URL = 'https://darkpurpleof.github.io/terms';
+    var PLUGIN_URL = '/ugc/viewugc?id=beta-enroll&author=system@darkpurpleof.github.io&type=1';
+    var LOCALES = { en: 'en-US', es: 'es-ES', ru: 'ru-RU', ja: 'ja-JP', de: 'de-DE' };
+
+    // ── i18n ──
+    // Language comes from the URL: /<xx>/beta. Anything unsupported falls back to English.
+    var I18N = {
+      en: {
+        pageTitle: 'Beta Program', title: 'Beta Program',
+        aboutTitle: 'About the beta',
+        about1: 'Early access to experimental features',
+        about2: '1000 DF$ to join, non-refundable',
+        about3: 'Includes the official beta plugin',
+        pillSignIn: 'Sign in', pillNotEligible: 'Not eligible', pillOpen: 'Open', pillEnrolled: 'Enrolled',
+        descSignedOut: 'Sign in to join.',
+        descEnrolled: "You're in. Get the official beta plugin to start.",
+        descOpen: 'Early access to experimental features. 1000 DF$, non-refundable.',
+        descNeed: 'You need:',
+        reqSignedIn: 'Signed in', reqAge: 'Account 6+ months old', reqCoins: '1000 DF$', reqCoinsHave: '1000 DF$ (you have {n})',
+        download: 'Download plugin', withdraw: 'Withdraw', join: 'Join for 1000 DF$',
+        terms: 'By joining you agree to the {link}.', termsLink: 'Terms',
+        joinTitle: 'Join the beta?', joinBody: 'This costs 1000 DF$ and is non-refundable.', joinConfirm: 'Join',
+        withdrawTitle: 'Withdraw?', withdrawBody: "This can't be undone and the fee isn't refunded.", withdrawConfirm: 'Withdraw',
+        cancel: 'Cancel',
+        toastEnrolled: "You're enrolled", toastWithdrawn: 'Withdrawn',
+        err_SESSION: 'Please sign in again', err_SIGNIN: 'Sign in first', err_TOO_NEW: 'Your account is too new',
+        err_NO_USER: 'Account data not found', err_ALREADY: 'Already enrolled', err_INSUFFICIENT: 'Not enough DF$',
+        err_NOT_ENROLLED: 'Not enrolled', err_NETWORK: 'Network error', err_DEFAULT: 'Something went wrong',
+        statFee: 'Joining fee', statAge: 'Account age', statAgeVal: '6+ months', statRefund: 'Refunds', statRefundVal: 'None', statBalance: 'Your balance',
+        reqTitle: 'Requirements', reqProgress: '{done} of {total} met', stMet: 'Met', stNotMet: 'Not met', stUnchecked: 'Not checked',
+        stepsTitle: 'How it works',
+        step1T: 'Check the requirements', step1B: 'Be signed in, with an account older than 6 months and at least 1000 DF$.',
+        step2T: 'Join the program', step2B: 'Pay the 1000 DF$ joining fee. It is non-refundable.',
+        step3T: 'Install the plugin', step3B: 'Download the official beta plugin and start trying experimental features.',
+        getTitle: 'What you get',
+        get1T: 'Early access', get1B: 'Try experimental features before they are available to everyone.',
+        get2T: 'Official beta plugin', get2B: 'Included with your membership and available from its plugin page.',
+        knowTitle: 'Good to know',
+        know1: 'The 1000 DF$ fee is non-refundable.',
+        know2: 'You can withdraw from the program, but the fee is not refunded.',
+        know3: 'Withdrawing cannot be undone.'
+      },
+      es: {
+        pageTitle: 'Programa beta', title: 'Programa beta',
+        aboutTitle: 'Acerca de la beta',
+        about1: 'Acceso anticipado a funciones experimentales',
+        about2: '1000 DF$ para unirte, sin reembolso',
+        about3: 'Incluye el plugin oficial de la beta',
+        pillSignIn: 'Inicia sesión', pillNotEligible: 'No elegible', pillOpen: 'Abierto', pillEnrolled: 'Inscrito',
+        descSignedOut: 'Inicia sesión para unirte.',
+        descEnrolled: 'Ya estás dentro. Obtén el plugin oficial de la beta para empezar.',
+        descOpen: 'Acceso anticipado a funciones experimentales. 1000 DF$, sin reembolso.',
+        descNeed: 'Necesitas:',
+        reqSignedIn: 'Sesión iniciada', reqAge: 'Cuenta con más de 6 meses', reqCoins: '1000 DF$', reqCoinsHave: '1000 DF$ (tienes {n})',
+        download: 'Descargar plugin', withdraw: 'Darme de baja', join: 'Unirme por 1000 DF$',
+        terms: 'Al unirte aceptas los {link}.', termsLink: 'Términos',
+        joinTitle: '¿Unirte a la beta?', joinBody: 'Cuesta 1000 DF$ y no es reembolsable.', joinConfirm: 'Unirme',
+        withdrawTitle: '¿Darte de baja?', withdrawBody: 'No se puede deshacer y la cuota no se reembolsa.', withdrawConfirm: 'Darme de baja',
+        cancel: 'Cancelar',
+        toastEnrolled: 'Te has inscrito', toastWithdrawn: 'Baja confirmada',
+        err_SESSION: 'Inicia sesión de nuevo', err_SIGNIN: 'Inicia sesión primero', err_TOO_NEW: 'Tu cuenta es demasiado nueva',
+        err_NO_USER: 'No se encontraron los datos de la cuenta', err_ALREADY: 'Ya estás inscrito', err_INSUFFICIENT: 'DF$ insuficientes',
+        err_NOT_ENROLLED: 'No estás inscrito', err_NETWORK: 'Error de red', err_DEFAULT: 'Algo salió mal',
+        statFee: 'Cuota de ingreso', statAge: 'Antigüedad de la cuenta', statAgeVal: '6+ meses', statRefund: 'Reembolsos', statRefundVal: 'Ninguno', statBalance: 'Tu saldo',
+        reqTitle: 'Requisitos', reqProgress: '{done} de {total} cumplidos', stMet: 'Cumplido', stNotMet: 'No cumplido', stUnchecked: 'Sin comprobar',
+        stepsTitle: 'Cómo funciona',
+        step1T: 'Revisa los requisitos', step1B: 'Ten la sesión iniciada, una cuenta con más de 6 meses y al menos 1000 DF$.',
+        step2T: 'Únete al programa', step2B: 'Paga la cuota de 1000 DF$. No es reembolsable.',
+        step3T: 'Instala el plugin', step3B: 'Descarga el plugin oficial de la beta y empieza a probar funciones experimentales.',
+        getTitle: 'Qué obtienes',
+        get1T: 'Acceso anticipado', get1B: 'Prueba funciones experimentales antes de que estén disponibles para todos.',
+        get2T: 'Plugin oficial de la beta', get2B: 'Incluido con tu membresía y disponible en su página de plugin.',
+        knowTitle: 'Conviene saber',
+        know1: 'La cuota de 1000 DF$ no es reembolsable.',
+        know2: 'Puedes darte de baja del programa, pero la cuota no se reembolsa.',
+        know3: 'Darte de baja no se puede deshacer.'
+      },
+      ru: {
+        pageTitle: 'Бета-программа', title: 'Бета-программа',
+        aboutTitle: 'О бета-программе',
+        about1: 'Ранний доступ к экспериментальным функциям',
+        about2: 'Вступление стоит 1000 DF$, без возврата',
+        about3: 'Включает официальный плагин беты',
+        pillSignIn: 'Войдите', pillNotEligible: 'Недоступно', pillOpen: 'Открыто', pillEnrolled: 'Участвуете',
+        descSignedOut: 'Войдите, чтобы присоединиться.',
+        descEnrolled: 'Вы в программе. Скачайте официальный плагин беты, чтобы начать.',
+        descOpen: 'Ранний доступ к экспериментальным функциям. 1000 DF$, без возврата.',
+        descNeed: 'Нужно:',
+        reqSignedIn: 'Вы вошли', reqAge: 'Аккаунту больше 6 месяцев', reqCoins: '1000 DF$', reqCoinsHave: '1000 DF$ (у вас {n})',
+        download: 'Скачать плагин', withdraw: 'Выйти из программы', join: 'Вступить за 1000 DF$',
+        terms: 'Присоединяясь, вы принимаете {link}.', termsLink: 'Условия',
+        joinTitle: 'Вступить в бету?', joinBody: 'Стоит 1000 DF$, возврату не подлежит.', joinConfirm: 'Вступить',
+        withdrawTitle: 'Выйти из программы?', withdrawBody: 'Это нельзя отменить, взнос не возвращается.', withdrawConfirm: 'Выйти',
+        cancel: 'Отмена',
+        toastEnrolled: 'Вы в программе', toastWithdrawn: 'Вы вышли',
+        err_SESSION: 'Войдите снова', err_SIGNIN: 'Сначала войдите', err_TOO_NEW: 'Ваш аккаунт слишком новый',
+        err_NO_USER: 'Данные аккаунта не найдены', err_ALREADY: 'Вы уже участвуете', err_INSUFFICIENT: 'Недостаточно DF$',
+        err_NOT_ENROLLED: 'Вы не участвуете', err_NETWORK: 'Ошибка сети', err_DEFAULT: 'Что-то пошло не так',
+        statFee: 'Вступительный взнос', statAge: 'Возраст аккаунта', statAgeVal: '6+ месяцев', statRefund: 'Возврат', statRefundVal: 'Нет', statBalance: 'Ваш баланс',
+        reqTitle: 'Требования', reqProgress: 'Выполнено: {done} из {total}', stMet: 'Выполнено', stNotMet: 'Не выполнено', stUnchecked: 'Не проверено',
+        stepsTitle: 'Как это работает',
+        step1T: 'Проверьте требования', step1B: 'Войдите в аккаунт старше 6 месяцев, на балансе должно быть не менее 1000 DF$.',
+        step2T: 'Вступите в программу', step2B: 'Оплатите вступительный взнос 1000 DF$. Он не возвращается.',
+        step3T: 'Установите плагин', step3B: 'Скачайте официальный плагин беты и начните пробовать экспериментальные функции.',
+        getTitle: 'Что вы получаете',
+        get1T: 'Ранний доступ', get1B: 'Пробуйте экспериментальные функции раньше, чем они станут доступны всем.',
+        get2T: 'Официальный плагин беты', get2B: 'Входит в участие и доступен на странице плагина.',
+        knowTitle: 'Важно знать',
+        know1: 'Взнос 1000 DF$ не возвращается.',
+        know2: 'Из программы можно выйти, но взнос не возвращается.',
+        know3: 'Выход нельзя отменить.'
+      },
+      ja: {
+        pageTitle: 'ベータプログラム', title: 'ベータプログラム',
+        aboutTitle: 'ベータについて',
+        about1: '試験的な機能への早期アクセス',
+        about2: '参加費 1000 DF$(返金不可)',
+        about3: '公式ベータプラグイン付き',
+        pillSignIn: 'サインイン', pillNotEligible: '対象外', pillOpen: '参加可能', pillEnrolled: '参加中',
+        descSignedOut: '参加するにはサインインしてください。',
+        descEnrolled: '参加済みです。公式ベータプラグインをダウンロードして始めましょう。',
+        descOpen: '試験的な機能への早期アクセス。1000 DF$、返金不可。',
+        descNeed: '必要条件:',
+        reqSignedIn: 'サインイン済み', reqAge: 'アカウント作成から6か月以上', reqCoins: '1000 DF$', reqCoinsHave: '1000 DF$(所持: {n})',
+        download: 'プラグインをダウンロード', withdraw: '脱退', join: '1000 DF$ で参加',
+        terms: '参加すると{link}に同意したことになります。', termsLink: '利用規約',
+        joinTitle: 'ベータに参加しますか?', joinBody: '1000 DF$ がかかり、返金はできません。', joinConfirm: '参加',
+        withdrawTitle: '脱退しますか?', withdrawBody: '元に戻せず、参加費も返金されません。', withdrawConfirm: '脱退',
+        cancel: 'キャンセル',
+        toastEnrolled: '参加しました', toastWithdrawn: '脱退しました',
+        err_SESSION: 'もう一度サインインしてください', err_SIGNIN: '先にサインインしてください', err_TOO_NEW: 'アカウントが新しすぎます',
+        err_NO_USER: 'アカウントデータが見つかりません', err_ALREADY: 'すでに参加しています', err_INSUFFICIENT: 'DF$ が足りません',
+        err_NOT_ENROLLED: '参加していません', err_NETWORK: 'ネットワークエラー', err_DEFAULT: '問題が発生しました',
+        statFee: '参加費', statAge: 'アカウント年数', statAgeVal: '6か月以上', statRefund: '返金', statRefundVal: 'なし', statBalance: 'あなたの残高',
+        reqTitle: '必要条件', reqProgress: '{total}件中{done}件達成', stMet: '達成', stNotMet: '未達成', stUnchecked: '未確認',
+        stepsTitle: '参加の流れ',
+        step1T: '条件を確認', step1B: 'サインイン済みで、作成から6か月以上のアカウントと1000 DF$以上が必要です。',
+        step2T: 'プログラムに参加', step2B: '参加費1000 DF$を支払います。返金はできません。',
+        step3T: 'プラグインを導入', step3B: '公式ベータプラグインをダウンロードして、試験的な機能を試しましょう。',
+        getTitle: '参加特典',
+        get1T: '早期アクセス', get1B: '試験的な機能を一般公開より先に試せます。',
+        get2T: '公式ベータプラグイン', get2B: '参加に含まれ、プラグインページから入手できます。',
+        knowTitle: 'ご注意',
+        know1: '参加費1000 DF$は返金できません。',
+        know2: 'プログラムから脱退できますが、参加費は返金されません。',
+        know3: '脱退は元に戻せません。'
+      },
+      de: {
+        pageTitle: 'Beta-Programm', title: 'Beta-Programm',
+        aboutTitle: 'Über die Beta',
+        about1: 'Früher Zugang zu experimentellen Funktionen',
+        about2: '1000 DF$ Beitritt, nicht erstattbar',
+        about3: 'Inklusive offiziellem Beta-Plugin',
+        pillSignIn: 'Anmelden', pillNotEligible: 'Nicht berechtigt', pillOpen: 'Offen', pillEnrolled: 'Teilnehmer',
+        descSignedOut: 'Melde dich an, um beizutreten.',
+        descEnrolled: 'Du bist dabei. Hol dir das offizielle Beta-Plugin zum Start.',
+        descOpen: 'Früher Zugang zu experimentellen Funktionen. 1000 DF$, nicht erstattbar.',
+        descNeed: 'Du brauchst:',
+        reqSignedIn: 'Angemeldet', reqAge: 'Konto älter als 6 Monate', reqCoins: '1000 DF$', reqCoinsHave: '1000 DF$ (du hast {n})',
+        download: 'Plugin herunterladen', withdraw: 'Austreten', join: 'Für 1000 DF$ beitreten',
+        terms: 'Mit dem Beitritt stimmst du den {link} zu.', termsLink: 'Nutzungsbedingungen',
+        joinTitle: 'Der Beta beitreten?', joinBody: 'Das kostet 1000 DF$ und ist nicht erstattbar.', joinConfirm: 'Beitreten',
+        withdrawTitle: 'Austreten?', withdrawBody: 'Das lässt sich nicht rückgängig machen, die Gebühr wird nicht erstattet.', withdrawConfirm: 'Austreten',
+        cancel: 'Abbrechen',
+        toastEnrolled: 'Du bist dabei', toastWithdrawn: 'Ausgetreten',
+        err_SESSION: 'Bitte melde dich erneut an', err_SIGNIN: 'Bitte zuerst anmelden', err_TOO_NEW: 'Dein Konto ist zu neu',
+        err_NO_USER: 'Kontodaten nicht gefunden', err_ALREADY: 'Bereits angemeldet', err_INSUFFICIENT: 'Nicht genug DF$',
+        err_NOT_ENROLLED: 'Nicht angemeldet', err_NETWORK: 'Netzwerkfehler', err_DEFAULT: 'Etwas ist schiefgelaufen',
+        statFee: 'Beitrittsgebühr', statAge: 'Kontoalter', statAgeVal: '6+ Monate', statRefund: 'Erstattungen', statRefundVal: 'Keine', statBalance: 'Dein Guthaben',
+        reqTitle: 'Voraussetzungen', reqProgress: '{done} von {total} erfüllt', stMet: 'Erfüllt', stNotMet: 'Nicht erfüllt', stUnchecked: 'Nicht geprüft',
+        stepsTitle: 'So funktioniert es',
+        step1T: 'Voraussetzungen prüfen', step1B: 'Sei angemeldet, mit einem Konto, das älter als 6 Monate ist, und mindestens 1000 DF$.',
+        step2T: 'Dem Programm beitreten', step2B: 'Zahle die Beitrittsgebühr von 1000 DF$. Sie ist nicht erstattbar.',
+        step3T: 'Plugin installieren', step3B: 'Lade das offizielle Beta-Plugin herunter und teste experimentelle Funktionen.',
+        getTitle: 'Das bekommst du',
+        get1T: 'Früher Zugang', get1B: 'Teste experimentelle Funktionen, bevor sie für alle verfügbar sind.',
+        get2T: 'Offizielles Beta-Plugin', get2B: 'In deiner Mitgliedschaft enthalten und auf der Plugin-Seite erhältlich.',
+        knowTitle: 'Gut zu wissen',
+        know1: 'Die Gebühr von 1000 DF$ ist nicht erstattbar.',
+        know2: 'Du kannst aus dem Programm austreten, die Gebühr wird aber nicht erstattet.',
+        know3: 'Ein Austritt lässt sich nicht rückgängig machen.'
+      }
+    };
+
+    var langMatch = location.pathname.match(/(?:^|\/)([a-z]{2})(?:\/creator)?\/(?:beta-features|beta)(?:\.html|\/index\.html)?\/?$/i);
+    var LANG = (langMatch && I18N[langMatch[1].toLowerCase()]) ? langMatch[1].toLowerCase() : 'en';
+
+    function t(key, vars) {
+      var s = I18N[LANG][key];
+      if (s === undefined) s = I18N.en[key];
+      if (s === undefined) s = key;
+      if (vars) s = s.replace(/\{(\w+)\}/g, function (_, k) { return vars[k] !== undefined ? vars[k] : ''; });
+      return s;
+    }
 
     var currentUser = null;
+    var card = document.getElementById('betaCard');
+    var art = document.getElementById('betaArt');
+    var body = document.getElementById('betaBody');
+    var busy = false;
 
-    function accountOlderThanSixMonths(creationTimeISO){
-      if(!creationTimeISO) return false;
-      var created = new Date(creationTimeISO);
-      var sixMonths = new Date(created);
-      sixMonths.setMonth(sixMonths.getMonth() + 6);
-      return (new Date()) >= sixMonths;
+    // ── helpers ──
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined) n.textContent = text;
+      return n;
     }
 
-    function renderUnavailable(missingDetails){
-      betaArt.style.backgroundImage = "url('"+ASSETS.unavailable+"')";
-      betaDesc.textContent = `No eres elegible para unirte al Programa Beta. Debes cumplir con todos los siguientes criterios:
-- Tu cuenta debe tener al menos 6 meses de antigüedad
-- Debes tener al menos 1000 DF$
-- Debes haber iniciado sesión
-
-Actualmente, no cumples con: ${missingDetails}`;
-      betaActions.innerHTML = '';
+    // "By joining you agree to the Terms." with the link inside the sentence
+    function termsLine(cls) {
+      var fine = el('p', cls);
+      var parts = t('terms').split('{link}');
+      var a = el('a', '', t('termsLink'));
+      a.href = TERMS_URL; a.target = '_blank'; a.rel = 'noopener';
+      fine.appendChild(document.createTextNode(parts[0]));
+      fine.appendChild(a);
+      fine.appendChild(document.createTextNode(parts[1] || ''));
+      return fine;
     }
 
-    function renderNotEnrolled(){
-      betaArt.style.backgroundImage = "url('"+ASSETS.available+"')";
-      betaDesc.textContent = "¡Inscríbete en el programa beta para obtener nuevas funciones adicionales antes que nadie! Al unirte al Programa Beta aceptas nuestros Términos de Servicio que puedes consultar en [darkpurpleof.github.io](https://darkpurpleof.github.io/terms) y pagarás una tarifa de inscripción de 1000 DF$ (no reembolsable) en el momento de unirte. Estos 1000 DF$ no serán reembolsados si te retiras del programa.";
-      betaActions.innerHTML = '';
-      var enrollBtn = document.createElement('button'); enrollBtn.className = 'btn primary'; enrollBtn.textContent = 'Inscribirse';
-      enrollBtn.addEventListener('click', onEnrollClicked);
-      betaActions.appendChild(enrollBtn);
+    function applyStaticText() {
+      document.documentElement.lang = LANG;
+      document.title = t('pageTitle');
+      var nodes = document.querySelectorAll('[data-i]');
+      for (var i = 0; i < nodes.length; i++) nodes[i].textContent = t(nodes[i].getAttribute('data-i'));
+      var side = document.getElementById('sideTerms');
+      side.textContent = '';
+      var line = termsLine('');
+      while (line.firstChild) side.appendChild(line.firstChild);
     }
 
-    function renderEnrolled(){
-      betaArt.style.backgroundImage = "url('"+ASSETS.enrolled+"')";
-      betaDesc.textContent = "Actualmente estás inscrito en el programa beta, el cual ofrecerá funciones beta en el futuro. Mientras tanto, puedes descargar el plugin oficial del programa beta para comenzar a usar la aplicación oficial.";
-      betaActions.innerHTML = '';
-      var downloadBtn = document.createElement('a'); downloadBtn.className = 'btn primary';
-      downloadBtn.href = '../ugc/viewugc?id=beta-enroll&author=system@darkpurpleof.github.io&type=1';
-      downloadBtn.textContent = 'Descargar el Plugin';
-      var withdrawBtn = document.createElement('button'); withdrawBtn.className='btn'; withdrawBtn.textContent='Cancelar Inscripción';
-      withdrawBtn.addEventListener('click', onWithdrawClicked);
-      betaActions.appendChild(downloadBtn); betaActions.appendChild(withdrawBtn);
+    var toastEl = document.getElementById('toast');
+    var toastTimer;
+    function toast(text, kind) {
+      toastEl.textContent = text;
+      toastEl.className = (kind || 'purple') + ' show';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 3000);
     }
 
-    // Actions
-    function onEnrollClicked(){
-      if(!currentUser){ toast('Debes iniciar sesión para inscribirte', 'red'); return; }
-      askConfirmation('Unirse al Programa Beta', '¿Estás seguro de que quieres pagar 1000 DF$ y unirte al Programa Beta? Esta tarifa no es reembolsable. Al unirte, aceptas nuestros Términos de Servicio disponibles en [darkpurpleof.github.io](https://darkpurpleof.github.io/terms) y obtendrás acceso anticipado a funciones experimentales. Puedes retirarte más tarde, pero la tarifa no será reembolsada.').then(function(confirmed){
-        if(!confirmed) return;
-        var userEmail = currentUser.email;
-        var userRef = db.collection('user_data').doc(userEmail);
+    // ── API ──
+    async function api(action) {
+      var headers = { 'Content-Type': 'application/json' };
+      var payload = { action: action };
 
-        db.runTransaction(function(transaction){
-          return transaction.get(userRef).then(function(uSnap){
-            if(!uSnap.exists){ throw new Error('Datos de usuario no encontrados'); }
-            var data = uSnap.data() || {};
-            var coinsStr = (data.coins || '0').toString();
-            var coins = parseCoins(coinsStr);
-            if(coins < 1000n){ throw new Error('Monedas insuficientes'); }
-            var newCoins = coins - 1000n;
-            transaction.update(userRef, { coins: newCoins.toString(), beta_enrolled: true });
+      var token = null;
+      try { token = currentUser ? await currentUser.getIdToken() : null; } catch (e) { console.warn(e); }
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      else if (currentUser) payload.uid = currentUser.uid;
 
-            var trRefEnroll = db.collection('transactions').doc(userEmail).collection('records').doc('beta-enroll');
-            transaction.set(trRefEnroll, {
-              amount: 1000,
-              date: firebase.firestore.FieldValue.serverTimestamp(),
-              description: 'Unirse a la beta',
-              image: 'darkpurpleof.github.io/org-owner.jpg',
-              source: 'system@darkpurpleof.github.io',
-              type: 'outgoing',
-              transtype: 'beta'
-            });
+      var res, data;
+      try {
+        res = await fetch(API_URL, { method: 'POST', headers: headers, body: JSON.stringify(payload) });
+        data = await res.json();
+      } catch (e) {
+        var ne = new Error('NETWORK'); ne.code = 'NETWORK'; throw ne;
+      }
+      if (!res.ok || !data.ok) {
+        var err = new Error(data.error || 'SERVER'); err.code = data.error || 'SERVER'; throw err;
+      }
+      return data;
+    }
 
-            var trRefFixer = db.collection('transactions').doc(userEmail).collection('records').doc('darkpurpleofswebsitefixer');
-            transaction.set(trRefFixer, {
-              amount: 0,
-              date: firebase.firestore.FieldValue.serverTimestamp(),
-              description: "DarkPurpleOF's Website Beta",
-              image: 'darkpurpleof.github.io/assets/default_inverted.png',
-              source: 'system@darkpurpleof.github.io',
-              type: 'outgoing'
-            });
+    function errText(err) {
+      var k = 'err_' + err.code;
+      return (I18N[LANG][k] || I18N.en[k]) ? t(k) : t('err_DEFAULT');
+    }
 
-          });
-        }).then(function(){
-          toast('¡Inscripción exitosa!', 'purple'); refreshUI();
-        }).catch(function(err){ console.error(err); toast(err.message || 'Error en la inscripción', 'red'); });
+    // ── modal ──
+    var backdrop = document.getElementById('modalBackdrop');
+    var mTitle = document.getElementById('modalTitle');
+    var mBody = document.getElementById('modalBody');
+    var mCancel = document.getElementById('modalCancel');
+    var mConfirm = document.getElementById('modalConfirm');
 
+    function ask(title, text, confirmLabel) {
+      return new Promise(function (resolve) {
+        mTitle.textContent = title;
+        mBody.textContent = text;
+        mConfirm.textContent = confirmLabel;
+        backdrop.classList.add('open');
+        mConfirm.focus();
+
+        function done(result) {
+          backdrop.classList.remove('open');
+          mCancel.removeEventListener('click', onCancel);
+          mConfirm.removeEventListener('click', onConfirm);
+          backdrop.removeEventListener('click', onBackdrop);
+          document.removeEventListener('keydown', onKey);
+          resolve(result);
+        }
+        function onCancel() { done(false); }
+        function onConfirm() { done(true); }
+        function onBackdrop(e) { if (e.target === backdrop) done(false); }
+        function onKey(e) { if (e.key === 'Escape') done(false); }
+
+        mCancel.addEventListener('click', onCancel);
+        mConfirm.addEventListener('click', onConfirm);
+        backdrop.addEventListener('click', onBackdrop);
+        document.addEventListener('keydown', onKey);
       });
     }
 
-    function onWithdrawClicked(){
-      if(!currentUser){ toast('Debes iniciar sesión', 'red'); return; }
-      askConfirmation('Retirarse del Programa Beta', '¿Estás seguro de que quieres retirarte del Programa Beta? Esta acción es irreversible. Tu estado de beta_enrolled será eliminado, el registro de transacción asociado será borrado y perderás acceso a las funciones beta. La tarifa de inscripción de 1000 DF$ no será reembolsada.').then(function(confirmed){
-        if(!confirmed) return;
-        var userRef = db.collection('user_data').doc(currentUser.email);
-        var trRefFixer = db.collection('transactions').doc(currentUser.email).collection('records').doc('darkpurpleofswebsitefixer');
-        var trRefEnroll = db.collection('transactions').doc(currentUser.email).collection('records').doc('beta-enroll');
+    // ── rendering ──
+    function setArt(url) { art.style.backgroundImage = "url('" + url + "')"; }
 
-        userRef.update({ beta_enrolled: firebase.firestore.FieldValue.delete() }).then(function(){
-          trRefFixer.delete().catch(function(e){ console.warn('error al eliminar fixer', e); });
-          trRefEnroll.delete().catch(function(e){ console.warn('error al eliminar enroll', e); });
-          toast('Te has retirado del programa', 'yellow'); refreshUI();
-        }).catch(function(err){ console.error(err); toast(err.message || 'Error al retirarse', 'red'); });
+    function formatN(n) { return Number(n).toLocaleString(LOCALES[LANG] || 'en-US'); }
+    function hasNumber(n) { return n !== undefined && n !== null && n !== '' && isFinite(Number(n)); }
+
+    // one requirement tile: state is 'ok' | 'bad' | 'neutral'
+    function req(state, text) {
+      var li = el('li', state);
+      li.appendChild(el('span', 'mark', state === 'ok' ? '✓' : state === 'bad' ? '✕' : ''));
+      var wrap = el('span', 'rt');
+      wrap.appendChild(el('span', 'rl', text));
+      wrap.appendChild(el('span', 'rs', state === 'ok' ? t('stMet') : state === 'bad' ? t('stNotMet') : t('stUnchecked')));
+      li.appendChild(wrap);
+      return li;
+    }
+
+    function progress(done, total) {
+      var wrap = el('div', 'prog');
+      var head = el('div', 'prog-head');
+      head.appendChild(el('span', '', t('reqTitle')));
+      head.appendChild(el('b', '', t('reqProgress', { done: done, total: total })));
+      wrap.appendChild(head);
+      var segs = el('div', 'segs');
+      for (var i = 0; i < total; i++) segs.appendChild(el('span', 'seg' + (i < done ? ' on' : '')));
+      wrap.appendChild(segs);
+      return wrap;
+    }
+
+    function view(opts) {
+      card.classList.remove('skeleton');
+      setArt(opts.art);
+      body.textContent = '';
+      body.appendChild(el('span', 'pill' + (opts.ok ? ' ok' : ''), opts.pill));
+      body.appendChild(el('h1', '', t('title')));
+      if (opts.desc) body.appendChild(el('p', 'desc', opts.desc));
+      if (opts.progress) body.appendChild(progress(opts.progress.done, opts.progress.total));
+      if (opts.reqs) {
+        var ul = el('ul', 'reqs');
+        for (var i = 0; i < opts.reqs.length; i++) ul.appendChild(opts.reqs[i]);
+        body.appendChild(ul);
+      }
+      if (opts.actions) {
+        var actions = el('div', 'actions');
+        for (var j = 0; j < opts.actions.length; j++) actions.appendChild(opts.actions[j]);
+        body.appendChild(actions);
+      }
+      if (opts.terms) body.appendChild(termsLine('fine'));
+    }
+
+    function showBalance(coins) {
+      var tile = document.getElementById('statBalance');
+      if (hasNumber(coins)) {
+        document.getElementById('statBalanceVal').textContent = formatN(coins) + ' DF$';
+        tile.hidden = false;
+      } else {
+        tile.hidden = true;
+      }
+    }
+
+    function renderSignedOut() {
+      showBalance(null);
+      view({
+        art: ASSETS.unavailable, pill: t('pillSignIn'),
+        desc: t('descSignedOut'),
+        progress: { done: 0, total: 3 },
+        reqs: [req('bad', t('reqSignedIn')), req('neutral', t('reqAge')), req('neutral', t('reqCoins'))]
       });
     }
 
-    // refresh UI
-    function refreshUI(){
-      if(!currentUser){ renderUnavailable('"Iniciar sesión"'); return; }
-      var userRef = db.collection('user_data').doc(currentUser.email);
-      userRef.get().then(function(snap){
-        var data = snap.exists ? snap.data() : {};
-        var isEnrolled = !!data.beta_enrolled;
-        var coinsStr = (data.coins || '0').toString();
-        var coins = parseCoins(coinsStr);
-        var creationTime = currentUser.metadata && currentUser.metadata.creationTime;
-        var meetsAge = accountOlderThanSixMonths(creationTime);
-        var meetsCoins = coins >= 1000n;
-        if(isEnrolled){ renderEnrolled(); return; }
-        var missingDetails = [];
-        if(!meetsAge) missingDetails.push('antigüedad de la cuenta (debe tener al menos 6 meses)');
-        if(!meetsCoins) {
-          var needed = 1000n - coins;
-          missingDetails.push(`monedas (tienes ${coins.toString()} DF$, necesitas ${needed.toString()} más)`);
-        }
-        if(!currentUser) missingDetails.push('inicio de sesión');
-        if(missingDetails.length > 0){
-          renderUnavailable(missingDetails.join(', '));
-        } else {
-          renderNotEnrolled();
-        }
-      }).catch(function(err){ console.error(err); toast('Error al cargar datos del usuario', 'red'); });
+    function renderStatus(s) {
+      showBalance(s.coins);
+      var coinsLabel = hasNumber(s.coins) ? t('reqCoinsHave', { n: formatN(s.coins) }) : t('reqCoins');
+
+      if (s.enrolled) {
+        var dl = el('a', 'btn primary', t('download'));
+        dl.href = PLUGIN_URL;
+        var out = el('button', 'btn', t('withdraw'));
+        out.addEventListener('click', onWithdraw);
+        view({
+          art: ASSETS.enrolled, pill: t('pillEnrolled'), ok: true,
+          desc: t('descEnrolled'),
+          actions: [dl, out]
+        });
+      } else if (s.eligible) {
+        var go = el('button', 'btn primary', t('join'));
+        go.addEventListener('click', onEnroll);
+        view({
+          art: ASSETS.available, pill: t('pillOpen'), ok: true,
+          desc: t('descOpen'),
+          progress: { done: 3, total: 3 },
+          reqs: [req('ok', t('reqSignedIn')), req('ok', t('reqAge')), req('ok', coinsLabel)],
+          actions: [go],
+          terms: true
+        });
+      } else {
+        var met = 1 + (s.meetsAge ? 1 : 0) + (s.meetsCoins ? 1 : 0);
+        view({
+          art: ASSETS.unavailable, pill: t('pillNotEligible'),
+          desc: t('descNeed'),
+          progress: { done: met, total: 3 },
+          reqs: [
+            req('ok', t('reqSignedIn')),
+            req(s.meetsAge ? 'ok' : 'bad', t('reqAge')),
+            req(s.meetsCoins ? 'ok' : 'bad', coinsLabel)
+          ]
+        });
+      }
     }
 
-    // auth listener
-    auth.onAuthStateChanged(function(user){ currentUser = user; refreshUI(); });
+    // ── actions ──
+    async function load() {
+      if (!currentUser) { renderSignedOut(); return; }
+      try {
+        renderStatus(await api('status'));
+      } catch (err) {
+        console.error(err);
+        toast(errText(err), 'red');
+      }
+    }
 
-    document.addEventListener('DOMContentLoaded', function(){ refreshUI(); });
+    function setBusy(on) {
+      busy = on;
+      var buttons = body.querySelectorAll('button');
+      for (var i = 0; i < buttons.length; i++) buttons[i].disabled = on;
+    }
+
+    async function run(action, okText, okKind) {
+      if (busy) return;
+      setBusy(true);
+      try {
+        await api(action);
+        toast(okText, okKind);
+      } catch (err) {
+        console.error(err);
+        toast(errText(err), 'red');
+      }
+      busy = false;
+      await load();
+    }
+
+    async function onEnroll() {
+      var yes = await ask(t('joinTitle'), t('joinBody'), t('joinConfirm'));
+      if (yes) run('enroll', t('toastEnrolled'), 'purple');
+    }
+
+    async function onWithdraw() {
+      var yes = await ask(t('withdrawTitle'), t('withdrawBody'), t('withdrawConfirm'));
+      if (yes) run('withdraw', t('toastWithdrawn'), 'yellow');
+    }
+
+    applyStaticText();
+
+    auth.onAuthStateChanged(function (user) { currentUser = user; load(); });
   </script>
 </body>
 </html>

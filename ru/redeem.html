@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="en" id="htmlRoot">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title id="pageTitleTag">Redeem Code</title>
+  <title>Redeem Code</title>
 
+  <!-- Auth for sign-in; Firestore is still loaded because dp-topbar needs it. The redeem logic itself never touches it. -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
@@ -265,57 +266,61 @@
     <div class="steps" id="stepIndicator">
       <div class="step-item active" id="si-1">
         <div class="step-num">1</div>
-        <span id="step1Label">Enter code</span>
+        <span>Enter code</span>
       </div>
       <div class="step-connector" id="sc-1"></div>
       <div class="step-item" id="si-2">
         <div class="step-num">2</div>
-        <span id="step2Label">Confirm</span>
+        <span>Confirm</span>
       </div>
       <div class="step-connector" id="sc-2"></div>
       <div class="step-item" id="si-3">
         <div class="step-num">3</div>
-        <span id="step3Label">Done</span>
+        <span>Done</span>
       </div>
     </div>
 
     <!-- ── Step 1: Enter code ── -->
     <div class="card screen active" id="screen-1">
-      <h1 id="screen1Title">Redeem a code</h1>
-      <p class="lead" id="screen1Lead">Redeem a DarkPurpleOF's Website code to obtain coins, UGC, Plugins, Sticker Packs, to redeem it, enter the 25-character code in the field below</p>
+      <h1>Redeem a code</h1>
+      <p class="lead">
+        Redeem a DarkPurpleOF's Website code to obtain coins, UGC, Plugins, Sticker Packs, to redeem it, enter the 25-character code in the field below
+      </p>
 
       <div style="margin-bottom: 12px; font-size: 13px; color: var(--muted);">
-        <span id="addedToPrefix">It'll be added to</span> <span id="currentUserEmail" data-default-text="your account" style="color: var(--text); font-weight: 600;">your account</span>
+        <span id="addedTo">It'll be added to</span> <span id="currentUserEmail" style="color: var(--text); font-weight: 600;">your account</span>
       </div>
 
-      <input id="codeInput" class="input" placeholder="Enter your code" autocomplete="off" maxlength="29" spellcheck="false" inputmode="text" data-i18n-placeholder="code" />
-      
-      <div style="font-size: 11px; color: var(--muted); margin-top: 6px;" id="codeExample">Like this one: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX</div>
+      <input id="codeInput" class="input" placeholder="Enter your code" autocomplete="off" maxlength="29" spellcheck="false" inputmode="text" />
+
+      <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">
+        Like this one: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
+      </div>
 
       <div class="hint" id="message"></div>
 
       <div class="btn-row">
-        <button id="redeemBtn" class="btn" data-i18n="btnNext">Next</button>
-        <button id="openApp" class="btn ghost" style="display:none;" data-i18n="btnOpenApp">Open App</button>
+        <button id="redeemBtn" class="btn">Next</button>
+        <button id="openApp" class="btn ghost" style="display:none;">Open App</button>
       </div>
     </div>
 
     <!-- ── Step 2: Confirm ── -->
     <div class="card screen" id="screen-2">
-      <h1 id="screen2Title">Confirm redemption</h1>
-      <p class="lead" id="screen2Lead">Review what you're about to receive, then select <strong>Confirm</strong>.</p>
+      <h1>Confirm redemption</h1>
+      <p class="lead">Review what you're about to receive, then select <strong>Confirm</strong>.</p>
 
       <div class="confirm-row" id="confirmRow">
         <!-- filled dynamically -->
       </div>
 
       <div class="disclaimer">
-        <span id="disclaimerText">By selecting Confirm, you agree to the <a href="/terms">DarkPurpleOF's Website Terms and Conditions</a> and that you won't be able to transfer, use this item outside of the platform or otherwise resell it. No Refunds</span>
+        By selecting Confirm, you agree to the <a href="/terms">DarkPurpleOF's Website Terms and Conditions</a> and that you won't be able to transfer, use this item outside of the platform or otherwise resell it. No Refunds
       </div>
 
       <div class="btn-row">
-        <button id="confirmBtn" class="btn" data-i18n="btnConfirm">Confirm</button>
-        <button id="cancelBtn" class="btn ghost" data-i18n="btnBack">Back</button>
+        <button id="confirmBtn" class="btn">Confirm</button>
+        <button id="cancelBtn" class="btn ghost">Back</button>
       </div>
     </div>
 
@@ -324,12 +329,12 @@
       <div class="success-icon">
         <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <h1 id="screen3Title">You're all set!</h1>
+      <h1>You're all set!</h1>
       <p class="lead" id="successLead"></p>
       <div class="success-detail" id="successDetail"></div>
       <div class="btn-row">
-        <button id="redeemAnotherBtn" class="btn ghost" data-i18n="btnRedeemAnother">Redeem another</button>
-        <button id="txBtn" class="btn" data-i18n="btnViewTransactions">View transactions</button>
+        <button id="redeemAnotherBtn" class="btn ghost">Redeem another</button>
+        <button id="txBtn" class="btn">View transactions</button>
       </div>
     </div>
 
@@ -342,6 +347,7 @@
   <div id="toast" style="position:fixed;top:18px;left:50%;transform:translateX(-50%);display:none;padding:10px 14px;border-radius:4px;color:#fff;z-index:99999;box-shadow:0 4px 8px rgba(0,0,0,0.28);font-size:13px;font-family:'Segoe UI Variable','Segoe UI',Inter,system-ui,sans-serif;"></div>
 
 <script>
+  // ── Firebase Auth only (public web config). All data access is server-side. ──
   const firebaseConfig = {
     apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
     authDomain: "darkpurpleof-s-website.firebaseapp.com",
@@ -352,7 +358,308 @@
   };
   if (!window.firebase || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
-  const db = firebase.firestore();
+
+  // The page is served from GitHub Pages; the backend lives on Netlify.
+  // Override with `window.REDEEM_API = '...'` before this script if needed.
+  const IS_LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
+  const API_URL = window.REDEEM_API
+    || (IS_LOCAL ? 'http://localhost:8888/redeem' : 'https://darkpurpleofswebsite.netlify.app/redeem');
+
+  // ── i18n ─────────────────────────────────────────────────
+  // Language comes from the URL: /<xx>/redeem. Anything unsupported falls back to English.
+  const FORBIDDEN_CHARS = " A, E, I, O, U, L, S, 0 ( !, @, #, $, %, ^, &, *, (, ), _, +, =, {, }, [, ], |, \\, :, ;, \", ', <, >, ?, /, ~, ` )";
+
+  const I18N = {
+    en: {
+      title: "Redeem Code",
+      step1: "Enter code", step2: "Confirm", step3: "Done",
+      h1: "Redeem a code",
+      lead1: "Redeem a DarkPurpleOF's Website code to obtain coins, UGC, Plugins, Sticker Packs, to redeem it, enter the 25-character code in the field below",
+      addedTo: "It'll be added to", yourAccount: "your account",
+      placeholder: "Enter your code",
+      example: "Like this one: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+      next: "Next", openApp: "Open App",
+      confirmTitle: "Confirm redemption",
+      confirmLead: "Review what you're about to receive, then select <strong>Confirm</strong>.",
+      disclaimer: "By selecting Confirm, you agree to the <a href=\"/terms\">DarkPurpleOF's Website Terms and Conditions</a> and that you won't be able to transfer, use this item outside of the platform or otherwise resell it. No Refunds",
+      confirm: "Confirm", back: "Back",
+      allSet: "You're all set!", redeemAnother: "Redeem another", viewTx: "View transactions",
+      forbidden: "Codes cannot contain:",
+      err_EMPTY: "Please enter a code.",
+      err_LEGACY: "Legacy Redeem codes can't be redeemed anymore",
+      err_BAD_CODE: "That did not work, try again with another code",
+      err_LEGACY_NO_AMOUNT: "Legacy code did not contain a coin amount.",
+      err_INVALID_PAYLOAD: "Invalid code payload.",
+      err_INVALID_AMOUNT: "Invalid coin amount.",
+      err_ITEM_NOT_FOUND: "Referenced item not found.",
+      err_UNKNOWN_TYPE: "Unknown code type.",
+      err_SIGNIN: "You must be signed in to redeem codes.",
+      err_SESSION: "Invalid or expired session. Please sign in again.",
+      failedValidate: "Failed to validate code. Try again.",
+      disabledTitle: "Oops!, you can't redeem codes right now",
+      disabledBody: "The ability to redeem codes from your account has been temporarily disabled due to a violation in our {tos}",
+      tos: "Terms of Service",
+      headingGet: "This is what you'll get",
+      headingHere: "Here is what you get",
+      headingRole: "You'll get this role",
+      descAddon: "Add-on for: DarkPurpleOF's Website",
+      descPlugin: "You need the DarkPurpleOF's Website app to use this plugin - Incompatible with the web version",
+      descAddonFor: "Add-on for: {for}",
+      descRole: "It will appear publicly on your profile",
+      descBundle: "Included content for the DarkPurpleOF's Website",
+      descDefault: "After you redeem this code, the item will be added to your account immediately.",
+      by: "by {name}", system: "System",
+      coinsTitle: "{n} Coins",
+      addedLegacy: "{n} coins have been added to your account.",
+      addedCoins: "{n} coins (DF$) have been added to your account.",
+      addedItem: "{name} has been added to your account.",
+      detailCoins: "You now have <strong>{n} coins</strong>.",
+      detailItem: "You can find it in your library.",
+      failTitle: "The order can't be completed",
+      failLead: "The order can't be completed due to an error, please try again later, if this issue remains contact us",
+      anonymous: "Anonymous"
+    },
+    es: {
+      title: "Canjear código",
+      step1: "Ingresar código", step2: "Confirmar", step3: "Listo",
+      h1: "Canjear un código",
+      lead1: "Canjea un código de DarkPurpleOF's Website para obtener monedas, UGC, plugins y paquetes de stickers. Para canjearlo, ingresa el código de 25 caracteres en el campo de abajo",
+      addedTo: "Se agregará a", yourAccount: "tu cuenta",
+      placeholder: "Ingresa tu código",
+      example: "Así: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+      next: "Siguiente", openApp: "Abrir app",
+      confirmTitle: "Confirmar canje",
+      confirmLead: "Revisa lo que vas a recibir y luego selecciona <strong>Confirmar</strong>.",
+      disclaimer: "Al seleccionar Confirmar, aceptas los <a href=\"/terms\">Términos y Condiciones de DarkPurpleOF's Website</a> y que no podrás transferir este artículo, usarlo fuera de la plataforma ni revenderlo. No hay reembolsos",
+      confirm: "Confirmar", back: "Atrás",
+      allSet: "¡Todo listo!", redeemAnother: "Canjear otro", viewTx: "Ver transacciones",
+      forbidden: "Los códigos no pueden contener:",
+      err_EMPTY: "Ingresa un código.",
+      err_LEGACY: "Los códigos de canje antiguos ya no se pueden canjear",
+      err_BAD_CODE: "No funcionó, intenta con otro código",
+      err_LEGACY_NO_AMOUNT: "El código antiguo no contenía una cantidad de monedas.",
+      err_INVALID_PAYLOAD: "Datos del código no válidos.",
+      err_INVALID_AMOUNT: "Cantidad de monedas no válida.",
+      err_ITEM_NOT_FOUND: "No se encontró el artículo asociado.",
+      err_UNKNOWN_TYPE: "Tipo de código desconocido.",
+      err_SIGNIN: "Debes iniciar sesión para canjear códigos.",
+      err_SESSION: "Sesión no válida o caducada. Inicia sesión de nuevo.",
+      failedValidate: "No se pudo validar el código. Inténtalo de nuevo.",
+      disabledTitle: "¡Ups! No puedes canjear códigos en este momento",
+      disabledBody: "La posibilidad de canjear códigos desde tu cuenta se ha desactivado temporalmente por una infracción de nuestros {tos}",
+      tos: "Términos de servicio",
+      headingGet: "Esto es lo que obtendrás",
+      headingHere: "Esto es lo que obtienes",
+      headingRole: "Obtendrás este rol",
+      descAddon: "Complemento para: DarkPurpleOF's Website",
+      descPlugin: "Necesitas la app de DarkPurpleOF's Website para usar este plugin - No es compatible con la versión web",
+      descAddonFor: "Complemento para: {for}",
+      descRole: "Aparecerá públicamente en tu perfil",
+      descBundle: "Contenido incluido para DarkPurpleOF's Website",
+      descDefault: "Después de canjear este código, el artículo se agregará de inmediato a tu cuenta.",
+      by: "por {name}", system: "Sistema",
+      coinsTitle: "{n} monedas",
+      addedLegacy: "Se agregaron {n} monedas a tu cuenta.",
+      addedCoins: "Se agregaron {n} monedas (DF$) a tu cuenta.",
+      addedItem: "{name} se agregó a tu cuenta.",
+      detailCoins: "Ahora tienes <strong>{n} monedas</strong>.",
+      detailItem: "Lo encontrarás en tu biblioteca.",
+      failTitle: "No se pudo completar el pedido",
+      failLead: "No se pudo completar el pedido debido a un error. Inténtalo de nuevo más tarde; si el problema continúa, contáctanos",
+      anonymous: "Anónimo"
+    },
+    ru: {
+      title: "Активация кода",
+      step1: "Ввод кода", step2: "Подтверждение", step3: "Готово",
+      h1: "Активировать код",
+      lead1: "Активируйте код DarkPurpleOF's Website, чтобы получить монеты, UGC, плагины и наборы стикеров. Для активации введите 25-символьный код в поле ниже",
+      addedTo: "Будет добавлено на", yourAccount: "ваш аккаунт",
+      placeholder: "Введите код",
+      example: "Например: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+      next: "Далее", openApp: "Открыть приложение",
+      confirmTitle: "Подтверждение активации",
+      confirmLead: "Проверьте, что вы получите, и нажмите <strong>Подтвердить</strong>.",
+      disclaimer: "Нажимая «Подтвердить», вы принимаете <a href=\"/terms\">Условия использования DarkPurpleOF's Website</a> и соглашаетесь, что не сможете передавать этот предмет, использовать его за пределами платформы или перепродавать. Возврат средств невозможен",
+      confirm: "Подтвердить", back: "Назад",
+      allSet: "Всё готово!", redeemAnother: "Активировать ещё", viewTx: "Посмотреть транзакции",
+      forbidden: "Коды не могут содержать:",
+      err_EMPTY: "Введите код.",
+      err_LEGACY: "Старые коды активации больше нельзя активировать",
+      err_BAD_CODE: "Не получилось, попробуйте другой код",
+      err_LEGACY_NO_AMOUNT: "Старый код не содержит количества монет.",
+      err_INVALID_PAYLOAD: "Недопустимые данные кода.",
+      err_INVALID_AMOUNT: "Недопустимое количество монет.",
+      err_ITEM_NOT_FOUND: "Связанный предмет не найден.",
+      err_UNKNOWN_TYPE: "Неизвестный тип кода.",
+      err_SIGNIN: "Чтобы активировать коды, нужно войти в аккаунт.",
+      err_SESSION: "Сессия недействительна или истекла. Войдите снова.",
+      failedValidate: "Не удалось проверить код. Попробуйте ещё раз.",
+      disabledTitle: "Упс! Сейчас вы не можете активировать коды",
+      disabledBody: "Возможность активировать коды в вашем аккаунте временно отключена из-за нарушения наших {tos}",
+      tos: "Условий использования",
+      headingGet: "Вот что вы получите",
+      headingHere: "Вот что вы получаете",
+      headingRole: "Вы получите эту роль",
+      descAddon: "Дополнение для: DarkPurpleOF's Website",
+      descPlugin: "Для использования этого плагина нужно приложение DarkPurpleOF's Website - несовместим с веб-версией",
+      descAddonFor: "Дополнение для: {for}",
+      descRole: "Она будет отображаться в вашем профиле",
+      descBundle: "Включённый контент для DarkPurpleOF's Website",
+      descDefault: "После активации этого кода предмет сразу будет добавлен в ваш аккаунт.",
+      by: "от {name}", system: "Система",
+      coinsTitle: "Монеты: {n}",
+      addedLegacy: "Монеты ({n}) добавлены на ваш аккаунт.",
+      addedCoins: "Монеты ({n}, DF$) добавлены на ваш аккаунт.",
+      addedItem: "«{name}» добавлено на ваш аккаунт.",
+      detailCoins: "Теперь у вас монет: <strong>{n}</strong>.",
+      detailItem: "Он находится в вашей библиотеке.",
+      failTitle: "Не удалось оформить заказ",
+      failLead: "Не удалось оформить заказ из-за ошибки. Повторите попытку позже, а если проблема не исчезнет, свяжитесь с нами",
+      anonymous: "Аноним"
+    },
+    ja: {
+      title: "コードを引き換える",
+      step1: "コード入力", step2: "確認", step3: "完了",
+      h1: "コードを引き換える",
+      lead1: "DarkPurpleOF's Website のコードを引き換えて、コイン、UGC、プラグイン、ステッカーパックを入手できます。引き換えるには、下の欄に25文字のコードを入力してください",
+      addedTo: "追加先:", yourAccount: "あなたのアカウント",
+      placeholder: "コードを入力",
+      example: "例: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+      next: "次へ", openApp: "アプリを開く",
+      confirmTitle: "引き換えの確認",
+      confirmLead: "受け取る内容を確認し、<strong>確認</strong>を選択してください。",
+      disclaimer: "「確認」を選択すると、<a href=\"/terms\">DarkPurpleOF's Website 利用規約</a>に同意し、このアイテムの譲渡、プラットフォーム外での使用、転売ができないことに同意したものとみなされます。返金はできません",
+      confirm: "確認", back: "戻る",
+      allSet: "完了しました!", redeemAnother: "別のコードを引き換える", viewTx: "取引を表示",
+      forbidden: "コードには次の文字を含めることはできません:",
+      err_EMPTY: "コードを入力してください。",
+      err_LEGACY: "旧形式の引き換えコードは使用できなくなりました",
+      err_BAD_CODE: "うまくいきませんでした。別のコードをお試しください",
+      err_LEGACY_NO_AMOUNT: "旧形式のコードにコイン数が含まれていません。",
+      err_INVALID_PAYLOAD: "コードのデータが無効です。",
+      err_INVALID_AMOUNT: "コインの数量が無効です。",
+      err_ITEM_NOT_FOUND: "参照されているアイテムが見つかりません。",
+      err_UNKNOWN_TYPE: "不明なコードの種類です。",
+      err_SIGNIN: "コードを引き換えるにはサインインが必要です。",
+      err_SESSION: "セッションが無効か期限切れです。もう一度サインインしてください。",
+      failedValidate: "コードを検証できませんでした。もう一度お試しください。",
+      disabledTitle: "現在コードを引き換えることはできません",
+      disabledBody: "{tos}への違反により、お客様のアカウントでのコードの引き換えは一時的に無効になっています",
+      tos: "利用規約",
+      headingGet: "受け取る内容",
+      headingHere: "受け取る内容",
+      headingRole: "このロールを受け取ります",
+      descAddon: "対象: DarkPurpleOF's Website",
+      descPlugin: "このプラグインを使用するには DarkPurpleOF's Website アプリが必要です - Web 版では使用できません",
+      descAddonFor: "対象: {for}",
+      descRole: "プロフィールに公開表示されます",
+      descBundle: "DarkPurpleOF's Website 用の含まれるコンテンツ",
+      descDefault: "このコードを引き換えると、アイテムはすぐにアカウントに追加されます。",
+      by: "作成者: {name}", system: "システム",
+      coinsTitle: "{n} コイン",
+      addedLegacy: "{n} コインがアカウントに追加されました。",
+      addedCoins: "{n} コイン (DF$) がアカウントに追加されました。",
+      addedItem: "{name} がアカウントに追加されました。",
+      detailCoins: "現在の所持コイン: <strong>{n} コイン</strong>",
+      detailItem: "ライブラリで確認できます。",
+      failTitle: "注文を完了できません",
+      failLead: "エラーのため注文を完了できません。しばらくしてからもう一度お試しください。問題が解決しない場合はお問い合わせください",
+      anonymous: "匿名"
+    },
+    de: {
+      title: "Code einlösen",
+      step1: "Code eingeben", step2: "Bestätigen", step3: "Fertig",
+      h1: "Code einlösen",
+      lead1: "Löse einen DarkPurpleOF's Website-Code ein, um Münzen, UGC, Plugins und Sticker-Pakete zu erhalten. Gib dazu den 25-stelligen Code im Feld unten ein",
+      addedTo: "Wird hinzugefügt zu", yourAccount: "deinem Konto",
+      placeholder: "Code eingeben",
+      example: "So sieht er aus: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
+      next: "Weiter", openApp: "App öffnen",
+      confirmTitle: "Einlösung bestätigen",
+      confirmLead: "Prüfe, was du erhältst, und wähle dann <strong>Bestätigen</strong>.",
+      disclaimer: "Mit „Bestätigen“ stimmst du den <a href=\"/terms\">Nutzungsbedingungen von DarkPurpleOF's Website</a> zu und erkennst an, dass du diesen Artikel weder übertragen noch außerhalb der Plattform verwenden oder weiterverkaufen darfst. Keine Rückerstattung",
+      confirm: "Bestätigen", back: "Zurück",
+      allSet: "Alles erledigt!", redeemAnother: "Weiteren einlösen", viewTx: "Transaktionen ansehen",
+      forbidden: "Codes dürfen Folgendes nicht enthalten:",
+      err_EMPTY: "Bitte gib einen Code ein.",
+      err_LEGACY: "Alte Einlösecodes können nicht mehr eingelöst werden",
+      err_BAD_CODE: "Das hat nicht funktioniert, versuche es mit einem anderen Code",
+      err_LEGACY_NO_AMOUNT: "Der alte Code enthielt keine Münzanzahl.",
+      err_INVALID_PAYLOAD: "Ungültige Code-Daten.",
+      err_INVALID_AMOUNT: "Ungültige Münzanzahl.",
+      err_ITEM_NOT_FOUND: "Der referenzierte Artikel wurde nicht gefunden.",
+      err_UNKNOWN_TYPE: "Unbekannter Codetyp.",
+      err_SIGNIN: "Du musst angemeldet sein, um Codes einzulösen.",
+      err_SESSION: "Ungültige oder abgelaufene Sitzung. Bitte melde dich erneut an.",
+      failedValidate: "Der Code konnte nicht geprüft werden. Versuche es erneut.",
+      disabledTitle: "Hoppla, du kannst gerade keine Codes einlösen",
+      disabledBody: "Das Einlösen von Codes wurde für dein Konto vorübergehend deaktiviert, da gegen unsere {tos} verstoßen wurde",
+      tos: "Nutzungsbedingungen",
+      headingGet: "Das erhältst du",
+      headingHere: "Das erhältst du",
+      headingRole: "Du erhältst diese Rolle",
+      descAddon: "Add-on für: DarkPurpleOF's Website",
+      descPlugin: "Du benötigst die DarkPurpleOF's Website-App, um dieses Plugin zu nutzen - nicht mit der Webversion kompatibel",
+      descAddonFor: "Add-on für: {for}",
+      descRole: "Sie wird öffentlich in deinem Profil angezeigt",
+      descBundle: "Enthaltene Inhalte für DarkPurpleOF's Website",
+      descDefault: "Nach dem Einlösen dieses Codes wird der Artikel sofort deinem Konto hinzugefügt.",
+      by: "von {name}", system: "System",
+      coinsTitle: "{n} Münzen",
+      addedLegacy: "{n} Münzen wurden deinem Konto hinzugefügt.",
+      addedCoins: "{n} Münzen (DF$) wurden deinem Konto hinzugefügt.",
+      addedItem: "{name} wurde deinem Konto hinzugefügt.",
+      detailCoins: "Du hast jetzt <strong>{n} Münzen</strong>.",
+      detailItem: "Du findest ihn in deiner Bibliothek.",
+      failTitle: "Die Bestellung kann nicht abgeschlossen werden",
+      failLead: "Die Bestellung kann aufgrund eines Fehlers nicht abgeschlossen werden. Bitte versuche es später erneut. Besteht das Problem weiterhin, kontaktiere uns",
+      anonymous: "Anonym"
+    }
+  };
+
+  const SUPPORTED = Object.keys(I18N);
+  const langMatch = location.pathname.match(/(?:^|\/)([a-z]{2})\/redeem(?:\.html|\/index\.html)?\/?$/i);
+  const LANG = (langMatch && SUPPORTED.includes(langMatch[1].toLowerCase())) ? langMatch[1].toLowerCase() : 'en';
+
+  function t(key, vars) {
+    let s = (I18N[LANG] && I18N[LANG][key]);
+    if (s === undefined) s = I18N.en[key];
+    if (s === undefined) s = key;
+    if (vars) s = s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? vars[k] : ''));
+    return s;
+  }
+
+  // Maps a server error code (or a client-side one) to a translated message.
+  function errText(code) {
+    const k = 'err_' + code;
+    const has = (I18N[LANG] && I18N[LANG][k]) || I18N.en[k];
+    return has ? t(k) : t('failedValidate');
+  }
+
+  function applyStaticText() {
+    document.documentElement.lang = LANG;
+    document.title = t('title');
+    document.querySelector('#si-1 span').textContent = t('step1');
+    document.querySelector('#si-2 span').textContent = t('step2');
+    document.querySelector('#si-3 span').textContent = t('step3');
+    document.querySelector('#screen-1 h1').textContent = t('h1');
+    document.querySelector('#screen-1 p.lead').textContent = t('lead1');
+    document.getElementById('addedTo').textContent = t('addedTo');
+    document.getElementById('currentUserEmail').textContent = t('yourAccount');
+    document.getElementById('codeInput').placeholder = t('placeholder');
+    document.querySelector('#screen-1 input + div').textContent = t('example');
+    document.getElementById('redeemBtn').textContent = t('next');
+    document.getElementById('openApp').textContent = t('openApp');
+    document.querySelector('#screen-2 h1').textContent = t('confirmTitle');
+    document.querySelector('#screen-2 p.lead').innerHTML = t('confirmLead');
+    document.querySelector('#screen-2 .disclaimer').innerHTML = t('disclaimer');
+    document.getElementById('confirmBtn').textContent = t('confirm');
+    document.getElementById('cancelBtn').textContent = t('back');
+    document.querySelector('#screen-3 h1').textContent = t('allSet');
+    document.getElementById('redeemAnotherBtn').textContent = t('redeemAnother');
+    document.getElementById('txBtn').textContent = t('viewTx');
+  }
+  applyStaticText();
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('shoulddisable') === 'true') {
@@ -373,19 +680,60 @@
   const toast       = document.getElementById('toast');
   const spinnerOverlay = document.getElementById('spinnerOverlay');
 
+  let currentUser = null;
+  let confirmFingerprint = null; // returned by the server on preview, echoed back on confirm
+  let confirmCode = null;
+
+  // ── API ──────────────────────────────────────────────────
+  // Sends the Firebase ID token; falls back to the uid if no token can be obtained.
+  async function api(action, payload = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    const body = { action, ...payload };
+
+    let token = null;
+    try { token = currentUser ? await currentUser.getIdToken() : null; } catch (e) { console.warn(e); }
+
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    else if (currentUser) body.uid = currentUser.uid;
+
+    let res, data;
+    try {
+      res = await fetch(API_URL, { method: 'POST', headers, body: JSON.stringify(body) });
+      data = await res.json();
+    } catch (e) {
+      const err = new Error('NETWORK');
+      err.code = 'NETWORK';
+      throw err;
+    }
+    if (!res.ok || !data.ok) {
+      const err = new Error(data.error || 'SERVER');
+      err.code = data.error || 'SERVER';
+      err.status = res.status;
+      err.disabled = !!data.disabled;
+      throw err;
+    }
+    return data;
+  }
+
+  function formatErrors(code) {
+    if (code.includes('COINS')) return t('err_LEGACY');
+    if (/[0OAEIULS]/.test(code) || /[^A-Z0-9-]/.test(code)) {
+      return t('forbidden') + FORBIDDEN_CHARS;
+    }
+    return null;
+  }
+
   // Auto-format code input: uppercase + auto-dash insertion
   codeInput.addEventListener('input', (e) => {
     let val = (e.target.value || '').toUpperCase();
-    // Remove any existing dashes
     val = val.replace(/-/g, '');
-    // Re-add dashes every 5 characters
     let formatted = '';
     for (let i = 0; i < val.length; i++) {
       if (i > 0 && i % 5 === 0) formatted += '-';
       formatted += val[i];
     }
     e.target.value = formatted;
-    
+
     // Show spinner when code is complete (29 chars = 5 segments)
     if (formatted.length === 29) {
       clearError();
@@ -393,40 +741,26 @@
 
       spinnerOverlay.classList.add('active');
 
-      // Check if the code does not exist in the database (query during the spinner phase)
-      let checkPromise = db.collection('redeemable').doc(code).get()
-        .then(snap => snap.exists)
-        .catch(err => {
-          console.error(err);
-          if (err.code === 'permission-denied' || err.message.indexOf('permission') !== -1 || err.message.indexOf('Permission') !== -1) {
-            handleDisableError();
-          }
-          return false;
-        });
+      // Existence check runs on the server during the spinner phase
+      const checkPromise = currentUser
+        ? api('check', { code }).then(() => true).catch(err => {
+            console.error(err);
+            if (err.disabled) handleDisableError();
+            return false;
+          })
+        : Promise.resolve(false);
 
       setTimeout(async () => {
         spinnerOverlay.classList.remove('active');
-        
-        // Only display the errors after the spinner disappears
-        
-        // 1. COINS error has highest priority
-        if (code.includes('COINS')) {
-          showError(t('legacyDisallowed'));
-          return;
-        }
 
-        // 2. Vocals/forbidden characters error has priority over database existence error
-        const hasForbidden = /[0OAEIULS]/.test(code) || /[^A-Z0-9-]/.test(code);
-        if (hasForbidden) {
-          showError(t('codeForbidden'));
-          return;
-        }
+        // 1 + 2. Format errors take priority over the existence error
+        const fmt = formatErrors(code);
+        if (fmt) { showError(fmt); return; }
 
-        // 3. Database existence check
+        // 3. Existence check
         const exists = await checkPromise;
         if (!exists) {
-          showError(t('invalidCode'));
-          return;
+          showError(t('err_BAD_CODE'));
         }
       }, 3000);
     }
@@ -440,396 +774,17 @@
     }
   });
 
-  let currentUser = null;
-  let pendingAction = null; // function to call on confirmBtn click
-  let originalCodeData = null;
-
   const currentUserEmail = document.getElementById('currentUserEmail');
-
-  const SUPPORTED_LANGS = ['en', 'de', 'es', 'ru', 'ja'];
-  const LANG_FALLBACK = 'en';
-
-  const I18N = {
-    en: {
-      title: 'Redeem Code',
-      step1: 'Enter code',
-      step2: 'Confirm',
-      step3: 'Done',
-      screen1Title: 'Redeem a code',
-      screen1Lead: "Redeem a DarkPurpleOF's Website code to obtain coins, UGC, Plugins, Sticker Packs. To redeem it, enter the 25-character code in the field below.",
-      addedToPrefix: "It'll be added to",
-      currentAccount: 'your account',
-      codeExample: 'Like this one: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX',
-      btnNext: 'Next',
-      btnOpenApp: 'Open App',
-      btnConfirm: 'Confirm',
-      btnBack: 'Back',
-      btnRedeemAnother: 'Redeem another',
-      btnViewTransactions: 'View transactions',
-      screen2Title: 'Confirm redemption',
-      screen2Lead: "Review what you're about to receive, then select Confirm.",
-      disclaimer: {
-        prefix: 'By selecting Confirm, you agree to the',
-        terms: "DarkPurpleOF's Website Terms and Conditions",
-        suffix: "and that you won't be able to transfer, use this item outside of the platform or otherwise resell it. No Refunds"
-      },
-      screen3Title: "You're all set!",
-      signIn: 'You must be signed in to redeem codes.',
-      enterCode: 'Please enter a code.',
-      legacyDisallowed: "Legacy Redeem codes can't be redeemed anymore",
-      codeForbidden: 'Codes cannot contain: A, E, I, O, U, L, S, 0 ( !, @, #, $, %, ^, &, *, (, ), _, +, =, {, }, [, ], |, \\, :, ;, ", \', <, >, ?, /, ~, ` )',
-      invalidCode: 'That did not work, try again with another code',
-      invalidPayload: 'Invalid code payload.',
-      invalidCoins: 'Invalid coin amount.',
-      invalidPayloadMissing: 'Invalid code payload (missing author/id).',
-      referencedNotFound: 'Referenced item not found.',
-      unknownType: 'Unknown code type.',
-      legacyNoAmount: 'Legacy code did not contain a coin amount.',
-      validateFailed: 'Failed to validate code. Try again.',
-      noPermissionTitle: "Oops!, you can't redeem codes right now",
-      noPermissionLead: 'The ability to redeem codes from your account has been temporarily disabled due to a violation in our Terms of Service.',
-      step2ConfirmTitle: "This is what you'll get",
-      addOnFor: "Add-on for: DarkPurpleOF's Website",
-      bySystem: 'by System',
-      coinsAddedSuffix: 'coins have been added to your account.',
-      nowHave: 'You now have',
-      coins: 'coins',
-      coinUnits: 'Coins',
-      coinDF: 'DF$',
-      orderCantComplete: "The order can't be completed",
-      orderCantCompleteLead: "The order can't be completed due to an error, please try again later, if this issue remains contact us",
-      failedDeletePost: 'Failed to delete post.',
-      failedUpdatePin: 'Failed to update pin.',
-      failedUpdateLike: 'Failed to update like.',
-      failedUpdateRepost: 'Failed to update repost.',
-      failedReply: 'Failed to post reply.',
-      replyPosted: 'Reply posted!',
-      shared: 'Shared!',
-      linkCopied: 'Link copied!',
-      signInLike: 'Sign in to like',
-      signInRepost: 'Sign in to repost',
-      signInReply: 'Sign in to reply.',
-      removedFromWall: 'Removed from your wall.',
-      failedGeneric: 'Failed.'
-    },
-    de: {
-      title: 'Code einlösen',
-      step1: 'Code eingeben',
-      step2: 'Bestätigen',
-      step3: 'Fertig',
-      screen1Title: 'Einen Code einlösen',
-      screen1Lead: "Lösen Sie einen DarkPurpleOF's Website-Code ein, um Coins, UGC, Plugins oder Sticker-Packs zu erhalten. Geben Sie dazu den 25-stelligen Code unten ein.",
-      addedToPrefix: 'Wird hinzugefügt zu',
-      currentAccount: 'Ihrem Konto',
-      codeExample: 'Zum Beispiel: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX',
-      btnNext: 'Weiter',
-      btnOpenApp: 'App öffnen',
-      btnConfirm: 'Bestätigen',
-      btnBack: 'Zurück',
-      btnRedeemAnother: 'Noch einen einlösen',
-      btnViewTransactions: 'Transaktionen ansehen',
-      screen2Title: 'Einlösung bestätigen',
-      screen2Lead: 'Prüfen Sie, was Sie erhalten, und wählen Sie dann Bestätigen.',
-      disclaimer: { prefix: 'Mit der Bestätigung stimmen Sie den', terms: "Nutzungsbedingungen von DarkPurpleOF's Website", suffix: 'zu und akzeptieren, dass Sie diesen Artikel nicht außerhalb der Plattform übertragen, verwenden oder weiterverkaufen können. Keine Rückerstattungen' },
-      screen3Title: 'Alles erledigt!',
-      signIn: 'Sie müssen angemeldet sein, um Codes einzulösen.',
-      enterCode: 'Bitte geben Sie einen Code ein.',
-      legacyDisallowed: 'Legacy-Einlösungscodes können nicht mehr eingelöst werden',
-      codeForbidden: 'Codes dürfen nicht enthalten: A, E, I, O, U, L, S, 0 ( !, @, #, $, %, ^, &, *, (, ), _, +, =, {, }, [, ], |, \\, :, ;, ", \', <, >, ?, /, ~, ` )',
-      invalidCode: 'Das hat nicht funktioniert. Versuchen Sie es mit einem anderen Code.',
-      invalidPayload: 'Ungültige Code-Nutzlast.',
-      invalidCoins: 'Ungültiger Coin-Betrag.',
-      invalidPayloadMissing: 'Ungültige Code-Nutzlast (Autor/ID fehlt).',
-      referencedNotFound: 'Verknüpfter Artikel wurde nicht gefunden.',
-      unknownType: 'Unbekannter Code-Typ.',
-      legacyNoAmount: 'Der Legacy-Code enthielt keinen Coin-Betrag.',
-      validateFailed: 'Code konnte nicht überprüft werden. Bitte erneut versuchen.',
-      noPermissionTitle: 'Hoppla! Sie können derzeit keine Codes einlösen',
-      noPermissionLead: 'Die Funktion zum Einlösen von Codes wurde für Ihr Konto vorübergehend wegen eines Verstoßes gegen die Nutzungsbedingungen deaktiviert.',
-      step2ConfirmTitle: 'Das erhalten Sie',
-      addOnFor: "Erweiterung für: DarkPurpleOF's Website",
-      bySystem: 'von System',
-      coinsAddedSuffix: 'Coins wurden Ihrem Konto hinzugefügt.',
-      nowHave: 'Sie haben jetzt',
-      coins: 'Coins',
-      coinUnits: 'Coins',
-      coinDF: 'DF$',
-      orderCantComplete: 'Die Bestellung kann nicht abgeschlossen werden',
-      orderCantCompleteLead: 'Die Bestellung kann aufgrund eines Fehlers nicht abgeschlossen werden. Bitte versuchen Sie es später erneut. Wenn das Problem weiterhin besteht, kontaktieren Sie uns.',
-      failedDeletePost: 'Beitrag konnte nicht gelöscht werden.',
-      failedUpdatePin: 'Pin-Aktualisierung fehlgeschlagen.',
-      failedUpdateLike: 'Like-Aktualisierung fehlgeschlagen.',
-      failedUpdateRepost: 'Repost-Aktualisierung fehlgeschlagen.',
-      failedReply: 'Antwort konnte nicht gepostet werden.',
-      replyPosted: 'Antwort gepostet!',
-      shared: 'Geteilt!',
-      linkCopied: 'Link kopiert!',
-      signInLike: 'Zum Liken anmelden',
-      signInRepost: 'Zum Reposten anmelden',
-      signInReply: 'Zum Antworten anmelden.',
-      removedFromWall: 'Von deiner Wand entfernt.',
-      failedGeneric: 'Fehlgeschlagen.'
-    },
-    es: {
-      title: 'Canjear código',
-      step1: 'Ingresar código',
-      step2: 'Confirmar',
-      step3: 'Listo',
-      screen1Title: 'Canjear un código',
-      screen1Lead: "Canjea un código de DarkPurpleOF's Website para obtener monedas, UGC, plugins o paquetes de stickers. Para canjearlo, escribe abajo el código de 25 caracteres.",
-      addedToPrefix: 'Se añadirá a',
-      currentAccount: 'tu cuenta',
-      codeExample: 'Por ejemplo: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX',
-      btnNext: 'Siguiente',
-      btnOpenApp: 'Abrir app',
-      btnConfirm: 'Confirmar',
-      btnBack: 'Atrás',
-      btnRedeemAnother: 'Canjear otro',
-      btnViewTransactions: 'Ver transacciones',
-      screen2Title: 'Confirmar canje',
-      screen2Lead: 'Revisa lo que vas a recibir y luego selecciona Confirmar.',
-      disclaimer: { prefix: 'Al seleccionar Confirmar, aceptas los', terms: "Términos y condiciones de DarkPurpleOF's Website", suffix: 'y que no podrás transferir, usar este artículo fuera de la plataforma ni revenderlo. Sin reembolsos' },
-      screen3Title: '¡Todo listo!',
-      signIn: 'Debes iniciar sesión para canjear códigos.',
-      enterCode: 'Escribe un código.',
-      legacyDisallowed: 'Los códigos heredados ya no se pueden canjear',
-      codeForbidden: 'Los códigos no pueden contener: A, E, I, O, U, L, S, 0 ( !, @, #, $, %, ^, &, *, (, ), _, +, =, {, }, [, ], |, \\, :, ;, ", \', <, >, ?, /, ~, ` )',
-      invalidCode: 'Eso no funcionó, prueba con otro código',
-      invalidPayload: 'La carga útil del código no es válida.',
-      invalidCoins: 'Cantidad de monedas no válida.',
-      invalidPayloadMissing: 'La carga útil del código no es válida (faltan autor/id).',
-      referencedNotFound: 'No se encontró el artículo referenciado.',
-      unknownType: 'Tipo de código desconocido.',
-      legacyNoAmount: 'El código heredado no contenía una cantidad de monedas.',
-      validateFailed: 'No se pudo validar el código. Inténtalo de nuevo.',
-      noPermissionTitle: '¡Vaya!, ahora no puedes canjear códigos',
-      noPermissionLead: 'La opción de canjear códigos en tu cuenta se desactivó temporalmente por una violación de nuestros Términos de servicio.',
-      step2ConfirmTitle: 'Esto es lo que recibirás',
-      addOnFor: "Complemento para: DarkPurpleOF's Website",
-      bySystem: 'por el sistema',
-      coinsAddedSuffix: 'monedas se han añadido a tu cuenta.',
-      nowHave: 'Ahora tienes',
-      coins: 'monedas',
-      coinUnits: 'Monedas',
-      coinDF: 'DF$',
-      orderCantComplete: 'El pedido no se puede completar',
-      orderCantCompleteLead: 'El pedido no se puede completar debido a un error. Inténtalo más tarde; si el problema continúa, contáctanos.',
-      failedDeletePost: 'No se pudo borrar la publicación.',
-      failedUpdatePin: 'No se pudo actualizar el pin.',
-      failedUpdateLike: 'No se pudo actualizar el me gusta.',
-      failedUpdateRepost: 'No se pudo actualizar el repost.',
-      failedReply: 'No se pudo publicar la respuesta.',
-      replyPosted: '¡Respuesta publicada!',
-      shared: '¡Compartido!',
-      linkCopied: '¡Enlace copiado!',
-      signInLike: 'Inicia sesión para dar me gusta',
-      signInRepost: 'Inicia sesión para repostear',
-      signInReply: 'Inicia sesión para responder.',
-      removedFromWall: 'Eliminado de tu muro.',
-      failedGeneric: 'Error.'
-    },
-    ru: {
-      title: 'Погасить код',
-      step1: 'Ввести код',
-      step2: 'Подтвердить',
-      step3: 'Готово',
-      screen1Title: 'Погасить код',
-      screen1Lead: "Погасите код DarkPurpleOF's Website, чтобы получить монеты, UGC, плагины или наборы стикеров. Для этого введите 25-символьный код ниже.",
-      addedToPrefix: 'Будет добавлено в',
-      currentAccount: 'ваш аккаунт',
-      codeExample: 'Например: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX',
-      btnNext: 'Далее',
-      btnOpenApp: 'Открыть приложение',
-      btnConfirm: 'Подтвердить',
-      btnBack: 'Назад',
-      btnRedeemAnother: 'Погасить ещё',
-      btnViewTransactions: 'Посмотреть транзакции',
-      screen2Title: 'Подтвердите погашение',
-      screen2Lead: 'Проверьте, что вы получите, затем выберите Подтвердить.',
-      disclaimer: { prefix: 'Выбирая Подтвердить, вы соглашаетесь с', terms: "Условиями использования DarkPurpleOF's Website", suffix: 'и подтверждаете, что не сможете передавать, использовать этот предмет вне платформы или перепродавать его. Возвратов нет' },
-      screen3Title: 'Готово!',
-      signIn: 'Чтобы погашать коды, нужно войти в систему.',
-      enterCode: 'Введите код.',
-      legacyDisallowed: 'Наследуемые коды больше нельзя погасить',
-      codeForbidden: 'Код не может содержать: A, E, I, O, U, L, S, 0 ( !, @, #, $, %, ^, &, *, (, ), _, +, =, {, }, [, ], |, \\, :, ;, ", \', <, >, ?, /, ~, ` )',
-      invalidCode: 'Это не сработало. Попробуйте другой код.',
-      invalidPayload: 'Недопустимые данные кода.',
-      invalidCoins: 'Недопустимое количество монет.',
-      invalidPayloadMissing: 'Недопустимые данные кода (нет автора/ID).',
-      referencedNotFound: 'Связанный предмет не найден.',
-      unknownType: 'Неизвестный тип кода.',
-      legacyNoAmount: 'В наследуемом коде не было суммы монет.',
-      validateFailed: 'Не удалось проверить код. Попробуйте ещё раз.',
-      noPermissionTitle: 'Ой, сейчас вы не можете погашать коды',
-      noPermissionLead: 'Возможность погашать коды в вашем аккаунте временно отключена из-за нарушения условий использования.',
-      step2ConfirmTitle: 'Вот что вы получите',
-      addOnFor: "Дополнение для: DarkPurpleOF's Website",
-      bySystem: 'системой',
-      coinsAddedSuffix: 'монет добавлено на ваш аккаунт.',
-      nowHave: 'Теперь у вас',
-      coins: 'монет',
-      coinUnits: 'Монеты',
-      coinDF: 'DF$',
-      orderCantComplete: 'Заказ не может быть завершён',
-      orderCantCompleteLead: 'Заказ не может быть завершён из-за ошибки. Попробуйте позже, а если проблема останется, свяжитесь с нами.',
-      failedDeletePost: 'Не удалось удалить публикацию.',
-      failedUpdatePin: 'Не удалось обновить закрепление.',
-      failedUpdateLike: 'Не удалось обновить лайк.',
-      failedUpdateRepost: 'Не удалось обновить репост.',
-      failedReply: 'Не удалось опубликовать ответ.',
-      replyPosted: 'Ответ опубликован!',
-      shared: 'Отправлено!',
-      linkCopied: 'Ссылка скопирована!',
-      signInLike: 'Войдите, чтобы поставить лайк',
-      signInRepost: 'Войдите, чтобы репостнуть',
-      signInReply: 'Войдите, чтобы ответить.',
-      removedFromWall: 'Удалено с вашей стены.',
-      failedGeneric: 'Ошибка.'
-    },
-    ja: {
-      title: 'コードを引き換える',
-      step1: 'コード入力',
-      step2: '確認',
-      step3: '完了',
-      screen1Title: 'コードを引き換える',
-      screen1Lead: "DarkPurpleOF's Website のコードを使って、コイン、UGC、プラグイン、またはステッカーパックを受け取れます。25文字のコードを下に入力してください。",
-      addedToPrefix: '追加先:',
-      currentAccount: 'あなたのアカウント',
-      codeExample: '例: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX',
-      btnNext: '次へ',
-      btnOpenApp: 'アプリを開く',
-      btnConfirm: '確認',
-      btnBack: '戻る',
-      btnRedeemAnother: '別のコードを引き換える',
-      btnViewTransactions: '取引を見る',
-      screen2Title: '引き換えを確認',
-      screen2Lead: '受け取る内容を確認してから、確認を選択してください。',
-      disclaimer: { prefix: '確認を選択すると、', terms: "DarkPurpleOF's Website の利用規約", suffix: 'に同意し、このアイテムをプラットフォーム外で譲渡、使用、再販売しないことに同意したものとみなされます。返金不可' },
-      screen3Title: '完了しました！',
-      signIn: 'コードを引き換えるにはサインインが必要です。',
-      enterCode: 'コードを入力してください。',
-      legacyDisallowed: '従来の引き換えコードはもう使えません',
-      codeForbidden: 'コードに含められない文字: A, E, I, O, U, L, S, 0 ( !, @, #, $, %, ^, &, *, (, ), _, +, =, {, }, [, ], |, \\, :, ;, ", \', <, >, ?, /, ~, ` )',
-      invalidCode: 'うまくいきませんでした。別のコードで試してください。',
-      invalidPayload: 'コードの内容が無効です。',
-      invalidCoins: 'コイン数が無効です。',
-      invalidPayloadMissing: 'コードの内容が無効です（author/id がありません）。',
-      referencedNotFound: '参照されたアイテムが見つかりません。',
-      unknownType: '不明なコード種別です。',
-      legacyNoAmount: '従来コードにコイン数が含まれていませんでした。',
-      validateFailed: 'コードを検証できませんでした。もう一度お試しください。',
-      noPermissionTitle: '申し訳ありませんが、現在コードを引き換えられません',
-      noPermissionLead: '利用規約違反のため、このアカウントでのコード引き換え機能は一時的に無効化されています。',
-      step2ConfirmTitle: '受け取る内容はこちら',
-      addOnFor: "DarkPurpleOF's Website 用アドオン",
-      bySystem: 'システムより',
-      coinsAddedSuffix: 'コインがアカウントに追加されました。',
-      nowHave: '現在の所持数は',
-      coins: 'コイン',
-      coinUnits: 'コイン',
-      coinDF: 'DF$',
-      orderCantComplete: '注文を完了できません',
-      orderCantCompleteLead: 'エラーのため注文を完了できません。後でもう一度お試しください。問題が続く場合はお問い合わせください。',
-      failedDeletePost: '投稿を削除できませんでした。',
-      failedUpdatePin: 'ピン留めの更新に失敗しました。',
-      failedUpdateLike: 'いいねの更新に失敗しました。',
-      failedUpdateRepost: 'リポストの更新に失敗しました。',
-      failedReply: '返信を投稿できませんでした。',
-      replyPosted: '返信を投稿しました！',
-      shared: '共有しました！',
-      linkCopied: 'リンクをコピーしました！',
-      signInLike: 'いいねするにはサインインしてください',
-      signInRepost: 'リポストするにはサインインしてください',
-      signInReply: '返信するにはサインインしてください。',
-      removedFromWall: 'あなたのウォールから削除されました。',
-      failedGeneric: '失敗しました。'
-    }
-  };
-
-  function normalizeLang(lang) {
-    const short = String(lang || '').toLowerCase().split('-')[0].trim();
-    return SUPPORTED_LANGS.includes(short) ? short : null;
-  }
-
-  function detectBrowserLang() {
-    return normalizeLang(navigator.language || navigator.userLanguage || '') || LANG_FALLBACK;
-  }
-
-  let currentLang = detectBrowserLang();
-
-  function t(key) {
-    const parts = String(key).split('.');
-    let val = I18N[currentLang] || I18N.en;
-    for (const p of parts) val = val && val[p];
-    if (val == null) {
-      val = I18N.en;
-      for (const p of parts) val = val && val[p];
-    }
-    return val != null ? val : key;
-  }
-
-  function applyTranslations() {
-    document.documentElement.lang = currentLang;
-    document.title = t('title');
-    const map = [
-      ['step1Label','step1'],['step2Label','step2'],['step3Label','step3'],
-      ['screen1Title','screen1Title'],['screen1Lead','screen1Lead'],['addedToPrefix','addedToPrefix'],
-      ['currentUserEmail','currentAccount'],['codeExample','codeExample'],
-      ['screen2Title','screen2Title'],['screen2Lead','screen2Lead'],['screen3Title','screen3Title']
-    ];
-    for (const [id,key] of map) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = t(key);
-    }
-    const codeInput = document.getElementById('codeInput');
-    if (codeInput) codeInput.placeholder = currentLang === 'de' ? 'Geben Sie Ihren Code ein' :
-      currentLang === 'es' ? 'Ingresa tu código' :
-      currentLang === 'ru' ? 'Введите код' :
-      currentLang === 'ja' ? 'コードを入力してください' : 'Enter your code';
-
-    const btns = [
-      ['redeemBtn','btnNext'], ['openApp','btnOpenApp'], ['confirmBtn','btnConfirm'],
-      ['cancelBtn','btnBack'], ['redeemAnotherBtn','btnRedeemAnother'], ['txBtn','btnViewTransactions']
-    ];
-    for (const [id,key] of btns) { const el = document.getElementById(id); if (el) el.textContent = t(key); }
-
-    const disc = document.getElementById('disclaimerText');
-    if (disc) {
-      const d = t('disclaimer');
-      disc.innerHTML = `${d.prefix} <a href="/terms">${d.terms}</a> ${d.suffix}`;
-    }
-
-    const currentUserEmail = document.getElementById('currentUserEmail');
-    if (currentUserEmail) currentUserEmail.textContent = currentUserEmail.dataset.defaultText || t('currentAccount');
-
-    const titleTag = document.getElementById('pageTitleTag');
-    if (titleTag) titleTag.textContent = t('title');
-  }
-  applyTranslations();
-
   auth.onAuthStateChanged(async u => {
     currentUser = u || null;
     if (currentUserEmail) {
-      currentUserEmail.textContent = (u && u.email) ? u.email : t('currentAccount');
-      currentUserEmail.dataset.defaultText = t('currentAccount');
+      currentUserEmail.textContent = (u && u.email) ? u.email : t('yourAccount');
     }
     if (u) {
       try {
-        const profileSnap = await db.collection('user_data').doc(u.email).get();
-        const profile = profileSnap.exists ? (profileSnap.data() || {}) : {};
-        const accountLang = normalizeLang(profile.lang);
-        currentLang = accountLang || detectBrowserLang();
-        applyTranslations();
-      } catch (e) {
-        currentLang = detectBrowserLang();
-        applyTranslations();
-      }
-      try {
-        await db.collection('redeemable').doc('_check_permission_').get();
+        await api('status');
       } catch (err) {
-        if (err.code === 'permission-denied' || err.message.indexOf('permission') !== -1 || err.message.indexOf('Permission') !== -1) {
-          handleDisableError();
-        }
+        if (err.disabled) handleDisableError();
       }
     }
   });
@@ -857,11 +812,11 @@
   function handleDisableError() {
     const screen1 = document.getElementById('screen-1');
     if (screen1) {
-      const d = t('disclaimer');
+      const link = `<a href="/terms" style="color: var(--accent); text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${escapeHtml(t('tos'))}</a>`;
       screen1.innerHTML = `
-        <h1>${t('noPermissionTitle')}</h1>
+        <h1>${escapeHtml(t('disabledTitle'))}</h1>
         <p class="lead" style="margin-top: 16px;">
-          ${t('noPermissionLead')} <a href="/terms" style="color: var(--accent); text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${d.terms}</a>
+          ${escapeHtml(t('disabledBody')).replace('{tos}', link)}
         </p>
       `;
     }
@@ -913,44 +868,11 @@
     });
   }
 
-  async function writeTransaction(userEmail, docId, payload){
-    const txRef = db.collection('transactions').doc(userEmail).collection('records').doc(docId);
-    await txRef.set(payload);
-  }
-
-  async function addCoinsToUser(userEmail, amount){
-    const userRef = db.collection('user_data').doc(userEmail);
-    const snap = await userRef.get();
-    let current = 0;
-    if(snap.exists){
-      current = parseInt(snap.data().coins || '0', 10) || 0;
-    }
-    const newVal = current + Number(amount||0);
-    await userRef.set({ coins: String(newVal) }, { merge: true });
-    return newVal;
-  }
-
-  const NEW_CODE_RE = /^[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}$/i;
-
   const ua = navigator.userAgent.toLowerCase();
   const isAndroid = /android/i.test(ua);
-  
-  let isWindows = /windows/i.test(ua);
-  if (isWindows) {
-    const winVerMatch = ua.match(/windows nt (\d+\.\d+)/);
-    if (winVerMatch) {
-      const winVer = parseFloat(winVerMatch[1]);
-      if (winVer < 10.0) {
-        isWindows = false;
-      }
-    } else {
-      isWindows = false;
-    }
-  }
 
   if (isAndroid) {
     openApp.style.display = 'inline-block';
-    openApp.textContent = 'Open App';
   }
 
   openApp.addEventListener('click', ()=> location.href='darkpurpleof://redeem');
@@ -958,69 +880,26 @@
   // ── Step 1 → Step 2 ──────────────────────────────────────
   redeemBtn.addEventListener('click', async ()=>{
     clearError();
-    if(!currentUser){ showError(t('signIn')); return; }
+    if(!currentUser){ showError(t('err_SIGNIN')); return; }
     const codeRaw = (codeInput.value||'').trim();
-    if(!codeRaw){ showError(t('enterCode')); return; }
+    if(!codeRaw){ showError(t('err_EMPTY')); return; }
     const code = codeRaw.toUpperCase();
 
-    if (code.includes('COINS')) {
-      showError(t('legacyDisallowed'));
-      return;
-    }
-
-    const hasForbidden = /[0OAEIULS]/.test(code) || /[^A-Z0-9-]/.test(code);
-    if (hasForbidden) {
-      showError(t('codeForbidden'));
-      return;
-    }
-
-    const isNew = NEW_CODE_RE.test(code);
+    const fmt = formatErrors(code);
+    if (fmt) { showError(fmt); return; }
 
     redeemBtn.disabled = true;
 
     try {
-      const codeRef = db.collection('redeemable').doc(code);
-      const codeSnap = await codeRef.get();
-      if(!codeSnap.exists){ showError('That did not work, try again with another code'); return; }
-
-      const data = codeSnap.data() || {};
-      originalCodeData = data;
-
-      if(isNew){
-        const type = (data.type||'').toLowerCase();
-        if(!type){ showError(t('invalidPayload')); return; }
-
-        if(type === 'coins'){
-          const amount = Number(data.amount||0);
-          if(!amount || amount<=0){ showError(t('invalidCoins')); return; }
-          await buildConfirmCoins(code, amount, data, codeRef);
-        } else if(type==='shop'||type==='dev'){
-          if(!data.author||!data.id){ showError(t('invalidPayloadMissing')); return; }
-          const path = type==='dev'
-            ? `ugc/${data.author}/development-items/${data.id}`
-            : `ugc/${data.author}/store-items/${data.id}`;
-          const itemSnap = await db.doc(path).get();
-          if(!itemSnap.exists){ showError(t('referencedNotFound')); return; }
-          await buildConfirmItem(code, type, data, itemSnap.data(), data.author, data.id, codeRef);
-        } else {
-          showError(t('unknownType')); return;
-        }
-      } else {
-        // Legacy
-        const digits = (code.match(/\d+/g)||[]).join('');
-        const coins = digits ? parseInt(digits,10) : 0;
-        if(!coins||coins<=0){ showError(t('legacyNoAmount')); return; }
-        buildConfirmLegacy(code, coins, codeRef);
-      }
-
+      const p = await api('preview', { code });
+      confirmFingerprint = p.fingerprint;
+      confirmCode = code;
+      renderPreview(p);
       goStep(2);
     } catch(err){
       console.error(err);
-      if (err.code === 'permission-denied' || err.message.indexOf('permission') !== -1 || err.message.indexOf('Permission') !== -1) {
-        handleDisableError();
-        return;
-      }
-      showError(t('validateFailed'));
+      if (err.disabled) { handleDisableError(); return; }
+      showError(err.status && err.status < 500 ? errText(err.code) : t('failedValidate'));
     } finally {
       redeemBtn.disabled = false;
     }
@@ -1028,194 +907,83 @@
 
   cancelBtn.addEventListener('click', ()=> goStep(1));
 
-  // ── Confirm builders ──────────────────────────────────────
-  function renderConfirmRow(imgSrc, title, byHtml, descText){
+  // ── Render the server's preview ──────────────────────────
+  const BADGE = `<img src="/assets/verified.png" style="width:16px;height:16px;margin-left:5px;vertical-align:middle;">`;
+
+  function renderPreview(p){
+    let heading, title, desc;
+    let by;
+
+    if (p.kind === 'legacy') {
+      heading = t('headingGet');
+      title = escapeHtml(t('coinsTitle', { n: p.amount }));
+      by = escapeHtml(t('by', { name: t('system') }));
+      desc = escapeHtml(t('descAddon'));
+    } else if (p.kind === 'coins') {
+      heading = t('headingGet');
+      // "(DF$)" is the currency name, so it is never translated
+      title = `${escapeHtml(t('coinsTitle', { n: p.amount }))} <span style="color:var(--muted);font-size:13px;font-weight:500">(DF$)</span>${BADGE}`;
+      by = escapeHtml(t('by', { name: p.by })) + (p.byBadge ? BADGE : '');
+      desc = escapeHtml(t('descAddon'));
+    } else {
+      title = escapeHtml(p.title) + (p.titleBadge ? BADGE : '');
+      by = escapeHtml(t('by', { name: p.by })) + (p.byBadge ? BADGE : '');
+      switch (p.variant) {
+        case 'sticker':
+          heading = t('headingHere');
+          desc = escapeHtml(t('descAddon'));
+          break;
+        case 'plugin':
+          heading = t('headingHere');
+          desc = escapeHtml(t('descPlugin'));
+          if (p.forAddon) desc += '<br>' + escapeHtml(t('descAddonFor', { for: p.forAddon }));
+          break;
+        case 'role':
+          heading = t('headingRole');
+          desc = escapeHtml(t('descRole'));
+          break;
+        case 'bundle':
+          heading = t('headingHere');
+          desc = escapeHtml(t('descBundle'));
+          break;
+        default:
+          heading = t('confirmTitle');
+          desc = escapeHtml(t('descDefault'));
+      }
+    }
+
+    document.querySelector('#screen-2 h1').textContent = heading;
     confirmRow.innerHTML = `
-      <img src="${escapeHtml(imgSrc)}" alt="">
+      <img src="${escapeHtml(p.image)}" alt="">
       <div class="confirm-meta">
         <div class="c-title">${title}</div>
-        <div class="c-by">${byHtml}</div>
-        <div class="c-desc">${descText}</div>
+        <div class="c-by">${by}</div>
+        <div class="c-desc">${desc}</div>
       </div>
     `;
   }
 
-  function buildConfirmLegacy(code, coins, codeRef){
-    document.querySelector('#screen-2 h1').textContent = t('step2ConfirmTitle');
-    renderConfirmRow(
-      'https://darkpurpleof.github.io/org-owner.jpg',
-      `${coins} Coins`,
-      'by System',
-      "Add-on for: DarkPurpleOF's Website"
-    );
-    pendingAction = async ()=>{
-      const newCoins = await addCoinsToUser(currentUser.email, coins);
-      await writeTransaction(currentUser.email, code, {
-        amount: Number(coins),
-        date: firebase.firestore.FieldValue.serverTimestamp(),
-        description: "Redeemed Code",
-        image: "https://darkpurpleof.github.io/org-owner.jpg",
-        source: "system@darkpurpleof.github.io",
-        type: "incoming",
-        transtype: "coins"
-      });
-      await codeRef.delete();
-      showSuccess(`${coins} coins have been added to your account.`, `You now have <strong>${newCoins} coins</strong>.`);
-    };
-  }
-
-  async function buildConfirmCoins(code, amount, codeData, codeRef){
-    document.querySelector('#screen-2 h1').textContent = t('step2ConfirmTitle');
-    let authorEmail = codeData.author || 'system@darkpurpleof.github.io';
-    let authorDisplay = authorEmail;
-    let authorVerified = false;
-    try {
-      const aSnap = await db.collection('user_data').doc(authorEmail).get();
-      if(aSnap.exists){
-        const a = aSnap.data();
-        authorDisplay = a['display name'] || authorEmail;
-        authorVerified = !!a.is_verified;
-      }
-    } catch(e){ console.warn(e); }
-
-    const authBadge = authorVerified ? `<img src="/assets/verified.png" style="width:16px;height:16px;margin-left:5px;vertical-align:middle;">` : '';
-    const coinBadge = `<img src="/assets/verified.png" style="width:16px;height:16px;margin-left:5px;vertical-align:middle;">`;
-    renderConfirmRow(
-      codeData.image || 'https://darkpurpleof.github.io/org-owner.jpg',
-      `${amount} ${t('coinUnits')} <span style="color:var(--muted);font-size:13px;font-weight:500">(${t('coinDF')})</span>${coinBadge}`,
-      `by ${escapeHtml(authorDisplay)}${authBadge}`,
-      t('addOnFor')
-    );
-    confirmRow.querySelector('.c-title').innerHTML = `${amount} ${t('coinUnits')} <span style="color:var(--muted);font-size:13px;font-weight:500">(${t('coinDF')})</span>${coinBadge}`;
-    confirmRow.querySelector('.c-by').innerHTML = `by ${escapeHtml(authorDisplay)}${authBadge}`;
-
-    pendingAction = async ()=>{
-      const newCoins = await addCoinsToUser(currentUser.email, amount);
-      await writeTransaction(currentUser.email, code, {
-        amount: Number(amount),
-        date: firebase.firestore.FieldValue.serverTimestamp(),
-        description: "DF$",
-        image: codeData.image||"https://darkpurpleof.github.io/org-owner.jpg",
-        source: codeData.author||"system@darkpurpleof.github.io",
-        type: "incoming",
-        transtype: "coins"
-      });
-      await codeRef.delete();
-      showSuccess(`${amount} ${t('coinUnits')} (${t('coinDF')}) ${t('coinsAddedSuffix')}`, `${t('nowHave')} <strong>${newCoins} ${t('coins')}</strong>.`);
-    };
-  }
-
-  async function buildConfirmItem(code, type, codeData, itemDocData, authorEmail, itemId, codeRef){
-    let authorDisplay = authorEmail, authorVerified = false;
-    try {
-      const aSnap = await db.collection('user_data').doc(authorEmail).get();
-      if(aSnap.exists){ const a=aSnap.data(); authorDisplay=a['display name']||authorEmail; authorVerified=!!a.is_verified; }
-    } catch(e){ console.warn(e); }
-
-    const itemImage = itemDocData.image||itemDocData.img||"https://darkpurpleof.github.io/org-owner.jpg";
-    const itemName  = itemDocData.name||itemDocData.title||("Item "+itemId);
-    const itemVerified = !!itemDocData.verified;
-    const showBadge = authorVerified || itemVerified;
-    const badge = showBadge ? `<img src="/assets/verified.png" style="width:16px;height:16px;margin-left:5px;vertical-align:middle;">` : '';
-
-    const itemType = (itemDocData.type || '').trim();
-    let stepTitle = t('screen2Title');
-    let stepDesc = 'After you redeem this code, the item will be added to your account immediately.';
-
-    if (itemType === 'Sticker Pack') {
-      stepTitle = t('step2ConfirmTitle');
-      stepDesc = t('addOnFor');
-    } else if (itemType === 'Plugin') {
-      stepTitle = t('step2ConfirmTitle');
-      stepDesc = currentLang === 'de'
-        ? "Sie benötigen die DarkPurpleOF's Website-App, um dieses Plugin zu verwenden – nicht mit der Webversion kompatibel"
-        : currentLang === 'es'
-          ? "Necesitas la app de DarkPurpleOF's Website para usar este plugin: incompatible con la versión web"
-          : currentLang === 'ru'
-            ? "Для этого плагина нужно приложение DarkPurpleOF's Website — несовместимо с веб-версией"
-            : currentLang === 'ja'
-              ? "このプラグインを使うには DarkPurpleOF's Website アプリが必要です。Web 版とは互換性がありません"
-              : "You need the DarkPurpleOF's Website app to use this plugin - Incompatible with the web version";
-      if (itemDocData.for) {
-        stepDesc += `<br>${t('addOnFor')} ${escapeHtml(itemDocData.for)}`;
-      }
-    } else if (itemType === 'Role' && type === 'dev') {
-      stepTitle = currentLang === 'de' ? 'Sie erhalten diese Rolle' : currentLang === 'es' ? 'Recibirás este rol' : currentLang === 'ru' ? 'Вы получите эту роль' : currentLang === 'ja' ? 'このロールを取得します' : "You'll get this role";
-      stepDesc = currentLang === 'de' ? 'Sie wird öffentlich in Ihrem Profil angezeigt' : currentLang === 'es' ? 'Aparecerá públicamente en tu perfil' : currentLang === 'ru' ? 'Она будет публично отображаться в вашем профиле' : currentLang === 'ja' ? 'プロフィールに公開表示されます' : 'It will appear publicly on your profile';
-    } else if (itemType === 'Bundle' && type === 'dev') {
-      stepTitle = t('step2ConfirmTitle');
-      stepDesc = currentLang === 'de' ? "Enthaltene Inhalte für DarkPurpleOF's Website" : currentLang === 'es' ? "Contenido incluido para DarkPurpleOF's Website" : currentLang === 'ru' ? "Включённый контент для DarkPurpleOF's Website" : currentLang === 'ja' ? "DarkPurpleOF's Website に含まれるコンテンツ" : "Included content for the DarkPurpleOF's Website";
-    }
-
-    document.querySelector('#screen-2 h1').textContent = stepTitle;
-
-    renderConfirmRow(itemImage, escapeHtml(itemName), '', stepDesc);
-    confirmRow.querySelector('.c-title').innerHTML = `${escapeHtml(itemName)}${badge}`;
-    confirmRow.querySelector('.c-by').innerHTML = `by ${escapeHtml(authorDisplay)}${authorVerified ? `<img src="/assets/verified.png" style="width:16px;height:16px;margin-left:5px;vertical-align:middle;">` : ''}`;
-
-    pendingAction = async ()=>{
-      const userRef = db.collection('user_data').doc(currentUser.email);
-      const updates = {};
-      updates.purchasedIds = firebase.firestore.FieldValue.arrayUnion(itemId);
-
-      if (itemType === 'Role' && type === 'dev') {
-        const rolename = itemDocData.rolename;
-        if (rolename) {
-          updates.roles = firebase.firestore.FieldValue.arrayUnion(rolename);
-        }
-      }
-
-      await userRef.set(updates, { merge:true });
-      
-      await writeTransaction(currentUser.email, itemId, {
-        amount: 0,
-        date: firebase.firestore.FieldValue.serverTimestamp(),
-        description: String(itemName),
-        image: itemImage,
-        source: authorEmail,
-        type: "outgoing"
-      });
-      await codeRef.delete();
-      showSuccess(currentLang === 'de' ? `${itemName} wurde zu Ihrem Konto hinzugefügt.` : currentLang === 'es' ? `${itemName} se ha añadido a tu cuenta.` : currentLang === 'ru' ? `${itemName} добавлен в ваш аккаунт.` : currentLang === 'ja' ? `${itemName} がアカウントに追加されました。` : `${itemName} has been added to your account.`, currentLang === 'de' ? 'Sie finden es in Ihrer Bibliothek.' : currentLang === 'es' ? 'Puedes encontrarlo en tu biblioteca.' : currentLang === 'ru' ? 'Вы можете найти его в своей библиотеке.' : currentLang === 'ja' ? 'ライブラリで確認できます。' : 'You can find it in your library.');
-    };
-  }
-
   // ── Step 2 → Step 3 ──────────────────────────────────────
   confirmBtn.addEventListener('click', async ()=>{
-    if(!pendingAction) return;
-    
-    // Show spinner overlay
+    if(!confirmCode || !confirmFingerprint) return;
+
     spinnerOverlay.classList.add('active');
-    
+
     try {
-      // Re-check the code
-      const code = codeInput.value.toUpperCase();
-      const codeRef = db.collection('redeemable').doc(code);
-      const codeSnap = await codeRef.get();
-      
-      let isValid = true;
-      if (!codeSnap.exists) {
-        isValid = false;
-      } else {
-        const currentData = codeSnap.data() || {};
-        if (JSON.stringify(originalCodeData) !== JSON.stringify(currentData)) {
-          isValid = false;
-        }
-      }
-
-      if (!isValid) {
-        spinnerOverlay.classList.remove('active');
-        showFailureScreen();
-        return;
-      }
-
-      await pendingAction();
+      const r = await api('confirm', { code: confirmCode, fingerprint: confirmFingerprint });
       spinnerOverlay.classList.remove('active');
+      if (r.kind === 'legacy') {
+        showSuccess(t('addedLegacy', { n: r.amount }), t('detailCoins', { n: r.newCoins }));
+      } else if (r.kind === 'coins') {
+        showSuccess(t('addedCoins', { n: r.amount }), t('detailCoins', { n: r.newCoins }));
+      } else {
+        showSuccess(t('addedItem', { name: r.name }), t('detailItem'));
+      }
       goStep(3, false);
     } catch(err){
       console.error(err);
       spinnerOverlay.classList.remove('active');
-      if (err.code === 'permission-denied' || err.message.indexOf('permission') !== -1 || err.message.indexOf('Permission') !== -1) {
+      if (err.disabled) {
         handleDisableError();
         goStep(1);
         return;
@@ -1226,49 +994,52 @@
 
   function showFailureScreen() {
     const s3H1 = document.querySelector('#screen-3 h1');
-    s3H1.textContent = t('orderCantComplete');
-    
+    s3H1.textContent = t('failTitle');
+
     const successIcon = document.querySelector('#screen-3 .success-icon');
     successIcon.classList.add('error');
     successIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-    
-    successLead.textContent = t('orderCantCompleteLead');
-    
-    const userIdVal = currentUser ? currentUser.uid : 'Anonymous';
-    const timestampVal = new Date().toLocaleString();
+
+    successLead.textContent = t('failLead');
+
+    const userIdVal = currentUser ? currentUser.uid : t('anonymous');
+    const timestampVal = new Date().toLocaleString(LANG);
     const uuidVal = generateUUID();
-    
+
+    // Field labels are technical identifiers for support and stay in English.
     successDetail.innerHTML = `
       <div style="font-style: italic; font-size: 11px; color: var(--muted); text-align: left; line-height: 1.6;">
-        UserId: ${userIdVal}<br>
-        Timestamp: ${timestampVal}<br>
+        UserId: ${escapeHtml(userIdVal)}<br>
+        Timestamp: ${escapeHtml(timestampVal)}<br>
         OneUseUUID: ${uuidVal}
       </div>
     `;
-    
+
     txBtn.style.display = 'none';
-    
+
     goStep(3, true);
   }
 
-  function showSuccess(lead, detail){
+  // `detailHtml` is built from translation strings plus a number, so it is safe to inject.
+  function showSuccess(lead, detailHtml){
     const s3H1 = document.querySelector('#screen-3 h1');
-    s3H1.textContent = t('screen3Title');
-    
+    s3H1.textContent = t('allSet');
+
     const successIcon = document.querySelector('#screen-3 .success-icon');
     successIcon.classList.remove('error');
     successIcon.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
-    
+
     txBtn.style.display = 'inline-block';
-    
+
     successLead.textContent = lead;
-    successDetail.innerHTML = detail;
+    successDetail.innerHTML = detailHtml;
   }
 
   redeemAnotherBtn.addEventListener('click', ()=>{
     codeInput.value='';
     clearError();
-    pendingAction = null;
+    confirmFingerprint = null;
+    confirmCode = null;
     goStep(1);
   });
   txBtn.addEventListener('click', ()=> window.location.href='/transactions');

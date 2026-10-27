@@ -1,302 +1,77 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Item</title>
-
-  <!-- Firebase (compat) moved to top so dp-topbar can use the globals -->
-  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
-  <style>
-    /* Global box-sizing and overflow guard to prevent any accidental horizontal scroll */
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body { height: 100%; width: 100%; overflow-x: hidden; }
-    img { max-width: 100%; display: block; }
-
-    :root{
-      /* ---- original palette, unchanged ---- */
-      --bg: #171717;
-      --card: #1f1f1f;
-      --muted: #a8a8a8;
-      --accent: #6b21a8;
-      --accent-strong: #5b21b6;
-      --text: #eaeaea;
-      --border: rgba(255,255,255,0.04);
-      --friend-row-height: 110px;
-      --friend-row-height-mobile: 84px;
-
-      /* ---- derived tones (same hues, just alpha/mix variants) ---- */
-      --accent-glow: rgba(107,33,168,0.45);
-      --accent-ring: rgba(107,33,168,0.22);
-      --accent-soft: rgba(107,33,168,0.12);
-      --card-raised: #242424;
-
-      --font-body: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-      --font-display: 'Sora', 'Inter', system-ui, sans-serif;
-      --font-mono: 'Space Mono', ui-monospace, monospace;
-
-      --safe-b: env(safe-area-inset-bottom, 0px);
-    }
-    body.light {
-      --bg: #f6f8fb; --card:#fff; --muted:#475569; --text:#0f172a; --border: rgba(0,0,0,0.06);
-      --card-raised: #ffffff;
-    }
-
-    body {
-      margin:0; font-family: var(--font-body); background-color: var(--bg); color:var(--text);
-      transition: background .25s, color .25s; min-height:100vh;
-    }
-
-    dp-topbar { display:block; position:sticky; top:0; z-index:100; }
-
-    /* ============ LAYOUT ============ */
-    main.dp-page {
-      max-width:1180px; width:100%; margin:0 auto; padding:32px 20px 64px;
-      box-sizing:border-box; overflow-x:hidden;
-    }
-
-    .dp-hero{
-      position:relative;
-      background:
-        radial-gradient(1200px 260px at 15% -10%, var(--accent-soft), transparent 60%),
-        var(--card);
-      border-radius:20px;
-      border:1px solid var(--border);
-      box-shadow:0 24px 60px -20px rgba(0,0,0,0.55);
-      overflow:hidden;
-    }
-
-    .dp-hero-inner{
-      display:grid;
-      grid-template-columns: 400px 1px 1fr;
-      gap:0;
-      align-items:stretch;
-    }
-
-    /* -------- media (left) -------- */
-    .dp-media{
-      padding:28px;
-      display:flex; align-items:center; justify-content:center;
-    }
-    .dp-media-frame{
-      position:relative;
-      width:100%; aspect-ratio:1/1; border-radius:16px; overflow:hidden;
-      background:#101010;
-      border:1px solid var(--border);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.02), 0 20px 40px -18px var(--accent-glow);
-    }
-    .dp-media-frame img{ width:100%; height:100%; object-fit:cover; }
-    .dp-media-frame::after{
-      content:''; position:absolute; inset:0; pointer-events:none;
-      background:linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.35) 100%);
-    }
-    .dp-own-chip{
-      position:absolute; top:12px; left:12px; z-index:2;
-      display:none; align-items:center; gap:6px;
-      font-family:var(--font-mono); font-size:11px; letter-spacing:.04em; font-weight:700;
-      color:#fff; background:var(--accent-strong); padding:6px 10px; border-radius:999px;
-      box-shadow:0 6px 16px -6px var(--accent-glow);
-    }
-
-    /* -------- ticket-perforation divider (signature element, desktop only) -------- */
-    .dp-perf{
-      position:relative; width:1px; background:transparent;
-      background-image: repeating-linear-gradient(to bottom, var(--border) 0 8px, transparent 8px 16px);
-    }
-    .dp-perf::before, .dp-perf::after{
-      content:''; position:absolute; left:50%; transform:translateX(-50%);
-      width:22px; height:22px; border-radius:50%; background:var(--bg);
-    }
-    .dp-perf::before{ top:-11px; }
-    .dp-perf::after{ bottom:-11px; }
-
-    /* -------- details (right) -------- */
-    .dp-details{
-      padding:28px 32px 28px 24px;
-      display:flex; flex-direction:column; gap:16px; min-width:0;
-    }
-
-    .dp-heading{ display:flex; flex-direction:column; gap:4px; min-width:0; }
-    .dp-eyebrow{
-      font-family:var(--font-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase;
-      color:var(--muted);
-    }
-    .item-name{
-      font-family:var(--font-display); font-weight:800; font-size:26px; line-height:1.15;
-      display:flex; align-items:center; gap:10px; color:var(--text);
-      overflow-wrap:anywhere;
-    }
-    .verified-badge{ width:18px; height:18px; flex:0 0 auto; }
-    .item-author-line{
-      font-size:13.5px; color:var(--muted); display:flex; gap:6px; align-items:center; margin-top:2px;
-    }
-
-    /* -------- spec strip (signature-adjacent: mono data chips) -------- */
-    .dp-specs{
-      display:flex; flex-wrap:wrap; gap:8px;
-      padding:14px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border);
-    }
-    .info-row{
-      display:flex; align-items:baseline; gap:7px;
-      padding:7px 12px; border-radius:999px;
-      border:1px solid var(--border); background:var(--card-raised);
-    }
-    .info-label{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
-    .info-value{
-      font-family:var(--font-mono); font-weight:700; font-size:12.5px; color:var(--text);
-      display:flex; align-items:center; gap:6px; white-space:nowrap;
-    }
-
-    .desc{
-      color:var(--text); font-size:14.5px; line-height:1.55; opacity:.92;
-      max-height:180px; overflow:auto; padding-right:4px;
-    }
-
-    /* -------- actions -------- */
-    .dp-actions{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:auto; padding-top:6px;
-    }
-    .action-button{
-      display:inline-flex; gap:9px; align-items:center; justify-content:center;
-      padding:14px 20px; border-radius:12px; border:none; cursor:pointer;
-      font-family:var(--font-body); font-weight:800; font-size:15px;
-      background:linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
-      color:#fff; min-width:200px;
-      box-shadow:0 10px 24px -10px var(--accent-glow);
-      transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
-    }
-    .action-button:hover:not(:disabled){ transform:translateY(-1px); box-shadow:0 14px 30px -10px var(--accent-glow); }
-    .action-button:active:not(:disabled){ transform:translateY(0); }
-    .action-button:disabled{ opacity:0.55; cursor:not-allowed; box-shadow:none; }
-    .action-button.secondary{
-      background:transparent; border:1px solid var(--border); color:var(--text);
-      font-weight:700; box-shadow:none; min-width:auto;
-    }
-    .action-button.secondary:hover{ border-color:var(--accent); }
-
-    .small-muted{ font-size:12.5px; color:var(--muted); }
-    #action-disclaimer{ width:100%; }
-
-    /* ============ TOAST ============ */
-    #toast{
-      position:fixed; top:18px; left:50%; transform:translateX(-50%);
-      padding:11px 16px; border-radius:10px; font-weight:700; font-size:14px;
-      display:none; z-index:99999; box-shadow:0 12px 30px -10px rgba(0,0,0,0.5);
-    }
-    #toast.purple{ background:var(--accent-strong); color:#fff; }
-    #toast.yellow{ background:#e6b800; color:#222; }
-    #toast.red{ background:#c0392b; color:#fff; }
-
-    /* ============ PURCHASE MODAL (desktop: centered card) ============ */
-    .modal-overlay{
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.62); backdrop-filter:blur(2px);
-      z-index:99990; align-items:center; justify-content:center; padding:16px;
-    }
-    .modal{
-      background:var(--card); border-radius:16px; width:100%; max-width:420px; padding:22px;
-      box-shadow:0 20px 60px rgba(0,0,0,0.6); color:var(--text); border:1px solid var(--border);
-    }
-    .modal h3{ margin:0 0 6px 0; font-family:var(--font-display); font-weight:700; font-size:18px; }
-    .modal p{ margin:6px 0 16px 0; color:var(--muted); font-size:14px; }
-    .modal .modal-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
-    .btn{ padding:10px 16px; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:14px; }
-    .btn.ghost{ background:transparent; border:1px solid var(--border); color:var(--text); }
-    .btn.primary{ background:var(--accent); color:#fff; }
-    .btn.primary:hover{ background:var(--accent-strong); }
-    .dp-sheet-handle{ display:none; }
-
-    /* ============================================================
-       MOBILE — dedicated UI, not just a shrunk desktop layout:
-       - stacked full-bleed media
-       - horizontally scrollable spec chips
-       - sticky bottom purchase bar (app-store style)
-       - purchase modal becomes a bottom sheet
-       ============================================================ */
-    @media (max-width: 860px){
-      main.dp-page{ padding:0 0 calc(92px + var(--safe-b)); }
-
-      .dp-hero{ border-radius:0; border-left:none; border-right:none; }
-      .dp-hero-inner{ grid-template-columns:1fr; }
-      .dp-perf{ display:none; }
-
-      .dp-media{ padding:0; }
-      .dp-media-frame{ border-radius:0; aspect-ratio:4/3; border:none; }
-
-      .dp-details{ padding:18px 16px 12px; gap:14px; }
-      .item-name{ font-size:21px; }
-
-      .dp-specs{
-        flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
-        padding:12px 16px; margin:0 -16px; border-left:none; border-right:none;
-        scrollbar-width:none;
-      }
-      .dp-specs::-webkit-scrollbar{ display:none; }
-      .info-row{ flex:0 0 auto; }
-
-      .desc{ max-height:none; }
-
-      /* hide the inline action row; the sticky bar below takes over */
-      .dp-actions{ display:none; }
-
-      /* sticky mobile action bar (mirrors the SAME buttons via CSS, not duplicate DOM) */
-      .dp-mobile-bar{
-        position:fixed; left:0; right:0; bottom:0; z-index:200;
-        display:flex; gap:10px; align-items:center;
-        padding:12px 14px calc(12px + var(--safe-b));
-        background:rgba(23,23,23,0.86);
-        backdrop-filter:blur(14px) saturate(140%);
-        border-top:1px solid var(--border);
-      }
-      body.light .dp-mobile-bar{ background:rgba(255,255,255,0.86); }
-      .dp-mobile-bar .action-button{ min-width:0; flex:1 1 auto; padding:13px 16px; font-size:14.5px; }
-      .dp-mobile-bar .action-button.secondary{ flex:0 0 auto; padding:13px; width:48px; }
-      .dp-mobile-bar #action-disclaimer, .dp-mobile-bar #view-in-app-disclaimer{
-        display:none; /* shown inline above the bar instead */
-      }
-
-      .dp-mobile-note{
-        display:block; padding:0 16px 4px; font-size:12px; color:var(--muted); text-align:center;
-      }
-
-      /* modal -> bottom sheet */
-      .modal-overlay{ align-items:flex-end; padding:0; }
-      .modal{
-        max-width:100%; border-radius:20px 20px 0 0; padding:14px 18px calc(18px + var(--safe-b));
-        animation: dp-sheet-up .22s ease-out;
-      }
-      .dp-sheet-handle{
-        display:block; width:40px; height:4px; border-radius:99px; background:var(--border);
-        margin:2px auto 14px;
-      }
-      @keyframes dp-sheet-up{ from{ transform:translateY(24px); opacity:.6; } to{ transform:translateY(0); opacity:1; } }
-    }
-
-    @media (min-width:861px){
-      .dp-mobile-bar{ display:none; }
-      .dp-mobile-note{ display:none; }
-      .gift-btn-icon{ display:none; }
-    }
-
-    @media (max-width: 860px){
-      .gift-btn-text{ display:none; }
-      .gift-btn-icon{ display:inline-flex; align-items:center; }
-      .gift-btn-icon svg{ width:20px; height:20px; }
-      #view-in-app-btn{ flex:1; justify-content:center; }
-    }
-
-    @media (max-width: 460px){
-      .dp-media-frame{ aspect-ratio:1/1; }
-      .item-name{ font-size:19px; }
-    }
-  </style>
-
-  <!-- initialize firebase early so dp-topbar and other components can access firebase globals -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Item</title>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;width:100%;overflow-x:hidden}
+img{max-width:100%;display:block}
+button{font:inherit;color:inherit}
+:root{--bg:#171717;--surface:#1f1f1f;--raised:#242424;--border:rgba(255,255,255,0.04);--text:#eaeaea;--muted:#a8a8a8;--accent:#6b21a8;--accent-h:#5b21b6;--danger:#c0392b;--star:#F5B400;--sb:env(safe-area-inset-bottom,0px)}
+body.light{--bg:#f6f8fb;--surface:#fff;--raised:#fff;--border:rgba(0,0,0,0.06);--text:#0f172a;--muted:#475569}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14.5px;line-height:1.55;min-height:100vh}
+dp-topbar{display:block;position:sticky;top:0;z-index:100}
+.page{max-width:1120px;margin:0 auto;padding:24px 20px 64px;display:grid;grid-template-columns:minmax(0,1fr) 316px;gap:24px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.sec{padding:20px 22px;border-top:1px solid var(--border)}.sec:first-child{border-top:0}
+h1{font-size:23px;line-height:1.25;margin:2px 0 4px;font-weight:700;display:flex;align-items:center;gap:8px;overflow-wrap:anywhere}
+h2{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:600}
+.muted{color:var(--muted)}.star{color:var(--star)}
+.vb{width:16px;height:16px;flex:none;display:inline-block;vertical-align:-3px;margin-left:5px}h1 .vb{width:20px;height:20px;margin:0}
+#hd{display:flex;gap:18px;align-items:flex-start}
+.ico{width:96px;height:96px;border-radius:12px;object-fit:cover;background:var(--raised);border:1px solid var(--border);flex:none}
+.hm{flex:1;min-width:0}.eyebrow{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.tools{display:flex;gap:6px}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:4px;background:var(--accent-h);color:#fff;border:0;margin-top:8px}
+.ib{background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;color:var(--muted);font-size:13px}.ib:hover{color:var(--text);border-color:var(--muted)}
+#shots{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}#shots img{height:220px;width:auto;border-radius:6px;border:1px solid var(--border);cursor:zoom-in;flex:none;background:var(--raised)}
+.desc{white-space:pre-wrap;color:var(--text);opacity:.9;overflow-wrap:anywhere}.desc.clamp{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.link{background:none;border:0;color:var(--text);text-decoration:underline;cursor:pointer;padding:6px 0 0;font-weight:600;font-size:13px}
+.notice{margin:0 22px 0;padding:10px 12px;border:1px solid rgba(192,57,43,.5);background:rgba(192,57,43,.12);border-radius:6px;font-size:13px}
+.buy{position:sticky;top:76px;padding:20px}
+.price{font-size:26px;font-weight:700;margin-bottom:14px}
+#actions{display:flex;flex-direction:column;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:6px;border:1px solid rgba(128,128,128,.28);background:transparent;cursor:pointer;font-weight:600;font-size:14px}
+.btn:hover:not(:disabled){border-color:var(--muted)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover:not(:disabled){background:var(--accent-h);border-color:var(--accent-h)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
+dl{margin:18px 0 0;border-top:1px solid var(--border)}dl div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13.5px}
+dt{color:var(--muted)}dd{margin:0;text-align:right;overflow-wrap:anywhere;display:flex;align-items:center;justify-content:flex-end}
+.sum{display:flex;align-items:center;gap:10px;margin-bottom:14px}.sum b{font-size:22px}
+.sb{background:none;border:0;padding:0 2px;font-size:26px;line-height:1;cursor:pointer;color:rgba(168,168,168,.35)}.sb.on{color:var(--star)}
+textarea,input,select{width:100%;background:var(--raised);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font:inherit;resize:vertical}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--accent-h);outline-offset:-1px}
+.rev{display:flex;gap:12px;padding:16px 0;border-top:1px solid var(--border)}
+.av{position:relative;width:40px;height:40px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}.av.s{width:28px;height:28px;font-size:12px}
+.av img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover}
+.rb{flex:1;min-width:0}.rh{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}.rh time{color:var(--muted);font-size:12px}
+.rb p{margin:6px 0;overflow-wrap:anywhere;white-space:pre-wrap}
+.ra{display:flex;gap:14px}.ra button{background:none;border:0;color:var(--muted);cursor:pointer;font-size:12.5px;padding:2px 0}.ra button:hover{color:var(--text)}
+.thread{margin-top:10px;padding-left:12px;border-left:2px solid var(--border)}.cm{padding:8px 0}.cm .rh{margin-bottom:2px}
+.cf{display:flex;gap:8px;margin-top:8px}.cf input{flex:1}
+#toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);padding:10px 16px;border-radius:6px;font-weight:600;font-size:14px;display:none;z-index:99999;max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#toast.purple{background:var(--accent-h);color:#fff}#toast.yellow{background:#e6b800;color:#222}#toast.red{background:#c0392b;color:#fff}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99990;align-items:center;justify-content:center;padding:16px}
+.md{background:var(--surface);border:1px solid var(--border);border-radius:8px;width:100%;max-width:440px;padding:22px;max-height:90vh;overflow:auto}.md.wide{max-width:900px;padding:10px}
+.md h3{margin:0 0 8px;font-size:17px}.md p{margin:6px 0 14px;color:var(--muted);font-size:14px}.md label{display:block;font-size:12.5px;color:var(--muted);margin:12px 0 4px}
+.ma{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}.ma .btn{padding:9px 16px}
+@media(max-width:860px){
+.page{grid-template-columns:1fr;padding:0 0 calc(84px + var(--sb));gap:0}.card{border-radius:0;border-left:0;border-right:0}
+.sec{padding:18px 16px}.notice{margin:0 16px}.buy{position:static;border-top:0}.buy .price{display:none}
+#actions{position:fixed;left:0;right:0;bottom:0;z-index:200;flex-direction:row;padding:12px 14px calc(12px + var(--sb));background:var(--surface);border-top:1px solid var(--border)}
+#actions .btn{flex:1}#actions .btn.gift{flex:0 0 auto}
+.ico{width:72px;height:72px}h1{font-size:20px}#shots img{height:180px}
+.ov{align-items:flex-end;padding:0}.md{max-width:100%;border-radius:12px 12px 0 0;padding-bottom:calc(20px + var(--sb))}}
+</style>
+<!-- initialize firebase early so dp-topbar and other components can access firebase globals -->
   <script>
     (function(){
       const firebaseConfig = {
@@ -317,110 +92,40 @@
       window.dpDb = firebase.firestore();
     })();
   </script>
-
-  <!-- dp-topbar (user provided) -->
-  <script type="module" src="/dp-topbar.js"></script>
-  <script src="/sendgift.js"></script>
+<script type="module" src="/dp-topbar.js"></script>
+<script src="/uploader.js"></script>
+<script src="/sendgift.js"></script>
 </head>
 <body>
-  <dp-topbar></dp-topbar>
-
-  <main class="dp-page">
-    <section class="dp-hero" id="ugc-root">
-      <div class="dp-hero-inner">
-
-        <div class="dp-media">
-          <div class="dp-media-frame" id="left-image">
-            <div class="dp-own-chip" id="own-indicator">✓ You own this</div>
-            <img src="https://darkpurpleof.github.io/assets/default_plugin.png" alt="item image" id="item-image">
-          </div>
-        </div>
-
-        <div class="dp-perf" aria-hidden="true"></div>
-
-        <div class="dp-details">
-          <div class="dp-heading">
-            <div class="dp-eyebrow" id="item-eyebrow">Item</div>
-            <div class="item-name" id="item-name">Loading...</div>
-            <div class="item-author-line" id="item-author">by —</div>
-          </div>
-
-          <div class="dp-specs" id="info-grid">
-            <div class="info-row"><span class="info-label">Author</span><span class="info-value" id="info-author">—</span></div>
-            <div class="info-row"><span class="info-label">Type</span><span class="info-value" id="info-type">—</span></div>
-            <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">—</span></div>
-            <div class="info-row"><span class="info-label">Download</span><span class="info-value" id="info-download">—</span></div>
-            <div class="info-row"><span class="info-label">Updated</span><span class="info-value" id="info-updated">—</span></div>
-          </div>
-
-          <div class="desc" id="item-desc">&nbsp;</div>
-
-          <div class="dp-mobile-note" id="mobile-disclaimer-mirror"></div>
-
-          <div class="dp-actions" id="action-row">
-            <button class="action-button" id="action-btn" style="display:none">Purchase</button>
-            <button class="action-button secondary" id="gift-btn" style="display:none">Gift this item</button>
-            <button class="action-button secondary" id="migrate-btn" style="display:none">Migrate</button>
-            <button class="action-button secondary" id="view-in-app-btn" style="display:none">View in App</button>
-            <div class="small-muted" id="action-disclaimer"></div>
-          </div>
-
-          <div style="display: none;" class="small-muted" id="view-in-app-disclaimer"></div>
-        </div>
-
-      </div>
+<dp-topbar></dp-topbar>
+<main class="page">
+  <div class="card">
+    <section class="sec"><div id="hd"></div></section>
+    <section class="sec" id="shots-sec" hidden><div id="shots"></div></section>
+    <div id="sale-notice" hidden style="padding-top:16px"><div class="notice" data-i="itemNotOnSale"></div></div>
+    <section class="sec"><h2 data-i="description"></h2><div id="desc"></div></section>
+    <section class="sec" id="log-sec" hidden><h2 data-i="whatsNew"></h2><div class="desc" id="log"></div></section>
+    <section class="sec">
+      <h2 data-i="reviewsTitle"></h2>
+      <div class="sum" id="sum"></div>
+      <div id="composer"></div>
+      <div id="reviews"></div>
     </section>
-  </main>
-
-  <!-- Mobile sticky action bar: mirrors the same buttons above via layout, real controls live in #action-row -->
-  <div class="dp-mobile-bar" id="mobile-action-bar"></div>
-
-  <div id="toast" class="purple">OK</div>
-
-  <!-- Purchase Modal (desktop: centered card / mobile: bottom sheet, same DOM) -->
-  <div id="purchase-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal" role="document" id="purchase-modal">
-      <div class="dp-sheet-handle"></div>
-      <h3 id="modal-title">Confirm Purchase</h3>
-      <p id="modal-body">Are you sure you want to buy this item?</p>
-      <div class="modal-actions">
-        <button class="btn ghost" id="modal-cancel">Cancel</button>
-        <button class="btn primary" id="modal-confirm">Confirm</button>
-      </div>
-    </div>
   </div>
+  <aside class="card buy">
+    <div class="price" id="price"></div>
+    <div id="actions"></div>
+    <div class="note" id="note"></div>
+    <dl id="facts"></dl>
+  </aside>
+</main>
+<div id="toast" class="purple"></div>
+<div class="ov" id="ov"><div class="md" id="md" role="dialog" aria-modal="true">
+  <h3 id="m-title"></h3><div id="m-body"></div>
+  <div class="ma"><button class="btn" id="m-cancel"></button><button class="btn primary" id="m-ok"></button></div>
+</div></div>
 
-  <script>
-    // Use compat globals initialized above (dpAuth, dpDb)
-    const auth = window.dpAuth || firebase.auth();
-    const db = window.dpDb || firebase.firestore();
-
-    function showToast(text, type='purple', ms=2500){
-      const t = document.getElementById('toast');
-      t.className = type;
-      t.textContent = text;
-      t.style.display = 'block';
-      setTimeout(()=> t.style.display='none', ms);
-    }
-
-    // parse url params (compat with multiple ? style)
-    const query = location.href.split('?').slice(1).join('&');
-    const params = new URLSearchParams(query);
-    const itemId = params.get('id');
-    const authorParam = params.get('author');
-    const typeParam = params.get('type');
-
-    function ugcCollectionForType(t){ return (t === '0') ? 'store-items' : 'development-items'; }
-    const DEFAULT_IMAGE = 'https://darkpurpleof.github.io/assets/default_plugin.png';
-
-    let ugcDoc = null;
-    let authorDoc = null;
-    let currentUser = null;
-    let currentUserDoc = null;
-    let isPurchasing = false;
-
-
-
+<script>
 const SUPPORTED_LANGS = ['en', 'es', 'ru', 'de', 'ja'];
 const I18N = {
       "en": {
@@ -690,496 +395,394 @@ const I18N = {
       }
 };
 
-let currentLang = 'en';
 
-function normalizeLang(code){
-  const c = String(code || '').trim().toLowerCase();
-  return SUPPORTED_LANGS.includes(c) ? c : 'en';
+Object.assign(I18N.en, {
+  description:'Description', noDescription:'No description provided.', showMore:'Show more', showLess:'Show less', whatsNew:"What's new",
+  reviewsTitle:'Ratings & reviews', noRatings:'No ratings yet', ratingsCount:'{n} ratings', reviewPlaceholder:'Write a review (optional)',
+  postReview:'Post review', updateReview:'Update review', purchaseToReview:'Purchase this item to leave a review.', reviewSaved:'Review saved', reviewFailed:'Could not save your review',
+  noReviews:'No written reviews yet.', comments:'Comments', commentPlaceholder:'Add a comment', post:'Post', purchaseToComment:'Purchase this item to comment.',
+  report:'Report', reportItem:'Report item', reportReview:'Report review', reportComment:'Report comment',
+  reportBody:'Report this for breaking the rules. Reports must be truthful; false reports may result in your account being banned.',
+  reason:'Reason', selectReason:'Select a reason', additional:'Additional details (optional)', reportThanks:'Report submitted',
+  reportThanksBody:'Our moderators will review your report.', reportNeedsOwn:'You must own this item to report content on it.',
+  owned:'Owned', purchased:'Purchased', unavailable:'Unavailable', price:'Price', downloads:'Downloads', share:'Share', linkCopied:'Link copied', close:'Close',
+  signInPurchase:'Sign in to purchase this item.', migrateBody:'Your earlier purchase of this item needs to be recorded to your account. This does not charge you again.', migrateHint:'Migrate your earlier purchase to continue.',
+  gift:'Gift', giftNeedLogin:'Sign in to send gifts',
+  errBanned:'Your account is restricted', errAuth:'Please sign in and try again', errAnon:'Guest download limit reached. Sign in to continue', errNotOwned:'You do not own this item',
+  errFile:'The file is currently unavailable', errNetwork:'Network error. Check your connection', errGeneric:'Something went wrong. Please try again',
+  r1:'Inappropriate banner', r2:'Inappropriate profile picture', r3:'Hate speech', r4:'Inappropriate bio or display name', r5:'Offensive language',
+  r6:'Impersonation', r7:'Spam or scam', r8:'Sexually explicit content', r9:'Harassment or bullying', verified:'verified'
+});
+
+/* The extra strings above only existed in English, so every other language fell back to English. */
+const I18N_MORE={
+  es:{
+    description:'Descripción', noDescription:'Sin descripción.', showMore:'Ver más', showLess:'Ver menos', whatsNew:'Novedades',
+    reviewsTitle:'Valoraciones y reseñas', noRatings:'Aún no hay valoraciones', ratingsCount:'{n} valoraciones', reviewPlaceholder:'Escribe una reseña (opcional)',
+    postReview:'Publicar reseña', updateReview:'Actualizar reseña', purchaseToReview:'Compra este artículo para dejar una reseña.', reviewSaved:'Reseña guardada', reviewFailed:'No se pudo guardar tu reseña',
+    noReviews:'Aún no hay reseñas escritas.', comments:'Comentarios', commentPlaceholder:'Añade un comentario', post:'Publicar', purchaseToComment:'Compra este artículo para comentar.',
+    report:'Denunciar', reportItem:'Denunciar artículo', reportReview:'Denunciar reseña', reportComment:'Denunciar comentario',
+    reportBody:'Denuncia esto por incumplir las normas. Las denuncias deben ser verídicas; las denuncias falsas pueden provocar la suspensión de tu cuenta.',
+    reason:'Motivo', selectReason:'Selecciona un motivo', additional:'Detalles adicionales (opcional)', reportThanks:'Denuncia enviada',
+    reportThanksBody:'Nuestros moderadores revisarán tu denuncia.', reportNeedsOwn:'Debes ser dueño de este artículo para denunciar su contenido.',
+    owned:'Adquirido', purchased:'Comprado', unavailable:'No disponible', price:'Precio', downloads:'Descargas', share:'Compartir', linkCopied:'Enlace copiado', close:'Cerrar',
+    signInPurchase:'Inicia sesión para comprar este artículo.', migrateBody:'Tu compra anterior de este artículo debe registrarse en tu cuenta. No se te volverá a cobrar.', migrateHint:'Migra tu compra anterior para continuar.',
+    gift:'Regalar', giftNeedLogin:'Inicia sesión para enviar regalos',
+    errBanned:'Tu cuenta está restringida', errAuth:'Inicia sesión e inténtalo de nuevo', errAnon:'Se alcanzó el límite de descargas para invitados. Inicia sesión para continuar', errNotOwned:'No eres dueño de este artículo',
+    errFile:'El archivo no está disponible por ahora', errNetwork:'Error de red. Revisa tu conexión', errGeneric:'Algo salió mal. Inténtalo de nuevo',
+    r1:'Banner inapropiado', r2:'Foto de perfil inapropiada', r3:'Discurso de odio', r4:'Biografía o nombre inapropiado', r5:'Lenguaje ofensivo',
+    r6:'Suplantación de identidad', r7:'Spam o estafa', r8:'Contenido sexual explícito', r9:'Acoso o intimidación', verified:'verificado'
+  },
+  de:{
+    description:'Beschreibung', noDescription:'Keine Beschreibung vorhanden.', showMore:'Mehr anzeigen', showLess:'Weniger anzeigen', whatsNew:'Neuigkeiten',
+    reviewsTitle:'Bewertungen & Rezensionen', noRatings:'Noch keine Bewertungen', ratingsCount:'{n} Bewertungen', reviewPlaceholder:'Rezension schreiben (optional)',
+    postReview:'Rezension veröffentlichen', updateReview:'Rezension aktualisieren', purchaseToReview:'Kaufe diesen Artikel, um eine Rezension zu schreiben.', reviewSaved:'Rezension gespeichert', reviewFailed:'Deine Rezension konnte nicht gespeichert werden',
+    noReviews:'Noch keine geschriebenen Rezensionen.', comments:'Kommentare', commentPlaceholder:'Kommentar hinzufügen', post:'Senden', purchaseToComment:'Kaufe diesen Artikel, um zu kommentieren.',
+    report:'Melden', reportItem:'Artikel melden', reportReview:'Rezension melden', reportComment:'Kommentar melden',
+    reportBody:'Melde dies wegen eines Regelverstoßes. Meldungen müssen wahrheitsgemäß sein; falsche Meldungen können zur Sperrung deines Kontos führen.',
+    reason:'Grund', selectReason:'Grund auswählen', additional:'Weitere Angaben (optional)', reportThanks:'Meldung gesendet',
+    reportThanksBody:'Unsere Moderatoren prüfen deine Meldung.', reportNeedsOwn:'Du musst diesen Artikel besitzen, um Inhalte dazu zu melden.',
+    owned:'Im Besitz', purchased:'Gekauft', unavailable:'Nicht verfügbar', price:'Preis', downloads:'Downloads', share:'Teilen', linkCopied:'Link kopiert', close:'Schließen',
+    signInPurchase:'Melde dich an, um diesen Artikel zu kaufen.', migrateBody:'Dein früherer Kauf dieses Artikels muss deinem Konto zugeordnet werden. Es wird nichts erneut abgebucht.', migrateHint:'Migriere deinen früheren Kauf, um fortzufahren.',
+    gift:'Schenken', giftNeedLogin:'Melde dich an, um Geschenke zu senden',
+    errBanned:'Dein Konto ist eingeschränkt', errAuth:'Bitte melde dich an und versuche es erneut', errAnon:'Download-Limit für Gäste erreicht. Melde dich an, um fortzufahren', errNotOwned:'Du besitzt diesen Artikel nicht',
+    errFile:'Die Datei ist derzeit nicht verfügbar', errNetwork:'Netzwerkfehler. Prüfe deine Verbindung', errGeneric:'Etwas ist schiefgelaufen. Bitte versuche es erneut',
+    r1:'Unangemessenes Banner', r2:'Unangemessenes Profilbild', r3:'Hassrede', r4:'Unangemessene Bio oder unangemessener Anzeigename', r5:'Beleidigende Sprache',
+    r6:'Identitätsvortäuschung', r7:'Spam oder Betrug', r8:'Sexuell explizite Inhalte', r9:'Belästigung oder Mobbing', verified:'verifiziert'
+  },
+  ru:{
+    description:'Описание', noDescription:'Описание отсутствует.', showMore:'Показать больше', showLess:'Свернуть', whatsNew:'Что нового',
+    reviewsTitle:'Оценки и отзывы', noRatings:'Оценок пока нет', ratingsCount:'Оценок: {n}', reviewPlaceholder:'Напишите отзыв (необязательно)',
+    postReview:'Опубликовать отзыв', updateReview:'Обновить отзыв', purchaseToReview:'Купите этот товар, чтобы оставить отзыв.', reviewSaved:'Отзыв сохранён', reviewFailed:'Не удалось сохранить отзыв',
+    noReviews:'Письменных отзывов пока нет.', comments:'Комментарии', commentPlaceholder:'Добавьте комментарий', post:'Отправить', purchaseToComment:'Купите этот товар, чтобы комментировать.',
+    report:'Пожаловаться', reportItem:'Пожаловаться на товар', reportReview:'Пожаловаться на отзыв', reportComment:'Пожаловаться на комментарий',
+    reportBody:'Сообщите о нарушении правил. Жалобы должны быть правдивыми; ложные жалобы могут привести к блокировке вашего аккаунта.',
+    reason:'Причина', selectReason:'Выберите причину', additional:'Дополнительные сведения (необязательно)', reportThanks:'Жалоба отправлена',
+    reportThanksBody:'Наши модераторы рассмотрят вашу жалобу.', reportNeedsOwn:'Чтобы жаловаться на контент, нужно владеть этим товаром.',
+    owned:'Есть у вас', purchased:'Куплено', unavailable:'Недоступно', price:'Цена', downloads:'Загрузки', share:'Поделиться', linkCopied:'Ссылка скопирована', close:'Закрыть',
+    signInPurchase:'Войдите, чтобы купить этот товар.', migrateBody:'Вашу прежнюю покупку этого товара нужно записать на ваш аккаунт. Повторно деньги не списываются.', migrateHint:'Перенесите прежнюю покупку, чтобы продолжить.',
+    gift:'Подарить', giftNeedLogin:'Войдите, чтобы отправлять подарки',
+    errBanned:'Ваш аккаунт ограничен', errAuth:'Войдите и повторите попытку', errAnon:'Достигнут лимит загрузок для гостей. Войдите, чтобы продолжить', errNotOwned:'У вас нет этого товара',
+    errFile:'Файл сейчас недоступен', errNetwork:'Ошибка сети. Проверьте подключение', errGeneric:'Что-то пошло не так. Повторите попытку',
+    r1:'Неприемлемый баннер', r2:'Неприемлемое фото профиля', r3:'Разжигание ненависти', r4:'Неприемлемое описание или имя', r5:'Оскорбительная лексика',
+    r6:'Выдача себя за другого', r7:'Спам или мошенничество', r8:'Откровенный сексуальный контент', r9:'Домогательства или травля', verified:'подтверждён'
+  },
+  ja:{
+    description:'説明', noDescription:'説明はありません。', showMore:'もっと見る', showLess:'閉じる', whatsNew:'新着情報',
+    reviewsTitle:'評価とレビュー', noRatings:'まだ評価がありません', ratingsCount:'評価 {n} 件', reviewPlaceholder:'レビューを書く（任意）',
+    postReview:'レビューを投稿', updateReview:'レビューを更新', purchaseToReview:'レビューを書くにはこのアイテムを購入してください。', reviewSaved:'レビューを保存しました', reviewFailed:'レビューを保存できませんでした',
+    noReviews:'まだレビューはありません。', comments:'コメント', commentPlaceholder:'コメントを追加', post:'投稿', purchaseToComment:'コメントするにはこのアイテムを購入してください。',
+    report:'報告', reportItem:'アイテムを報告', reportReview:'レビューを報告', reportComment:'コメントを報告',
+    reportBody:'ルール違反として報告します。報告は事実に基づく必要があり、虚偽の報告はアカウント停止の対象となる場合があります。',
+    reason:'理由', selectReason:'理由を選択', additional:'詳細（任意）', reportThanks:'報告を送信しました',
+    reportThanksBody:'モデレーターが内容を確認します。', reportNeedsOwn:'コンテンツを報告するにはこのアイテムを所持している必要があります。',
+    owned:'所持済み', purchased:'購入済み', unavailable:'利用不可', price:'価格', downloads:'ダウンロード数', share:'共有', linkCopied:'リンクをコピーしました', close:'閉じる',
+    signInPurchase:'このアイテムを購入するにはサインインしてください。', migrateBody:'このアイテムの以前の購入をアカウントに記録する必要があります。再度請求されることはありません。', migrateHint:'続けるには以前の購入を移行してください。',
+    gift:'ギフト', giftNeedLogin:'ギフトを送るにはサインインしてください',
+    errBanned:'アカウントが制限されています', errAuth:'サインインしてもう一度お試しください', errAnon:'ゲストのダウンロード上限に達しました。続けるにはサインインしてください', errNotOwned:'このアイテムを所持していません',
+    errFile:'ファイルは現在利用できません', errNetwork:'ネットワークエラーです。接続を確認してください', errGeneric:'問題が発生しました。もう一度お試しください',
+    r1:'不適切なバナー', r2:'不適切なプロフィール画像', r3:'ヘイトスピーチ', r4:'不適切な自己紹介または表示名', r5:'攻撃的な言葉',
+    r6:'なりすまし', r7:'スパムまたは詐欺', r8:'性的に露骨なコンテンツ', r9:'嫌がらせまたはいじめ', verified:'認証済み'
+  }
+};
+for(const l of Object.keys(I18N_MORE))Object.assign(I18N[l],I18N_MORE[l]);
+
+/* Item type names come from the database in English; unknown types are shown as stored. */
+const TYPE_NAMES={
+  es:{Plugin:'Complemento',Sticker:'Sticker','Sticker Pack':'Paquete de stickers','Profile Frame':'Marco de perfil',Sample:'Muestra',Role:'Rol',Bundle:'Paquete',Decal:'Calcomanía',Lua:'Lua'},
+  de:{Plugin:'Plugin',Sticker:'Sticker','Sticker Pack':'Sticker-Paket','Profile Frame':'Profilrahmen',Sample:'Beispiel',Role:'Rolle',Bundle:'Bundle',Decal:'Decal',Lua:'Lua'},
+  ru:{Plugin:'Плагин',Sticker:'Стикер','Sticker Pack':'Набор стикеров','Profile Frame':'Рамка профиля',Sample:'Образец',Role:'Роль',Bundle:'Набор',Decal:'Наклейка',Lua:'Lua'},
+  ja:{Plugin:'プラグイン',Sticker:'ステッカー','Sticker Pack':'ステッカーパック','Profile Frame':'プロフィールフレーム',Sample:'サンプル',Role:'ロール',Bundle:'バンドル',Decal:'デカール',Lua:'Lua'}
+};
+let currentLang='en';
+const typeLabel=ty=>((TYPE_NAMES[currentLang]||{})[ty])||ty||'';
+const normalizeLang=c=>{c=String(c||'').trim().toLowerCase();return SUPPORTED_LANGS.includes(c)?c:'en'};
+const localeForLang=()=>({en:'en-US',es:'es-ES',ru:'ru-RU',de:'de-DE',ja:'ja-JP'})[currentLang]||'en-US';
+function t(k,v={}){const o=(I18N[currentLang]||{})[k]??I18N.en[k]??k;return String(o).replace(/\{(\w+)\}/g,(_,x)=>v[x]??'')}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const compact=n=>new Intl.NumberFormat(localeForLang(),{notation:'compact'}).format(n);
+const auth=window.dpAuth||firebase.auth(), db=window.dpDb||firebase.firestore(), TS=firebase.firestore.Timestamp;
+
+/* ---------- Backend (same endpoints as ShopApi in the Android app) ---------- */
+const LOCAL=/^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname);
+const API_BASE=window.DP_API_BASE||(LOCAL?`${location.protocol}//${location.hostname}:8888`:'https://darkpurpleofswebsite.netlify.app');
+const API={
+  purchase:'/economy/purchaseugc',
+  download:(route,a,id)=>`/download/store/${route}/${encodeURIComponent(a)}/${encodeURIComponent(id)}`
+};
+if(window.SendGiftSheet)SendGiftSheet.configure({endpoint:API_BASE+'/economy/sendgift'});
+async function call(path,{method='GET',body,needAuth=false}={}){
+  let tk=null;
+  try{ if(auth.currentUser) tk=await auth.currentUser.getIdToken(false); }catch(e){ console.error(e); }
+  if(needAuth&&!tk) return {ok:false,code:'auth_required'};
+  try{
+    const r=await fetch(API_BASE+path,{method,headers:{...(tk?{Authorization:'Bearer '+tk}:{}),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
+    if(!r.ok){let c=null;try{c=(await r.clone().json()).code}catch(e){}return {ok:false,code:c||'http_'+r.status}}
+    return {ok:true,res:r};
+  }catch(e){console.error(e);return {ok:false,code:'network'}}
+}
+function errText(c){
+  const m={not_enough_coins:'notEnoughCoins',banned:'errBanned',item_not_for_sale:'itemNotOnSale',item_not_found:'itemNotOnSale',auth_required:'errAuth',anon_limit:'errAnon',not_owned:'errNotOwned',
+    upstream_failed:'errFile',file_too_large:'errFile',not_downloadable:'errFile',network:'errNetwork'};
+  return t(m[c]||'errGeneric');
 }
 
-function localeForLang(){
-  return ({ en: 'en-US', es: 'es-ES', ru: 'ru-RU', de: 'de-DE', ja: 'ja-JP' })[currentLang] || 'en-US';
+/* ---------- State ---------- */
+const params=new URLSearchParams(location.href.split('?').slice(1).join('&'));
+const itemId=params.get('id'), authorParam=params.get('author'), typeId=Number(params.get('type'))||0, typeParam=String(typeId);
+const DEFAULT_IMAGE='https://darkpurpleof.github.io/assets/default_plugin.png';
+const NO_DL=['Profile Frame','Sample','Role','Bundle','Decal','Lua'];
+const REASONS=['r1','r2','r3','r4','r5','r6','r7','r8','r9'];
+let ugcDoc=null,authorDoc=null,currentUser=null,userDoc=null,owned=false,legacy=false,busy=false,descOpen=false;
+let reviews=[],comments={},profiles={},openThread=null,my={stars:0,text:''},draft={stars:0,text:''},drafts={};
+let itemRef=null,areaRef=null,listening=false;
+const isOwner=()=>!!currentUser&&currentUser.email===authorParam;
+const canParticipate=()=>owned||isOwner();
+
+function toast(text,type='purple',ms=2800){const e=$('#toast');e.className=type;e.textContent=text;e.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.display='none',ms)}
+function dialog({title,body='',ok,cancel,onOk,wide}){
+  $('#md').className='md'+(wide?' wide':'');$('#m-title').textContent=title||'';$('#m-title').hidden=!title;$('#m-body').innerHTML=body;
+  const okB=$('#m-ok'),cB=$('#m-cancel');okB.hidden=!ok;cB.hidden=!cancel&&!ok;okB.textContent=ok||'';cB.textContent=cancel||t('cancel');okB.disabled=false;
+  $('.ma').style.display=(ok||cancel)?'flex':'none';
+  okB.onclick=async()=>{if(okB.disabled)return;okB.disabled=true;let keep;try{keep=await onOk?.()}finally{okB.disabled=false}if(keep!==true)closeDialog()};
+  cB.onclick=closeDialog;$('#ov').style.display='flex';
+}
+function closeDialog(){$('#ov').style.display='none';$('#m-body').innerHTML=''}
+$('#ov').addEventListener('mousedown',e=>{if(e.target.id==='ov')closeDialog()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDialog()});
+
+/* ---------- Helpers ---------- */
+const vb=v=>v?`<img class="vb" src="/assets/verified.png" alt="${esc(t('verified'))}">`:'';
+const fmtDate=ts=>{try{if(!ts)return '—';return (ts.toDate?ts.toDate():new Date(ts)).toLocaleDateString(localeForLang(),{year:'numeric',month:'short',day:'numeric'})}catch(e){return '—'}};
+const price=()=>parseInt(ugcDoc&&ugcDoc.price||0,10)||0;
+const priceText=()=>price()===0?t('free'):t('priceLabel',{price:price().toLocaleString(localeForLang())});
+const authorName=()=>authorDoc?(authorDoc['display name']||authorDoc.email):authorParam;
+function avatar(p,name,small){
+  const L=esc((name||'U').charAt(0).toUpperCase());
+  return `<div class="av${small?' s':''}">${L}${p&&p.profile_picture?`<img src="${esc(p.profile_picture)}" alt="">`:''}${p&&p.profile_picture_frame?`<img src="${esc(p.profile_picture_frame)}" alt="">`:''}</div>`;
+}
+const starsStr=n=>'★'.repeat(Math.max(0,Math.min(5,n)));
+
+/* ---------- Loading ---------- */
+async function loadUGC(){
+  if(!itemId||!authorParam){toast(t('missingIdOrAuthor'),'red');return}
+  itemRef=db.collection('ugc').doc(authorParam).collection(typeId===0?'store-items':'development-items').doc(itemId);
+  areaRef=itemRef.collection('userArea');
+  try{
+    const [d,a]=await Promise.all([itemRef.get(),db.collection('user_data').doc(authorParam).get().catch(()=>null)]);
+    if(!d.exists){toast(t('itemNotFound'),'red');return}
+    ugcDoc={id:d.id,...d.data()};
+    authorDoc=a&&a.exists?{email:authorParam,...a.data()}:null;
+    document.title=ugcDoc.name||t('pageTitle');
+    renderAll();startListeners();
+  }catch(e){console.error(e);toast(t('failedToLoadItem'),'red')}
+}
+async function refreshUser(){
+  userDoc=null;owned=false;legacy=false;my={stars:0,text:''};
+  if(currentUser){
+    const em=currentUser.email;
+    try{const u=await db.collection('user_data').doc(em).get();userDoc=u.exists?u.data():null}catch(e){console.error(e)}
+    if(ugcDoc){
+      let tx=false;
+      try{tx=(await db.collection('transactions').doc(em).collection('records').doc(ugcDoc.id).get()).exists}catch(e){}
+      const roleOwned=ugcDoc.type==='Role'&&ugcDoc.rolename&&((userDoc&&userDoc.roles)||[]).includes(ugcDoc.rolename);
+      owned=tx||!!roleOwned;
+      legacy=!tx&&!!(userDoc&&Array.isArray(userDoc.purchasedIds)&&userDoc.purchasedIds.includes(ugcDoc.id));
+      try{const r=await itemRef.collection('ratings').doc(em).get();if(r.exists)my={stars:r.data().stars||0,text:r.data().review_text||''}}catch(e){}
+    }
+  }
+  draft={...my};
+  currentLang=normalizeLang((userDoc&&userDoc.lang)||(navigator.language||'en').slice(0,2));
+  applyStatic();if(ugcDoc)renderAll();
+}
+function startListeners(){
+  if(listening)return;listening=true;
+  itemRef.collection('ratings').orderBy('updated_at','desc').limit(50).onSnapshot(s=>{
+    reviews=s.docs.map(d=>({id:d.id,stars:d.data().stars||0,text:d.data().review_text||'',name:d.data().author_display,at:d.data().updated_at}));
+    loadProfiles();renderReviews();
+  },e=>console.warn('reviews',e));
+  areaRef.where('type','==','comment').orderBy('createdAt','asc').onSnapshot(s=>{
+    const g={};s.docs.forEach(d=>{const x=d.data();if(!x.ratingId)return;(g[x.ratingId]=g[x.ratingId]||[]).push({id:d.id,email:x.authorEmail||'',name:x.authorDisplay,text:x.text||'',at:x.createdAt})});
+    comments=g;loadProfiles();renderReviews();
+  },e=>console.warn('comments',e));
+}
+async function loadProfiles(){
+  if(!currentUser)return;
+  const need=new Set(reviews.map(r=>r.id));Object.values(comments).flat().forEach(c=>need.add(c.email));
+  const todo=[...need].filter(e=>e&&!(e in profiles));if(!todo.length)return;
+  todo.forEach(e=>profiles[e]=null);
+  await Promise.all(todo.map(async e=>{try{const d=await db.collection('user_data').doc(e).get();profiles[e]=d.exists?d.data():{}}catch(x){profiles[e]={}}}));
+  renderReviews();
 }
 
-function t(key, vars = {}){
-  const dict = I18N[currentLang] || I18N.en;
-  const fallback = (I18N.en && I18N.en[key]) ? I18N.en[key] : key;
-  let out = (dict && dict[key]) ? dict[key] : fallback;
-  if (typeof out !== 'string') return String(out);
-  return out.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
+/* ---------- Rendering ---------- */
+function renderAll(){renderItem();renderActions();renderComposer();renderReviews()}
+function applyStatic(){
+  document.documentElement.lang=currentLang;document.title=(ugcDoc&&ugcDoc.name)||t('pageTitle');
+  document.querySelectorAll('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));
+}
+function renderItem(){
+  const d=ugcDoc,cnt=+d.rating_count||0,avg=cnt?(+d.rating_sum||0)/cnt:null;
+  const onSale=d.on_sale===true;
+  $('#hd').innerHTML=`<img class="ico" src="${esc(d.image||DEFAULT_IMAGE)}" alt="">
+    <div class="hm"><div class="eyebrow">${esc(typeLabel(d.type)||t('item'))}</div>
+    <h1><span>${esc(d.name||'—')}</span>${vb(d.is_verified||d.verified)}</h1>
+    <div class="muted">${t('by')} ${esc(authorName())}${vb(authorDoc&&(authorDoc.is_verified||authorDoc.verified))}</div>
+    ${avg!==null?`<div style="margin-top:6px"><span class="star">★</span> <b>${avg.toFixed(1)}</b> <span class="muted">· ${t('ratingsCount',{n:compact(cnt)})}</span></div>`:''}
+    ${owned?`<span class="chip">✓ ${t('owned')}</span>`:''}</div>
+    <div class="tools"><button class="ib" data-a="share">${t('share')}</button>${currentUser&&!isOwner()?`<button class="ib" data-a="report-item">${t('report')}</button>`:''}</div>`;
+  const shots=(Array.isArray(d.previews)?d.previews:[]).filter(Boolean);
+  $('#shots-sec').hidden=!shots.length;$('#shots').innerHTML=shots.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" data-a="shot" data-src="${esc(u)}">`).join('');
+  $('#sale-notice').hidden=owned||(onSale&&!!authorDoc);
+  const desc=d.description||'';
+  $('#desc').innerHTML=desc.trim()?`<div class="desc${desc.length>220&&!descOpen?' clamp':''}">${esc(desc)}</div>${desc.length>220?`<button class="link" data-a="more">${t(descOpen?'showLess':'showMore')}</button>`:''}`:`<span class="muted"><i>${t('noDescription')}</i></span>`;
+  $('#log-sec').hidden=!(d.changelog&&String(d.changelog).trim());$('#log').textContent=d.changelog||'';
+  $('#price').textContent=owned?t('owned'):priceText();
+  const dl=d.downloads!=null?compact(+d.downloads||0):null;
+  $('#facts').innerHTML=[[t('author'),esc(authorName())+vb(authorDoc&&(authorDoc.is_verified||authorDoc.verified))],[t('type'),esc(typeLabel(d.type)||'—')],[t('version'),esc(d.version||'—')],[t('updated'),fmtDate(d.updated_at||d.updated)],dl&&[t('downloads'),dl]].filter(Boolean).map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  const cnt2=cnt;$('#sum').innerHTML=avg!==null?`<b>${avg.toFixed(1)}</b><span class="star" style="font-size:18px">${starsStr(Math.round(avg))}</span><span class="muted">${t('ratingsCount',{n:compact(cnt2)})}</span>`:`<span class="muted">${t('noRatings')}</span>`;
+}
+function mainState(){
+  const d=ugcDoc,onSale=d.on_sale===true;
+  if((!onSale&&!owned)||(!authorDoc&&!owned)||d.downloadable===false)return {text:t('unavailable'),disabled:true};
+  if(owned)return NO_DL.includes(d.type)?{text:t('purchased'),disabled:true}:{text:t('downloadButton'),fn:'download'};
+  if(legacy)return {text:t('migrate'),fn:'migrate'};
+  return {text:price()===0?t('freeLabel'):t('purchasePrice',{price:price().toLocaleString(localeForLang())}),fn:'purchase'};
+}
+function renderActions(){
+  if(!ugcDoc)return;
+  const s=mainState(),d=ugcDoc,onSale=d.on_sale===true;
+  const canGift=onSale&&!!authorDoc&&d.downloadable!==false;
+  const android=/Android/i.test(navigator.userAgent);
+  $('#actions').innerHTML=`<button class="btn primary" data-a="${s.fn||''}" ${s.disabled||busy?'disabled':''}>${busy?t('loading'):esc(s.text)}</button>`
+    +(canGift?`<button class="btn gift" data-a="gift" ${busy?'disabled':''}>🎁<span class="gl"> ${t('gift')}</span></button>`:'')
+    +(android?`<button class="btn" data-a="app">${t('viewInApp')}</button>`:'');
+  $('#note').textContent=!currentUser&&!owned?t('signInPurchase'):(legacy&&!owned?t('migrateHint'):(android?t('androidAppRequired'):''));
+}
+function renderComposer(){
+  const c=$('#composer');if(!ugcDoc)return;
+  if(!currentUser||!canParticipate()){c.innerHTML=`<p class="muted"><i>${t('purchaseToReview')}</i></p>`;return}
+  c.innerHTML=`<div>${[1,2,3,4,5].map(n=>`<button class="sb${n<=draft.stars?' on':''}" data-a="star" data-n="${n}" aria-label="${n}">★</button>`).join('')}</div>
+    <textarea id="rv-text" rows="3" maxlength="1000" placeholder="${esc(t('reviewPlaceholder'))}" style="margin-top:6px">${esc(draft.text)}</textarea>
+    <div style="text-align:right;margin-top:8px"><button class="btn primary" id="rv-post" data-a="post-review">${t(my.stars?'updateReview':'postReview')}</button></div>`;
+  updateComposerBtn();
+}
+function updateComposerBtn(){
+  const b=$('#rv-post');if(!b)return;
+  b.disabled=!(draft.stars>0&&(draft.stars!==my.stars||draft.text.trim()!==my.text.trim()));
+}
+function renderReviews(){
+  const box=$('#reviews');if(!box||!ugcDoc)return;
+  const list=reviews.filter(r=>r.text.trim()||(comments[r.id]||[]).length);
+  if(!list.length){box.innerHTML=`<p class="muted" style="border-top:1px solid var(--border);padding-top:14px">${t('noReviews')}</p>`;return}
+  box.innerHTML=list.map(r=>{
+    const p=currentUser?profiles[r.id]:null,name=(p&&p['display name'])||r.name||r.id.split('@')[0],cs=comments[r.id]||[];
+    const mine=currentUser&&currentUser.email===r.id;
+    let th='';
+    if(openThread===r.id){
+      th=`<div class="thread">${cs.map(c=>{const cp=currentUser?profiles[c.email]:null,cn=(cp&&cp['display name'])||c.name||c.email.split('@')[0];
+        return `<div class="cm"><div class="rh">${avatar(cp,cn,true)}<b>${esc(cn)}</b>${vb(cp&&cp.is_verified)}<time>${fmtDate(c.at)}</time>${canParticipate()&&currentUser&&currentUser.email!==c.email?`<span class="ra"><button data-a="report-comment" data-id="${esc(c.id)}">${t('report')}</button></span>`:''}</div><p>${esc(c.text)}</p></div>`}).join('')}
+        ${canParticipate()&&currentUser?`<div class="cf"><input data-draft="${esc(r.id)}" maxlength="500" placeholder="${esc(t('commentPlaceholder'))}" value="${esc(drafts[r.id]||'')}"><button class="btn primary" data-a="post-comment" data-id="${esc(r.id)}">${t('post')}</button></div>`:`<p class="muted"><i>${t('purchaseToComment')}</i></p>`}</div>`;
+    }
+    return `<article class="rev">${avatar(p,name)}<div class="rb"><div class="rh"><b>${esc(name)}</b>${vb(p&&p.is_verified)}<span class="star">${starsStr(r.stars)}</span><time>${fmtDate(r.at)}</time></div>
+      ${r.text.trim()?`<p>${esc(r.text)}</p>`:''}<div class="ra"><button data-a="thread" data-id="${esc(r.id)}">${t('comments')} (${cs.length})</button>${canParticipate()&&currentUser&&!mine?`<button data-a="report-review" data-id="${esc(r.id)}">${t('report')}</button>`:''}</div>${th}</div></article>`;
+  }).join('');
 }
 
-function applyStaticTranslations(){
-  document.documentElement.lang = currentLang;
-  document.title = t('pageTitle');
-
-  const setText = (selector, value) => {
-    const el = document.querySelector(selector);
-    if (el) el.textContent = value;
-  };
-
-  setText('#item-eyebrow', t('item'));
-  setText('#item-name', t('loading'));
-  setText('#item-author', `${t('by')} —`);
-  setText('#own-indicator', t('ownThis'));
-  setText('#modal-title', t('confirmPurchaseTitle'));
-  setText('#modal-body', t('confirmPurchaseBodyDefault'));
-  setText('#modal-cancel', t('cancel'));
-  setText('#modal-confirm', t('confirm'));
-  setText('#toast', t('ok'));
-
-  const labels = document.querySelectorAll('.info-label');
-  const labelMap = [t('author'), t('type'), t('version'), t('download'), t('updated')];
-  labels.forEach((el, i) => { if (labelMap[i]) el.textContent = labelMap[i]; });
+/* ---------- Actions ---------- */
+async function doPurchase(claimLegacy){
+  if(busy)return;busy=true;renderActions();
+  const r=await call(API.purchase,{method:'POST',needAuth:true,body:{ugcId:itemId,author:authorParam,typeId,claimLegacy:!!claimLegacy,purchasingFrom:'web'}});
+  let j=null;if(r.ok){try{j=await r.res.json()}catch(e){}}
+  busy=false;
+  if(r.ok&&j&&j.ok){toast(t('purchaseComplete'));await refreshUser()}
+  else if(r.code==='already_owned'){toast(t('alreadyOwnThis'),'yellow');await refreshUser()}
+  else if(r.code==='legacy_owned'){legacy=true;toast(t('migrateHint'),'yellow')}
+  else toast(r.ok?errText('bad_response'):errText(r.code),'red');
+  renderAll();
 }
-
-function syncLanguageFromDoc(doc){
-  currentLang = normalizeLang(doc && doc.lang);
-  applyStaticTranslations();
-  if (authorDoc) renderAuthor();
-  if (ugcDoc) renderUGC();
+async function doDownload(){
+  if(busy)return;busy=true;renderActions();toast(t('startingDownload'));
+  const r=await call(API.download(typeId===0?'catalog':'dev',authorParam,itemId));
+  busy=false;renderActions();
+  if(!r.ok){toast(errText(r.code),'red');return}
+  try{
+    const blob=await r.res.blob(),cd=r.res.headers.get('content-disposition')||'';
+    const m=cd.match(/filename\*=UTF-8''([^;]+)/i),m2=cd.match(/filename="([^"]+)"/i);
+    const ty=(ugcDoc.type||'').toLowerCase(),base=(ugcDoc.name||'download').replace(/[^a-z0-9\-_.]/gi,'_');
+    const name=(m?decodeURIComponent(m[1]):m2?m2[1]:base+(ty.includes('plugin')?'.dpplugin':ty.includes('sticker')?'.dpfstickers':'')).replace(/[\\/]/g,'_');
+    const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);
+    toast(t('downloadComplete'));
+  }catch(e){console.error(e);toast(t('downloadFailed'),'red')}
 }
-
-    // modal elements
-    const modalOverlay = document.getElementById('purchase-modal-overlay');
-    const modalTitle = document.getElementById('modal-title');
-    const modalBody = document.getElementById('modal-body');
-    const modalCancel = document.getElementById('modal-cancel');
-    const modalConfirm = document.getElementById('modal-confirm');
-
-    function setImage(url){ const img = document.getElementById('item-image'); img.src = url || DEFAULT_IMAGE; }
-    function formatTimestamp(ts){ try{ if(!ts) return '—'; if(ts.toDate) ts = ts.toDate(); const d = new Date(ts); return d.toLocaleString(localeForLang()); }catch(e){return '—';} }
-    function setOwnIndicator(owned){ const el = document.getElementById('own-indicator'); el.style.display = owned ? 'flex' : 'none'; }
-
-    async function loadUGC(){
-      if(!itemId || !authorParam){ showToast(t('missingIdOrAuthor'), 'red'); return; }
-      const coll = ugcCollectionForType(typeParam);
-      try{
-        const d = await db.collection('ugc').doc(authorParam).collection(coll).doc(itemId).get();
-        if(!d.exists){ showToast(t('itemNotFound'), 'red'); return; }
-        ugcDoc = Object.assign({ id: d.id }, d.data());
-        renderUGC();
-        await loadAuthor(ugcDoc.source || authorParam);
-      }catch(err){ console.error(err); showToast(t('failedToLoadItem'), 'red'); }
-    }
-
-    // ---------- FIX: use d.exists (property) not d.exists() (function) ----------
-    async function loadAuthor(email){
-      try{
-        const d = await db.collection('user_data').doc(email).get();
-        if(!d.exists) authorDoc = { email }; else authorDoc = Object.assign({ email }, d.data());
-        renderAuthor();
-      }catch(e){ console.error(e); authorDoc = { email }; renderAuthor(); }
-    }
-
-    async function loadCurrentUserDoc(){
-      if(!currentUser) {
-        currentUserDoc = null;
-        syncLanguageFromDoc(null);
-        return;
-      }
-      try{
-        const d = await db.collection('user_data').doc(currentUser.email).get();
-        currentUserDoc = d.exists ? d.data() : null;
-        syncLanguageFromDoc(currentUserDoc);
-      }catch(e){
-        console.error(e);
-        currentUserDoc = null;
-        syncLanguageFromDoc(null);
-      }
-    }
-
-    // Render UGC: now also shows item-level verified badge and sets document.title (added)
-    function renderUGC(){
-      if(!ugcDoc) return;
-      // item name + verified badge (if item has verified/is_verified)
-      const nameEl = document.getElementById('item-name');
-      nameEl.innerHTML = ''; // clear
-      const tn = document.createElement('span');
-      tn.textContent = ugcDoc.name || '—';
-      nameEl.appendChild(tn);
-
-      const itemVerified = !!(ugcDoc.is_verified || ugcDoc.verified);
-      if(itemVerified){
-        const v = document.createElement('img');
-        v.src = '/assets/verified.png';
-        v.className = 'verified-badge';
-        v.alt = 'verified';
-        nameEl.appendChild(v);
-      }
-
-      const eyebrow = document.getElementById('item-eyebrow');
-      if(eyebrow) eyebrow.textContent = ugcDoc.type ? ugcDoc.type : t('item');
-
-      setImage(ugcDoc.image || DEFAULT_IMAGE);
-      document.getElementById('item-desc').textContent = ugcDoc.description || '';
-      document.getElementById('info-type').textContent = ugcDoc.type || '—';
-      document.getElementById('info-version').textContent = ugcDoc.version || '—';
-      document.getElementById('info-download').textContent = ugcDoc.downloadable ? t('yes') : t('no');
-      document.getElementById('info-updated').textContent = formatTimestamp(ugcDoc.updated_at || ugcDoc.updated || null);
-      document.getElementById('info-author').textContent = ugcDoc.source || authorParam;
-
-      // set document title to item name (added)
-      try{ document.title = (ugcDoc.name ? `${ugcDoc.name}` : t('pageTitle')); }catch(e){/*ignore*/}
-
-      updateActionState();
-    }
-
-    // ---------- Improved renderAuthor: builds nodes (not raw textContent) & updates info-author with badge too ----------
-    function renderAuthor(){
-      if(!authorDoc) return;
-      const display = authorDoc['display name'] || authorDoc.displayName || authorDoc.display_name || authorDoc.email;
-      const isVerified = !!(authorDoc.is_verified || authorDoc.verified);
-      const authorLine = document.getElementById('item-author');
-
-      // Clear and build content to avoid appending into a text node by accident
-      authorLine.innerHTML = '';
-      const textSpan = document.createElement('span');
-      textSpan.textContent = t('by') + ' ' + (display || authorDoc.email);
-      authorLine.appendChild(textSpan);
-
-      if(isVerified){
-        const img = document.createElement('img');
-        img.src = '/assets/verified.png';
-        img.className = 'verified-badge';
-        img.alt = 'verified';
-        authorLine.appendChild(img);
-      }
-
-      // also update the info-grid author value (keeps UI consistent) — now includes badge if verified (fix #2)
-      const infoAuthorEl = document.getElementById('info-author');
-      if(infoAuthorEl){
-        infoAuthorEl.innerHTML = ''; // clear
-        const aSpan = document.createElement('span');
-        aSpan.textContent = display || authorDoc.email;
-        infoAuthorEl.appendChild(aSpan);
-        if(isVerified){
-          const i = document.createElement('img');
-          i.src = '/assets/verified.png';
-          i.className = 'verified-badge';
-          i.alt = 'verified';
-          infoAuthorEl.appendChild(i);
-        }
-      }
-
-      updateActionState();
-    }
-
-    // Check if a transaction record exists for this user + item
-    async function transactionExistsForUser(email){
-      try{
-        const snap = await db.collection('transactions').doc(email).collection('records').doc(ugcDoc.id).get();
-        return snap.exists;
-      }catch(e){ console.error('tx check failed', e); return false; }
-    }
-
-    function formatPrice(p){ const price = parseInt(p || 0, 10) || 0; const formatted = Number(price).toLocaleString(localeForLang()); return price === 0 ? t('freeLabel') : t('purchasePrice', { price: formatted }); }
-
-    function userHasRole(role){ if(!currentUserDoc || !role) return false; const roles = currentUserDoc.roles || []; return roles.includes(role); }
-
-    function isAndroid() {
-      return /Android/i.test(navigator.userAgent);
-    }
-
-    async function updateActionState(){
-      const actionBtn = document.getElementById('action-btn');
-      const giftBtn = document.getElementById('gift-btn');
-      const migrateBtn = document.getElementById('migrate-btn');
-      const viewInAppBtn = document.getElementById('view-in-app-btn');
-      const disclaimer = document.getElementById('action-disclaimer');
-      const viewInAppDisclaimer = document.getElementById('view-in-app-disclaimer');
-      actionBtn.style.display = 'none'; giftBtn.style.display = 'none'; migrateBtn.style.display = 'none'; viewInAppBtn.style.display = 'none'; disclaimer.textContent = ''; viewInAppDisclaimer.textContent = '';
-      if(!ugcDoc) return;
-
-      const authorResolved = !!(authorDoc && (authorDoc['display name'] || authorDoc.displayName || authorDoc.display_name));
-      const onSale = (ugcDoc.on_sale !== undefined) ? Boolean(ugcDoc.on_sale) : true;
-
-      let ownedByTx = false;
-      let purchasedFlag = false;
-      if(currentUser){
-        ownedByTx = await transactionExistsForUser(currentUser.email);
-        purchasedFlag = !!(currentUserDoc && Array.isArray(currentUserDoc.purchasedIds) && currentUserDoc.purchasedIds.includes(ugcDoc.id));
-      }
-
-      // ownership via role
-      const roleOwned = (ugcDoc.type === 'Role' && userHasRole(ugcDoc.rolename));
-      const owned = ownedByTx || roleOwned;
-      setOwnIndicator(owned);
-
-      // disclaimers
-      if(!currentUser) disclaimer.textContent = t('needLoginPurchase');
-      if(!onSale) disclaimer.textContent = t('itemNotOnSale');
-
-      const android = isAndroid();
-
-      if (giftBtn) {
-        giftBtn.style.display = 'inline-flex';
-        giftBtn.disabled = !window.SendGiftSheet;
-        giftBtn.innerHTML = `<span class="gift-btn-text">${t('giftThisItem')}</span><span class="gift-btn-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-80v-440H80v-240h208q-5-9-6.5-19t-1.5-21q0-50 35-85t85-35q23 0 43 8.5t37 23.5q17-16 37-24t43-8q50 0 85 35t35 85q0 11-2 20.5t-6 19.5h208v240h-80v440H160Zm371.5-748.5Q520-817 520-800t11.5 28.5Q543-760 560-760t28.5-11.5Q600-783 600-800t-11.5-28.5Q577-840 560-840t-28.5 11.5ZM360-800q0 17 11.5 28.5T400-760q17 0 28.5-11.5T440-800q0-17-11.5-28.5T400-840q-17 0-28.5 11.5T360-800ZM160-680v80h280v-80H160Zm280 520v-360H240v360h200Zm80 0h200v-360H520v360Zm280-440v-80H520v80h280Z"/></svg></span>`;
-        giftBtn.onclick = window.SendGiftSheet ? () => {
-          const typeId = (typeof typeParam !== 'undefined' && typeParam !== null && typeParam !== '') ? Number(typeParam) : 0;
-          window.SendGiftSheet.open({ ugcId: itemId, author: authorParam, typeId });
-        } : null;
-      }
-
-      if (owned) {
-        if (ugcDoc.download_link) {
-          if (android) {
-            viewInAppBtn.style.display = 'inline-flex';
-            viewInAppBtn.textContent = t('viewInApp');
-            viewInAppBtn.onclick = onViewInApp;
-            viewInAppDisclaimer.textContent = t('androidAppRequired');
-          } else {
-            actionBtn.style.display = 'inline-flex';
-            actionBtn.disabled = false;
-            actionBtn.textContent = t('downloadButton');
-            actionBtn.onclick = onDownload;
-          }
-        } else {
-          actionBtn.style.display = 'inline-flex';
-          actionBtn.disabled = true;
-          actionBtn.textContent = t('youOwnThis');
-          actionBtn.onclick = null;
-        }
-      } else if (purchasedFlag && !ownedByTx) {
-        migrateBtn.style.display = 'inline-flex';
-        migrateBtn.disabled = false;
-        migrateBtn.textContent = t('migrate');
-        migrateBtn.onclick = onMigrate;
-      } else {
-        if (currentUser && onSale && authorResolved) {
-          actionBtn.style.display = 'inline-flex';
-          actionBtn.disabled = isPurchasing;
-          actionBtn.textContent = formatPrice(ugcDoc.price);
-          actionBtn.onclick = showPurchaseDialog;
-          if (android) {
-            viewInAppBtn.style.display = 'inline-flex';
-            viewInAppBtn.textContent = t('viewInApp');
-            viewInAppBtn.onclick = onViewInApp;
-            viewInAppDisclaimer.textContent = t('androidAppRequired');
-          }
-        }
-      }
-
-      // mirror disclaimer text above the sticky mobile bar
-      const mirror = document.getElementById('mobile-disclaimer-mirror');
-      if(mirror) mirror.textContent = disclaimer.textContent || viewInAppDisclaimer.textContent || '';
-    }
-
-    // Shows confirmation modal (added)
-    function showPurchaseDialog(){
-      if(!ugcDoc) return;
-      modalTitle.textContent = t('buyTitle', { name: ugcDoc.name || t('item') });
-      const priceValue = Number(parseInt(ugcDoc.price || 0,10) || 0).toLocaleString(localeForLang());
-      const priceText = (parseInt(ugcDoc.price || 0,10) || 0) === 0 ? t('freeLabel') : t('priceLabel', { price: priceValue });
-      modalBody.textContent = t('confirmPurchaseBody', { priceText });
-      modalOverlay.style.display = 'flex';
-      modalOverlay.setAttribute('aria-hidden','false');
-
-      // hook buttons
-      modalCancel.onclick = () => { closePurchaseDialog(); };
-      modalConfirm.onclick = () => { closePurchaseDialog(); doPurchase(); };
-    }
-
-    function closePurchaseDialog(){
-      modalOverlay.style.display = 'none';
-      modalOverlay.setAttribute('aria-hidden','true');
-      modalCancel.onclick = null;
-      modalConfirm.onclick = null;
-    }
-
-    // doPurchase contains the previous onBuy logic (refactored) — after success will reload the page (added)
-    async function doPurchase(){
-      if(isPurchasing) return;
-      if(!currentUser){ showToast(t('needLoginBuy'), 'yellow'); return; }
-      const price = parseInt(ugcDoc.price || 0, 10) || 0;
-      await loadCurrentUserDoc();
-      const coinsStr = (currentUserDoc && currentUserDoc.coins) ? currentUserDoc.coins : '0';
-      const coins = parseInt(coinsStr, 10) || 0;
-      if(coins < price){ showToast(t('notEnoughCoins'), 'red'); return; }
-
-      // guard checks
-      const authorResolved = !!(authorDoc && (authorDoc['display name'] || authorDoc.displayName || authorDoc.display_name));
-      if(!authorResolved){ showToast(t('ownerNotVerified'), 'red'); return; }
-      const onSale = (ugcDoc.on_sale !== undefined) ? Boolean(ugcDoc.on_sale) : true;
-      if(!onSale){ showToast(t('itemNotOnSale'), 'yellow'); return; }
-
-      // ensure not already purchased in transactions
-      const alreadyTx = await transactionExistsForUser(currentUser.email);
-      if(alreadyTx){ showToast(t('alreadyOwnThis'), 'yellow'); await loadCurrentUserDoc(); updateActionState(); return; }
-
-      try{
-        isPurchasing = true;
-        const actionBtn = document.getElementById('action-btn');
-        actionBtn.disabled = true; const prevText = actionBtn.textContent; actionBtn.textContent = t('purchasing');
-        window.addEventListener('beforeunload', preventUnload);
-
-        // write transaction
-        const txRef = db.collection('transactions').doc(currentUser.email).collection('records').doc(ugcDoc.id);
-        await txRef.set({ amount: price, date: firebase.firestore.FieldValue.serverTimestamp(), description: ugcDoc.name || '', image: ugcDoc.image || DEFAULT_IMAGE, source: authorParam, type: 'outgoing' });
-
-        // deduct coins (save as string)
-        const newCoins = String(Math.max(0, coins - price));
-        await db.collection('user_data').doc(currentUser.email).set({ coins: newCoins }, { merge: true });
-
-        // If Role -> merge role into roles array
-        if(ugcDoc.type === 'Role' && ugcDoc.rolename){ await db.collection('user_data').doc(currentUser.email).update({ roles: firebase.firestore.FieldValue.arrayUnion(ugcDoc.rolename) }); }
-
-        // If Bundle -> add purchasedIds
-        if(ugcDoc.type === 'Bundle'){ await db.collection('user_data').doc(currentUser.email).update({ purchasedIds: firebase.firestore.FieldValue.arrayUnion(ugcDoc.id) }); }
-
-        showToast(t('purchaseComplete'), 'purple');
-
-        // reload current user doc & UI
-        await loadCurrentUserDoc();
-        await updateActionState();
-
-        // AUTO-RELOAD THE PAGE after purchase (added). small delay so toast shows.
-        setTimeout(()=> { try { location.reload(); } catch(e){ /*ignore*/ } }, 800);
-
-      }catch(err){ console.error(err); showToast(t('purchaseFailed'), 'red'); } finally{
-        isPurchasing = false;
-        const actionBtn = document.getElementById('action-btn');
-        if(actionBtn){
-          actionBtn.disabled = false;
-          actionBtn.textContent = formatPrice(ugcDoc.price);
-        }
-        window.removeEventListener('beforeunload', preventUnload);
-      }
-    }
-
-    function preventUnload(e){ e.preventDefault(); e.returnValue = ''; }
-
-    // ---------- Improved download: detect filename from Content-Disposition, blob.type, URL, or map by ugcDoc.type ----------
-    async function onDownload(){
-      if(!ugcDoc || !ugcDoc.download_link){ showToast(t('noDownloadAvailable'), 'yellow'); return; }
-      // only allow download if transaction exists for user
-      if(!currentUser){ showToast(t('needLoginDownload'), 'yellow'); return; }
-      const ownedByTx = await transactionExistsForUser(currentUser.email);
-      if(!ownedByTx){ showToast(t('mustOwnDownload'), 'yellow'); return; }
-      try{
-        showToast(t('startingDownload'), 'purple');
-        const resp = await fetch(ugcDoc.download_link);
-        if(!resp.ok){ showToast(t('failedToFetchFile'), 'red'); return; }
-        const blob = await resp.blob();
-
-        // try content-disposition header for filename
-        let filename = null;
-        const cd = resp.headers.get('content-disposition');
-        if(cd){
-          // filename*=UTF-8''name or filename="name" or filename=name
-          const m1 = cd.match(/filename\*=UTF-8''([^;]+)/i);
-          const m2 = cd.match(/filename="([^"]+)"/i);
-          const m3 = cd.match(/filename=([^;]+)/i);
-          const raw = m1 ? decodeURIComponent(m1[1]) : (m2 ? m2[1] : (m3 ? m3[1] : null));
-          if(raw) filename = raw.replace(/["']/g, '').trim();
-        }
-
-        // If no filename yet, try extension from blob.type (but avoid application/octet-stream)
-        if(!filename){
-          if(blob.type && blob.type !== 'application/octet-stream'){
-            const ext = '.' + blob.type.split('/').pop();
-            const base = (ugcDoc.name || 'download').replace(/[^a-z0-9\-_.]/gi,'_');
-            filename = base + ext;
-          }
-        }
-
-        // If still no filename, try to parse extension from URL
-        if(!filename){
-          try{
-            const u = new URL(ugcDoc.download_link, location.href);
-            const path = u.pathname || '';
-            const match = path.match(/\.([a-z0-9]+)$/i);
-            if(match) {
-              const base = (ugcDoc.name || 'download').replace(/[^a-z0-9\-_.]/gi,'_');
-              filename = base + '.' + match[1];
-            }
-          }catch(e){
-            // ignore
-          }
-        }
-
-        // Last resort: map by ugcDoc.type to the desired extension (plugin/sticker)
-        if(!filename){
-          const base = (ugcDoc.name || 'download').replace(/[^a-z0-9\-_.]/gi,'_');
-          const t = (ugcDoc.type || '').toLowerCase();
-          if(t.includes('plugin')) filename = base + '.dpplugin';
-          else if(t.includes('sticker')) filename = base + '.dpfstickers';
-          else filename = base; // no ext
-        }
-
-        // ensure filename isn't empty
-        if(!filename) filename = 'download';
-
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-        showToast(t('downloadComplete'), 'purple');
-      }catch(err){ console.error(err); showToast(t('downloadFailed'), 'red'); }
-    }
-
-    // Migrate: create transaction record for items that exist only in purchasedIds
-    async function onMigrate(){
-      if(!currentUser) { showToast(t('loginFirst'), 'yellow'); return; }
-      try{
-        const price = parseInt(ugcDoc.price || 0, 10) || 0;
-        const txRef = db.collection('transactions').doc(currentUser.email).collection('records').doc(ugcDoc.id);
-        await txRef.set({ amount: price, date: firebase.firestore.FieldValue.serverTimestamp(), description: ugcDoc.name || '', image: ugcDoc.image || DEFAULT_IMAGE, source: authorParam, type: 'outgoing' });
-        showToast(t('migrationComplete'), 'purple');
-        await loadCurrentUserDoc();
-        await updateActionState();
-      }catch(e){ console.error(e); showToast(t('migrationFailed'), 'red'); }
-    }
-
-    function onViewInApp() {
-      const url = `darkpurpleof://installer/${itemId}/${authorParam}/${typeParam}`;
-      window.location.href = url;
-    }
-
-    // auth listener
-    auth.onAuthStateChanged(async (user)=>{
-      currentUser = user ? { uid: user.uid, email: user.email } : null;
-      await loadCurrentUserDoc();
-      updateActionState();
+function confirmPurchase(){
+  if(!currentUser){toast(t('needLoginPurchase'),'yellow');return}
+  dialog({title:t('buyTitle',{name:ugcDoc.name||t('item')}),body:`<p>${t('confirmPurchaseBody',{priceText:priceText()})}</p>`,ok:t('confirm'),cancel:t('cancel'),onOk:()=>doPurchase(false)});
+}
+function confirmMigrate(){dialog({title:t('migrate'),body:`<p>${t('migrateBody')}</p>`,ok:t('confirm'),cancel:t('cancel'),onOk:()=>doPurchase(true)})}
+function openGift(){
+  if(!currentUser){toast(t('giftNeedLogin'),'yellow');return}
+  if(!window.SendGiftSheet){toast(t('errGeneric'),'red');return}
+  try{SendGiftSheet.open({ugcId:itemId,author:authorParam,typeId})}catch(e){console.error('SendGiftSheet.open failed',e);toast(t('errGeneric'),'red')}
+}
+async function submitReview(){
+  const em=currentUser&&currentUser.email;if(!em||!canParticipate()||!draft.stars||busy)return;
+  const stars=draft.stars,text=draft.text.trim(),b=$('#rv-post');if(b)b.disabled=true;
+  const ref=itemRef.collection('ratings').doc(em);
+  try{
+    const res=await db.runTransaction(async tx=>{
+      const prev=await tx.get(ref),it=await tx.get(itemRef),ps=prev.exists?prev.data().stars:null;
+      let sum=it.data().rating_sum||0,cnt=it.data().rating_count||0;
+      if(ps!=null)sum=sum-ps+stars;else{sum+=stars;cnt++}
+      tx.set(ref,{stars,review_text:text,author_display:(auth.currentUser&&auth.currentUser.displayName)||em.split('@')[0],updated_at:TS.now()});
+      tx.update(itemRef,{rating_sum:sum,rating_count:cnt});return {sum,cnt};
     });
+    ugcDoc.rating_sum=res.sum;ugcDoc.rating_count=res.cnt;my={stars,text};draft={stars,text};toast(t('reviewSaved'));renderItem();
+  }catch(e){console.error(e);toast(t('reviewFailed'),'red')}
+  renderComposer();
+}
+function postComment(rid){
+  const text=(drafts[rid]||'').trim(),em=currentUser&&currentUser.email;if(!em||!canParticipate()||!text)return;
+  drafts[rid]='';
+  areaRef.add({type:'comment',ratingId:rid,authorEmail:em,authorDisplay:(auth.currentUser&&auth.currentUser.displayName)||em.split('@')[0],text,createdAt:TS.now()}).catch(e=>{console.error(e);toast(t('errGeneric'),'red')});
+}
+function openReport(targetType,targetId,own){
+  if(!currentUser){toast(t('errAuth'),'yellow');return}
+  if(!canParticipate()){toast(t('reportNeedsOwn'),'yellow');return}
+  if(own||isOwner())return;
+  const title=t({item:'reportItem',review:'reportReview',comment:'reportComment'}[targetType]);
+  dialog({title,body:`<p>${t('reportBody')}</p><label for="rp-r">${t('reason')}</label><select id="rp-r"><option value="">${t('selectReason')}</option>${REASONS.map(k=>`<option value="${esc(I18N.en[k])}">${esc(t(k))}</option>`).join('')}</select><label for="rp-d">${t('additional')}</label><textarea id="rp-d" rows="3" maxlength="500"></textarea>`,
+    ok:t('report'),cancel:t('cancel'),onOk:async()=>{
+      const reason=$('#rp-r').value;if(!reason){toast(t('selectReason'),'yellow');return true}
+      try{await areaRef.add({type:'report',targetType,targetId,authorEmail:currentUser.email,reason,description:$('#rp-d').value.trim(),createdAt:TS.now()})}catch(e){console.error(e);toast(t('errGeneric'),'red');return}
+      setTimeout(()=>dialog({title:t('reportThanks'),body:`<p>${t('reportThanksBody')}</p>`,ok:t('close'),onOk:()=>{}}),0);
+    }});
+}
+const ACT={
+  purchase:confirmPurchase,migrate:confirmMigrate,download:doDownload,gift:openGift,
+  app:()=>{location.href=`darkpurpleof://installer/${itemId}/${authorParam}/${typeParam}`},
+  more:()=>{descOpen=!descOpen;renderItem()},
+  shot:d=>dialog({body:`<img src="${esc(d.src)}" alt="" style="margin:0 auto;max-height:80vh;border-radius:6px">`,wide:true}),
+  share:async()=>{const data={title:ugcDoc.name,url:location.href};try{if(navigator.share)await navigator.share(data);else{await navigator.clipboard.writeText(location.href);toast(t('linkCopied'))}}catch(e){}},
+  star:d=>{draft.stars=+d.n;document.querySelectorAll('.sb').forEach((b,i)=>b.classList.toggle('on',i<draft.stars));updateComposerBtn()},
+  'post-review':submitReview,
+  thread:d=>{openThread=openThread===d.id?null:d.id;renderReviews()},
+  'post-comment':d=>postComment(d.id),
+  'report-item':()=>openReport('item',itemId),
+  'report-review':d=>openReport('review',d.id,currentUser&&currentUser.email===d.id),
+  'report-comment':d=>{const c=Object.values(comments).flat().find(x=>x.id===d.id);openReport('comment',d.id,c&&currentUser&&c.email===currentUser.email)}
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset)});
+document.addEventListener('input',e=>{
+  if(e.target.id==='rv-text'){draft.text=e.target.value;updateComposerBtn()}
+  else if(e.target.dataset&&e.target.dataset.draft)drafts[e.target.dataset.draft]=e.target.value;
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.draft){e.preventDefault();postComment(e.target.dataset.draft)}});
 
-    document.getElementById('action-btn').addEventListener('click', ()=>{});
-    document.getElementById('migrate-btn').addEventListener('click', ()=>{});
-
-    // close modal with Escape
-    document.addEventListener('keydown',(e)=>{
-      if(e.key === 'Escape'){
-        if(modalOverlay.style.display === 'flex') closePurchaseDialog();
-      }
-    });
-
-    // Move the real action buttons into the sticky mobile bar on small screens,
-    // and back into the inline row on larger screens — same nodes, no duplication,
-    // so all click handlers / state above keep working untouched.
-    (function setupResponsiveActionSlot(){
-      const inlineRow = document.getElementById('action-row');
-      const mobileBar = document.getElementById('mobile-action-bar');
-      const mq = window.matchMedia('(max-width: 860px)');
-
-      function place(){
-        const target = mq.matches ? mobileBar : inlineRow;
-        const btns = [
-          document.getElementById('action-btn'),
-          document.getElementById('gift-btn'),
-          document.getElementById('migrate-btn'),
-          document.getElementById('view-in-app-btn')
-        ];
-        btns.forEach(b => { if(b && b.parentElement !== target) target.appendChild(b); });
-        // re-append disclaimer text nodes to whichever row is inline (mobile shows its own mirror instead)
-        const disclaimerEl = document.getElementById('action-disclaimer');
-        if(disclaimerEl && disclaimerEl.parentElement !== inlineRow) inlineRow.appendChild(disclaimerEl);
-      }
-      place();
-      mq.addEventListener ? mq.addEventListener('change', place) : mq.addListener(place);
-    })();
-
-    // Initialize
-    applyStaticTranslations();
-    loadUGC();
-  </script>
+auth.onAuthStateChanged(async u=>{currentUser=u?{uid:u.uid,email:u.email}:null;profiles={};await refreshUser();if(ugcDoc){loadProfiles();renderAll()}});
+currentLang=normalizeLang((navigator.language||'en').slice(0,2));applyStatic();loadUGC();
+</script>
 </body>
 </html>

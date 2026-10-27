@@ -1279,6 +1279,7 @@
 
   <!-- dp-topbar -->
   <script type="module" src="/dp-topbar.js"></script>
+  <script src="/login-i18n.js"></script>
 </head>
 <body>
   <dp-topbar></dp-topbar>
@@ -1464,7 +1465,7 @@
           <button type="button" class="ghost-btn m3-state" id="authorizeCancelBtn">Cancel</button>
         </div>
 
-        <p class="authorize-footnote" id="authorizeFootnote">By continuing, you allow this app to use your information in accordance with its own terms and privacy policy. You can revoke access at any time from <a href="/settings.html">Settings</a>.</p>
+        <p class="authorize-footnote" id="authorizeFootnote">By continuing, you allow this app to use your information in accordance with its own terms and privacy policy. You can revoke access at any time from <a href="/connected-apps.html">Settings</a>.</p>
       </div>
 
       <div class="card screen-card oauth-cancelled-card" id="oauthCancelledCard" style="display:none;">
@@ -1517,6 +1518,9 @@
 
     const ADMIN_DOMAIN = "@darkpurpleof.github.io";
     const USER_DOMAIN = "@users.darkpurpleof.github.io";
+    // OAuth server (Netlify functions: /oauth/authorize, /token, /revoke, /userinfo, /grants)
+    const OAUTH_BASE = "http://darkpurpleofswebsite.netlify.app/oauth";
+    let oauthParams = {}; // state, scope, PKCE challenge, resolved redirect_uri
     // Mirrors LoginActivity.LEGACY_CUTOFF_YEAR/MONTH/DAY (Dec 31 2026, UTC)
     const LEGACY_CUTOFF = new Date("2026-12-31T23:59:59Z");
     // Same probe LoginActivity uses (isLegacyLoginLockedFromServer) so the
@@ -1573,11 +1577,15 @@
       window.history.replaceState({}, document.title, url.toString());
     }
 
-    // Validate redirectUrl: must contain '__' placeholder and have a scheme:// (accept custom schemes)
+    // Validate redirect URL: safe custom scheme or https (http only on localhost); '__' placeholder optional
     function isValidRedirectUrl(url) {
       if (!url || typeof url !== "string") return false;
-      if (!url.includes("__")) return false;
-      return /^[a-z][a-z0-9+\-.]*:\/\//i.test(url);
+      let u;
+      try { u = new URL(url.replace("__", "x")); } catch (e) { return false; }
+      const proto = u.protocol.toLowerCase();
+      if (["javascript:", "data:", "vbscript:", "file:", "blob:", "about:"].includes(proto)) return false;
+      if (proto === "http:") return ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname);
+      return /^[a-z][a-z0-9+.-]*:$/i.test(proto);
     }
 
     // Global holders
@@ -1621,29 +1629,41 @@
         oauthClient = data;
         oauthClient.__id = oauthClientId;
 
-        // Overridable return URL: a caller can pass ?redirect_uri=<url> to use
-        // instead of the client's stored redirectUrl (e.g. local dev, a
-        // per-launch deep link). Only honored when the client doc explicitly
-        // opts in via `allowRedirectOverride: true`, and the override still
-        // has to pass the same "__" placeholder + scheme:// validation — this
-        // is effectively an open redirect if left ungated, so it's opt-in per
-        // client rather than on by default.
+        // Overridable return URL: ?redirect_uri= must be registered (redirectUrl / redirectUris)
+        // or the client doc must opt in with allowRedirectOverride: true. Server re-checks it.
+        const registered = [data.redirectUrl].concat(Array.isArray(data.redirectUris) ? data.redirectUris : []).filter(Boolean);
         const redirectOverride = getQueryParam("redirect_uri");
         oauthRedirectOverridden = false;
-        if (redirectOverride && data.allowRedirectOverride === true && isValidRedirectUrl(redirectOverride)) {
+        oauthClient.redirectUrl = data.redirectUrl;
+        if (redirectOverride) {
+          const ok = isValidRedirectUrl(redirectOverride) &&
+            (registered.includes(redirectOverride) || data.allowRedirectOverride === true);
+          if (!ok) {
+            console.warn("redirect_uri rejected:", redirectOverride);
+            oauthClient = null;
+            triedLoadingOauthClient = true;
+            showToast("This app isn't allowed to use that return link.", "red", 5000);
+            return;
+          }
           oauthClient.redirectUrl = redirectOverride;
-          oauthRedirectOverridden = true;
-        } else if (redirectOverride) {
-          console.warn("Ignoring redirect_uri override: not permitted or invalid for this client.");
+          oauthRedirectOverridden = !registered.includes(redirectOverride);
         }
 
         oauthClientValidRedirect = isValidRedirectUrl(oauthClient.redirectUrl);
         if (!oauthClientValidRedirect) {
-          console.warn("OAuth client redirect invalid or missing '__':", oauthClient.redirectUrl);
+          console.warn("OAuth client redirect invalid:", oauthClient.redirectUrl);
           oauthClient = null;
           triedLoadingOauthClient = true;
           return;
         }
+
+        oauthParams = {
+          state: getQueryParam("state") || "",
+          scope: getQueryParam("scope") || "",
+          codeChallenge: getQueryParam("code_challenge") || "",
+          codeChallengeMethod: getQueryParam("code_challenge_method") || "S256",
+          redirectUri: oauthClient.redirectUrl
+        };
 
         insertOAuthCard(data);
         triedLoadingOauthClient = true;
@@ -1707,7 +1727,7 @@
   byLine.className = "oauth-by";
 
   const byText = document.createElement("span");
-  byText.textContent = "by " + (data.author || "Unknown");
+  byText.textContent = tr("by {0}").replace("{0}", data.author || tr("Unknown"));
 
   byLine.appendChild(byText);
 
@@ -2112,11 +2132,11 @@
       const isVerified = !!(clientData && (clientData.clientverified || clientData.official === true));
       authorizeClientVerifiedBadge.style.display = isVerified ? "inline-flex" : "none";
 
-      const authorLabel = (clientData && clientData.author) || "Unknown";
+      const authorLabel = (clientData && clientData.author) || tr("Unknown");
       const authorVerified = !!(clientData && clientData.author_verified);
       authorizeClientBy.innerHTML = "";
       const byText = document.createElement("span");
-      byText.textContent = "by " + authorLabel;
+      byText.textContent = tr("by {0}").replace("{0}", authorLabel);
       authorizeClientBy.appendChild(byText);
       if (authorVerified) {
         const badge = document.createElement("span");
@@ -2142,7 +2162,7 @@
           overrideNote.style.marginTop = "8px";
           document.querySelector(".authorize-permissions").insertAdjacentElement("afterend", overrideNote);
         }
-        overrideNote.innerHTML = "<b>Custom return link:</b> this sign-in will return to <code style=\"word-break:break-all;\">" + String(oauthClient.redirectUrl).split("__")[0] + "\u2026</code> instead of this app's usual link.";
+        overrideNote.textContent = tr("Custom return link: this sign-in will return to {0} instead of this app's usual link.").replace("{0}", String(oauthClient.redirectUrl).split("__")[0] + "\u2026");
         overrideNote.style.display = "block";
       } else if (overrideNote) {
         overrideNote.style.display = "none";
@@ -2151,7 +2171,9 @@
       // Permissions / scopes list
       authorizePermissionsList.innerHTML = "";
       const scopes = (clientData && Array.isArray(clientData.scopes)) ? clientData.scopes : [];
-      const effectiveScopes = scopes.length ? scopes : ["profile:read", "email:read"]; // sensible default if none declared
+      const baseScopes = scopes.length ? scopes : ["profile:read", "email:read"];
+      const askedScopes = (oauthParams.scope || "").split(/[\s,]+/).filter(Boolean);
+      const effectiveScopes = askedScopes.length ? askedScopes.filter((x) => baseScopes.includes(x)) : baseScopes;
 
       effectiveScopes.forEach((scope) => {
         const { description, risk } = describeScope(scope);
@@ -2240,19 +2262,35 @@
     }
 
     async function doOauthRedirect() {
+      authorizeConfirmBtn.disabled = true;
       try {
-        const token = await auth.currentUser.getIdToken(true);
-        const redirectUrl = String(oauthClient.redirectUrl).replace("__", encodeURIComponent(token));
-        if (isValidRedirectUrl(redirectUrl) || redirectUrl.startsWith(oauthClient.redirectUrl.split("__")[0])) {
-          showToast("Redirecting...", "purple", 1500);
-          setTimeout(() => { window.location.assign(redirectUrl); }, 500);
-        } else {
-          console.warn("OAuth redirect invalid after token insertion:", redirectUrl);
-          showToast("This app's redirect is misconfigured.", "red");
+        showToast("Authorizing...", "purple", 1500);
+        const idToken = await auth.currentUser.getIdToken();
+        const res = await fetch(OAUTH_BASE + "/authorize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + idToken },
+          body: JSON.stringify({
+            client_id: oauthClientId,
+            redirect_uri: oauthParams.redirectUri,
+            scope: oauthParams.scope,
+            state: oauthParams.state,
+            code_challenge: oauthParams.codeChallenge,
+            code_challenge_method: oauthParams.codeChallengeMethod
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.redirect || !isValidRedirectUrl(data.redirect)) {
+          console.warn("authorize failed:", data);
+          showToast(data.error_description || "Couldn't complete authorization. Try again.", "red", 5000);
+          authorizeConfirmBtn.disabled = false;
+          return;
         }
-      } catch (tokErr) {
-        console.error("Failed to get ID token for oauth redirect:", tokErr);
+        showToast("Redirecting...", "purple", 1500);
+        setTimeout(() => { window.location.assign(data.redirect); }, 400);
+      } catch (e) {
+        console.error("OAuth authorize error:", e);
         showToast("Couldn't complete authorization. Try again.", "red");
+        authorizeConfirmBtn.disabled = false;
       }
     }
 
@@ -2261,6 +2299,14 @@
     });
 
     authorizeCancelBtn.addEventListener("click", () => {
+      const uri = oauthParams.redirectUri;
+      if (uri && !uri.includes("__") && isValidRedirectUrl(uri)) {
+        const u = new URL(uri);
+        u.searchParams.set("error", "access_denied");
+        if (oauthParams.state) u.searchParams.set("state", oauthParams.state);
+        window.location.assign(u.toString());
+        return;
+      }
       cancelOauth();
     });
 
