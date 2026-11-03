@@ -408,7 +408,14 @@ sRec:'cumple lo recomendado',sMin:'cumple lo mínimo',sLow:'por debajo del míni
     version:'バージョン {v}',released:'{d} にリリース',notes:'リリースノート',pickPlatform:'下からプラットフォームを選択してください。',macNote:'macOS 11 以降が必要です。',linuxMeta:'Flatpak · .deb · .rpm',apkMeta:'Android APK',browser:'すべてのダウンロード'}
 };
 const normalizeLang = c => { c = String(c||'').trim().toLowerCase(); return SUPPORTED_LANGS.includes(c) ? c : 'en'; };
-const lang = normalizeLang((navigator.language||'en').slice(0,2));
+/* language: URL path (/es/download, /ru/, /de/..., also es-MX style) > ?lang=xx > browser language */
+function pickLang(){
+  const code = c => { c = String(c||'').toLowerCase(); return /^[a-z]{2}([-_][a-z]{2})?$/.test(c) && SUPPORTED_LANGS.includes(c.slice(0,2)) ? c.slice(0,2) : null; };
+  for (const seg of location.pathname.split('/')) { const c = code(seg); if (c) return c; }
+  const q = code(new URLSearchParams(location.search).get('lang'));
+  return q || normalizeLang((navigator.language||'en').slice(0,2));
+}
+const lang = pickLang();
 const LOCALE = {en:'en-US',es:'es-ES',ru:'ru-RU',de:'de-DE',ja:'ja-JP'}[lang];
 const t = (k, v={}) => String((I18N[lang]||{})[k] ?? I18N.en[k] ?? k).replace(/\{(\w+)\}/g, (_,x) => v[x] ?? '');
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

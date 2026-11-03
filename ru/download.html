@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Download DarkPurpleOF's Website</title>
+<meta name="description" content="Download DarkPurpleOF's Website for Windows, macOS, Linux and Android." />
+<link rel="icon" href="/org-owner.jpg" />
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;width:100%;overflow-x:hidden;overflow-x:clip}   /* clip, not hidden: hidden turns body into a scroll container and breaks the sticky topbar */
+img{max-width:100%;display:block}
+button{font:inherit;color:inherit}
+a{color:inherit}
+:root{--bg:#171717;--surface:#1f1f1f;--raised:#242424;--border:rgba(255,255,255,0.04);--line:rgba(255,255,255,0.09);--text:#eaeaea;--muted:#a8a8a8;--accent:#6b21a8;--accent-h:#5b21b6;--tint:#c4a1f2;--sb:env(safe-area-inset-bottom,0px)}
+body.light{--bg:#f6f8fb;--surface:#fff;--raised:#fff;--border:rgba(0,0,0,0.06);--line:rgba(0,0,0,0.12);--text:#0f172a;--muted:#475569;--tint:#6b21a8}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14.5px;line-height:1.55;min-height:100vh;position:relative}
+dp-topbar{display:block;position:sticky;top:0;z-index:100}
+@media(max-width:340px),(max-height:320px){dp-topbar{position:static}}
+html.small dp-topbar{position:static}
+.page{position:relative;z-index:1;max-width:940px;margin:0 auto;padding:28px 20px calc(64px + var(--sb));display:grid;gap:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.02),0 12px 32px rgba(0,0,0,.18)}
+body.light .card{box-shadow:0 1px 2px rgba(15,23,42,.05),0 10px 28px rgba(15,23,42,.06)}
+.card.top{border-top:2px solid var(--accent)}
+.sec{padding:22px}
+h1{font-size:32px;line-height:1.15;margin:6px 0 8px;font-weight:700;letter-spacing:-.02em;overflow-wrap:anywhere}
+h2{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:600}
+.muted{color:var(--muted)}
+.eyebrow{display:flex;align-items:center;gap:8px;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.eyebrow::before{content:"";width:8px;height:8px;background:var(--accent);display:inline-block}
+.hero{display:flex;gap:26px;align-items:center;padding:32px 28px}
+.logo{width:112px;height:112px;border-radius:14px;object-fit:cover;background:var(--raised);border:1px solid var(--line);flex:none;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.hm{flex:1;min-width:0}
+.lead{font-size:15.5px;color:var(--muted);max-width:52ch}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;min-height:24px}
+.pill{font-size:12px;font-weight:600;padding:3px 10px;border-radius:4px;background:var(--raised);border:1px solid var(--line);color:var(--muted);text-decoration:none}
+a.pill:hover{color:var(--text);border-color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;border-radius:6px;border:1px solid rgba(128,128,128,.28);background:transparent;cursor:pointer;font-weight:600;font-size:14px;text-decoration:none;color:var(--text);white-space:nowrap;transition:background .15s,border-color .15s,transform .15s,box-shadow .15s}
+.btn:hover:not(.disabled){border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-h);border-color:var(--accent-h);transform:translateY(-1px)}
+.btn.lg{padding:13px 22px;font-size:15px}
+.btn.disabled{opacity:.5;cursor:not-allowed}
+.btn:focus-visible,summary:focus-visible,.tip:focus-visible,a.pill:focus-visible{outline:2px solid var(--accent-h);outline-offset:2px}
+.chip{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--accent);color:#fff;margin-left:8px;vertical-align:2px;letter-spacing:.02em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.tile{position:relative;display:flex;flex-direction:column;gap:16px;padding:18px;background:var(--raised);border:1px solid var(--line);border-radius:8px;transition:border-color .15s,transform .15s}
+.tile:hover{border-color:var(--accent);transform:translateY(-2px);z-index:2}
+.tile.cur{border-color:var(--accent);background:var(--raised);background:color-mix(in srgb,var(--accent) 14%,var(--raised))}
+.tile.off{opacity:.72}
+.tile.off:hover{transform:none;border-color:var(--line)}
+.th{display:flex;gap:12px;align-items:center}
+.pi{width:44px;height:44px;border-radius:8px;background:rgba(107,33,168,.16);border:1px solid rgba(107,33,168,.32);display:flex;align-items:center;justify-content:center;flex:none;color:var(--tint)}
+.pi svg{width:24px;height:24px}
+.pn{flex:1;min-width:0}
+.pn b{display:block;font-size:16px}
+.pn .meta{display:block;color:var(--muted);font-size:12.5px;overflow-wrap:anywhere;min-height:19px}
+.pa{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}
+.pa .btn{flex:1 1 auto;padding:10px 12px}
+.pa .tip{flex:1 1 auto;display:flex}
+.pa .tip .btn{flex:1}
+.cmds{margin-top:14px;border:1px solid var(--line);border-radius:8px;background:var(--raised);padding:6px 16px 14px}
+.cmds summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;padding:6px 0}
+.cmds summary:hover{color:var(--text)}
+.code{position:relative;margin-top:8px}
+.code pre{margin:0;padding:14px 16px;background:var(--bg);border:1px solid var(--line);border-radius:6px;overflow-x:auto;font:12.5px/1.65 ui-monospace,Menlo,Consolas,monospace}
+.code pre{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.45) transparent}
+.code pre::-webkit-scrollbar{height:8px}
+.code pre::-webkit-scrollbar-track{background:transparent}
+.code pre::-webkit-scrollbar-thumb{background:rgba(128,128,128,.4);border-radius:4px;border:2px solid transparent;background-clip:content-box}
+.code pre::-webkit-scrollbar-thumb:hover{background:var(--accent);background-clip:content-box}
+.code .btn{position:absolute;top:8px;right:8px;padding:5px 10px;font-size:12px;background:var(--surface)}
+.foot{text-align:center;font-size:12.5px;color:var(--muted)}
+.foot a{text-decoration:underline}
+.tip{position:relative;display:inline-block}
+.tip .bubble{position:absolute;bottom:calc(100% + 8px);right:0;width:max-content;max-width:min(300px,78vw);padding:9px 12px;background:var(--raised);color:var(--text);border:1px solid rgba(128,128,128,.35);border-radius:6px;font-size:12.5px;font-weight:500;line-height:1.45;white-space:normal;box-shadow:0 8px 24px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .12s;z-index:20}
+.tip:hover .bubble,.tip:focus .bubble,.tip:focus-within .bubble{opacity:1}
+.cta .tip{display:flex}
+.cta .tip .btn{flex:1}
+.cta .tip .bubble{left:0;right:auto}
+
+.tabs-wrap{overflow-x:auto;margin-bottom:6px}
+.tabs{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.tab{background:transparent;border:0;border-right:1px solid var(--line);padding:9px 18px;font-weight:600;font-size:13.5px;color:var(--muted);cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.tab:last-child{border-right:0}
+.tab:hover{color:var(--text)}
+.tab[aria-selected=true]{background:var(--accent);color:#fff}
+.tab:focus-visible{outline:2px solid var(--accent-h);outline-offset:-2px}
+.rq{display:grid;grid-template-columns:176px 1fr 1fr;gap:0 20px;padding:12px 0;border-top:1px solid var(--line);align-items:start}
+.rq.head{border-top:0;padding:14px 0 8px;font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.rq .k{display:flex;align-items:flex-start;gap:10px;color:var(--muted)}
+.ki{flex:none;width:20px;height:20px;color:var(--tint)}
+.ki svg{width:20px;height:20px;display:block}
+.rq .span{grid-column:2 / span 2}
+.vg{display:grid;gap:7px;overflow-wrap:anywhere}
+.vi{display:flex;gap:9px;align-items:flex-start}
+.ck{flex:none;width:18px;height:18px;margin-top:1px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;color:var(--tint);border:1px solid rgba(107,33,168,.5)}
+.ck svg{width:12px;height:12px;stroke-width:3.2}
+.ck.rec{background:var(--accent);border-color:var(--accent);color:#fff}
+.ck.info{border-color:var(--line);color:var(--muted)}
+.ck.info svg{width:14px;height:14px;stroke-width:2.2}
+.ck.low{border-color:#c0392b;color:#e8574a}
+.hc{display:flex;align-items:center;gap:8px}
+.dev{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:11px 14px;margin:14px 0 4px;border:1px solid var(--line);border-radius:6px;background:var(--raised);font-size:13px}
+.dev b{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.dev .vi{align-items:center}
+.dev small{color:var(--muted);font-size:12px;flex-basis:100%}
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.steps li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--raised);border:1px solid var(--line);border-radius:6px}
+.steps li::before{content:counter(s);flex:none;width:24px;height:24px;border-radius:4px;background:var(--accent);color:#fff;font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center}
+.hrow{padding:9px 0;border-top:1px solid var(--line)}
+.hrow:first-of-type{border-top:0}
+.hrow b{display:block;font-size:13px}
+.hash{display:block;font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);word-break:break-all;margin-top:2px}
+.dev{border-left:3px solid var(--accent)}
+.warn{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:14px 16px;background:var(--raised);border:1px solid var(--line);border-left:3px solid #c0392b;border-radius:6px}
+.warn p{margin:0}
+.warn p+p{margin-top:6px;color:var(--muted)}
+body.unsup .cmds,body.unsup #verify{opacity:.5;pointer-events:none}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card{animation:rise .45s ease both}
+.page>:nth-child(2){animation-delay:.07s}
+.page>:nth-child(3){animation-delay:.14s}
+#plats:not(.done) .tile{animation:rise .45s ease both}
+#plats:not(.done) .tile:nth-child(2){animation-delay:.08s}
+#plats:not(.done) .tile:nth-child(3){animation-delay:.16s}
+#plats:not(.done) .tile:nth-child(4){animation-delay:.24s}
+#plats:not(.done) .tile:nth-child(5){animation-delay:.32s}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media(max-width:620px){
+.page{padding:16px 0 calc(48px + var(--sb));gap:12px}
+.card{border-radius:0;border-left:0;border-right:0}
+.sec{padding:18px 16px}
+.hero{flex-direction:column;align-items:flex-start;gap:16px;padding:22px 16px}
+.logo{width:80px;height:80px}
+h1{font-size:26px}
+.cta .btn{flex:1}
+.grid{grid-template-columns:1fr}
+.foot{padding:0 16px}
+.rq{grid-template-columns:1fr;gap:2px;padding:12px 0}
+.rq.head{display:none}
+.rq .span{grid-column:auto}
+.vg[data-l]::before{content:attr(data-l);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.rq .k{margin-bottom:2px}
+}
+</style>
+<!-- initialize firebase early so dp-topbar can access firebase globals -->
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyCAPZF2zwU6z5rhikrIVZ4TVxf1tS5aTbA",
+    authDomain: "darkpurpleof-s-website.firebaseapp.com",
+    projectId: "darkpurpleof-s-website",
+    storageBucket: "darkpurpleof-s-website.firebasestorage.app",
+    messagingSenderId: "520651082420",
+    appId: "1:520651082420:web:bb05c0c3fd64517952e5e1"
+  };
+  if (!window.firebase || !firebase.apps || firebase.apps.length === 0) {
+    try { firebase.initializeApp(firebaseConfig); }
+    catch(e){ console.warn('Firebase init failed (maybe already initialized)', e); }
+  }
+  window._DPF_FIREBASE_READY = true;
+  window.dpFirebase = firebase;
+  window.dpAuth = firebase.auth();
+  window.dpDb = firebase.firestore();
+})();
+</script>
+<script type="module" src="/dp-topbar.js"></script>
+</head>
+<body>
+<dp-topbar></dp-topbar>
+<main class="page">
+  <section class="card top">
+    <div class="sec hero">
+      <img class="logo" src="/org-owner.jpg" alt="" />
+      <div class="hm">
+        <div class="eyebrow" data-i="title"></div>
+        <h1>DarkPurpleOF's Website</h1>
+        <div class="lead" data-i="tagline"></div>
+        <div class="cta" id="heroCta"></div>
+        <div class="pills" id="relInfo"></div>
+      </div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="sec">
+      <h2 data-i="allPlatforms"></h2>
+      <div class="grid" id="plats"></div>
+      <div id="cmdsWrap"></div>
+      <div id="verify"></div>
+    </div>
+  </section>
+  <section class="card" id="requirements">
+    <div class="sec">
+      <h2 data-i="reqTitle"></h2>
+      <div class="tabs-wrap"><div class="tabs" id="reqTabs" role="tablist"></div></div>
+      <div id="reqDev"></div>
+      <div id="reqTable"></div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="sec">
+      <h2 data-i="stepsTitle"></h2>
+      <ol class="steps" id="steps"></ol>
+    </div>
+  </section>
+  <div class="foot"><a id="allDl" href="https://github.com/darkpurpleof/darkpurpleofs-website-pc/releases"></a></div>
+  <noscript><p class="muted" style="text-align:center"><a href="https://github.com/darkpurpleof/darkpurpleofs-website-pc/releases">Downloads</a></p></noscript>
+</main>
+
+<script>
+/* ---------- config: change these if your names differ ---------- */
+const REPO = 'darkpurpleof/darkpurpleofs-website-pc';          // GitHub repo whose latest release holds the installers
+const RELEASES = `https://github.com/${REPO}/releases`;   // /releases/latest would skip pre-releases
+const ANDROID_REPO = 'darkpurpleof/darkpurpleofswebsite-app';   // Android app has its own repo and version
+const ANDROID_RELEASES = `https://github.com/${ANDROID_REPO}/releases`;
+/* direct links (v2.0.0), used until/unless the GitHub API lookup succeeds */
+const DL = `https://github.com/${REPO}/releases/download/2.0.0/`;
+const ADL = `https://github.com/${ANDROID_REPO}/releases/download/11.8.2/`;
+const FALLBACK = {
+  android :{name:'REL11.8.2.apk',                                browser_download_url:ADL+'REL11.8.2.apk'},
+  windows :{name:'DarkPurpleOFsWebsite-Setup.exe',               browser_download_url:DL+'DarkPurpleOFsWebsite-Setup.exe'},
+  macArm  :{name:'DarkPurpleOFsWebsite-apple-silicon.pkg',       browser_download_url:DL+'DarkPurpleOFsWebsite-apple-silicon.pkg'},
+  macIntel:{name:'DarkPurpleOFsWebsite-apple-intel.pkg',         browser_download_url:DL+'DarkPurpleOFsWebsite-apple-intel.pkg'},
+  deb     :{name:'darkpurpleofswebsite_2.0.0_amd64.deb',         browser_download_url:DL+'darkpurpleofswebsite_2.0.0_amd64.deb'},
+  rpm     :{name:'darkpurpleofswebsite-2.0.0-1.x86_64.rpm',      browser_download_url:DL+'darkpurpleofswebsite-2.0.0-1.x86_64.rpm'}
+};
+const SITE = 'https://darkpurpleof.github.io';
+const FLATPAK_ID = 'io.github.darkpurpleof.DarkPurpleOFsWebsite';
+const FLATPAKREF = `/flatpak/${FLATPAK_ID}.flatpakref`;
+const linuxCmds = () =>
+  `# Flatpak\n` +
+  `flatpak remote-add --user --if-not-exists darkpurpleof ${SITE}/flatpak/darkpurpleof.flatpakrepo\n` +
+  `flatpak install --user darkpurpleof ${FLATPAK_ID}\n\n` +
+  `# Debian / Ubuntu\n` +
+  `sudo apt install ./${(found.deb && found.deb.name) || 'DarkPurpleOFsWebsite.deb'}\n\n` +
+  `# Fedora / openSUSE\n` +
+  `sudo dnf install ./${(found.rpm && found.rpm.name) || 'DarkPurpleOFsWebsite.rpm'}`;
+/* release asset name -> platform. Adjust the patterns to your file names. */
+const MATCH = {
+  windows : a => /\.(msi|exe)$/i.test(a.name),
+  macArm  : a => /\.pkg$/i.test(a.name) && /arm64|aarch64|silicon/i.test(a.name),
+  macIntel: a => /\.pkg$/i.test(a.name) && /x64|x86_64|amd64|intel/i.test(a.name),
+  deb     : a => /\.deb$/i.test(a.name),
+  rpm     : a => /\.rpm$/i.test(a.name),
+  android : a => /\.apk$/i.test(a.name)
+};
+
+/* ---------- i18n (ru/de/ja fall back to English for newer strings) ---------- */
+const SUPPORTED_LANGS = ['en','es','ru','de','ja'];
+const I18N = {
+  en:{
+    pre:'Pre-release',
+    unsupHint_j2me:'Don’t even think about it.',unsupMsg_j2me:'Don’t even think about it.',steps_unsup_j2me:'Don’t even think about it.',dev_j2me:'J2ME',
+
+    unsupHint_console:'Downloads are disabled on this device. Why did you think that would work?',
+    unsupMsg_console:'{d}? Why did you think that would work? Please open this page on a Windows, macOS or Linux computer, or a regular Android phone or tablet.',
+    steps_unsup_console:'Put the controller down.|Open this page on a Windows, macOS or Linux computer, or an Android phone or tablet.|Download from there.',
+    dev_xbox:'An Xbox',dev_playstation:'A PlayStation',dev_nintendo:'A Nintendo console',
+
+    unsupHint:'Downloads are disabled on this device, but you can keep using the website as usual.',
+    unsupMsg:'The app can’t be installed on {d}, but you can keep using the website as usual. It should mostly work. To install the app, open this page on a Windows, macOS or Linux computer, or a regular Android phone or tablet.',
+    steps_unsup:'Keep using the website in your browser as usual.|To get the app, open this page on a Windows, macOS or Linux computer, or a regular Android phone or tablet.|Download from there.',
+tabUnsup:'Unsupported device',unsupDl:'Unavailable on this device',unsupHint_jio:'Downloads are disabled on this device. Open this page on another device.',
+    unsupMsg_jio:'{d} can’t run DarkPurpleOF’s Website. Please check this page again on another device: a Windows, macOS or Linux computer, or a regular Android phone or tablet.',
+    unsupFb:'Facebook’s in-app browser also blocks installs, even on a supported phone. Open this page in your normal browser instead.',
+    dev_kindle:'Kindle',dev_winphone:'Windows Phone',dev_blackberry:'BlackBerry',dev_jio:'JioPhone (KaiOS)',dev_facebook:'the Facebook app on Android',
+    steps_unsup_jio:'Open this page on another device.|Use a Windows, macOS or Linux computer, or a regular Android phone or tablet.|Download from there.',
+sRec:'meets the recommended spec',sMin:'meets the minimum spec',sLow:'below the minimum spec',devCores:'{n} CPU threads',devScreen:'{w} × {h} display',
+    rCores:'CPU cores',rStore:'Storage type',rInput:'Input',rSession:'Desktop session',rPerm:'Permissions',rWeb:'WebView',
+    hdd:'HDD (slower startup)',ssd:'SSD or NVMe',inputReq:'Keyboard and mouse, or touch',
+    sessionReq:'Wayland or X11 desktop session',permNotif:'Notifications',permInstall:'Install unknown apps (needed for the APK)',webReq:'Up-to-date Android System WebView',
+    stepsTitle:'How to install',verify:'Verify downloads (SHA-256)',
+    steps_windows:'Download the installer (.msi / .exe).|If SmartScreen appears, choose More info → Run anyway.|Follow the installer, then launch from the Start menu.',
+    steps_mac:'Download the .pkg for your chip (Apple menu → About This Mac).|Open it and follow the installer. If blocked, allow it in System Settings → Privacy & Security.|Launch from Applications.',
+    steps_linux:'Install Flatpak and add the repo (see terminal commands above), or download the .deb / .rpm.|Run the install command for your distribution.|Launch from your app menu.',
+    steps_android:'Download the APK on your phone.|Allow "Install unknown apps" for your browser when asked.|Open the APK and tap Install.',
+    steps_ios:'There is no iPhone or iPad app yet.|Maybe in the future.|For now, use the website in your browser, or download the app on a Windows, macOS or Linux computer or an Android device.',
+    iosMaybe:'No iPhone or iPad app yet. Maybe in the future.',
+    detected:'Detected on this device',devMeetsRec:'{mem} memory: meets the recommended spec',devMeetsMin:'{mem} memory: meets the minimum spec',devBelow:'{mem} memory: below the minimum spec',devApprox:'Approximate: browsers round memory down and cap it at 8 GB.',anyFlatpak:'Any distribution with Flatpak support (Flatpak build)', reqTitle:'System requirements',min:'Minimum',rec:'Recommended',rOS:'Operating system',rCPU:'Processor',rRAM:'Memory (RAM)',rDisk:'Storage',rGPU:'Graphics',rDisplay:'Display',rNet:'Network',rArch:'Architecture',rNotes:'Notes',orNewer:'{x} or newer',free:'{x} free',latest:'latest release',integrated:'Integrated graphics',accel:'GPU with hardware acceleration',netReq:'Internet connection required',linuxNote:'The Flatpak build needs Flatpak installed. The system tray needs StatusNotifier/AppIndicator support (built into KDE; GNOME needs the AppIndicator extension).',iosNote:'Hypothetical: there is no iOS build yet.', title:'Download',tagline:'The native app for Windows, macOS, Linux and Android.',downloadFor:'Download for {os}',allPlatforms:'All platforms',yourDevice:'Your device',
+    appleSilicon:'Apple Silicon',intel:'Intel',download:'Download',terminal:'Install from the terminal',copy:'Copy',copied:'Copied',
+    unavailable:'Unavailable',iosMeta:'Not on the App Store',iosTip:'Not available yet. Maybe in the future, but not through the App Store, so it would only work on jailbroken devices.',
+    version:'Version {v}',released:'Released {d}',notes:'Release notes',pickPlatform:'Choose your platform below.',macNote:'Requires macOS 11 or later.',linuxMeta:'Flatpak · .deb · .rpm',apkMeta:'Android APK',browser:'All downloads'},
+  es:{
+    pre:'Versión preliminar',
+    unsupHint_j2me:'Ni se te ocurra.',unsupMsg_j2me:'Ni se te ocurra.',steps_unsup_j2me:'Ni se te ocurra.',dev_j2me:'J2ME',
+
+    unsupHint_console:'Las descargas están desactivadas en este dispositivo. ¿Por qué pensaste que esto iba a funcionar?',
+    unsupMsg_console:'¿{d}? ¿Por qué pensaste que esto iba a funcionar? Abre esta página en un ordenador con Windows, macOS o Linux, o en un teléfono o tableta Android normal.',
+    steps_unsup_console:'Deja el mando.|Abre esta página en un ordenador con Windows, macOS o Linux, o en un teléfono o tableta Android.|Descarga desde ahí.',
+    dev_xbox:'Una Xbox',dev_playstation:'Una PlayStation',dev_nintendo:'Una consola Nintendo',
+
+    unsupHint:'Las descargas están desactivadas en este dispositivo, pero puedes seguir usando el sitio web como siempre.',
+    unsupMsg:'La app no se puede instalar en {d}, pero puedes seguir usando el sitio web como siempre. Debería funcionar en su mayor parte. Para instalar la app, abre esta página en un ordenador con Windows, macOS o Linux, o en un teléfono o tableta Android normal.',
+    steps_unsup:'Sigue usando el sitio web en tu navegador como siempre.|Para obtener la app, abre esta página en un ordenador con Windows, macOS o Linux, o en un teléfono o tableta Android normal.|Descarga desde ahí.',
+tabUnsup:'Dispositivo no compatible',unsupDl:'No disponible en este dispositivo',unsupHint_jio:'Las descargas están desactivadas en este dispositivo. Abre esta página en otro dispositivo.',
+    unsupMsg_jio:'{d} no puede ejecutar DarkPurpleOF’s Website. Vuelve a consultar esta página en otro dispositivo: un ordenador con Windows, macOS o Linux, o un teléfono o tableta Android normal.',
+    unsupFb:'El navegador integrado de Facebook también bloquea las instalaciones, incluso en un teléfono compatible. Abre esta página en tu navegador habitual.',
+    dev_kindle:'Kindle',dev_winphone:'Windows Phone',dev_blackberry:'BlackBerry',dev_jio:'JioPhone (KaiOS)',dev_facebook:'la app de Facebook en Android',
+    steps_unsup_jio:'Abre esta página en otro dispositivo.|Usa un ordenador con Windows, macOS o Linux, o un teléfono o tableta Android normal.|Descarga desde ahí.',
+sRec:'cumple lo recomendado',sMin:'cumple lo mínimo',sLow:'por debajo del mínimo',devCores:'{n} hilos de CPU',devScreen:'Pantalla de {w} × {h}',
+    rCores:'Núcleos de CPU',rStore:'Tipo de almacenamiento',rInput:'Entrada',rSession:'Sesión de escritorio',rPerm:'Permisos',rWeb:'WebView',
+    hdd:'HDD (inicio más lento)',ssd:'SSD o NVMe',inputReq:'Teclado y ratón, o táctil',
+    sessionReq:'Sesión de escritorio Wayland o X11',permNotif:'Notificaciones',permInstall:'Instalar apps desconocidas (necesario para el APK)',webReq:'Android System WebView actualizado',
+    stepsTitle:'Cómo instalar',verify:'Verificar descargas (SHA-256)',
+    steps_windows:'Descarga el instalador (.msi / .exe).|Si aparece SmartScreen, elige Más información → Ejecutar de todas formas.|Sigue el instalador y abre desde el menú Inicio.',
+    steps_mac:'Descarga el .pkg de tu chip (menú Apple → Acerca de este Mac).|Ábrelo y sigue el instalador. Si se bloquea, permítelo en Ajustes del Sistema → Privacidad y seguridad.|Abre desde Aplicaciones.',
+    steps_linux:'Instala Flatpak y añade el repositorio (comandos de terminal arriba), o descarga el .deb / .rpm.|Ejecuta el comando de instalación de tu distribución.|Abre desde el menú de aplicaciones.',
+    steps_android:'Descarga el APK en tu teléfono.|Permite "Instalar apps desconocidas" para tu navegador cuando lo pida.|Abre el APK y pulsa Instalar.',
+    steps_ios:'Todavía no existe una app para iPhone o iPad.|Quizá en el futuro.|Por ahora, usa el sitio web en tu navegador, o descarga la app en un ordenador con Windows, macOS o Linux o en un dispositivo Android.',
+    iosMaybe:'Aún no hay app para iPhone ni iPad. Quizá en el futuro.',
+    detected:'Detectado en este dispositivo',devMeetsRec:'{mem} de memoria: cumple lo recomendado',devMeetsMin:'{mem} de memoria: cumple lo mínimo',devBelow:'{mem} de memoria: por debajo del mínimo',devApprox:'Aproximado: los navegadores redondean la memoria a la baja y la limitan a 8 GB.',anyFlatpak:'Cualquier distribución con soporte de Flatpak (versión Flatpak)', reqTitle:'Requisitos del sistema',min:'Mínimos',rec:'Recomendados',rOS:'Sistema operativo',rCPU:'Procesador',rRAM:'Memoria (RAM)',rDisk:'Almacenamiento',rGPU:'Gráficos',rDisplay:'Pantalla',rNet:'Red',rArch:'Arquitectura',rNotes:'Notas',orNewer:'{x} o posterior',free:'{x} libres',latest:'última versión',integrated:'Gráficos integrados',accel:'GPU con aceleración por hardware',netReq:'Se requiere conexión a Internet',linuxNote:'La versión Flatpak necesita tener Flatpak instalado. La bandeja del sistema necesita compatibilidad con StatusNotifier/AppIndicator (integrada en KDE; GNOME necesita la extensión AppIndicator).',iosNote:'Hipotético: todavía no existe una versión para iOS.', title:'Descargar',tagline:'La app nativa para Windows, macOS, Linux y Android.',downloadFor:'Descargar para {os}',allPlatforms:'Todas las plataformas',yourDevice:'Tu dispositivo',
+    appleSilicon:'Apple Silicon',intel:'Intel',download:'Descargar',terminal:'Instalar desde la terminal',copy:'Copiar',copied:'Copiado',
+    unavailable:'No disponible',iosMeta:'No está en la App Store',iosTip:'Aún no está disponible. Quizá en el futuro, pero no por la App Store, así que solo funcionaría en dispositivos con jailbreak.',
+    version:'Versión {v}',released:'Publicada el {d}',notes:'Notas de la versión',pickPlatform:'Elige tu plataforma abajo.',macNote:'Requiere macOS 11 o posterior.',linuxMeta:'Flatpak · .deb · .rpm',apkMeta:'APK de Android',browser:'Todas las descargas'},
+  ru:{
+    pre:'Предварительная версия',tabUnsup:'Неподдерживаемое устройство',unsupDl:'Недоступно на этом устройстве',
+    unsupHint:'Загрузки отключены на этом устройстве, но вы можете по-прежнему пользоваться сайтом как обычно.',
+    unsupMsg:'Приложение нельзя установить на этом устройстве ({d}), но вы можете по-прежнему пользоваться сайтом как обычно. Он должен в основном работать. Чтобы установить приложение, откройте эту страницу на компьютере с Windows, macOS или Linux либо на обычном телефоне или планшете Android.',
+    steps_unsup:'Продолжайте пользоваться сайтом в браузере как обычно.|Чтобы получить приложение, откройте эту страницу на компьютере с Windows, macOS или Linux либо на обычном телефоне или планшете Android.|Скачайте его там.',
+    unsupHint_jio:'Загрузки отключены на этом устройстве. Откройте эту страницу на другом устройстве.',
+    unsupMsg_jio:'{d} не может запустить DarkPurpleOF’s Website. Откройте эту страницу снова на другом устройстве: компьютере с Windows, macOS или Linux либо на обычном телефоне или планшете Android.',
+    steps_unsup_jio:'Откройте эту страницу на другом устройстве.|Используйте компьютер с Windows, macOS или Linux либо обычный телефон или планшет Android.|Скачайте приложение там.',
+    unsupHint_console:'Загрузки отключены на этом устройстве. С чего вы взяли, что это сработает?',
+    unsupMsg_console:'{d}? С чего вы взяли, что это сработает? Откройте эту страницу на компьютере с Windows, macOS или Linux либо на обычном телефоне или планшете Android.',
+    steps_unsup_console:'Отложите геймпад.|Откройте эту страницу на компьютере с Windows, macOS или Linux либо на телефоне или планшете Android.|Скачайте приложение там.',
+    unsupHint_j2me:'Даже не думайте.',unsupMsg_j2me:'Даже не думайте.',steps_unsup_j2me:'Даже не думайте.',
+    unsupFb:'Встроенный браузер Facebook тоже блокирует установку, даже на поддерживаемом телефоне. Откройте эту страницу в обычном браузере.',
+    dev_kindle:'Kindle',dev_winphone:'Windows Phone',dev_blackberry:'BlackBerry',dev_jio:'JioPhone (KaiOS)',dev_facebook:'приложение Facebook на Android',dev_xbox:'Xbox',dev_playstation:'PlayStation',dev_nintendo:'Консоль Nintendo',dev_j2me:'J2ME',
+    iosMaybe:'Приложения для iPhone и iPad пока нет. Возможно, в будущем.',
+    sRec:'соответствует рекомендуемым',sMin:'соответствует минимальным',sLow:'ниже минимальных',devCores:'Потоков ЦП: {n}',devScreen:'Экран {w} × {h}',
+    rCores:'Ядра ЦП',rStore:'Тип накопителя',rInput:'Ввод',rSession:'Сеанс рабочего стола',rPerm:'Разрешения',rWeb:'WebView',
+    hdd:'HDD (медленнее запуск)',ssd:'SSD или NVMe',inputReq:'Клавиатура и мышь или сенсорный экран',
+    sessionReq:'Сеанс рабочего стола Wayland или X11',permNotif:'Уведомления',permInstall:'Установка неизвестных приложений (нужна для APK)',webReq:'Актуальная версия Android System WebView',
+    stepsTitle:'Как установить',verify:'Проверка загрузок (SHA-256)',
+    steps_windows:'Скачайте установщик (.msi / .exe).|Если появится SmartScreen, выберите «Подробнее» → «Выполнить в любом случае».|Следуйте указаниям установщика и запустите приложение из меню «Пуск».',
+    steps_mac:'Скачайте .pkg для своего чипа (меню Apple → «Об этом Mac»).|Откройте его и следуйте указаниям установщика. Если установка заблокирована, разрешите её в «Системных настройках» → «Конфиденциальность и безопасность».|Запустите из папки «Программы».',
+    steps_linux:'Установите Flatpak и добавьте репозиторий (команды терминала выше) или скачайте .deb / .rpm.|Выполните команду установки для своего дистрибутива.|Запустите из меню приложений.',
+    steps_android:'Скачайте APK на телефон.|Когда появится запрос, разрешите браузеру «Установку неизвестных приложений».|Откройте APK и нажмите «Установить».',
+    steps_ios:'Приложения для iPhone и iPad пока нет.|Возможно, в будущем.|Пока пользуйтесь сайтом в браузере или скачайте приложение на компьютере с Windows, macOS или Linux либо на устройстве Android.',
+    detected:'Определено на этом устройстве',devMeetsRec:'Память {mem}: соответствует рекомендуемым',devMeetsMin:'Память {mem}: соответствует минимальным',devBelow:'Память {mem}: ниже минимальных',devApprox:'Приблизительно: браузеры округляют память вниз и ограничивают её 8 ГБ.',anyFlatpak:'Любой дистрибутив с поддержкой Flatpak (сборка Flatpak)', reqTitle:'Системные требования',min:'Минимальные',rec:'Рекомендуемые',rOS:'Операционная система',rCPU:'Процессор',rRAM:'Память (ОЗУ)',rDisk:'Хранилище',rGPU:'Графика',rDisplay:'Экран',rNet:'Сеть',rArch:'Архитектура',rNotes:'Примечания',orNewer:'{x} или новее',free:'{x} свободно',latest:'последняя версия',integrated:'Встроенная графика',accel:'GPU с аппаратным ускорением',netReq:'Требуется подключение к интернету',linuxNote:'Для Flatpak-сборки нужен установленный Flatpak. Для значка в трее нужна поддержка StatusNotifier/AppIndicator (встроена в KDE; в GNOME нужно расширение AppIndicator).',iosNote:'Гипотетически: сборки для iOS пока нет.', title:'Скачать',tagline:'Нативное приложение для Windows, macOS, Linux и Android.',downloadFor:'Скачать для {os}',allPlatforms:'Все платформы',yourDevice:'Ваше устройство',
+    appleSilicon:'Apple Silicon',intel:'Intel',download:'Скачать',terminal:'Установка через терминал',copy:'Копировать',copied:'Скопировано',
+    unavailable:'Недоступно',iosMeta:'Нет в App Store',iosTip:'Пока недоступно. Возможно, в будущем, но не через App Store, поэтому будет работать только на устройствах с джейлбрейком.',
+    version:'Версия {v}',released:'Выпущено {d}',notes:'Список изменений',pickPlatform:'Выберите платформу ниже.',macNote:'Требуется macOS 11 или новее.',linuxMeta:'Flatpak · .deb · .rpm',apkMeta:'APK для Android',browser:'Все загрузки'},
+  de:{
+    pre:'Vorabversion',tabUnsup:'Nicht unterstütztes Gerät',unsupDl:'Auf diesem Gerät nicht verfügbar',
+    unsupHint:'Downloads sind auf diesem Gerät deaktiviert, aber du kannst die Website wie gewohnt weiter nutzen.',
+    unsupMsg:'Die App lässt sich auf diesem Gerät ({d}) nicht installieren, aber du kannst die Website wie gewohnt weiter nutzen. Sie sollte größtenteils funktionieren. Um die App zu installieren, öffne diese Seite auf einem Windows-, macOS- oder Linux-Computer oder auf einem normalen Android-Smartphone oder -Tablet.',
+    steps_unsup:'Nutze die Website weiterhin wie gewohnt im Browser.|Um die App zu bekommen, öffne diese Seite auf einem Windows-, macOS- oder Linux-Computer oder auf einem normalen Android-Smartphone oder -Tablet.|Lade sie dort herunter.',
+    unsupHint_jio:'Downloads sind auf diesem Gerät deaktiviert. Öffne diese Seite auf einem anderen Gerät.',
+    unsupMsg_jio:'{d} kann DarkPurpleOF’s Website nicht ausführen. Bitte rufe diese Seite erneut auf einem anderen Gerät auf: einem Windows-, macOS- oder Linux-Computer oder einem normalen Android-Smartphone oder -Tablet.',
+    steps_unsup_jio:'Öffne diese Seite auf einem anderen Gerät.|Nutze einen Windows-, macOS- oder Linux-Computer oder ein normales Android-Smartphone oder -Tablet.|Lade die App dort herunter.',
+    unsupHint_console:'Downloads sind auf diesem Gerät deaktiviert. Wie kamst du darauf, dass das funktionieren würde?',
+    unsupMsg_console:'{d}? Wie kamst du darauf, dass das funktionieren würde? Öffne diese Seite auf einem Windows-, macOS- oder Linux-Computer oder auf einem normalen Android-Smartphone oder -Tablet.',
+    steps_unsup_console:'Leg den Controller weg.|Öffne diese Seite auf einem Windows-, macOS- oder Linux-Computer oder auf einem Android-Smartphone oder -Tablet.|Lade die App dort herunter.',
+    unsupHint_j2me:'Denk nicht mal dran.',unsupMsg_j2me:'Denk nicht mal dran.',steps_unsup_j2me:'Denk nicht mal dran.',
+    unsupFb:'Der In-App-Browser von Facebook blockiert Installationen ebenfalls, selbst auf einem unterstützten Smartphone. Öffne diese Seite stattdessen in deinem normalen Browser.',
+    dev_kindle:'Kindle',dev_winphone:'Windows Phone',dev_blackberry:'BlackBerry',dev_jio:'JioPhone (KaiOS)',dev_facebook:'die Facebook-App auf Android',dev_xbox:'Xbox',dev_playstation:'PlayStation',dev_nintendo:'Eine Nintendo-Konsole',dev_j2me:'J2ME',
+    iosMaybe:'Noch keine App für iPhone und iPad. Vielleicht in Zukunft.',
+    sRec:'erfüllt die empfohlenen Anforderungen',sMin:'erfüllt die Mindestanforderungen',sLow:'unter den Mindestanforderungen',devCores:'{n} CPU-Threads',devScreen:'{w} × {h} Bildschirm',
+    rCores:'CPU-Kerne',rStore:'Speichertyp',rInput:'Eingabe',rSession:'Desktop-Sitzung',rPerm:'Berechtigungen',rWeb:'WebView',
+    hdd:'HDD (langsamerer Start)',ssd:'SSD oder NVMe',inputReq:'Tastatur und Maus oder Touch',
+    sessionReq:'Wayland- oder X11-Desktop-Sitzung',permNotif:'Benachrichtigungen',permInstall:'Unbekannte Apps installieren (für die APK nötig)',webReq:'Aktuelles Android System WebView',
+    stepsTitle:'So installierst du',verify:'Downloads prüfen (SHA-256)',
+    steps_windows:'Lade das Installationsprogramm (.msi / .exe) herunter.|Wenn SmartScreen erscheint, wähle „Weitere Informationen“ → „Trotzdem ausführen“.|Folge dem Installationsprogramm und starte die App dann über das Startmenü.',
+    steps_mac:'Lade die .pkg für deinen Chip herunter (Apple-Menü → „Über diesen Mac“).|Öffne sie und folge dem Installationsprogramm. Falls sie blockiert wird, erlaube sie unter Systemeinstellungen → Datenschutz & Sicherheit.|Starte die App aus dem Ordner „Programme“.',
+    steps_linux:'Installiere Flatpak und füge das Repository hinzu (Terminal-Befehle oben) oder lade die .deb / .rpm herunter.|Führe den Installationsbefehl für deine Distribution aus.|Starte die App über das Anwendungsmenü.',
+    steps_android:'Lade die APK auf dein Smartphone herunter.|Erlaube auf Nachfrage „Unbekannte Apps installieren“ für deinen Browser.|Öffne die APK und tippe auf „Installieren“.',
+    steps_ios:'Es gibt noch keine App für iPhone oder iPad.|Vielleicht in Zukunft.|Nutze vorerst die Website im Browser oder lade die App auf einem Windows-, macOS- oder Linux-Computer oder einem Android-Gerät herunter.',
+    detected:'Auf diesem Gerät erkannt',devMeetsRec:'{mem} Arbeitsspeicher: erfüllt die empfohlenen Anforderungen',devMeetsMin:'{mem} Arbeitsspeicher: erfüllt die Mindestanforderungen',devBelow:'{mem} Arbeitsspeicher: unter den Mindestanforderungen',devApprox:'Ungefähr: Browser runden den Speicher ab und begrenzen ihn auf 8 GB.',anyFlatpak:'Jede Distribution mit Flatpak-Unterstützung (Flatpak-Version)', reqTitle:'Systemanforderungen',min:'Minimum',rec:'Empfohlen',rOS:'Betriebssystem',rCPU:'Prozessor',rRAM:'Arbeitsspeicher (RAM)',rDisk:'Speicherplatz',rGPU:'Grafik',rDisplay:'Bildschirm',rNet:'Netzwerk',rArch:'Architektur',rNotes:'Hinweise',orNewer:'{x} oder neuer',free:'{x} frei',latest:'neueste Version',integrated:'Integrierte Grafik',accel:'GPU mit Hardwarebeschleunigung',netReq:'Internetverbindung erforderlich',linuxNote:'Für die Flatpak-Version muss Flatpak installiert sein. Das Tray-Symbol benötigt StatusNotifier/AppIndicator-Unterstützung (in KDE integriert; GNOME braucht die AppIndicator-Erweiterung).',iosNote:'Hypothetisch: Es gibt noch keine iOS-Version.', title:'Herunterladen',tagline:'Die native App für Windows, macOS, Linux und Android.',downloadFor:'Für {os} herunterladen',allPlatforms:'Alle Plattformen',yourDevice:'Dein Gerät',
+    appleSilicon:'Apple Silicon',intel:'Intel',download:'Herunterladen',terminal:'Per Terminal installieren',copy:'Kopieren',copied:'Kopiert',
+    unavailable:'Nicht verfügbar',iosMeta:'Nicht im App Store',iosTip:'Noch nicht verfügbar. Vielleicht in Zukunft, aber nicht über den App Store, daher nur auf Geräten mit Jailbreak nutzbar.',
+    version:'Version {v}',released:'Veröffentlicht am {d}',notes:'Versionshinweise',pickPlatform:'Wähle unten deine Plattform.',macNote:'Erfordert macOS 11 oder neuer.',linuxMeta:'Flatpak · .deb · .rpm',apkMeta:'Android-APK',browser:'Alle Downloads'},
+  ja:{
+    pre:'プレリリース',tabUnsup:'非対応のデバイス',unsupDl:'このデバイスでは利用できません',
+    unsupHint:'このデバイスではダウンロードできませんが、これまでどおりウェブサイトをご利用いただけます。',
+    unsupMsg:'このアプリは{d}にはインストールできませんが、これまでどおりウェブサイトをご利用いただけます。ほとんどの機能は動作するはずです。アプリをインストールするには、Windows、macOS、Linux のパソコン、または通常の Android スマートフォンやタブレットでこのページを開いてください。',
+    steps_unsup:'これまでどおりブラウザでウェブサイトをご利用ください。|アプリを入手するには、Windows、macOS、Linux のパソコン、または通常の Android スマートフォンやタブレットでこのページを開きます。|そこでダウンロードします。',
+    unsupHint_jio:'このデバイスではダウンロードできません。別のデバイスでこのページを開いてください。',
+    unsupMsg_jio:'{d}では DarkPurpleOF’s Website を実行できません。別のデバイス（Windows、macOS、Linux のパソコン、または通常の Android スマートフォンやタブレット）でこのページをもう一度ご確認ください。',
+    steps_unsup_jio:'別のデバイスでこのページを開きます。|Windows、macOS、Linux のパソコン、または通常の Android スマートフォンやタブレットを使います。|そこでアプリをダウンロードします。',
+    unsupHint_console:'このデバイスではダウンロードできません。なぜ動くと思ったのですか？',
+    unsupMsg_console:'{d}？なぜ動くと思ったのですか？Windows、macOS、Linux のパソコン、または通常の Android スマートフォンやタブレットでこのページを開いてください。',
+    steps_unsup_console:'コントローラーを置きましょう。|Windows、macOS、Linux のパソコン、または Android スマートフォンやタブレットでこのページを開きます。|そこでアプリをダウンロードします。',
+    unsupHint_j2me:'考えるのもやめましょう。',unsupMsg_j2me:'考えるのもやめましょう。',steps_unsup_j2me:'考えるのもやめましょう。',
+    unsupFb:'Facebook のアプリ内ブラウザでは、対応しているスマートフォンでもインストールがブロックされます。代わりに通常のブラウザでこのページを開いてください。',
+    dev_kindle:'Kindle',dev_winphone:'Windows Phone',dev_blackberry:'BlackBerry',dev_jio:'JioPhone (KaiOS)',dev_facebook:'Android 版 Facebook アプリ',dev_xbox:'Xbox',dev_playstation:'PlayStation',dev_nintendo:'Nintendo のゲーム機',dev_j2me:'J2ME',
+    iosMaybe:'iPhone / iPad 向けアプリはまだありません。将来的には登場するかもしれません。',
+    sRec:'推奨要件を満たしています',sMin:'最小要件を満たしています',sLow:'最小要件を下回っています',devCores:'CPU スレッド数 {n}',devScreen:'{w} × {h} のディスプレイ',
+    rCores:'CPU コア',rStore:'ストレージの種類',rInput:'入力',rSession:'デスクトップセッション',rPerm:'権限',rWeb:'WebView',
+    hdd:'HDD（起動が遅くなります）',ssd:'SSD または NVMe',inputReq:'キーボードとマウス、またはタッチ操作',
+    sessionReq:'Wayland または X11 のデスクトップセッション',permNotif:'通知',permInstall:'提供元不明のアプリのインストール（APK に必要）',webReq:'最新の Android System WebView',
+    stepsTitle:'インストール方法',verify:'ダウンロードの検証 (SHA-256)',
+    steps_windows:'インストーラー（.msi / .exe）をダウンロードします。|SmartScreen が表示されたら、「詳細情報」→「実行」を選びます。|インストーラーの指示に従い、スタートメニューから起動します。',
+    steps_mac:'お使いのチップ用の .pkg をダウンロードします（Apple メニュー →「このMacについて」）。|開いてインストーラーの指示に従います。ブロックされた場合は、システム設定 → プライバシーとセキュリティで許可してください。|「アプリケーション」から起動します。',
+    steps_linux:'Flatpak をインストールしてリポジトリを追加するか（上のターミナルコマンド参照）、.deb / .rpm をダウンロードします。|お使いのディストリビューション用のインストールコマンドを実行します。|アプリメニューから起動します。',
+    steps_android:'スマートフォンで APK をダウンロードします。|確認が表示されたら、ブラウザに「提供元不明のアプリのインストール」を許可します。|APK を開いて「インストール」をタップします。',
+    steps_ios:'iPhone / iPad 向けアプリはまだありません。|将来的には登場するかもしれません。|当面はブラウザでウェブサイトをご利用いただくか、Windows、macOS、Linux のパソコンまたは Android デバイスでアプリをダウンロードしてください。',
+    detected:'このデバイスで検出',devMeetsRec:'メモリ {mem}: 推奨要件を満たしています',devMeetsMin:'メモリ {mem}: 最小要件を満たしています',devBelow:'メモリ {mem}: 最小要件を下回っています',devApprox:'概算: ブラウザはメモリを切り捨て、8 GB を上限として報告します。',anyFlatpak:'Flatpak に対応した任意のディストリビューション（Flatpak 版）', reqTitle:'システム要件',min:'最小',rec:'推奨',rOS:'OS',rCPU:'プロセッサ',rRAM:'メモリ (RAM)',rDisk:'ストレージ',rGPU:'グラフィックス',rDisplay:'ディスプレイ',rNet:'ネットワーク',rArch:'アーキテクチャ',rNotes:'備考',orNewer:'{x} 以降',free:'空き {x}',latest:'最新リリース',integrated:'内蔵グラフィックス',accel:'ハードウェアアクセラレーション対応 GPU',netReq:'インターネット接続が必要',linuxNote:'Flatpak 版には Flatpak のインストールが必要です。システムトレイには StatusNotifier/AppIndicator のサポートが必要です（KDE は標準対応、GNOME は AppIndicator 拡張機能が必要）。',iosNote:'仮定: iOS 版はまだありません。', title:'ダウンロード',tagline:'Windows、macOS、Linux、Android 向けのネイティブアプリ。',downloadFor:'{os} 版をダウンロード',allPlatforms:'すべてのプラットフォーム',yourDevice:'お使いのデバイス',
+    appleSilicon:'Apple Silicon',intel:'Intel',download:'ダウンロード',terminal:'ターミナルからインストール',copy:'コピー',copied:'コピーしました',
+    unavailable:'利用不可',iosMeta:'App Store では配信されません',iosTip:'まだ利用できません。将来的に登場するかもしれませんが、App Store ではなく、脱獄（ジェイルブレイク）済みのデバイスでのみ動作する見込みです。',
+    version:'バージョン {v}',released:'{d} にリリース',notes:'リリースノート',pickPlatform:'下からプラットフォームを選択してください。',macNote:'macOS 11 以降が必要です。',linuxMeta:'Flatpak · .deb · .rpm',apkMeta:'Android APK',browser:'すべてのダウンロード'}
+};
+const normalizeLang = c => { c = String(c||'').trim().toLowerCase(); return SUPPORTED_LANGS.includes(c) ? c : 'en'; };
+/* language: URL path (/es/download, /ru/, /de/..., also es-MX style) > ?lang=xx > browser language */
+function pickLang(){
+  const code = c => { c = String(c||'').toLowerCase(); return /^[a-z]{2}([-_][a-z]{2})?$/.test(c) && SUPPORTED_LANGS.includes(c.slice(0,2)) ? c.slice(0,2) : null; };
+  for (const seg of location.pathname.split('/')) { const c = code(seg); if (c) return c; }
+  const q = code(new URLSearchParams(location.search).get('lang'));
+  return q || normalizeLang((navigator.language||'en').slice(0,2));
+}
+const lang = pickLang();
+const LOCALE = {en:'en-US',es:'es-ES',ru:'ru-RU',de:'de-DE',ja:'ja-JP'}[lang];
+const t = (k, v={}) => String((I18N[lang]||{})[k] ?? I18N.en[k] ?? k).replace(/\{(\w+)\}/g, (_,x) => v[x] ?? '');
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = s => document.querySelector(s);
+
+/* ---------- platform detection ---------- */
+function detectOS(){
+  const ua = navigator.userAgent || '';
+  const p  = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
+  if (/android/i.test(ua)) return 'android';
+  if (/iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(p) && navigator.maxTouchPoints > 1)) return 'ios';
+  if (/Win/i.test(p) || /Windows/i.test(ua)) return 'windows';
+  if (/Mac/i.test(p)) return 'mac';
+  if (/Linux|X11|CrOS/i.test(ua + p)) return 'linux';
+  return null;
+}
+function detectUnsupported(){
+  const ua = navigator.userAgent || '';
+  if (/Xbox/i.test(ua)) return 'xbox';                                        // Xbox UAs also claim Windows
+  if (/PlayStation|PLAYSTATION|\bPS[345]\b/.test(ua)) return 'playstation';
+  if (/Nintendo|NintendoBrowser/i.test(ua)) return 'nintendo';
+  if (/MIDP|CLDC|J2ME|UNTRUSTED\/1\.0/i.test(ua)) return 'j2me';
+  if (/Windows Phone|IEMobile|WPDesktop/i.test(ua)) return 'winphone';      // WP UAs also claim Android
+  if (/BlackBerry|BB10|PlayBook|RIM Tablet/i.test(ua)) return 'blackberry';
+  if (/KAIOS|JioPhone|Jio ?Phone/i.test(ua)) return 'jio';
+  if (/\bSilk\/|Kindle|\bKF[A-Z]{2,6}\b|AmazonWebAppPlatform/i.test(ua)) return 'kindle';
+  if (/android/i.test(ua) && /FBAN|FBAV|FB_IAB|FB4A|Orca-Android/i.test(ua)) return 'facebook';
+  return null;
+}
+const UNSUP = detectUnsupported();   // 'kindle' | 'winphone' | 'blackberry' | 'jio' | 'facebook' | 'xbox' | 'playstation' | 'nintendo' | 'j2me' | null
+if (/Nintendo 3DS|KAIOS|JioPhone|Jio ?Phone|Opera Mini|Nokia|Series ?40|MIDP|CLDC|J2ME/i.test(navigator.userAgent)) document.documentElement.classList.add('small');   // tiny screens: let the topbar scroll away
+const UNSUP_K = UNSUP === 'jio' ? '_jio' : UNSUP === 'j2me' ? '_j2me' : ['xbox','playstation','nintendo'].includes(UNSUP) ? '_console' : '';   // KaiOS: screen too small for the site, so it gets the "use another device" wording
+const OS = UNSUP ? null : detectOS();
+let arch = null;            // 'arm' | 'x86' | null (only Chromium exposes it)
+let found = {...FALLBACK};  // platform key -> release asset
+
+/* ---------- ui ---------- */
+const ICON = {
+  monitor:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
+  laptop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="10" rx="1.5"/><path d="M3 19h18"/></svg>',
+  terminal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></svg>'
+};
+
+function btn(a){
+  const cls = 'btn' + (a.primary ? ' primary' : '') + (a.lg ? ' lg' : '');
+  if (UNSUP && !a.tip) return `<span class="${cls} disabled" role="button" aria-disabled="true">${esc(a.label)}</span>`;
+  if (a.tip) {
+    return `<span class="tip" tabindex="0"><span class="${cls} disabled" role="button" aria-disabled="true">${esc(a.label)}</span>` +
+           `<span class="bubble" role="tooltip">${esc(t('iosTip'))}</span></span>`;
+  }
+  return `<a class="${cls}" href="${a.href || (a.key === 'android' ? ANDROID_RELEASES : RELEASES)}"${a.key ? ` data-key="${a.key}"` : ''}>${esc(a.label)}</a>`;
+}
+
+function heroButtons(){
+  const dl = os => t('downloadFor', {os});
+  if (UNSUP) return [{label:t('unsupDl'), lg:1}];
+  switch (OS) {
+    case 'windows': return [{key:'windows', label:dl('Windows'), primary:1, lg:1}];
+    case 'android': return [{key:'android', label:dl('Android'), primary:1, lg:1}];
+    case 'linux':   return [{href:FLATPAKREF, label:dl('Linux') + ' · Flatpak', primary:1, lg:1},
+                            {key:'deb', label:'.deb', lg:1}, {key:'rpm', label:'.rpm', lg:1}];
+    case 'ios':     return [{tip:1, label:'iOS · ' + t('unavailable'), lg:1}];
+    case 'mac': {
+      const arm = {key:'macArm',   label:dl('macOS') + ' · ' + t('appleSilicon')};
+      const itl = {key:'macIntel', label:dl('macOS') + ' · ' + t('intel')};
+      const [first, second] = arch === 'x86' ? [itl, arm] : [arm, itl];
+      return [{...first, primary:1, lg:1}, {...second, lg:1}];
+    }
+    default: return [];
+  }
+}
+
+const PLAT_IDS = ['windows','mac','linux','android','ios'];
+const PLATS = [
+  {id:'windows', name:'Windows', icon:'monitor', meta:()=>'',                 acts:()=>[{key:'windows', label:t('download')}]},
+  {id:'mac',     name:'macOS',   icon:'laptop',  meta:()=>t('macNote'),       acts:()=>[{key:'macArm', label:t('appleSilicon')}, {key:'macIntel', label:t('intel')}]},
+  {id:'linux',   name:'Linux',   icon:'terminal',meta:()=>t('linuxMeta'),     acts:()=>[{href:FLATPAKREF, label:'Flatpak'}, {key:'deb', label:'.deb'}, {key:'rpm', label:'.rpm'}]},
+  {id:'android', name:'Android', icon:'phone',   meta:()=>t('apkMeta'),       acts:()=>[{key:'android', label:t('download')}]},
+  {id:'ios',     name:'iOS',     icon:'phone',   meta:()=>t('iosMeta'),       acts:()=>[{tip:1, label:t('unavailable')}]}
+];
+
+
+/* ---------- system requirements (edit the values here) ---------- */
+const svg = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const RI = {
+  os:      svg('<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/>'),
+  cpu:     svg('<rect x="7" y="7" width="10" height="10" rx="1"/><path d="M9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"/>'),
+  ram:     svg('<rect x="3" y="8" width="18" height="8" rx="1"/><path d="M7 16v3M11 16v3M15 16v3M7 11v2M12 11v2M17 11v2"/>'),
+  disk:    svg('<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 14h.01M11 14h6"/>'),
+  gpu:     svg('<rect x="3" y="7" width="18" height="10" rx="1.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6 17v2M18 17v2"/>'),
+  display: svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>'),
+  net:     svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>'),
+  arch:    svg('<path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>'),
+  info:    svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'),
+  check:   svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
+  cross:   svg('<path d="m6 6 12 12M18 6 6 18"/>')
+};
+const ck = (cls='') => `<span class="ck ${cls}">${cls === 'info' ? RI.info : cls === 'low' ? RI.cross : RI.check}</span>`;
+const lines = (arr, cls='') => arr.map(x => `<div class="vi">${ck(cls)}<span>${esc(x)}</span></div>`).join('');
+
+const MEM = {windows:[4,8], mac:[4,8], linux:[4,8], android:[2,4], ios:[2,4]};   // GB: [minimum, recommended]
+const DISK = [4, 8];                                                               // GB free: [minimum, recommended]
+const CORES = {windows:[4,8], mac:[4,8], linux:[4,8], android:[4,8]};              // threads: [min, rec]
+
+function reqRows(id){
+  const gb  = n => n + ' GB';
+  const free = n => t('free', {x: gb(n)});
+  const one = (k, icon, v)        => ({k, icon, v});
+  const two = (k, icon, min, rec) => ({k, icon, min, rec});
+  const note = text               => ({k:'rNotes', icon:'info', note:text});
+  const ram   = two('rRAM',  'ram',  [gb(MEM[id][0])], [gb(MEM[id][1])]);
+  const disk  = two('rDisk', 'disk', [free(DISK[0])],  [free(DISK[1])]);
+  const store = two('rStore','disk', [t('hdd')], [t('ssd')]);
+  const net   = one('rNet',  'net',  [t('netReq')]);
+  const gpu   = two('rGPU',  'gpu',  [t('integrated')], [t('accel')]);
+  const disp  = two('rDisplay','display', ['1280 × 720'], ['1920 × 1080']);
+  const input = one('rInput','display', [t('inputReq')]);
+  const cores = two('rCores','cpu', ['2 cores / 4 threads'], ['4+ cores / 8 threads']);
+  const pcCpu = two('rCPU', 'cpu',
+    ['Intel Core i3 12th Gen / 10th Gen', 'AMD Ryzen 5 5500'],
+    ['Intel Core i5 9th Gen', 'AMD Ryzen 8+']);
+  const arch64 = one('rArch','arch',['64-bit (x86_64)']);
+  switch (id) {
+    case 'windows': return [
+      two('rOS','os',[t('orNewer',{x:'Windows 10 22H2 (build 19045)'})],[t('orNewer',{x:'Windows 11 23H2'})]),
+      pcCpu, cores, ram, disk, store, gpu, disp, input, net, arch64];
+    case 'mac': return [
+      two('rOS','os',[t('orNewer',{x:'macOS 11 Big Sur (11.0)'})],[t('orNewer',{x:'macOS 14 Sonoma'})]),
+      two('rCPU','cpu',['Apple M1'],['Apple M3']), ram, disk, store, gpu, disp, input, net,
+      one('rArch','arch',['Apple Silicon (arm64)', 'Intel (x86_64)'])];
+    case 'linux': return [
+      two('rOS','os',
+        [t('orNewer',{x:'Ubuntu 22.04 LTS'}), t('orNewer',{x:'Debian 12'}), 'Fedora (' + t('latest') + ')', t('anyFlatpak')],
+        [t('orNewer',{x:'Ubuntu 24.04 LTS'}), t('orNewer',{x:'Debian 13'}), 'Fedora (' + t('latest') + ')', 'Red Hat Enterprise Linux (' + t('latest') + ')']),
+      one('rSession','display',[t('sessionReq')]),
+      pcCpu, cores, ram, disk, store, gpu, disp, input, net, one('rArch','arch',['x86_64']), note(t('linuxNote'))];
+    case 'android': return [
+      two('rOS','os',[t('orNewer',{x:'Android 8.0 Oreo (API 26)'})],[t('orNewer',{x:'Android 13 (API 33)'})]),
+      ram, disk, one('rWeb','os',[t('webReq')]), one('rPerm','info',[t('permNotif'), t('permInstall')]), net];
+    case 'ios': return [
+      two('rOS','os',[t('orNewer',{x:'iOS 16'})],[t('orNewer',{x:'iOS 17'})]),
+      ram, disk, net, note(t('iosNote'))];
+    default: return [];
+  }
+}
+
+let reqTab = UNSUP ? 'unsup' : PLAT_IDS.includes(OS) ? OS : 'windows';
+
+function deviceStrip(){
+  if (reqTab !== OS) return '';
+  const items = [];
+  const st = c => t(c === 'rec' ? 'sRec' : c === '' ? 'sMin' : 'sLow');
+  const row = (c, txt) => `<div class="vi">${ck(c)}<span>${esc(txt)}</span></div>`;
+  const mem = navigator.deviceMemory;                      // Chromium only; rounded down, capped at 8
+  if (mem) {
+    const [min, rec] = MEM[reqTab];
+    const label = mem >= 8 ? '8 GB+' : mem + ' GB';
+    const [cls, key] = mem >= rec ? ['rec', 'devMeetsRec'] : mem >= min ? ['', 'devMeetsMin'] : ['low', 'devBelow'];
+    items.push(row(cls, t(key, {mem: label})));
+  }
+  const th = navigator.hardwareConcurrency;
+  if (th && CORES[reqTab]) {
+    const [m, r] = CORES[reqTab];
+    const c = th >= r ? 'rec' : th >= m ? '' : 'low';
+    items.push(row(c, t('devCores', {n: th}) + ': ' + st(c)));
+  }
+  if (['windows','mac','linux'].includes(reqTab) && screen.width) {
+    const k = devicePixelRatio || 1, w = Math.round(screen.width * k), h = Math.round(screen.height * k);
+    const c = (w >= 1920 && h >= 1080) ? 'rec' : (w >= 1280 && h >= 720) ? '' : 'low';
+    items.push(row(c, t('devScreen', {w, h}) + ': ' + st(c)));
+  }
+  if (!items.length) return '';
+  return `<div class="dev"><b>${esc(t('detected'))}</b>${items.join('')}<small>${esc(t('devApprox'))}</small></div>`;
+}
+
+function renderSteps(){
+  $('#steps').innerHTML = t('steps_' + reqTab + (reqTab === 'unsup' ? UNSUP_K : '')).split('|').map(s => `<li><span>${esc(s)}</span></li>`).join('');
+}
+
+function renderReqs(){
+  $('#reqTabs').innerHTML = (UNSUP ? [{id:'unsup', name:t('tabUnsup')}] : []).concat(PLATS).map(p =>
+    `<button class="tab" role="tab" type="button" data-t="${p.id}" aria-selected="${p.id === reqTab}">${p.name}</button>`).join('');
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => { reqTab = b.dataset.t; renderReqs(); });
+  $('#reqDev').innerHTML = deviceStrip();
+  if (reqTab === 'unsup') {
+    $('#reqTable').innerHTML = `<div class="warn"><span class="ck low">${RI.cross}</span><div><p>${esc(t('unsupMsg' + UNSUP_K, {d: t('dev_' + UNSUP)}))}</p>` +
+      (UNSUP === 'facebook' ? `<p>${esc(t('unsupFb'))}</p>` : '') + `</div></div>`;
+    renderSteps();
+    return;
+  }
+
+  const head = `<div class="rq head"><div></div><div class="hc">${ck()}${esc(t('min'))}</div><div class="hc">${ck('rec')}${esc(t('rec'))}</div></div>`;
+  const key  = r => `<div class="k"><span class="ki">${RI[r.icon]}</span><span>${esc(t(r.k))}</span></div>`;
+  $('#reqTable').innerHTML = head + reqRows(reqTab).map(r =>
+    r.note !== undefined
+      ? `<div class="rq">${key(r)}<div class="vg span"><div class="vi">${ck('info')}<span>${esc(r.note)}</span></div></div></div>`
+    : r.v
+      ? `<div class="rq">${key(r)}<div class="vg span">${lines(r.v)}</div></div>`
+      : `<div class="rq">${key(r)}<div class="vg" data-l="${esc(t('min'))}">${lines(r.min)}</div><div class="vg" data-l="${esc(t('rec'))}">${lines(r.rec, 'rec')}</div></div>`
+  ).join('');
+  renderSteps();
+}
+
+function render(){
+  document.title = t('title') + " — DarkPurpleOF's Website";
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i]').forEach(el => el.textContent = t(el.dataset.i));
+  $('#allDl').textContent = t('browser');
+  document.body.classList.toggle('unsup', !!UNSUP);
+  if (UNSUP) $('.lead').textContent = t('unsupHint' + UNSUP_K);
+  else if (OS === 'ios') $('.lead').textContent = t('iosMaybe');
+
+  $('#heroCta').innerHTML = heroButtons().map(btn).join('');
+
+  $('#plats').innerHTML = PLATS.map(p => `
+    <div class="tile${p.id === OS ? ' cur' : ''}${p.id === 'ios' || UNSUP ? ' off' : ''}" data-p="${p.id}">
+      <div class="th">
+        <div class="pi">${ICON[p.icon]}</div>
+        <div class="pn"><b>${p.name}${p.id === OS ? `<span class="chip">${esc(t('yourDevice'))}</span>` : ''}</b><span class="meta" data-meta="${p.id}">${esc(p.meta())}</span></div>
+      </div>
+      <div class="pa">${p.acts().map(btn).join('')}</div>
+    </div>`).join('');
+  setTimeout(() => $('#plats').classList.add('done'), 900);
+
+  $('#cmdsWrap').innerHTML = `
+    <details class="cmds"><summary>${esc(t('terminal'))}</summary>
+      <div class="code"><pre><code id="cmdText">${esc(linuxCmds())}</code></pre><button class="btn" id="copyBtn" type="button">${esc(t('copy'))}</button></div>
+    </details>`;
+  const cb = $('#copyBtn');
+  cb.onclick = async () => {
+    try { await navigator.clipboard.writeText(linuxCmds()); cb.textContent = t('copied'); setTimeout(() => cb.textContent = t('copy'), 1500); } catch(e) { console.warn('clipboard write failed', e); }
+  };
+  renderReqs();
+  applyAssets();
+}
+
+/* point buttons at the real files once the latest release is known */
+let release = null, androidRelease = null;
+function applyAssets(){
+  for (const [k, a] of Object.entries(found)) {
+    document.querySelectorAll(`[data-key="${k}"]`).forEach(el => { el.href = a.browser_download_url; });
+  }
+  const cmd = $('#cmdText');
+  if (cmd) cmd.textContent = linuxCmds();
+  const mb = a => (a.size / 1048576).toFixed(0) + ' MB';
+  for (const k of ['windows', 'android']) {
+    const el = document.querySelector(`[data-meta="${k}"]`);
+    if (el && found[k]) el.textContent = found[k].name + (found[k].size ? ' · ' + mb(found[k]) : '');
+  }
+  const info = $('#relInfo');
+  if (release) {
+    const v = String(release.tag_name || '').replace(/^v/i, '');
+    const d = release.published_at ? new Date(release.published_at).toLocaleDateString(LOCALE, {year:'numeric', month:'short', day:'numeric'}) : '';
+    info.innerHTML = `<span class="pill">${esc(t('version', {v}))}</span>` +
+      (release.prerelease ? `<span class="pill">${esc(t('pre'))}</span>` : '') +
+      (d ? `<span class="pill">${esc(t('released', {d}))}</span>` : '') +
+      (androidRelease ? `<span class="pill">Android ${esc(String(androidRelease.tag_name || '').replace(/^v/i, ''))}</span>` : '') +
+      `<a class="pill" href="${esc(release.html_url || RELEASES)}">${esc(t('notes'))} ↗</a>`;
+  } else {
+    info.innerHTML = OS || UNSUP ? '' : `<span class="muted">${esc(t('pickPlatform'))}</span>`;
+  }
+  const vf = $('#verify');
+  const uniq = [...new Map(Object.values(found).filter(a => a.digest).map(a => [a.name, a])).values()];
+  vf.innerHTML = uniq.length ? `<details class="cmds"><summary>${esc(t('verify'))}</summary>` +
+    uniq.map(a => `<div class="hrow"><b>${esc(a.name)}</b><span class="hash">${esc(a.digest.replace(/^sha256:/, ''))}</span></div>`).join('') +
+    `<div class="code"><pre><code>sha256sum &lt;file&gt;\ncertutil -hashfile &lt;file&gt; SHA256\nshasum -a 256 &lt;file&gt;</code></pre></div></details>` : '';
+}
+
+function pickAssets(assets){
+  const f = k => assets.find(MATCH[k]);
+  const x64 = /amd64|x86_64|x64/i;
+  const fx = k => assets.find(a => MATCH[k](a) && x64.test(a.name)) || f(k);   // prefer the x86_64 package
+  const out = {windows:f('windows'), android:f('android'), macArm:f('macArm'), macIntel:f('macIntel'), deb:fx('deb'), rpm:fx('rpm')};
+  const pkgs = assets.filter(a => /\.pkg$/i.test(a.name));
+  if (pkgs.length === 1) { out.macArm = out.macArm || pkgs[0]; out.macIntel = out.macIntel || pkgs[0]; }
+  Object.keys(out).forEach(k => out[k] || delete out[k]);
+  return out;
+}
+
+async function loadRelease(repo){
+  const KEY = 'dp_latest_release_v3:' + repo;
+  try {
+    const c = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+    if (c && Date.now() - c.at < 10 * 60 * 1000) return c.data;
+  } catch(e) { console.warn('release cache read failed', e); }
+  try {
+    const r = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=10`, {headers:{Accept:'application/vnd.github+json'}});
+    if (!r.ok) throw new Error(r.status);
+    const j = (await r.json()).find(x => !x.draft);      // newest release, pre-releases included
+    if (!j) throw new Error('no releases');
+    const data = {prerelease:!!j.prerelease, tag_name:j.tag_name, html_url:j.html_url, published_at:j.published_at,
+                  assets:(j.assets || []).map(a => ({name:a.name, size:a.size, digest:a.digest || '', browser_download_url:a.browser_download_url}))};
+    try { sessionStorage.setItem(KEY, JSON.stringify({at:Date.now(), data})); } catch(e) { console.warn('release cache write failed', e); }
+    return data;
+  } catch(e) { console.warn('release lookup failed, using fallback links', e); return null; }
+}
+
+render();
+
+if (OS === 'mac' && navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+  navigator.userAgentData.getHighEntropyValues(['architecture']).then(v => {
+    arch = v.architecture === 'arm' ? 'arm' : v.architecture === 'x86' ? 'x86' : null;
+    render();
+  }).catch(e => console.warn('arch detection failed', e));
+}
+
+Promise.all([loadRelease(REPO), loadRelease(ANDROID_REPO)]).then(([pc, an]) => {
+  if (!pc && !an) return;
+  release = pc;
+  androidRelease = an;
+  found = {...FALLBACK, ...pickAssets(pc ? pc.assets || [] : []), ...(an ? {android: pickAssets(an.assets || []).android || FALLBACK.android} : {})};
+  applyAssets();
+});
+</script>
+</body>
+</html>
